@@ -1,0 +1,53 @@
+name = "new-telegram-bot"
+main = "src/index.ts"
+compatibility_date = "2025-01-07"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "your_kv_namespace_id" # Replace with your actual KV Namespace ID
+
+# D1 Database - Replace with your own
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "your_database_name"
+# database_id = "your_database_id"
+
+# Environment variables (set via wrangler secret)
+# TELEGRAM_BOT_TOKEN
+# TELEGRAM_WEBHOOK_SECRET
+# SENTRY_DSN
+# GEMINI_API_KEY
+
+[triggers]
+crons = [ "0 * * * *" ] # Run every hour
+
+[env.staging]
+name = "new-telegram-bot-staging"
+# Staging KV Namespaces
+# [[env.staging.kv_namespaces]]
+# binding = "SESSIONS"
+# id = "your_staging_kv_namespace_id"
+
+# Staging D1 Database
+# [[env.staging.d1_databases]]
+# binding = "DB"
+# database_name = "your_staging_database_name"
+# database_id = "your_staging_database_id"
+
+[env.production]
+name = "new-telegram-bot-prod"
+# Production KV Namespaces
+# [[env.production.kv_namespaces]]
+# binding = "SESSIONS"
+# id = "your_production_kv_namespace_id"
+
+# Production D1 Database
+# [[env.production.d1_databases]]
+# binding = "DB"
+# database_name = "your_production_database_name"
+# database_id = "your_production_database_id"
+
+# Production Cron triggers
+# [env.production.triggers]
+# crons = [ "0 8 * * *" ] # Example: Run daily at 8 AM UTC
