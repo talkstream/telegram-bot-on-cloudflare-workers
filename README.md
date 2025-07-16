@@ -55,6 +55,7 @@
 - Node.js 20+ and npm 10+
 - [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - [Telegram Bot Token](https://t.me/botfather)
+- [Google Gemini API Key](https://makersuite.google.com/app/apikey) (optional, for AI features)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/cli-wrangler/install-update)
 
 ### 1. Clone and Install

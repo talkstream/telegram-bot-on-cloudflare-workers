@@ -1,0 +1,79 @@
+name = "telegram-bot-wireframe"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+compatibility_flags = ["nodejs_compat"]
+
+# Account and route configuration
+# account_id = "your_cloudflare_account_id_here"
+# route = "https://your-domain.com/*"
+
+# Basic configuration
+[vars]
+ENVIRONMENT = "development"
+
+# D1 Database
+# Create with: wrangler d1 create your-bot-db
+[[d1_databases]]
+binding = "DB"
+database_name = "your-bot-db"
+database_id = "your-database-id-here"
+
+# KV Namespaces
+# Create with: wrangler kv:namespace create CACHE
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-cache-namespace-id-here"
+
+# Create with: wrangler kv:namespace create RATE_LIMIT
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "your-rate-limit-namespace-id-here"
+
+# Create with: wrangler kv:namespace create SESSIONS
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "your-sessions-namespace-id-here"
+
+# Staging environment
+[env.staging]
+name = "telegram-bot-wireframe-staging"
+vars = { ENVIRONMENT = "staging" }
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "your-bot-db-staging"
+database_id = "your-staging-database-id-here"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "your-staging-cache-namespace-id-here"
+
+[[env.staging.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "your-staging-rate-limit-namespace-id-here"
+
+[[env.staging.kv_namespaces]]
+binding = "SESSIONS"
+id = "your-staging-sessions-namespace-id-here"
+
+# Production environment
+[env.production]
+name = "telegram-bot-wireframe-prod"
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "your-bot-db-prod"
+database_id = "your-production-database-id-here"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-production-cache-namespace-id-here"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "your-production-rate-limit-namespace-id-here"
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "your-production-sessions-namespace-id-here"
