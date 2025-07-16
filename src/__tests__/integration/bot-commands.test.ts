@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createBot } from '@/core/bot';
 import { createMockEnv } from '../utils/mock-env';
+import { createBot, mockBot } from '../mocks/core-bot';
 
 describe('Bot Commands Registration', () => {
   const mockEnv = createMockEnv();

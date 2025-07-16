@@ -51,6 +51,8 @@
 
 ## 🚀 Quick Start
 
+> **📖 Need detailed setup instructions?** Check out our comprehensive [Setup Guide](SETUP.md) for step-by-step configuration with screenshots and troubleshooting.
+
 ### Prerequisites
 - Node.js 20+ and npm 10+
 - [Cloudflare account](https://dash.cloudflare.com/sign-up)

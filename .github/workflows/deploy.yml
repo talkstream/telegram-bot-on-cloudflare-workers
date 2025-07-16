@@ -9,10 +9,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+    environment:
+      name: production
+      url: https://telegram-bot-wireframe.workers.dev
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+        
       - name: Run tests
         run: npm test
       - name: Deploy
@@ -20,3 +31,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env production

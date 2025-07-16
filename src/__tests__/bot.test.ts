@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createBot } from '@/core/bot';
 import { createMockEnv } from './utils/mock-env';
 import { createMockContext } from './utils/mock-context';
+import { createBot, mockBot } from './mocks/core-bot';
 
 describe('Bot', () => {
   it('should create bot instance', () => {
