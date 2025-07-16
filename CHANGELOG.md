@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-07-17
 
 ### Added
+
 - Initial wireframe implementation for Telegram bots on Cloudflare Workers
 - Full TypeScript support with strict mode configuration
 - grammY bot framework integration
@@ -28,12 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cloudflare pricing information in documentation
 
 ### Security
+
 - Enhanced security measures for public repository
 - Removed personal information from public files
 - Added webhook signature validation
 - Implemented secure token handling
 
 ### Fixed
+
 - Replaced V8 coverage with Istanbul for Cloudflare Workers compatibility
 - Resolved all TypeScript and ESLint errors
 - Fixed CI/CD resilience to missing configuration
@@ -43,12 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated package versions and fixed related tests
 
 ### Changed
+
 - Formatted code with Prettier across the project
 - Updated contact links
 - Cleaned up deployment history
 - Improved overall wireframe structure for better developer experience
 
 ### Documentation
+
 - Added comprehensive README in English and Russian
 - Created CLAUDE.md for project-specific instructions
 - Added setup and deployment guides
