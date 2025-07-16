@@ -66,6 +66,9 @@
 git clone https://github.com/yourusername/telegram-bot-cloudflare-wireframe.git
 cd telegram-bot-cloudflare-wireframe
 npm install
+
+# Verify setup
+npm run setup:check
 ```
 
 ### 2. Configure Environment
@@ -296,6 +299,18 @@ npm run format           # Format code
 npm run deploy           # Deploy to production
 npm run tail             # View production logs
 ```
+
+### CI/CD with GitHub Actions
+
+The repository includes GitHub Actions workflows:
+
+- **Test Workflow** - Automatically runs on every push and PR
+- **Deploy Workflow** - Optional, requires Cloudflare setup (disabled by default)
+
+To enable automatic deployment:
+1. Set up GitHub secrets (see [Setup Guide](SETUP.md))
+2. Edit `.github/workflows/deploy.yml` to enable push trigger
+3. Ensure all Cloudflare resources are created
 
 ### Project Structure
 

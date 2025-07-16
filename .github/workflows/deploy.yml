@@ -1,9 +1,16 @@
-name: Deploy
+name: Deploy (Optional)
+
+# This workflow is optional - it will only work if you've set up:
+# 1. CLOUDFLARE_API_TOKEN secret
+# 2. CLOUDFLARE_ACCOUNT_ID secret
+# 3. Created D1 database and KV namespaces in Cloudflare
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: # Manual trigger only
+  # Uncomment below to enable automatic deployment on push
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   deploy:
@@ -26,9 +33,33 @@ jobs:
         
       - name: Run tests
         run: npm test
+      - name: Create wrangler.toml for deployment
+        run: |
+          cp wrangler.toml.example wrangler.toml
+          echo "Note: Using example config. Ensure D1 and KV namespaces are configured in Cloudflare dashboard."
+          
+      - name: Check Cloudflare credentials
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] || [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "::warning::Cloudflare credentials not set. Please configure CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets."
+            echo "::warning::Deployment will be skipped. See SETUP.md for configuration instructions."
+            exit 0
+          fi
+          
       - name: Deploy
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production
+          command: deploy --env production --dry-run
+          
+      - name: Deploy Notice
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          echo "::notice::Deployment completed in dry-run mode."
+          echo "::notice::To enable actual deployment:"
+          echo "::notice::1. Create D1 database and KV namespaces in Cloudflare"
+          echo "::notice::2. Update wrangler.toml with correct resource IDs"
+          echo "::notice::3. Remove --dry-run flag from deploy command"
+          echo "::notice::See SETUP.md for detailed instructions."
