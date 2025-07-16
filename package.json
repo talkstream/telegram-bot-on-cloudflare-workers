@@ -27,7 +27,7 @@
     "tail:staging": "wrangler tail --env staging"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.44",
+    "@cloudflare/vitest-pool-workers": "^0.8.54",
     "@cloudflare/workers-types": "^4.20250111.0",
     "@eslint/js": "^9.18.0",
     "@types/node": "^22.10.7",
