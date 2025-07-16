@@ -48,10 +48,10 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@sentry/cloudflare": "^8.47.0",
+    "@sentry/cloudflare": "^9.39.0",
     "grammy": "^1.31.0",
     "hono": "^4.6.21",
-    "zod": "^3.24.1"
+    "zod": "^4.0.5"
   },
   "engines": {
     "node": ">=20.0.0",
