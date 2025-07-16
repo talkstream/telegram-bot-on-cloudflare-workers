@@ -1,10 +1,10 @@
-import { Bot, Context, InlineKeyboard } from 'grammy';
-import { Env } from '../config/env';
-import { SessionService, UserSession } from '../services/session-service';
-import { GeminiService } from '../services/gemini-service';
-import { getMessage } from '../lib/i18n';
-import { TelegramStarsService } from '../domain/services/telegram-stars.service';
-import { PaymentRepository } from '../domain/payments/repository';
+import { Bot, Context, InlineKeyboard, RawApi } from 'grammy';
+import type { Env } from '@/types';
+import { SessionService, UserSession } from '@/services/session-service';
+import { GeminiService } from '@/services/gemini-service';
+import { getMessage } from '@/lib/i18n';
+import { TelegramStarsService } from '@/domain/services/telegram-stars.service';
+import { PaymentRepository } from '@/domain/payments/repository';
 
 // Define a custom context type for grammY to include the session and services
 interface MyContext extends Context {

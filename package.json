@@ -27,7 +27,7 @@
     "tail:staging": "wrangler tail --env staging"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.44",
+    "@cloudflare/vitest-pool-workers": "^0.8.53",
     "@cloudflare/workers-types": "^4.20250111.0",
     "@eslint/js": "^9.18.0",
     "@types/node": "^22.10.7",
@@ -37,18 +37,20 @@
     "eslint": "^9.18.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-promise": "^7.2.1",
-    "husky": "^9.1.8",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "lint-staged": "^16.1.0",
+    "miniflare": "^4.20250709.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
-    "vite-tsconfig-paths": "^5.2.0",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4",
     "wrangler": "^4.5.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@sentry/cloudflare": "^8.47.0",
+    "@sentry/cloudflare": "^9.38.0",
     "grammy": "^1.31.0",
     "hono": "^4.6.21",
     "zod": "^3.24.1"

@@ -15,7 +15,14 @@ export function createMockEnv(): Env {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnThis(),
         first: vi.fn().mockResolvedValue(null),
-        run: vi.fn().mockResolvedValue({ success: true }),
+        run: vi.fn().mockResolvedValue({ 
+          success: true,
+          meta: {
+            last_row_id: 1,
+            changes: 1,
+            duration: 0.1
+          }
+        }),
         all: vi.fn().mockResolvedValue({ results: [] }),
       }),
       batch: vi.fn().mockResolvedValue([]),

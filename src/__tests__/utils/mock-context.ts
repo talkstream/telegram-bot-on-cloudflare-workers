@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import type { BotContext } from '@/types';
+import { createMockEnv } from './mock-env';
 
 export interface MockContextOptions {
   from?: any;
@@ -7,6 +8,7 @@ export interface MockContextOptions {
   message?: any;
   callbackQuery?: any;
   me?: any;
+  env?: any;
 }
 
 export function createMockContext(options: MockContextOptions = {}): BotContext {
