@@ -9,8 +9,26 @@ permissions:
   contents: write
 
 jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    name: Check Configuration
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: Check for required secrets
+        id: check
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+            echo "✅ Cloudflare secrets are configured"
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+            echo "::notice::Cloudflare deployment skipped - secrets not configured"
+          fi
+
   release:
     name: Create Release
+    needs: check-secrets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -75,11 +93,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Production
+        if: needs.check-secrets.outputs.has-secrets == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env production
+
+      - name: Deployment Notice
+        if: needs.check-secrets.outputs.has-secrets != 'true'
+        run: |
+          echo "::notice::📋 Cloudflare deployment skipped"
+          echo "::notice::This is a wireframe project - deployment is optional"
+          echo "::notice::To enable deployment, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets"
 
       - name: Notify deployment
         uses: 8398a7/action-slack@v3
