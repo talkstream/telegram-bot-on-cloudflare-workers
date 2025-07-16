@@ -34,7 +34,16 @@ export default defineWorkersConfig({
       },
     },
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      provider: 'istanbul', // Use istanbul instead of v8 for Cloudflare Workers compatibility
+      reporter: ['text', 'json', 'html', 'lcov'],
+      exclude: [
+        'node_modules/**',
+        'src/__tests__/**',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/mockData.ts',
+        '**/*.type.ts',
+      ],
     },
   },
   resolve: {

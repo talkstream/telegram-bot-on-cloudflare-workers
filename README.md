@@ -245,6 +245,8 @@ describe('StartCommand', () => {
 });
 ```
 
+**Important Note for Coverage**: This wireframe uses Istanbul coverage provider instead of V8 due to Cloudflare Workers compatibility. The V8 coverage provider relies on `node:inspector` which is not available in the Workers runtime. Istanbul works by instrumenting code at build time, making it compatible with Workers.
+
 ## 💡 Perfect Use Cases
 
 This wireframe is **ideal** for:

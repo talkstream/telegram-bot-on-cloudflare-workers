@@ -213,6 +213,10 @@ wrangler secret put SENTRY_DSN --env production      # Optional
 
 KV namespaces might need time to propagate. Wait a few minutes after creation.
 
+### Test coverage issues?
+
+This project uses Istanbul coverage provider instead of V8. If you encounter coverage errors with `node:inspector`, ensure you have `@vitest/coverage-istanbul` installed (not `@vitest/coverage-v8`). This is due to Cloudflare Workers runtime limitations.
+
 ## Next Steps
 
 - Customize bot commands in `src/adapters/telegram/commands/`
