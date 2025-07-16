@@ -13,7 +13,7 @@ Before you start, make sure you have:
 ## Step 1: Fork/Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/telegram-bot-on-cloudflare-workers.git
+git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
 cd telegram-bot-on-cloudflare-workers
 npm install
 ```
@@ -220,4 +220,4 @@ KV namespaces might need time to propagate. Wait a few minutes after creation.
 
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [grammY Documentation](https://grammy.dev/)
-- [Project Issues](https://github.com/yourusername/telegram-bot-on-cloudflare-workers/issues)
+- [Contact Developer](https://t.me/nafigator)

@@ -330,6 +330,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 </p>
 
 <p align="center">
-  <a href="https://github.com/yourusername/telegram-bot-cloudflare-wireframe/issues">Report Bug</a> •
-  <a href="https://github.com/yourusername/telegram-bot-cloudflare-wireframe/issues">Request Feature</a>
+  <a href="https://t.me/nafigator">Report Bug</a> •
+  <a href="https://t.me/nafigator">Request Feature</a>
 </p>
