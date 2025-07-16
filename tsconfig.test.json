@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["@cloudflare/workers-types", "node", "vitest/globals"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.json", "scripts/**/*.js"],
+  "exclude": ["node_modules", "dist", ".wrangler"]
+}

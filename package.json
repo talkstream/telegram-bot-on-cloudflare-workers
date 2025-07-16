@@ -1,0 +1,88 @@
+{
+  "name": "telegram-bot-cloudflare-wireframe",
+  "version": "1.0.0",
+  "description": "Production-ready wireframe for creating Telegram bots on Cloudflare Workers with TypeScript",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev --env development --var ENVIRONMENT:development",
+    "dev:remote": "wrangler dev --env development --var ENVIRONMENT:development --remote",
+    "deploy": "wrangler deploy --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{js,ts,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json,md,yml,yaml}\"",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "setup:check": "node scripts/check-setup.js",
+    "prepare": "husky || true",
+    "db:generate": "wrangler d1 migrations create",
+    "db:apply:local": "wrangler d1 migrations apply DB --local",
+    "db:apply:remote": "wrangler d1 migrations apply DB --env production",
+    "secrets:list": "wrangler secret list --env production",
+    "tail": "wrangler tail --env production",
+    "tail:staging": "wrangler tail --env staging"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.53",
+    "@cloudflare/workers-types": "^4.20250111.0",
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.7",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "eslint": "^9.18.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-promise": "^7.2.1",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
+    "miniflare": "^4.20250709.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.5.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@sentry/cloudflare": "^9.38.0",
+    "grammy": "^1.31.0",
+    "hono": "^4.6.21",
+    "zod": "^3.24.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "cloudflare",
+    "workers",
+    "typescript",
+    "grammy",
+    "wireframe",
+    "template"
+  ],
+  "author": "Arseniy Kamyshev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/talkstream/telegram-bot-on-cloudflare-workers"
+  }
+}

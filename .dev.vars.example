@@ -1,0 +1,18 @@
+# Copy this file to .dev.vars and fill in your values
+# This file is used for local development with wrangler dev
+
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+TELEGRAM_WEBHOOK_SECRET=your-secret-webhook-token-here
+
+# AI Configuration
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# Sentry Configuration (Optional)
+SENTRY_DSN=https://your-key@sentry.io/your-project-id
+
+# Environment
+ENVIRONMENT=development
+
+# Additional Configuration
+# Add any other environment variables your bot needs here
