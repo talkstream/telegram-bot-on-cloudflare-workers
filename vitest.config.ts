@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineWorkersConfig({
   test: {
     globals: true,
+    setupFiles: ['./src/__tests__/setup/grammy-mock.ts'],
     poolOptions: {
       workers: {
         isolatedStorage: true,

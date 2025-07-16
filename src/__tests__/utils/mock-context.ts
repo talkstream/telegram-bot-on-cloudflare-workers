@@ -80,6 +80,13 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
     // API
     api: {
       setMyCommands: vi.fn().mockResolvedValue({ ok: true }),
+      getMyCommands: vi.fn().mockResolvedValue([
+        { command: 'start', description: 'Start the bot' },
+        { command: 'help', description: 'Show help' },
+        { command: 'profile', description: 'View profile' },
+        { command: 'settings', description: 'Bot settings' },
+        { command: 'balance', description: 'Check balance' },
+      ]),
       sendMessage: vi.fn().mockResolvedValue({ ok: true }),
       sendInvoice: vi.fn().mockResolvedValue({ ok: true }),
     },

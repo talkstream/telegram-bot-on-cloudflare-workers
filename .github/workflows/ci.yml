@@ -79,7 +79,6 @@ jobs:
         continue-on-error: true # Don't fail the build on vulnerabilities
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        if: ${{ secrets.SNYK_TOKEN != '' }}
 
   build:
     name: Build
@@ -174,9 +173,13 @@ jobs:
           curl -f https://your-bot.workers.dev/health || exit 1
 
       - name: Set webhook (if needed)
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_WEBHOOK_SECRET != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
         run: |
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/setWebhook" \
-            -H "Content-Type: application/json" \
-            -d "{\"url\": \"https://your-bot.workers.dev/webhook/${{ secrets.TELEGRAM_WEBHOOK_SECRET }}\", \"secret_token\": \"${{ secrets.TELEGRAM_WEBHOOK_SECRET }}\"}"
+          if [ ! -z "$TELEGRAM_BOT_TOKEN" ] && [ ! -z "$TELEGRAM_WEBHOOK_SECRET" ]; then
+            curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+              -H "Content-Type: application/json" \
+              -d "{\"url\": \"https://your-bot.workers.dev/webhook/$TELEGRAM_WEBHOOK_SECRET\", \"secret_token\": \"$TELEGRAM_WEBHOOK_SECRET\"}"
+          fi
         continue-on-error: true
