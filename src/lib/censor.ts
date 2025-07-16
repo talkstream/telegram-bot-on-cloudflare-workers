@@ -69,7 +69,7 @@ export class Censor {
     [/\bнахуй\b/gi, 'н***й'],
     [/\bнахуя\b/gi, 'н***я'],
     [/\bпохуй\b/gi, 'п***й'],
-    [/\bпохую\b/gi, 'п***ю']
+    [/\bпохую\b/gi, 'п***ю'],
   ]);
 
   /**
@@ -123,5 +123,7 @@ export class Censor {
 
 // Экспорт функции для удобства использования
 export const censorText = (text: string): string => Censor.censor(text);
-export const containsObscene = (text: string): boolean => Censor.containsObscene(text);
-export const findObsceneWords = (text: string): string[] => Censor.findObsceneWords(text);
+export const containsObscene = (text: string): boolean =>
+  Censor.containsObscene(text);
+export const findObsceneWords = (text: string): string[] =>
+  Censor.findObsceneWords(text);

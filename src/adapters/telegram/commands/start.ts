@@ -5,7 +5,7 @@ import { escapeMarkdown } from '@/lib/telegram-formatter';
 
 export const startCommand: CommandHandler = async (ctx) => {
   const userId = ctx.from?.id;
-  
+
   if (!userId) {
     await ctx.reply('❌ Unable to identify user');
     return;
@@ -15,11 +15,11 @@ export const startCommand: CommandHandler = async (ctx) => {
     const userService = getUserService(ctx.env);
     const user = await userService.createOrUpdateUser({
       telegramId: userId,
-      username: ctx.from.username,
+      username: ctx.from.username || undefined,
       firstName: ctx.from.first_name,
-      lastName: ctx.from.last_name,
-      languageCode: ctx.from.language_code,
-      isPremium: ctx.from.is_premium,
+      lastName: ctx.from.last_name || undefined,
+      languageCode: ctx.from.language_code || undefined,
+      isPremium: ctx.from.is_premium || undefined,
     });
 
     logger.info('User started bot', {
@@ -49,9 +49,7 @@ Let's get started\\! What would you like to do today?
             { text: '📝 Help', callback_data: 'help' },
             { text: '⚙️ Settings', callback_data: 'settings' },
           ],
-          [
-            { text: '💳 Make Payment', callback_data: 'payment' },
-          ],
+          [{ text: '💳 Make Payment', callback_data: 'payment' }],
         ],
       },
     });

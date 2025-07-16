@@ -1,11 +1,12 @@
 import type { Context } from 'hono';
+
 import type { Env, HealthStatus } from '@/types';
 import { logger } from '@/lib/logger';
 
 export async function healthHandler(c: Context<{ Bindings: Env }>) {
   const startTime = Date.now();
   const env = c.env;
-  
+
   const status: HealthStatus = {
     status: 'healthy',
     version: '1.0.0',
@@ -50,7 +51,9 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
   if (env.TELEGRAM_BOT_TOKEN) {
     try {
       // Just verify token format
-      status.services.telegram = /^\d+:[A-Za-z0-9_-]{35}$/.test(env.TELEGRAM_BOT_TOKEN);
+      status.services.telegram = /^\d+:[A-Za-z0-9_-]{35}$/.test(
+        env.TELEGRAM_BOT_TOKEN
+      );
     } catch (error) {
       logger.error('Telegram token check failed', { error });
       status.services.telegram = false;
@@ -72,7 +75,7 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
 
   // Determine overall status
   const criticalServices = [status.services.database, status.services.telegram];
-  if (criticalServices.some(service => !service)) {
+  if (criticalServices.some((service) => !service)) {
     status.status = 'unhealthy';
   }
 
@@ -85,8 +88,12 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
   });
 
   // Return appropriate status code
-  const statusCode = status.status === 'healthy' ? 200 : 
-                     status.status === 'degraded' ? 200 : 503;
+  const statusCode =
+    status.status === 'healthy'
+      ? 200
+      : status.status === 'degraded'
+        ? 200
+        : 503;
 
   return c.json(status, statusCode);
 }

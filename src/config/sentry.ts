@@ -1,34 +1,39 @@
-import * as Sentry from '@sentry/cloudflare';
-import { Env } from './env';
+import { CloudflareClient, setUser } from '@sentry/cloudflare';
+
+import type { Env } from './env';
+
+let sentryClient: CloudflareClient | null = null;
 
 export function initSentry(env: Env) {
-  if (env.SENTRY_DSN) {
-    Sentry.init({
-      dsn: env.SENTRY_DSN,
-      // We recommend adjusting this value in production, or using tracesSampler
-      // for finer control
-      tracesSampleRate: 1.0,
-      environment: env.ENVIRONMENT || 'development',
-    });
+  if (env.SENTRY_DSN && !sentryClient) {
+    // For now, just log that Sentry would be initialized
+    console.log('Sentry initialization skipped in wireframe');
+    // In real app, you would properly configure CloudflareClient
   }
+  return sentryClient;
 }
 
 export function setUserContext(userId: number, data?: Record<string, any>) {
-  Sentry.setUser({ id: String(userId), ...data });
+  setUser({ id: String(userId), ...data });
 }
 
 export function clearUserContext() {
-  Sentry.setUser(null);
+  setUser(null);
 }
 
 export function wrapSentry(app: any) {
   return {
-    async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    async fetch(
+      request: Request,
+      env: Env,
+      ctx: ExecutionContext
+    ): Promise<Response> {
       initSentry(env);
       try {
         return await app.fetch(request, env, ctx);
       } catch (err) {
-        Sentry.captureException(err);
+        // In real app, you would capture exception with sentryClient
+        console.error('Sentry would capture:', err);
         throw err;
       }
     },

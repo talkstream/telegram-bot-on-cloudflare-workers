@@ -1,10 +1,9 @@
 import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
-import { escapeMarkdown } from '@/lib/telegram-formatter';
 
 export const payCommand: CommandHandler = async (ctx) => {
   const userId = ctx.from?.id;
-  
+
   if (!userId) {
     await ctx.reply('❌ Unable to identify user');
     return;
@@ -12,33 +11,35 @@ export const payCommand: CommandHandler = async (ctx) => {
 
   try {
     // Create payment invoice
-    await ctx.replyWithInvoice({
-      title: 'Premium Subscription',
-      description: 'Get access to premium features for 30 days',
-      payload: JSON.stringify({
+    await ctx.replyWithInvoice(
+      'Premium Subscription',
+      'Get access to premium features for 30 days',
+      JSON.stringify({
         userId,
         type: 'premium_subscription',
         duration: 30,
       }),
-      currency: 'XTR',
-      prices: [
+      'XTR',
+      [
         {
           label: 'Premium Subscription (30 days)',
           amount: 100, // 100 Telegram Stars
         },
       ],
-      maxTipAmount: 500, // Maximum 500 stars as tip
-      suggestedTipAmounts: [50, 100, 200], // Suggested tips
-      photoUrl: 'https://example.com/premium-banner.jpg',
-      photoSize: 200,
-      photoWidth: 640,
-      photoHeight: 360,
-      needName: false,
-      needPhoneNumber: false,
-      needEmail: false,
-      needShippingAddress: false,
-      isFlexible: false,
-    });
+      {
+        max_tip_amount: 500, // Maximum 500 stars as tip
+        suggested_tip_amounts: [50, 100, 200], // Suggested tips
+        photo_url: 'https://example.com/premium-banner.jpg',
+        photo_size: 200,
+        photo_width: 640,
+        photo_height: 360,
+        need_name: false,
+        need_phone_number: false,
+        need_email: false,
+        need_shipping_address: false,
+        is_flexible: false,
+      }
+    );
 
     // Send additional information
     const infoMessage = `
@@ -60,11 +61,12 @@ You're about to purchase a Premium Subscription for *100 Stars*\\.
       reply_markup: {
         inline_keyboard: [
           [
-            { text: '❓ What are Stars?', url: 'https://telegram.org/blog/telegram-stars' },
+            {
+              text: '❓ What are Stars?',
+              url: 'https://telegram.org/blog/telegram-stars',
+            },
           ],
-          [
-            { text: '🔙 Back', callback_data: 'main_menu' },
-          ],
+          [{ text: '🔙 Back', callback_data: 'main_menu' }],
         ],
       },
     });

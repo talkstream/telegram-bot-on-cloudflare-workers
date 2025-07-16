@@ -3,7 +3,7 @@ import { escapeMarkdown } from '@/lib/telegram-formatter';
 
 export const settingsCommand: CommandHandler = async (ctx) => {
   const userId = ctx.from?.id;
-  
+
   if (!userId) {
     await ctx.reply('❌ Unable to identify user');
     return;
@@ -33,12 +33,8 @@ Choose what you'd like to configure:
           { text: '🎨 Theme', callback_data: 'settings:theme' },
           { text: '🔐 Privacy', callback_data: 'settings:privacy' },
         ],
-        [
-          { text: '🗑️ Clear Data', callback_data: 'settings:clear_data' },
-        ],
-        [
-          { text: '🔙 Back', callback_data: 'main_menu' },
-        ],
+        [{ text: '🗑️ Clear Data', callback_data: 'settings:clear_data' }],
+        [{ text: '🔙 Back', callback_data: 'main_menu' }],
       ],
     },
   });

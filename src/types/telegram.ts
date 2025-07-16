@@ -1,4 +1,5 @@
 import type { Context as GrammyContext, SessionFlavor } from 'grammy';
+
 import type { Env } from './env';
 
 // Session data structure
@@ -12,9 +13,10 @@ export interface SessionData {
 }
 
 // Extended context with session and environment
-export type BotContext = GrammyContext & SessionFlavor<SessionData> & {
-  env: Env;
-};
+export type BotContext = GrammyContext &
+  SessionFlavor<SessionData> & {
+    env: Env;
+  };
 
 // Command handler type
 export type CommandHandler = (ctx: BotContext) => Promise<void>;

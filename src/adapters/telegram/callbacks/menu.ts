@@ -1,9 +1,8 @@
 import type { CallbackHandler } from '@/types';
-import { logger } from '@/lib/logger';
 
 export const mainMenuCallback: CallbackHandler = async (ctx) => {
   await ctx.answerCallbackQuery();
-  
+
   const menuMessage = `
 🏠 *Main Menu*
 
@@ -22,9 +21,7 @@ Choose an option:
           { text: '💳 Payment', callback_data: 'payment' },
           { text: '💰 Balance', callback_data: 'balance' },
         ],
-        [
-          { text: '📊 Statistics', callback_data: 'stats' },
-        ],
+        [{ text: '📊 Statistics', callback_data: 'stats' }],
       ],
     },
   });
@@ -32,7 +29,7 @@ Choose an option:
 
 export const helpCallback: CallbackHandler = async (ctx) => {
   await ctx.answerCallbackQuery();
-  
+
   const helpMessage = `
 📚 *Quick Help*
 
@@ -50,9 +47,7 @@ Need more help? Use /help command\\.
     parse_mode: 'MarkdownV2',
     reply_markup: {
       inline_keyboard: [
-        [
-          { text: '🔙 Back to Menu', callback_data: 'main_menu' },
-        ],
+        [{ text: '🔙 Back to Menu', callback_data: 'main_menu' }],
       ],
     },
   });
@@ -60,7 +55,7 @@ Need more help? Use /help command\\.
 
 export const settingsCallback: CallbackHandler = async (ctx) => {
   await ctx.answerCallbackQuery();
-  
+
   // Reuse the settings command logic
   const { settingsCommand } = await import('../commands/settings');
   await settingsCommand(ctx);
@@ -68,7 +63,7 @@ export const settingsCallback: CallbackHandler = async (ctx) => {
 
 export const paymentCallback: CallbackHandler = async (ctx) => {
   await ctx.answerCallbackQuery();
-  
+
   // Reuse the pay command logic
   const { payCommand } = await import('../commands/pay');
   await payCommand(ctx);
@@ -76,7 +71,7 @@ export const paymentCallback: CallbackHandler = async (ctx) => {
 
 export const balanceCallback: CallbackHandler = async (ctx) => {
   await ctx.answerCallbackQuery();
-  
+
   // Reuse the balance command logic
   const { balanceCommand } = await import('../commands/balance');
   await balanceCommand(ctx);
@@ -84,7 +79,7 @@ export const balanceCallback: CallbackHandler = async (ctx) => {
 
 export const statsCallback: CallbackHandler = async (ctx) => {
   await ctx.answerCallbackQuery();
-  
+
   // Reuse the stats command logic
   const { statsCommand } = await import('../commands/stats');
   await statsCommand(ctx);

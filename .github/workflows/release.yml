@@ -80,7 +80,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env production
-        
+
       - name: Notify deployment
         uses: 8398a7/action-slack@v3
         if: always()

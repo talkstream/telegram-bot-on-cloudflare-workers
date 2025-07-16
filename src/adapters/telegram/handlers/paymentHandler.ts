@@ -1,30 +1,40 @@
 import { Context } from 'grammy';
-import { Env } from '../../../config/env';
+
+import type { Env } from '../../../config/env';
 import { PaymentRepository } from '../../../domain/payments/repository';
 import { TelegramStarsService } from '../../../domain/services/telegram-stars.service';
-import { StarsService } from '../../../services/stars.service';
 import { logger } from '../../../lib/logger';
 
 interface HorizonContext extends Context {
   env: Env;
 }
 
-export async function handlePreCheckoutQuery(ctx: HorizonContext, env: Env): Promise<void> {
+export async function handlePreCheckoutQuery(
+  ctx: HorizonContext,
+  env: Env
+): Promise<void> {
   const query = ctx.preCheckoutQuery;
   const paymentRepo = new PaymentRepository(env.DB);
-  const starsService = new TelegramStarsService(ctx.api, paymentRepo);
+  const starsService = new TelegramStarsService(ctx.api.raw, paymentRepo);
 
   try {
+    if (!query) {
+      throw new Error('No pre-checkout query in context');
+    }
     await starsService.handlePreCheckoutQuery(query);
   } catch (error) {
     logger.error('Error handling pre-checkout query:', error);
     await ctx.answerPreCheckoutQuery(false, {
-      error_message: 'An error occurred while processing your payment. Please try again later.',
+      error_message:
+        'An error occurred while processing your payment. Please try again later.',
     });
   }
 }
 
-export async function handleSuccessfulPayment(ctx: HorizonContext, env: Env): Promise<void> {
+export async function handleSuccessfulPayment(
+  ctx: HorizonContext,
+  env: Env
+): Promise<void> {
   const payment = ctx.message?.successful_payment;
   if (!payment) {
     logger.error('No successful payment in message', { message: ctx.message });
@@ -40,7 +50,6 @@ export async function handleSuccessfulPayment(ctx: HorizonContext, env: Env): Pr
   const payload = JSON.parse(payment.invoice_payload);
   const chargeId = payment.telegram_payment_charge_id;
   const paymentRepo = new PaymentRepository(env.DB);
-  const starsService = new StarsService(env.DB);
 
   try {
     // Record payment
@@ -70,13 +79,16 @@ export async function handleSuccessfulPayment(ctx: HorizonContext, env: Env): Pr
     // You can add specific logic based on payment type here
     if (payload.type === 'direct_message') {
       // Example: Mark direct message as paid and ready for delivery
-      await ctx.reply('Your direct message has been paid for and will be delivered!');
+      await ctx.reply(
+        'Your direct message has been paid for and will be delivered!'
+      );
     } else if (payload.type === 'faction_change') {
       await ctx.reply('Your faction change payment was successful!');
     }
-
   } catch (error) {
     logger.error('Failed to handle successful payment', { error, payment });
-    await ctx.reply('An error occurred while processing your payment. Please contact support.');
+    await ctx.reply(
+      'An error occurred while processing your payment. Please contact support.'
+    );
   }
 }

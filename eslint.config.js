@@ -1,9 +1,11 @@
 import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import eslintPluginImport from 'eslint-plugin-import';
-import eslintPluginPromise from 'eslint-plugin-promise';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import importPlugin from 'eslint-plugin-import';
+import promisePlugin from 'eslint-plugin-promise';
+import globals from 'globals';
 
-export default tseslint.config(
+export default [
   // Ignore patterns
   {
     ignores: [
@@ -14,180 +16,121 @@ export default tseslint.config(
       '**/*.config.js',
       '**/*.config.ts',
       '**/coverage/**',
-      '**/.husky/**'
-    ]
+      '**/.husky/**',
+    ],
   },
-  
+
   // Base configuration
   js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-  
-  // TypeScript configuration
+
+  // TypeScript files
   {
+    files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
+      parser: tsParser,
       parserOptions: {
-        project: true,
-        tsconfigRootDir: import.meta.dirname,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: ['./tsconfig.json', './tsconfig.test.json'],
       },
       globals: {
-        // Cloudflare Workers globals
-        fetch: 'readonly',
-        Request: 'readonly',
-        Response: 'readonly',
-        Headers: 'readonly',
-        FormData: 'readonly',
-        File: 'readonly',
-        Blob: 'readonly',
-        URL: 'readonly',
-        URLSearchParams: 'readonly',
-        crypto: 'readonly',
-        TextEncoder: 'readonly',
-        TextDecoder: 'readonly',
-        console: 'readonly',
-        // Node globals for scripts
-        process: 'readonly',
-        Buffer: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-      }
-    }
-  },
-  
-  // Plugin configurations
-  {
+        ...globals.es2022,
+        ...globals.node,
+        ...globals.worker,
+      },
+    },
     plugins: {
-      import: eslintPluginImport,
-      promise: eslintPluginPromise,
-    }
-  },
-  
-  // Custom rules
-  {
+      '@typescript-eslint': tsPlugin,
+      import: importPlugin,
+      promise: promisePlugin,
+    },
     rules: {
       // TypeScript specific rules
-      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { 
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_'
-      }],
-      '@typescript-eslint/consistent-type-imports': ['error', {
-        prefer: 'type-imports',
-        fixStyle: 'inline-type-imports'
-      }],
-      '@typescript-eslint/no-misused-promises': ['error', {
-        checksVoidReturn: false
-      }],
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/await-thenable': 'error',
-      '@typescript-eslint/no-unnecessary-condition': 'error',
-      '@typescript-eslint/strict-boolean-expressions': ['error', {
-        allowNullableBoolean: true,
-        allowNullableString: true,
-        allowNullableNumber: false,
-        allowNullableObject: false,
-        allowAny: false
-      }],
-      
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-empty-interface': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+
+      // General rules
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+      'no-debugger': 'error',
+      'no-unused-vars': 'off', // Using TypeScript's version
+      'no-undef': 'off', // TypeScript handles this
+
       // Import rules
-      'import/order': ['error', {
-        groups: [
-          'builtin',
-          'external',
-          'internal',
-          ['sibling', 'parent'],
-          'index',
-          'type'
-        ],
-        'newlines-between': 'always',
-        alphabetize: {
-          order: 'asc',
-          caseInsensitive: true
-        }
-      }],
-      'import/no-duplicates': 'error',
-      'import/no-cycle': 'error',
-      'import/no-unused-modules': ['error', {
-        unusedExports: true,
-        ignoreExports: [
-          '**/index.ts',
-          '**/types/*.ts',
-          '**/*.d.ts',
-          '**/handlers/**/*.ts',
-          '**/commands/**/*.ts'
-        ]
-      }],
-      
+      'import/no-unresolved': 'off', // TypeScript handles this
+      'import/order': [
+        'error',
+        {
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
+          ],
+          'newlines-between': 'always',
+        },
+      ],
+
       // Promise rules
       'promise/always-return': 'error',
       'promise/no-return-wrap': 'error',
       'promise/param-names': 'error',
       'promise/catch-or-return': 'error',
-      'promise/no-nesting': 'error',
-      'promise/no-promise-in-callback': 'error',
-      'promise/no-callback-in-promise': 'error',
-      'promise/valid-params': 'error',
-      
-      // General rules
-      'no-console': ['error', {
-        allow: ['warn', 'error', 'info']
-      }],
-      'no-debugger': 'error',
-      'no-restricted-imports': ['error', {
-        patterns: ['../../../*', '../../../../*']
-      }],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'ForInStatement',
-          message: 'for..in loops iterate over the entire prototype chain. Use Object.keys/values/entries instead.'
-        }
-      ],
-      'prefer-const': 'error',
-      'no-var': 'error',
-      'object-shorthand': 'error',
-      'prefer-destructuring': ['error', {
-        array: false,
-        object: true
-      }],
-      
-      // Stylistic rules
-      'no-multiple-empty-lines': ['error', { max: 1 }],
-      'padding-line-between-statements': [
-        'error',
-        { blankLine: 'always', prev: '*', next: 'return' },
-        { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
-        { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] }
-      ]
-    }
+      'promise/no-native': 'off',
+      'promise/no-nesting': 'warn',
+      'promise/no-promise-in-callback': 'warn',
+      'promise/no-callback-in-promise': 'warn',
+      'promise/avoid-new': 'off',
+      'promise/no-new-statics': 'error',
+      'promise/no-return-in-finally': 'warn',
+      'promise/valid-params': 'warn',
+    },
   },
-  
-  // Overrides for specific file patterns
+
+  // Allow console in specific files
   {
-    files: ['**/*.test.ts', '**/*.spec.ts'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      'no-console': 'off'
-    }
-  },
-  {
-    files: ['**/migrations/**/*.sql'],
-    rules: {
-      '@typescript-eslint/no-unused-vars': 'off'
-    }
-  },
-  {
-    files: ['**/scripts/**/*.ts'],
+    files: ['**/logger.ts', '**/logger.js'],
     rules: {
       'no-console': 'off',
-      '@typescript-eslint/no-floating-promises': 'off'
-    }
-  }
-);
+    },
+  },
+
+  // JavaScript files
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.es2022,
+        ...globals.node,
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      'no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+];

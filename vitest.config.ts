@@ -12,24 +12,24 @@ export default defineWorkersConfig({
       workers: {
         isolatedStorage: true,
         wrangler: {
-          configPath: "./wrangler.toml",
+          configPath: './wrangler.toml',
         },
         miniflare: {
-          compatibilityDate: "2024-01-01",
-          compatibilityFlags: ["nodejs_compat"],
+          compatibilityDate: '2024-01-01',
+          compatibilityFlags: ['nodejs_compat'],
           // Bindings for unit tests
           bindings: {
-            TELEGRAM_BOT_TOKEN: "test-bot-token",
-            TELEGRAM_WEBHOOK_SECRET: "test-webhook-secret",
-            GEMINI_API_KEY: "test-gemini-key",
-            ADMIN_KEY: "test-admin-key",
-            ENVIRONMENT: "test",
-            SENTRY_DSN: "",
+            TELEGRAM_BOT_TOKEN: 'test-bot-token',
+            TELEGRAM_WEBHOOK_SECRET: 'test-webhook-secret',
+            GEMINI_API_KEY: 'test-gemini-key',
+            ADMIN_KEY: 'test-admin-key',
+            ENVIRONMENT: 'test',
+            SENTRY_DSN: '',
           },
           // Mock D1 database
-          d1Databases: ["DB"],
+          d1Databases: ['DB'],
           // Mock KV namespaces
-          kvNamespaces: ["SESSIONS", "CACHE"],
+          kvNamespaces: ['SESSIONS', 'CACHE'],
         },
       },
     },
@@ -39,7 +39,7 @@ export default defineWorkersConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 });

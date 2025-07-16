@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { rateLimiter } from '@/middleware/rate-limiter';
+
 import { createMockEnv } from '../utils/mock-env';
+
+import { rateLimiter } from '@/middleware/rate-limiter';
 
 describe('Rate Limiter Middleware', () => {
   let mockEnv: any;
@@ -11,7 +13,7 @@ describe('Rate Limiter Middleware', () => {
     vi.clearAllMocks();
     mockEnv = createMockEnv();
     mockNext = vi.fn().mockResolvedValue(undefined);
-    
+
     mockContext = {
       env: mockEnv,
       req: {
@@ -62,8 +64,8 @@ describe('Rate Limiter Middleware', () => {
 
   it('should use custom key generator', async () => {
     const keyGenerator = vi.fn(() => 'custom-key');
-    const middleware = rateLimiter({ 
-      maxRequests: 1, 
+    const middleware = rateLimiter({
+      maxRequests: 1,
       windowMs: 60000,
       keyGenerator,
     });
@@ -80,14 +82,14 @@ describe('Rate Limiter Middleware', () => {
   });
 
   it('should skip successful requests when configured', async () => {
-    const middleware = rateLimiter({ 
-      maxRequests: 1, 
+    const middleware = rateLimiter({
+      maxRequests: 1,
       windowMs: 60000,
       skipSuccessfulRequests: true,
     });
 
     mockContext.res.status = 200;
-    
+
     // Make multiple successful requests
     await middleware(mockContext, mockNext);
     await middleware(mockContext, mockNext);
@@ -98,14 +100,14 @@ describe('Rate Limiter Middleware', () => {
   });
 
   it('should skip failed requests when configured', async () => {
-    const middleware = rateLimiter({ 
-      maxRequests: 1, 
+    const middleware = rateLimiter({
+      maxRequests: 1,
       windowMs: 60000,
       skipFailedRequests: true,
     });
 
     mockContext.res.status = 500;
-    
+
     // Make multiple failed requests
     await middleware(mockContext, mockNext);
     await middleware(mockContext, mockNext);
@@ -121,7 +123,10 @@ describe('Rate Limiter Middleware', () => {
     await middleware(mockContext, mockNext);
 
     expect(mockContext.header).toHaveBeenCalledWith('X-RateLimit-Limit', '10');
-    expect(mockContext.header).toHaveBeenCalledWith('X-RateLimit-Remaining', '9');
+    expect(mockContext.header).toHaveBeenCalledWith(
+      'X-RateLimit-Remaining',
+      '9'
+    );
     expect(mockContext.header).toHaveBeenCalledWith(
       'X-RateLimit-Reset',
       expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/)
@@ -130,7 +135,7 @@ describe('Rate Limiter Middleware', () => {
 
   it('should handle KV storage errors gracefully', async () => {
     mockEnv.RATE_LIMIT.get.mockRejectedValue(new Error('KV error'));
-    
+
     const middleware = rateLimiter({ maxRequests: 5, windowMs: 60000 });
 
     await middleware(mockContext, mockNext);
@@ -152,7 +157,7 @@ describe('Rate Limiter Middleware', () => {
     expect(mockContext.text).toHaveBeenCalled();
 
     // Wait for window to expire
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     // Reset mocks
     mockContext.text.mockClear();

@@ -1,5 +1,4 @@
 import type { CommandHandler } from '@/types';
-import { escapeMarkdown } from '@/lib/telegram-formatter';
 
 export const helpCommand: CommandHandler = async (ctx) => {
   const helpMessage = `
@@ -39,9 +38,7 @@ Use the buttons below for quick access to main features\\!
           { text: '📊 Stats', callback_data: 'stats' },
           { text: '⚙️ Settings', callback_data: 'settings' },
         ],
-        [
-          { text: '💬 Support', url: 'https://t.me/support' },
-        ],
+        [{ text: '💬 Support', url: 'https://t.me/support' }],
       ],
     },
   });

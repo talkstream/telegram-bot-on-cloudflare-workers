@@ -1,11 +1,17 @@
-import { Bot, type Update } from 'grammy';
-import { Env } from '../config/env';
-import { createBot } from './bot';
+import { Bot } from 'grammy';
+import type { Update } from 'grammy/types';
+
+import type { Env } from '../config/env';
 import { logger } from '../lib/logger';
-import { handlePreCheckoutQuery, handleSuccessfulPayment } from '../adapters/telegram/handlers/paymentHandler';
+import {
+  handlePreCheckoutQuery,
+  handleSuccessfulPayment,
+} from '../adapters/telegram/handlers/paymentHandler';
 import { setupCommands } from '../adapters/telegram/commands';
 import { setupCallbacks } from '../adapters/telegram/callbacks';
 import { setUserContext, clearUserContext } from '../config/sentry'; // Re-using Sentry helpers
+
+import { createBot } from './bot';
 
 export class TelegramAdapter {
   private bot: Bot;
@@ -15,33 +21,37 @@ export class TelegramAdapter {
 
   constructor(env: Env) {
     this.env = env;
-    this.bot = createBot(env); // Use our createBot function
+    this.bot = createBot(env as any) as any; // Use our createBot function
     this.setupHandlers();
   }
 
   private setupHandlers(): void {
     // Setup command handlers
-    setupCommands(this.bot, this.env);
+    setupCommands(this.bot as any);
 
     // Setup callback query handlers
-    setupCallbacks(this.bot, this.env);
+    setupCallbacks(this.bot as any);
 
     // Register payment handlers
-    this.bot.on('pre_checkout_query', (ctx) => handlePreCheckoutQuery(ctx as any, this.env));
-    this.bot.on('message:successful_payment', (ctx) => handleSuccessfulPayment(ctx as any, this.env));
+    this.bot.on('pre_checkout_query', (ctx) =>
+      handlePreCheckoutQuery(ctx as any, this.env)
+    );
+    this.bot.on('message:successful_payment', (ctx) =>
+      handleSuccessfulPayment(ctx as any, this.env)
+    );
 
     // Error handling
     this.bot.catch((err) => {
       logger.error('Bot error', err.error, {
         ctx: err.ctx,
-        error: err.error
+        error: err.error,
       });
 
       // Set user context for Sentry
       if (err.ctx?.from?.id) {
         setUserContext(err.ctx.from.id, {
           username: err.ctx.from.username,
-          first_name: err.ctx.from.first_name
+          first_name: err.ctx.from.first_name,
         });
       }
 
@@ -58,7 +68,9 @@ export class TelegramAdapter {
     if (update.update_id && this.processedUpdates.has(update.update_id)) {
       const processedTime = this.processedUpdates.get(update.update_id);
       if (processedTime && now - processedTime < 5 * 60 * 1000) {
-        logger.warn('Duplicate update received', { update_id: update.update_id });
+        logger.warn('Duplicate update received', {
+          update_id: update.update_id,
+        });
         return;
       }
     }
@@ -97,7 +109,7 @@ export class TelegramAdapter {
       setUserContext(userId, {
         username: from?.username,
         first_name: from?.first_name,
-        is_bot: from?.is_bot
+        is_bot: from?.is_bot,
       });
     }
 

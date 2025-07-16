@@ -15,7 +15,7 @@ export class ScheduledTaskManager {
    */
   register(task: ScheduledTask): void {
     this.tasks.set(task.name, task);
-    logger.info('Scheduled task registered', { 
+    logger.info('Scheduled task registered', {
       name: task.name,
       cronPattern: task.cronPattern,
     });
@@ -26,23 +26,23 @@ export class ScheduledTaskManager {
    */
   async execute(taskName: string, env: Env): Promise<void> {
     const task = this.tasks.get(taskName);
-    
+
     if (!task) {
       logger.error('Scheduled task not found', { taskName });
       throw new Error(`Task ${taskName} not found`);
     }
-    
+
     const startTime = Date.now();
-    
+
     try {
       logger.info('Executing scheduled task', { taskName });
       await task.handler(env);
-      
+
       const duration = Date.now() - startTime;
       logger.info('Scheduled task completed', { taskName, duration });
     } catch (error) {
       const duration = Date.now() - startTime;
-      logger.error('Scheduled task failed', { 
+      logger.error('Scheduled task failed', {
         taskName,
         error,
         duration,
@@ -56,17 +56,17 @@ export class ScheduledTaskManager {
    */
   async executeAll(env: Env): Promise<void> {
     const tasks = Array.from(this.tasks.values());
-    
+
     logger.info('Executing all scheduled tasks', { count: tasks.length });
-    
+
     const results = await Promise.allSettled(
-      tasks.map(task => this.execute(task.name, env))
+      tasks.map((task) => this.execute(task.name, env))
     );
-    
-    const failed = results.filter(r => r.status === 'rejected').length;
-    const succeeded = results.filter(r => r.status === 'fulfilled').length;
-    
-    logger.info('All scheduled tasks completed', { 
+
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+
+    logger.info('All scheduled tasks completed', {
       total: tasks.length,
       succeeded,
       failed,
@@ -88,20 +88,20 @@ export const cleanupExpiredSessions: ScheduledTask = {
   handler: async (env) => {
     const sessionCache = env.SESSIONS;
     if (!sessionCache) return;
-    
+
     try {
       const list = await sessionCache.list({ prefix: 'session:' });
       let deleted = 0;
-      
+
       for (const key of list.keys) {
-        const data = await sessionCache.get(key.name, 'json') as any;
-        
+        const data = (await sessionCache.get(key.name, 'json')) as any;
+
         if (data?.expiresAt && new Date(data.expiresAt) < new Date()) {
           await sessionCache.delete(key.name);
           deleted++;
         }
       }
-      
+
       logger.info('Expired sessions cleaned up', { deleted });
     } catch (error) {
       logger.error('Failed to cleanup sessions', { error });
@@ -116,7 +116,7 @@ export const sendDailyStats: ScheduledTask = {
     try {
       // Collect stats from database
       const stats = await collectDailyStats(env);
-      
+
       // Send to admin channel or store for later
       logger.info('Daily stats collected', { stats });
     } catch (error) {
@@ -134,13 +134,13 @@ export const healthCheck: ScheduledTask = {
       const response = await fetch(
         `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getWebhookInfo`
       );
-      
-      const webhookInfo = await response.json() as any;
-      
+
+      const webhookInfo = (await response.json()) as any;
+
       if (!webhookInfo.ok || webhookInfo.result.pending_update_count > 100) {
         logger.error('Webhook health check failed', { webhookInfo });
       } else {
-        logger.info('Webhook health check passed', { 
+        logger.info('Webhook health check passed', {
           url: webhookInfo.result.url,
           pending: webhookInfo.result.pending_update_count,
         });
@@ -159,44 +159,46 @@ async function collectDailyStats(env: Env): Promise<Record<string, number>> {
     newUsers: 0,
     messagesProcessed: 0,
   };
-  
+
   try {
     // Example queries - adjust based on your schema
-    const totalUsers = await env.DB
-      .prepare('SELECT COUNT(*) as count FROM users')
-      .first<{ count: number }>();
-    
+    const totalUsers = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM users'
+    ).first<{ count: number }>();
+
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
-    const activeUsers = await env.DB
-      .prepare('SELECT COUNT(DISTINCT user_id) as count FROM sessions WHERE updated_at > ?')
+
+    const activeUsers = await env.DB.prepare(
+      'SELECT COUNT(DISTINCT user_id) as count FROM sessions WHERE updated_at > ?'
+    )
       .bind(yesterday.toISOString())
       .first<{ count: number }>();
-    
-    const newUsers = await env.DB
-      .prepare('SELECT COUNT(*) as count FROM users WHERE created_at > ?')
+
+    const newUsers = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE created_at > ?'
+    )
       .bind(yesterday.toISOString())
       .first<{ count: number }>();
-    
+
     stats.totalUsers = totalUsers?.count || 0;
     stats.activeUsers = activeUsers?.count || 0;
     stats.newUsers = newUsers?.count || 0;
   } catch (error) {
     logger.error('Failed to collect stats', { error });
   }
-  
+
   return stats;
 }
 
 // Factory function
 export function createScheduledTaskManager(): ScheduledTaskManager {
   const manager = new ScheduledTaskManager();
-  
+
   // Register default tasks
   manager.register(cleanupExpiredSessions);
   manager.register(sendDailyStats);
   manager.register(healthCheck);
-  
+
   return manager;
 }

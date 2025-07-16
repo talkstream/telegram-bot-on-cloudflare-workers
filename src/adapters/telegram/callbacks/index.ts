@@ -1,8 +1,5 @@
 import type { Bot } from 'grammy';
-import type { BotContext } from '@/types';
-import { logger } from '@/lib/logger';
 
-// Import callback handlers
 import {
   mainMenuCallback,
   helpCallback,
@@ -11,7 +8,6 @@ import {
   balanceCallback,
   statsCallback,
 } from './menu';
-
 import {
   languageSettingCallback,
   setLanguageCallback,
@@ -20,6 +16,11 @@ import {
   clearDataCallback,
   confirmClearDataCallback,
 } from './settings';
+
+import type { BotContext } from '@/types';
+import { logger } from '@/lib/logger';
+
+// Import callback handlers
 
 export function setupCallbacks(bot: Bot<BotContext>): void {
   logger.info('Setting up callback handlers');
@@ -31,7 +32,7 @@ export function setupCallbacks(bot: Bot<BotContext>): void {
   bot.callbackQuery('payment', paymentCallback);
   bot.callbackQuery('balance', balanceCallback);
   bot.callbackQuery('stats', statsCallback);
-  
+
   // Settings callbacks
   bot.callbackQuery('settings:language', languageSettingCallback);
   bot.callbackQuery(/^set_language:/, setLanguageCallback);
@@ -39,10 +40,10 @@ export function setupCallbacks(bot: Bot<BotContext>): void {
   bot.callbackQuery(/^toggle_notifications:/, toggleNotificationsCallback);
   bot.callbackQuery('settings:clear_data', clearDataCallback);
   bot.callbackQuery('confirm_clear_data', confirmClearDataCallback);
-  
+
   // Generic callback handler for unhandled callbacks
   bot.on('callback_query:data', async (ctx) => {
-    logger.warn('Unhandled callback query', { 
+    logger.warn('Unhandled callback query', {
       data: ctx.callbackQuery.data,
       userId: ctx.from?.id,
     });

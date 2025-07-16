@@ -25,6 +25,7 @@
 ## 🌟 Features
 
 ### Core Technologies
+
 - **🔥 Cloudflare Workers** - Edge computing with global distribution
 - **📘 TypeScript** - Full type safety with strict mode
 - **🤖 grammY** - Modern Telegram Bot framework
@@ -34,6 +35,7 @@
 - **🔍 Sentry** - Error tracking and performance monitoring
 
 ### Developer Experience
+
 - **📦 Zero-config setup** - Start developing immediately
 - **🧪 Testing suite** - Unit and integration tests with Vitest
 - **🔧 Hot reload** - Instant feedback during development
@@ -42,6 +44,7 @@
 - **🚀 CI/CD Pipeline** - GitHub Actions ready
 
 ### Security & Performance
+
 - **🔒 Webhook validation** - Secure token-based authentication
 - **⚡ Rate limiting** - Distributed rate limiting with KV
 - **🛡️ Security headers** - Best practices implemented
@@ -54,6 +57,7 @@
 > **📖 Need detailed setup instructions?** Check out our comprehensive [Setup Guide](SETUP.md) for step-by-step configuration with screenshots and troubleshooting.
 
 ### Prerequisites
+
 - Node.js 20+ and npm 10+
 - [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - [Telegram Bot Token](https://t.me/botfather)
@@ -184,13 +188,17 @@ wrangler secret put SENTRY_DSN
 ## 📚 Best Practices
 
 ### 1. **Content Management**
+
 All user-facing text should be managed through the content system:
+
 ```typescript
 const message = contentManager.format('welcome_message', { name: userName });
 ```
 
 ### 2. **Error Handling**
+
 Comprehensive error handling with proper logging:
+
 ```typescript
 try {
   await riskyOperation();
@@ -201,13 +209,21 @@ try {
 ```
 
 ### 3. **Rate Limiting**
+
 Apply appropriate rate limits to prevent abuse:
+
 ```typescript
-app.post('/webhook/:token', rateLimiter({ maxRequests: 20, windowMs: 60000 }), handler);
+app.post(
+  '/webhook/:token',
+  rateLimiter({ maxRequests: 20, windowMs: 60000 }),
+  handler
+);
 ```
 
 ### 4. **Type Safety**
+
 Leverage TypeScript's strict mode for maximum safety:
+
 ```typescript
 // Always define types for your data structures
 interface UserData {
@@ -218,7 +234,9 @@ interface UserData {
 ```
 
 ### 5. **Testing**
+
 Write tests for critical functionality:
+
 ```typescript
 describe('StartCommand', () => {
   it('should create new user on first interaction', async () => {
@@ -232,30 +250,35 @@ describe('StartCommand', () => {
 This wireframe is **ideal** for:
 
 ### 1. **🛍️ E-commerce Bots**
+
 - Product catalogs with D1 database
 - Payment processing with Telegram Stars
 - Order tracking with KV sessions
 - Global edge deployment for fast responses
 
 ### 2. **🎮 Gaming & Entertainment Bots**
+
 - Real-time game state in KV storage
 - Leaderboards with D1 queries
 - In-game purchases via Telegram Stars
 - Low-latency gameplay worldwide
 
 ### 3. **📊 Analytics & Monitoring Bots**
+
 - Data aggregation and reporting
 - Scheduled tasks for regular updates
 - Webhook integrations
 - Rich interactive dashboards
 
 ### 4. **🤝 Customer Support Bots**
+
 - AI-powered responses with Gemini
 - Ticket management system
 - Multi-language support
 - Integration with existing CRM systems
 
 ### 5. **📚 Educational & Content Bots**
+
 - Course management with structured content
 - Progress tracking in database
 - Premium content via payments
@@ -266,22 +289,27 @@ This wireframe is **ideal** for:
 This wireframe might **not** be the best choice for:
 
 ### 1. **📹 Heavy Media Processing**
+
 - **Why not**: Cloudflare Workers have CPU time limits (50ms)
 - **Alternative**: Use traditional servers with FFmpeg or cloud functions with longer timeouts
 
 ### 2. **🔄 Long-Running Tasks**
+
 - **Why not**: Workers timeout after 30 seconds
 - **Alternative**: Use AWS Lambda, Google Cloud Functions, or traditional servers
 
 ### 3. **📦 Large File Storage**
+
 - **Why not**: Workers have memory limits and no persistent file system
 - **Alternative**: Combine with R2/S3 for file storage or use traditional hosting
 
 ### 4. **🔌 WebSocket Connections**
+
 - **Why not**: Workers don't support persistent WebSocket connections for bots
 - **Alternative**: Use Node.js with libraries like node-telegram-bot-api
 
 ### 5. **🏛️ Legacy System Integration**
+
 - **Why not**: May require specific libraries or protocols not available in Workers
 - **Alternative**: Traditional servers with full OS access or containerized solutions
 
@@ -308,6 +336,7 @@ The repository includes GitHub Actions workflows:
 - **Deploy Workflow** - Optional, requires Cloudflare setup (disabled by default)
 
 To enable automatic deployment:
+
 1. Set up GitHub secrets (see [Setup Guide](SETUP.md))
 2. Edit `.github/workflows/deploy.yml` to enable push trigger
 3. Ensure all Cloudflare resources are created

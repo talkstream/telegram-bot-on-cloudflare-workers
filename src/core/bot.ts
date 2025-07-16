@@ -1,6 +1,8 @@
-import { Bot, Context, InlineKeyboard, RawApi } from 'grammy';
+import { Bot, Context, InlineKeyboard } from 'grammy';
+
 import type { Env } from '@/types';
-import { SessionService, UserSession } from '@/services/session-service';
+import { SessionService } from '@/services/session-service';
+import type { UserSession } from '@/services/session-service';
 import { GeminiService } from '@/services/gemini-service';
 import { getMessage } from '@/lib/i18n';
 import { TelegramStarsService } from '@/domain/services/telegram-stars.service';
@@ -8,8 +10,7 @@ import { PaymentRepository } from '@/domain/payments/repository';
 
 // Define a custom context type for grammY to include the session and services
 interface MyContext extends Context {
-  api: RawApi; // Add RawApi to context
-  session?: UserSession;
+  session?: UserSession | undefined;
   services: {
     session: SessionService;
     gemini: GeminiService;
@@ -25,11 +26,13 @@ export function createBot(env: Env) {
   const sessionService = new SessionService(env.SESSIONS);
   const geminiService = new GeminiService(env.GEMINI_API_KEY);
   const paymentRepo = new PaymentRepository(env.DB);
-  const telegramStarsService = new TelegramStarsService(bot.api, paymentRepo);
+  const telegramStarsService = new TelegramStarsService(
+    bot.api.raw,
+    paymentRepo
+  );
 
   // Middleware to attach services, session, and i18n to the context
   bot.use(async (ctx, next) => {
-    ctx.api = bot.api; // Attach bot.api to context
     ctx.services = {
       session: sessionService,
       gemini: geminiService,
@@ -41,7 +44,7 @@ export function createBot(env: Env) {
     ctx.i18n = (key, ...args) => getMessage(lang, key, ...args);
 
     if (ctx.from?.id) {
-      ctx.session = await sessionService.getSession(ctx.from.id);
+      ctx.session = (await sessionService.getSession(ctx.from.id)) || undefined;
     }
     await next();
   });
@@ -71,14 +74,15 @@ export function createBot(env: Env) {
       await ctx.reply(ctx.i18n('gemini_thinking'));
       const response = await ctx.services.gemini.generateText(prompt);
       await ctx.reply(response);
-    } catch (error) {
+    } catch (_error) {
       await ctx.reply(ctx.i18n('gemini_error'));
     }
   });
 
   bot.command('menu', async (ctx) => {
     const inlineKeyboard = new InlineKeyboard()
-      .text('Option 1', 'option_1').row()
+      .text('Option 1', 'option_1')
+      .row()
       .text('Option 2', 'option_2');
     await ctx.reply('Choose an option:', { reply_markup: inlineKeyboard });
   });
@@ -103,12 +107,13 @@ export function createBot(env: Env) {
       // For demonstration, let's assume a fixed target_masked_id and amount
       const targetMaskedId = 'TEST_USER_123';
       const starsAmount = 100;
-      const invoiceLink = await ctx.services.telegramStars.createDirectMessageInvoice(
-        userId,
-        userId, // Using userId as playerId for simplicity in wireframe
-        targetMaskedId,
-        starsAmount
-      );
+      const invoiceLink =
+        await ctx.services.telegramStars.createDirectMessageInvoice(
+          userId,
+          userId, // Using userId as playerId for simplicity in wireframe
+          targetMaskedId,
+          starsAmount
+        );
       await ctx.reply(`Please pay for your message: ${invoiceLink}`);
     } catch (error) {
       await ctx.reply('Failed to create invoice. Please try again later.');

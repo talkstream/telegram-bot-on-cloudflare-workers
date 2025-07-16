@@ -1,4 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
+
 import { logger } from '../../lib/logger';
 
 export interface TelegramPayment {
@@ -35,20 +36,23 @@ export class PaymentRepository {
 
   async recordPayment(payment: TelegramPayment): Promise<number> {
     try {
-      const result = await this.db.prepare(
-        `INSERT INTO telegram_payments (
+      const result = await this.db
+        .prepare(
+          `INSERT INTO telegram_payments (
           player_id, telegram_payment_charge_id, invoice_payload,
           payment_type, related_entity_id, stars_amount, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        payment.player_id,
-        payment.telegram_payment_charge_id,
-        payment.invoice_payload,
-        payment.payment_type,
-        payment.related_entity_id || null,
-        payment.stars_amount,
-        payment.status
-      ).run();
+        )
+        .bind(
+          payment.player_id,
+          payment.telegram_payment_charge_id,
+          payment.invoice_payload,
+          payment.payment_type,
+          payment.related_entity_id || null,
+          payment.stars_amount,
+          payment.status
+        )
+        .run();
       return result.meta.last_row_id as number;
     } catch (error) {
       logger.error('Failed to record payment', { error, payment });
@@ -58,20 +62,23 @@ export class PaymentRepository {
 
   async savePendingInvoice(invoice: PendingInvoice): Promise<number> {
     try {
-      const result = await this.db.prepare(
-        `INSERT INTO pending_invoices (
+      const result = await this.db
+        .prepare(
+          `INSERT INTO pending_invoices (
           player_id, invoice_type, target_masked_id, target_faction,
           stars_amount, invoice_link, expires_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        invoice.player_id,
-        invoice.invoice_type,
-        invoice.target_masked_id || null,
-        invoice.target_faction || null,
-        invoice.stars_amount,
-        invoice.invoice_link || null,
-        invoice.expires_at
-      ).run();
+        )
+        .bind(
+          invoice.player_id,
+          invoice.invoice_type,
+          invoice.target_masked_id || null,
+          invoice.target_faction || null,
+          invoice.stars_amount,
+          invoice.invoice_link || null,
+          invoice.expires_at
+        )
+        .run();
       return result.meta.last_row_id as number;
     } catch (error) {
       logger.error('Failed to save pending invoice', { error, invoice });
@@ -79,29 +86,47 @@ export class PaymentRepository {
     }
   }
 
-  async getPendingInvoice(playerId: number, invoiceType: string): Promise<PendingInvoice | null> {
+  async getPendingInvoice(
+    playerId: number,
+    invoiceType: string
+  ): Promise<PendingInvoice | null> {
     try {
-      const result = await this.db.prepare(
-        `SELECT * FROM pending_invoices
+      const result = await this.db
+        .prepare(
+          `SELECT * FROM pending_invoices
          WHERE player_id = ? AND invoice_type = ?`
-      )
+        )
         .bind(playerId, invoiceType)
         .first<PendingInvoice>();
       return result;
     } catch (error) {
-      logger.error('Failed to get pending invoice', { error, playerId, invoiceType });
+      logger.error('Failed to get pending invoice', {
+        error,
+        playerId,
+        invoiceType,
+      });
       throw new Error('Failed to get pending invoice');
     }
   }
 
-  async deletePendingInvoice(playerId: number, invoiceType: string): Promise<void> {
+  async deletePendingInvoice(
+    playerId: number,
+    invoiceType: string
+  ): Promise<void> {
     try {
-      await this.db.prepare(
-        `DELETE FROM pending_invoices
+      await this.db
+        .prepare(
+          `DELETE FROM pending_invoices
          WHERE player_id = ? AND invoice_type = ?`
-      ).bind(playerId, invoiceType).run();
+        )
+        .bind(playerId, invoiceType)
+        .run();
     } catch (error) {
-      logger.error('Failed to delete pending invoice', { error, playerId, invoiceType });
+      logger.error('Failed to delete pending invoice', {
+        error,
+        playerId,
+        invoiceType,
+      });
       throw new Error('Failed to delete pending invoice');
     }
   }

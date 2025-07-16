@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { startCommand } from '@/adapters/telegram/commands/start';
+
 import { createMockContext } from '../utils/mock-context';
-import { createMockEnv } from '../utils/mock-env';
 import { mockUserService } from '../mocks/user-service';
+
+import { startCommand } from '@/adapters/telegram/commands/start';
 
 // Mock the user service module
 vi.mock('@/services/user-service', () => ({
@@ -10,8 +11,6 @@ vi.mock('@/services/user-service', () => ({
 }));
 
 describe('Start Command', () => {
-  const mockEnv = createMockEnv();
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -125,10 +124,14 @@ describe('Start Command', () => {
     });
 
     // Configure mock to throw error
-    mockUserService.createOrUpdateUser.mockRejectedValueOnce(new Error('Database error'));
+    mockUserService.createOrUpdateUser.mockRejectedValueOnce(
+      new Error('Database error')
+    );
 
     await startCommand(ctx);
 
-    expect(ctx.reply).toHaveBeenCalledWith('❌ An error occurred. Please try again later.');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '❌ An error occurred. Please try again later.'
+    );
   });
 });

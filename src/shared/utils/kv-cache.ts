@@ -1,4 +1,5 @@
 import type { KVNamespace } from '@cloudflare/workers-types';
+
 import { logger } from '@/lib/logger';
 
 export interface CacheOptions {
@@ -17,15 +18,15 @@ export class KVCache {
    */
   async get<T = unknown>(key: string): Promise<T | null> {
     const fullKey = this.buildKey(key);
-    
+
     try {
       const value = await this.kv.get(fullKey, 'json');
-      
+
       if (value === null) {
         logger.debug('Cache miss', { key: fullKey });
         return null;
       }
-      
+
       logger.debug('Cache hit', { key: fullKey });
       return value as T;
     } catch (error) {
@@ -39,15 +40,15 @@ export class KVCache {
    */
   async getString(key: string): Promise<string | null> {
     const fullKey = this.buildKey(key);
-    
+
     try {
       const value = await this.kv.get(fullKey);
-      
+
       if (value === null) {
         logger.debug('Cache miss', { key: fullKey });
         return null;
       }
-      
+
       logger.debug('Cache hit', { key: fullKey });
       return value;
     } catch (error) {
@@ -62,20 +63,20 @@ export class KVCache {
   async set<T>(key: string, value: T, options?: CacheOptions): Promise<void> {
     const fullKey = this.buildKey(key);
     const ttl = options?.ttl ?? this.defaultOptions.ttl;
-    
+
     try {
       const putOptions: KVNamespacePutOptions = {};
-      
+
       if (ttl) {
         putOptions.expirationTtl = ttl;
       }
-      
+
       if (typeof value === 'string') {
         await this.kv.put(fullKey, value, putOptions);
       } else {
         await this.kv.put(fullKey, JSON.stringify(value), putOptions);
       }
-      
+
       logger.debug('Cache set', { key: fullKey, ttl });
     } catch (error) {
       logger.error('Cache set error', { error, key: fullKey });
@@ -88,7 +89,7 @@ export class KVCache {
    */
   async delete(key: string): Promise<void> {
     const fullKey = this.buildKey(key);
-    
+
     try {
       await this.kv.delete(fullKey);
       logger.debug('Cache delete', { key: fullKey });
@@ -115,14 +116,14 @@ export class KVCache {
     options?: CacheOptions
   ): Promise<T> {
     const cached = await this.get<T>(key);
-    
+
     if (cached !== null) {
       return cached;
     }
-    
+
     const value = await factory();
     await this.set(key, value, options);
-    
+
     return value;
   }
 
@@ -131,10 +132,10 @@ export class KVCache {
    */
   async list(prefix?: string): Promise<string[]> {
     const fullPrefix = this.buildKey(prefix || '');
-    
+
     try {
       const list = await this.kv.list({ prefix: fullPrefix });
-      return list.keys.map(key => key.name);
+      return list.keys.map((key) => key.name);
     } catch (error) {
       logger.error('Cache list error', { error, prefix: fullPrefix });
       return [];
@@ -146,11 +147,9 @@ export class KVCache {
    */
   async clear(prefix?: string): Promise<void> {
     const keys = await this.list(prefix);
-    
-    await Promise.all(
-      keys.map(key => this.kv.delete(key))
-    );
-    
+
+    await Promise.all(keys.map((key) => this.kv.delete(key)));
+
     logger.info('Cache cleared', { prefix, count: keys.length });
   }
 

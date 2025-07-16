@@ -5,14 +5,14 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ESNext"],
-    
+
     // Emit Configuration
     "noEmit": true,
     "isolatedModules": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    
+
     // Type Checking - Strictest settings
     "strict": true,
     "noImplicitAny": true,
@@ -22,7 +22,7 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    
+
     // Additional Checks
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -32,12 +32,12 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
-    
+
     // Module Resolution
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    
+
     // Path Aliases
     "baseUrl": ".",
     "paths": {
@@ -51,14 +51,11 @@
       "@/middleware/*": ["./src/middleware/*"],
       "@/utils/*": ["./src/shared/utils/*"]
     },
-    
+
     // Type Definitions
     "types": ["@cloudflare/workers-types", "node"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.json"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.json"],
   "exclude": [
     "node_modules",
     "dist",

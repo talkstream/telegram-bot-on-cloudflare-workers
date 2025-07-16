@@ -9,8 +9,14 @@ import { existsSync } from 'fs';
 import { execSync } from 'child_process';
 
 const REQUIRED_FILES = [
-  { path: '.dev.vars', message: 'Local environment variables (copy from .dev.vars.example)' },
-  { path: 'wrangler.toml', message: 'Wrangler configuration (copy from wrangler.toml.example)' },
+  {
+    path: '.dev.vars',
+    message: 'Local environment variables (copy from .dev.vars.example)',
+  },
+  {
+    path: 'wrangler.toml',
+    message: 'Wrangler configuration (copy from wrangler.toml.example)',
+  },
 ];
 
 const REQUIRED_COMMANDS = [
@@ -38,15 +44,17 @@ for (const tool of REQUIRED_COMMANDS) {
   try {
     const output = execSync(tool.command, { encoding: 'utf8' }).trim();
     console.log(`  ✅ ${tool.name}: ${output}`);
-    
+
     if (tool.minVersion) {
       const version = output.match(/(\d+\.\d+\.\d+)/)?.[1];
       if (version && version < tool.minVersion) {
-        console.log(`     ⚠️  Version ${version} is below minimum required ${tool.minVersion}`);
+        console.log(
+          `     ⚠️  Version ${version} is below minimum required ${tool.minVersion}`
+        );
         hasErrors = true;
       }
     }
-  } catch (error) {
+  } catch {
     console.log(`  ❌ ${tool.name} not found - Please install it`);
     hasErrors = true;
   }

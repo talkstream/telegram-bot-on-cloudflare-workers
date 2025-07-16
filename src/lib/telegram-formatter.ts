@@ -27,7 +27,7 @@ export function escapeMarkdown(text: string): string {
     '{',
     '}',
     '.',
-    '!'
+    '!',
   ];
 
   let escaped = text;
@@ -44,7 +44,7 @@ export function escapeMarkdown(text: string): string {
  * @returns Экранированный текст
  */
 export function escapeCode(text: string): string {
-  return text.replace(/`/g, '\`');
+  return text.replace(/`/g, '\\`');
 }
 
 /**
@@ -81,8 +81,10 @@ export function code(text: string): string {
  * @returns Форматированный текст
  */
 export function codeBlock(text: string, language?: string): string {
-  const escaped = text.replace(/```/g, '\`\`\`');
-  return language ? `\`\`\`${language}\n${escaped}\n\`\`\`` : `\`\`\`\n${escaped}\n\`\`\``;
+  const escaped = text.replace(/```/g, '\\`\\`\\`');
+  return language
+    ? `\`\`\`${language}\n${escaped}\n\`\`\``
+    : `\`\`\`\n${escaped}\n\`\`\``;
 }
 
 /**
@@ -163,7 +165,7 @@ export function formatMessage(message: {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 
   // Примечание: escapeMarkdown применяется к content. Если content уже содержит
@@ -182,7 +184,10 @@ export function formatMessage(message: {
  * @param maxLength Максимальная длина
  * @returns Обрезанный текст
  */
-export function truncateMessage(text: string, maxLength: number = 1000): string {
+export function truncateMessage(
+  text: string,
+  maxLength: number = 1000
+): string {
   if (text.length <= maxLength) {
     return text;
   }

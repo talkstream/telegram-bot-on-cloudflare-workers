@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { KVCache } from '@/shared/utils/kv-cache';
+
 import { createMockKV } from '../utils/mock-env';
+
+import { KVCache } from '@/shared/utils/kv-cache';
 
 describe('KVCache', () => {
   let mockKV: any;
@@ -28,7 +30,7 @@ describe('KVCache', () => {
 
     it('should handle errors gracefully', async () => {
       mockKV.get.mockRejectedValue(new Error('KV error'));
-      
+
       const result = await cache.get('test-key');
       expect(result).toBeNull();
     });
@@ -53,11 +55,9 @@ describe('KVCache', () => {
     it('should set TTL when provided', async () => {
       await cache.set('test-key', 'value', { ttl: 3600 });
 
-      expect(mockKV.put).toHaveBeenCalledWith(
-        'test-key',
-        'value',
-        { expirationTtl: 3600 }
-      );
+      expect(mockKV.put).toHaveBeenCalledWith('test-key', 'value', {
+        expirationTtl: 3600,
+      });
     });
   });
 
@@ -73,7 +73,7 @@ describe('KVCache', () => {
   describe('has', () => {
     it('should return true for existing key', async () => {
       await mockKV.put('test-key', 'value');
-      
+
       const exists = await cache.has('test-key');
       expect(exists).toBe(true);
     });
@@ -87,7 +87,7 @@ describe('KVCache', () => {
   describe('getOrSet', () => {
     it('should return cached value if exists', async () => {
       await mockKV.put('test-key', JSON.stringify({ cached: true }));
-      
+
       const factory = vi.fn().mockResolvedValue({ cached: false });
       const result = await cache.getOrSet('test-key', factory);
 
@@ -98,12 +98,12 @@ describe('KVCache', () => {
     it('should call factory and cache result if not exists', async () => {
       const factoryResult = { fresh: true };
       const factory = vi.fn().mockResolvedValue(factoryResult);
-      
+
       const result = await cache.getOrSet('test-key', factory);
 
       expect(result).toEqual(factoryResult);
       expect(factory).toHaveBeenCalled();
-      
+
       const cached = await cache.get('test-key');
       expect(cached).toEqual(factoryResult);
     });
@@ -130,7 +130,7 @@ describe('KVCache', () => {
       await mockKV.put('other:3', 'value3');
 
       const keys = await cache.list();
-      
+
       expect(keys).toContain('user:1');
       expect(keys).toContain('user:2');
       expect(keys).not.toContain('other:3');

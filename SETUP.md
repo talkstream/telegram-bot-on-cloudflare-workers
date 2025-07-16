@@ -77,14 +77,14 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 
 Add these secrets:
 
-| Secret Name | Description | Where to Get |
-|------------|-------------|--------------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token | Step 2.1 |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Step 2.2 |
-| `TELEGRAM_BOT_TOKEN` | Your Telegram bot token | [@BotFather](https://t.me/botfather) |
-| `TELEGRAM_WEBHOOK_SECRET` | Random string for webhook | Generate with `openssl rand -base64 32` |
-| `GEMINI_API_KEY` | Google Gemini API key (optional) | [Google AI Studio](https://makersuite.google.com/app/apikey) |
-| `SENTRY_DSN` | Sentry error tracking (optional) | [Sentry.io](https://sentry.io) |
+| Secret Name               | Description                      | Where to Get                                                 |
+| ------------------------- | -------------------------------- | ------------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`    | Cloudflare API token             | Step 2.1                                                     |
+| `CLOUDFLARE_ACCOUNT_ID`   | Your Cloudflare account ID       | Step 2.2                                                     |
+| `TELEGRAM_BOT_TOKEN`      | Your Telegram bot token          | [@BotFather](https://t.me/botfather)                         |
+| `TELEGRAM_WEBHOOK_SECRET` | Random string for webhook        | Generate with `openssl rand -base64 32`                      |
+| `GEMINI_API_KEY`          | Google Gemini API key (optional) | [Google AI Studio](https://makersuite.google.com/app/apikey) |
+| `SENTRY_DSN`              | Sentry error tracking (optional) | [Sentry.io](https://sentry.io)                               |
 
 ## Step 5: Local Development Setup
 
@@ -160,6 +160,7 @@ wrangler secret put SENTRY_DSN --env production      # Optional
 ## Step 8: Verify Deployment
 
 1. Check worker logs:
+
    ```bash
    npm run tail
    ```
@@ -179,11 +180,13 @@ wrangler secret put SENTRY_DSN --env production      # Optional
 ### Bot not responding?
 
 1. Check webhook status:
+
    ```bash
    curl https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo
    ```
 
 2. Check worker logs:
+
    ```bash
    wrangler tail --env production
    ```
@@ -196,6 +199,7 @@ wrangler secret put SENTRY_DSN --env production      # Optional
 ### Database errors?
 
 1. Ensure migrations are applied:
+
    ```bash
    npm run db:apply:remote
    ```

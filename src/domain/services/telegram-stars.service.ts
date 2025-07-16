@@ -1,7 +1,8 @@
-import { Bot, RawApi } from 'grammy';
-import { PreCheckoutQuery } from 'grammy/types';
-import { PaymentRepository, PendingInvoice } from '../payments/repository';
-import { logger } from '../../../lib/logger';
+import type { RawApi } from 'grammy';
+import type { PreCheckoutQuery } from 'grammy/types';
+
+import { PaymentRepository } from '../payments/repository';
+import { logger } from '../../lib/logger';
 
 export class TelegramStarsService {
   private api: RawApi;
@@ -16,7 +17,7 @@ export class TelegramStarsService {
     telegramId: number,
     playerId: number,
     targetMaskedId: string,
-    starsAmount: number,
+    starsAmount: number
   ): Promise<string> {
     const invoicePayload = JSON.stringify({
       type: 'direct_message',
@@ -36,9 +37,12 @@ export class TelegramStarsService {
       suggested_tip_amounts: [],
       start_parameter: 'direct_message',
       provider_data: '',
-    }).then(res => res.url);
+    });
 
-    if (!invoiceLink) {
+    // For now, assume the result is the invoice link
+    const linkUrl = typeof invoiceLink === 'string' ? invoiceLink : '';
+
+    if (!linkUrl) {
       throw new Error('Failed to create invoice link');
     }
 
@@ -47,12 +51,16 @@ export class TelegramStarsService {
       invoice_type: 'direct_message',
       target_masked_id: targetMaskedId,
       stars_amount: starsAmount,
-      invoice_link: invoiceLink,
+      invoice_link: linkUrl,
       expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // Expires in 1 hour
     });
 
-    logger.info('Direct message invoice created', { telegramId, playerId, starsAmount });
-    return invoiceLink;
+    logger.info('Direct message invoice created', {
+      telegramId,
+      playerId,
+      starsAmount,
+    });
+    return linkUrl;
   }
 
   async handlePreCheckoutQuery(query: PreCheckoutQuery): Promise<void> {
@@ -65,15 +73,28 @@ export class TelegramStarsService {
       payload.type
     );
 
-    if (!pendingInvoice || pendingInvoice.stars_amount * 100 !== query.total_amount) {
-      await this.api.answerPreCheckoutQuery(query.id, false, {
+    if (
+      !pendingInvoice ||
+      pendingInvoice.stars_amount * 100 !== query.total_amount
+    ) {
+      await this.api.answerPreCheckoutQuery({
+        pre_checkout_query_id: query.id,
+        ok: false,
         error_message: 'Invoice not found or amount mismatch.',
       });
-      logger.warn('Pre-checkout query failed: Invoice not found or amount mismatch', { query });
+      logger.warn(
+        'Pre-checkout query failed: Invoice not found or amount mismatch',
+        { query }
+      );
       return;
     }
 
-    await this.api.answerPreCheckoutQuery(query.id, true);
-    logger.info('Pre-checkout query answered successfully', { queryId: query.id });
+    await this.api.answerPreCheckoutQuery({
+      pre_checkout_query_id: query.id,
+      ok: true,
+    });
+    logger.info('Pre-checkout query answered successfully', {
+      queryId: query.id,
+    });
   }
 }

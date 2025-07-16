@@ -5,7 +5,7 @@ import { getUserService } from '@/services/user-service';
 
 export const statsCommand: CommandHandler = async (ctx) => {
   const userId = ctx.from?.id;
-  
+
   if (!userId) {
     await ctx.reply('❌ Unable to identify user');
     return;
@@ -13,8 +13,8 @@ export const statsCommand: CommandHandler = async (ctx) => {
 
   try {
     const userService = getUserService(ctx.env);
-    const user = await userService.getUserByTelegramId(userId);
-    
+    const user = await userService.getByTelegramId(userId);
+
     if (!user) {
       await ctx.reply('❌ User not found. Please /start the bot first.');
       return;
@@ -22,8 +22,10 @@ export const statsCommand: CommandHandler = async (ctx) => {
 
     // Calculate some example statistics
     const joinDate = new Date(user.createdAt);
-    const daysActive = Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const daysActive = Math.floor(
+      (Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
     const statsMessage = `
 📊 *Your Statistics*
 
@@ -51,12 +53,8 @@ export const statsCommand: CommandHandler = async (ctx) => {
       parse_mode: 'MarkdownV2',
       reply_markup: {
         inline_keyboard: [
-          [
-            { text: '💳 Get Premium', callback_data: 'payment' },
-          ],
-          [
-            { text: '🔙 Back', callback_data: 'main_menu' },
-          ],
+          [{ text: '💳 Get Premium', callback_data: 'payment' }],
+          [{ text: '🔙 Back', callback_data: 'main_menu' }],
         ],
       },
     });

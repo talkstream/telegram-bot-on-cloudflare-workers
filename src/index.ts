@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
-import { Env, validateEnv } from './config/env';
+
+import type { Env } from './config/env';
+import { validateEnv } from './config/env';
 import { loggerMiddleware } from './middleware/logger';
 import { rateLimiter } from './middleware/rate-limiter';
 import { wrapSentry } from './config/sentry';
@@ -27,12 +29,12 @@ app.get('/health', healthHandler);
 app.post('/webhook/:token', rateLimiter(), async (c) => {
   const env = validateEnv(c.env);
   const token = c.req.param('token');
-  
+
   // Validate webhook token
   if (token !== env.TELEGRAM_WEBHOOK_SECRET) {
     return c.text('Unauthorized', 401);
   }
-  
+
   // Validate Telegram secret header if provided
   const secretToken = c.req.header('X-Telegram-Bot-Api-Secret-Token');
   if (secretToken && secretToken !== env.TELEGRAM_WEBHOOK_SECRET) {
@@ -49,7 +51,7 @@ app.post('/webhook/:token', rateLimiter(), async (c) => {
     throw new ValidationError('Invalid Telegram update payload.');
   }
 
-  await telegramAdapter.handleUpdate(parsedUpdate.data);
+  await telegramAdapter.handleUpdate(parsedUpdate.data as any);
   return c.text('OK', 200);
 });
 

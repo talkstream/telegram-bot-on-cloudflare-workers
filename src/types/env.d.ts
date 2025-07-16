@@ -10,13 +10,13 @@ declare global {
     GEMINI_API_KEY: string;
     SENTRY_DSN?: string;
     ENVIRONMENT: 'development' | 'staging' | 'production';
-    
+
     // Bindings
     DB: D1Database;
     CACHE: KVNamespace;
     RATE_LIMIT: KVNamespace;
     SESSIONS: KVNamespace;
-    
+
     // Additional bindings can be added here
     // QUEUE?: Queue;
     // BUCKET?: R2Bucket;
