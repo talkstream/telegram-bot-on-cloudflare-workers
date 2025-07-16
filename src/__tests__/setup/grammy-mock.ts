@@ -1,4 +1,6 @@
 import { vi } from 'vitest';
+import '../mocks/logger';
+import '../mocks/telegram-formatter';
 
 // Mock grammy module
 vi.mock('grammy', () => ({

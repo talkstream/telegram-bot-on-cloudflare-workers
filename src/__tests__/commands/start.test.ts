@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { startCommand } from '@/adapters/telegram/commands/start';
 import { createMockContext } from '../utils/mock-context';
 import { createMockEnv } from '../utils/mock-env';
+import { mockUserService } from '../mocks/user-service';
+
+// Mock the user service module
+vi.mock('@/services/user-service', () => ({
+  getUserService: () => mockUserService,
+}));
 
 describe('Start Command', () => {
   const mockEnv = createMockEnv();
@@ -57,20 +63,19 @@ describe('Start Command', () => {
       },
     });
 
-    const mockUserService = {
-      createOrUpdateUser: vi.fn().mockResolvedValue({
-        id: 1,
-        telegramId: 123456,
-        username: 'johndoe',
-        firstName: 'John',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }),
-    };
-
-    vi.doMock('@/services/user-service', () => ({
-      getUserService: () => mockUserService,
-    }));
+    // Configure mock for this test
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: undefined,
+      languageCode: 'en',
+      isPremium: true,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
     await startCommand(ctx);
 
@@ -119,13 +124,8 @@ describe('Start Command', () => {
       },
     });
 
-    const mockUserService = {
-      createOrUpdateUser: vi.fn().mockRejectedValue(new Error('Database error')),
-    };
-
-    vi.doMock('@/services/user-service', () => ({
-      getUserService: () => mockUserService,
-    }));
+    // Configure mock to throw error
+    mockUserService.createOrUpdateUser.mockRejectedValueOnce(new Error('Database error'));
 
     await startCommand(ctx);
 

@@ -23,7 +23,7 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
 
   const mockContext = {
     // Basic context properties
-    from: options.from || {
+    from: 'from' in options ? options.from : {
       id: 123456,
       is_bot: false,
       first_name: 'Test',
@@ -39,7 +39,7 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
       message_id: 1,
       date: Date.now(),
       chat: options.chat || { id: 123456, type: 'private' },
-      from: options.from || { id: 123456, is_bot: false },
+      from: 'from' in options ? options.from : { id: 123456, is_bot: false },
       text: '/start',
     },
     
