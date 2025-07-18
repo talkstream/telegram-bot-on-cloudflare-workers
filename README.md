@@ -21,9 +21,26 @@
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-deployment">Deployment</a> •
-  <a href="#-best-practices">Best Practices</a> •
-  <a href="#-use-cases">Use Cases</a>
+  <a href="#-documentation">Documentation</a> •
+  <a href="#-roadmap">Roadmap</a>
 </p>
+
+---
+
+## 💫 Support the Project
+
+This wireframe is crafted with passion and care, drawing from decades of experience in IT communities and modern technical ecosystems. It's built by someone who believes that great tools should be both powerful and delightful to use.
+
+Every architectural decision here reflects a deep understanding of what developers need — not just technically, but experientially. This is code that respects your time and intelligence.
+
+If this wireframe resonates with your vision of what development tools should be, consider supporting its continued evolution:
+
+**Cryptocurrency:**
+- **TON**: `UQCASJtr_1FfSjcLW_mnx8WuKxT18fXEv5zHrfHhkrwQj2lT`
+- **USDT (BEP20)**: `0x16DD8C11BFF0D85D934789C25f77a1def24772F1`
+- **USDT (TRC20)**: `TR333FszR3b7crQR4mNufw56vRWxbTTTxS`
+
+*Your support is invested thoughtfully into making this project even better. Thank you for being part of this journey.*
 
 ---
 
@@ -631,6 +648,52 @@ Most bots work perfectly on the **Free plan**. Consider the **Paid plan** when:
 - You need detailed logs and debugging tools
 
 The wireframe automatically adapts to available resources and will work reliably on both plans.
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[Project Overview](docs/PROJECT_OVERVIEW.md)** - Architecture, technology stack, and quick start guide
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Local setup, testing, and debugging
+- **[Architecture Decisions](docs/ARCHITECTURE_DECISIONS.md)** - Key design choices and rationale
+- **[API Reference](docs/API_REFERENCE.md)** - Telegram API types and webhook handling
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment and configuration
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Code Patterns
+
+Reusable patterns for common tasks:
+
+- **[Webhook Validation](docs/patterns/webhook-validation.js)** - Secure webhook handling
+- **[Error Handling](docs/patterns/error-handling.js)** - Robust error management
+- **[Command Router](docs/patterns/command-router.js)** - Flexible command routing
+- **[Access Control](docs/patterns/access-control.js)** - Role-based permissions
+
+## 🚀 Roadmap
+
+### Phase 1: Core Enhancements (Days or Hours)
+- [ ] Plugin system for modular features
+- [ ] Database migrations toolkit
+- [ ] Advanced caching strategies
+- [ ] WebSocket support for real-time features
+
+### Phase 2: Developer Tools (Days or Hours)
+- [ ] CLI tool for scaffolding commands
+- [ ] Visual bot flow designer
+- [ ] Automated performance profiler
+- [ ] Integration test framework
+
+### Phase 3: Ecosystem (Days or Hours)
+- [ ] Plugin marketplace
+- [ ] Starter templates gallery
+- [ ] Community middleware
+- [ ] Video tutorials series
+
+### Phase 4: Enterprise Features (Days or Hours)
+- [ ] Multi-tenant architecture
+- [ ] Advanced analytics dashboard
+- [ ] A/B testing framework
+- [ ] Compliance tools (GDPR, etc.)
 
 ## 📄 License
 

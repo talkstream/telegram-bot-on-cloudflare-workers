@@ -1,11 +1,11 @@
 /**
- * Утилиты для безопасного форматирования сообщений Telegram
+ * Utilities for safe Telegram message formatting
  */
 
 /**
- * Экранирует специальные символы для Markdown v2 в Telegram
- * @param text Текст для экранирования
- * @returns Экранированный текст
+ * Escapes special characters for Telegram Markdown v2
+ * @param text Text to escape
+ * @returns Escaped text
  */
 export function escapeMarkdown(text: string): string {
   // Символы, которые нужно экранировать в Markdown v2

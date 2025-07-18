@@ -40,6 +40,9 @@ Thumbs.db
 .claude_memory_*
 .ai_memory*
 
+# Backup files
+backup/
+
 # Logs
 logs/
 *.log

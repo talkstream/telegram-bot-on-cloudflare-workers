@@ -1,6 +1,6 @@
 /**
- * Утилита для цензурирования обсценной лексики по российским стандартам
- * Оставляет первую и последнюю буквы, заменяя середину звездочками
+ * Utility for censoring obscene language according to Russian standards
+ * Keeps the first and last letters, replacing the middle with asterisks
  */
 
 export class Censor {
