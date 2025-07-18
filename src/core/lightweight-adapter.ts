@@ -8,6 +8,8 @@
 import { Bot } from 'grammy';
 
 import type { BotContext, Env } from '@/types';
+import type { TelegramStarsService } from '@/domain/services/telegram-stars.service';
+import type { PaymentRepository } from '@/domain/payments/repository';
 import { getTierConfig } from '@/config/tiers';
 import { logger } from '@/lib/logger';
 
@@ -110,28 +112,53 @@ export class LightweightAdapter {
    */
   private async initializeFullMode(env: Env): Promise<void> {
     // Lazy load heavy dependencies
-    const [{ SessionService }, { GeminiService }, { getMessage }, { batcherMiddleware }] =
-      await Promise.all([
-        import('@/services/session-service'),
-        import('@/services/gemini-service'),
-        import('@/lib/i18n'),
-        import('@/lib/telegram-batcher'),
-      ]);
+    const [{ SessionService }, { getMessage }, { batcherMiddleware }] = await Promise.all([
+      import('@/services/session-service'),
+      import('@/lib/i18n'),
+      import('@/lib/telegram-batcher'),
+    ]);
 
     // Initialize services
     const sessionService = new SessionService(env.SESSIONS);
-    const geminiService = this.config.features.aiEnabled
-      ? new GeminiService(env.GEMINI_API_KEY, 'paid')
-      : null;
+
+    // Load AI service if enabled
+    let aiService = null;
+    if (this.config.features.aiEnabled) {
+      const { AIService } = await import('@/services/ai-service');
+      const { loadProvidersFromEnv } = await import('@/lib/ai/config/provider-loader');
+      const { providers, defaultProvider, fallbackProviders, costCalculator } =
+        await loadProvidersFromEnv(env, 'paid');
+      if (providers.length > 0) {
+        aiService = new AIService(
+          {
+            ...(defaultProvider && { defaultProvider }),
+            fallbackProviders,
+            ...(costCalculator && {
+              costTracking: {
+                enabled: true,
+                calculator: costCalculator,
+              },
+            }),
+          },
+          'paid',
+        );
+
+        // Register all providers
+        for (const provider of providers) {
+          aiService.registerProvider(provider);
+        }
+      }
+    }
 
     // Full context setup
     this.bot.use(async (ctx, next) => {
       ctx.env = env;
       ctx.services = {
         session: sessionService,
-        gemini: geminiService,
-        // Add other services as needed
-      } as BotContext['services'];
+        ai: aiService,
+        telegramStars: {} as TelegramStarsService, // Placeholder for lightweight mode
+        paymentRepo: {} as PaymentRepository, // Placeholder for lightweight mode
+      };
 
       // Full i18n support
       const lang = ctx.from?.language_code === 'ru' ? 'ru' : 'en';

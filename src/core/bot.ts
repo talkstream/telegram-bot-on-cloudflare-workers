@@ -2,14 +2,15 @@ import { Bot, InlineKeyboard } from 'grammy';
 
 import type { Env, BotContext } from '@/types';
 import { SessionService } from '@/services/session-service';
-import { GeminiService } from '@/services/gemini-service';
+import { AIService } from '@/services/ai-service';
+import { loadProvidersFromEnv } from '@/lib/ai/config/provider-loader';
 import { getMessage } from '@/lib/i18n';
 import { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import { PaymentRepository } from '@/domain/payments/repository';
 import { batcherMiddleware } from '@/lib/telegram-batcher';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
 
-export function createBot(env: Env) {
+export async function createBot(env: Env) {
   const bot = new Bot<BotContext>(env.TELEGRAM_BOT_TOKEN);
   const tier = env.TIER || 'free';
 
@@ -17,7 +18,29 @@ export function createBot(env: Env) {
   const multiLayerCache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
 
   const sessionService = new SessionService(env.SESSIONS, tier, multiLayerCache);
-  const geminiService = new GeminiService(env.GEMINI_API_KEY, tier);
+
+  // Load AI providers and create AI service
+  const { providers, defaultProvider, fallbackProviders, costCalculator } =
+    await loadProvidersFromEnv(env, tier);
+  const aiService = new AIService(
+    {
+      ...(defaultProvider && { defaultProvider }),
+      fallbackProviders,
+      ...(costCalculator && {
+        costTracking: {
+          enabled: true,
+          calculator: costCalculator,
+        },
+      }),
+    },
+    tier,
+  );
+
+  // Register all providers
+  for (const provider of providers) {
+    aiService.registerProvider(provider);
+  }
+
   const paymentRepo = new PaymentRepository(env.DB);
   const telegramStarsService = new TelegramStarsService(bot.api.raw, paymentRepo, tier);
 
@@ -25,7 +48,7 @@ export function createBot(env: Env) {
   bot.use(async (ctx, next) => {
     ctx.services = {
       session: sessionService,
-      gemini: geminiService,
+      ai: providers.length > 0 ? aiService : null,
       telegramStars: telegramStarsService,
       paymentRepo: paymentRepo,
     };
@@ -69,14 +92,14 @@ export function createBot(env: Env) {
       await ctx.reply(ctx.i18n('gemini_prompt_needed'));
       return;
     }
-    if (!ctx.services.gemini) {
+    if (!ctx.services.ai) {
       await ctx.reply(ctx.i18n('gemini_not_available'));
       return;
     }
 
     try {
       await ctx.reply(ctx.i18n('gemini_thinking'));
-      const response = await ctx.services.gemini.generateText(prompt);
+      const response = await ctx.services.ai.generateText(prompt);
       await ctx.reply(response);
     } catch (_error) {
       await ctx.reply(ctx.i18n('gemini_error'));

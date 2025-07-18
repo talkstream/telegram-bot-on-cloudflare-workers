@@ -1,6 +1,6 @@
 {
   "name": "telegram-bot-cloudflare-wireframe",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Production-ready wireframe for creating Telegram bots on Cloudflare Workers with TypeScript",
   "type": "module",
   "main": "./src/index.ts",

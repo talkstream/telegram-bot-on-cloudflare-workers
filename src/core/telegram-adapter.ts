@@ -17,19 +17,22 @@ import { createBot } from './bot';
 import type { BotContext } from '@/types';
 
 export class TelegramAdapter {
-  private bot: Bot<BotContext>;
+  private bot!: Bot<BotContext>;
   private env: Env;
   private initialized = false;
   private processedUpdates = new Map<number, number>(); // update_id -> timestamp
   private tier: 'free' | 'paid';
+  private initPromise: Promise<void>;
 
   constructor(env: Env) {
     this.env = env;
     this.tier = env.TIER || 'free';
+    this.initPromise = this.initialize();
+  }
 
-    // For now, use standard bot creation
-    // Will initialize tier-aware bot on first update
-    this.bot = createBot(env);
+  private async initialize(): Promise<void> {
+    // Create bot with async AI provider loading
+    this.bot = await createBot(this.env);
 
     const config = getTierConfig(this.tier);
     if (this.tier === 'paid' || !config.optimization.lazyLoadDependencies) {
@@ -70,6 +73,8 @@ export class TelegramAdapter {
   }
 
   async handleUpdate(update: Update): Promise<void> {
+    // Ensure initialization is complete
+    await this.initPromise;
     const now = Date.now();
 
     // Duplicate update handling (5-minute window)

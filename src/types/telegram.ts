@@ -3,7 +3,7 @@ import type { Context as GrammyContext, SessionFlavor } from 'grammy';
 import type { Env } from './env';
 
 import type { SessionService } from '@/services/session-service';
-import type { GeminiService } from '@/services/gemini-service';
+import type { AIService } from '@/services/ai-service';
 import type { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import type { PaymentRepository } from '@/domain/payments/repository';
 import type { UserSession } from '@/services/session-service';
@@ -27,7 +27,7 @@ export type BotContext = GrammyContext &
     session?: UserSession | undefined;
     services: {
       session: SessionService;
-      gemini: GeminiService | null;
+      ai: AIService | null;
       telegramStars: TelegramStarsService;
       paymentRepo: PaymentRepository;
     };

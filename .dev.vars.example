@@ -5,14 +5,49 @@
 TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
 TELEGRAM_WEBHOOK_SECRET=your-secret-webhook-token-here
 
-# AI Configuration
+# AI Provider Configuration
+# Default provider (options: google-ai, openai, xai, deepseek, cloudflare-ai)
+AI_PROVIDER=google-ai
+
+# Provider API Keys (only configure the ones you want to use)
+# Google Gemini
 GEMINI_API_KEY=your-gemini-api-key-here
+
+# OpenAI
+# OPENAI_API_KEY=your-openai-api-key-here
+
+# xAI Grok
+# XAI_API_KEY=your-xai-api-key-here
+
+# DeepSeek
+# DEEPSEEK_API_KEY=your-deepseek-api-key-here
+
+# Cloudflare Workers AI
+# CLOUDFLARE_AI_ACCOUNT_ID=your-account-id
+# CLOUDFLARE_AI_API_TOKEN=your-api-token
+
+# Advanced AI Configuration (optional)
+# JSON configuration for multiple providers
+# AI_PROVIDERS_CONFIG={"providers":[{"id":"openai","type":"openai","config":{"model":"gpt-4o-mini"}}],"defaultProvider":"openai"}
+
+# Cost Tracking (optional)
+# AI_COST_TRACKING_ENABLED=true
+# AI_COST_CONFIG_URL=https://your-cost-config-api.com
 
 # Sentry Configuration (Optional)
 SENTRY_DSN=https://your-key@sentry.io/your-project-id
 
 # Environment
 ENVIRONMENT=development
+
+# Bot Owner Configuration (REQUIRED)
+# Comma-separated list of Telegram user IDs who have owner privileges
+# These users can manage admins and control bot settings
+BOT_OWNER_IDS=123456789,987654321
+
+# Tier Configuration
+# Options: free, paid (affects resource limits and features)
+TIER=free
 
 # Additional Configuration
 # Add any other environment variables your bot needs here

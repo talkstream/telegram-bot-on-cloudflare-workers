@@ -5,58 +5,58 @@ import { isFeatureEnabled } from '@/config/tiers';
 export const askCommand: CommandHandler = async (ctx) => {
   const tier = ctx.env.TIER || 'free';
 
+  // Check if AI service is available
+  if (!ctx.services?.ai) {
+    await ctx.reply(ctx.i18n('ai_not_configured'));
+    return;
+  }
+
   // Check if AI is enabled for this tier
   if (!isFeatureEnabled('aiEnabled', tier)) {
-    await ctx.reply(
-      '🚫 AI features are not available in the free tier.\n\n' +
-        'Upgrade to the paid tier to access:\n' +
-        '• AI-powered responses\n' +
-        '• Advanced text generation\n' +
-        '• Smart assistance',
-    );
+    await ctx.reply(ctx.i18n('ai_not_available_free_tier'));
     return;
   }
 
   const prompt = ctx.match;
 
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-    await ctx.reply(
-      '💭 Please provide a question or prompt after the command.\n\n' +
-        'Example: /ask What is the weather like today?',
-    );
+    await ctx.reply(ctx.i18n('ask_prompt_needed'));
     return;
   }
 
   try {
-    // Check if Gemini service is available
-    if (!ctx.services?.gemini) {
-      await ctx.reply('❌ AI service is not configured properly.');
-      logger.error('Gemini service not available in context');
-      return;
-    }
-
     // Send typing indicator
     await ctx.replyWithChatAction('typing');
 
-    // Generate response
-    const response = await ctx.services.gemini.generateText(prompt);
+    // Generate response using AI service
+    const response = await ctx.services.ai.complete(prompt, {
+      trackCost: true,
+    });
+
+    // Format response with provider info
+    const providerInfo = ctx.services.ai.getActiveProvider();
+    const formattedResponse =
+      response.content +
+      '\n\n<i>' +
+      ctx.i18n('powered_by', { provider: providerInfo || 'AI' }) +
+      '</i>';
 
     // Send the AI response
-    await ctx.reply(response, {
+    await ctx.reply(formattedResponse, {
       parse_mode: 'HTML',
     });
 
     logger.info('AI query processed', {
       userId: ctx.from?.id,
       promptLength: prompt.length,
+      provider: response.provider,
+      usage: response.usage,
+      cost: response.cost,
       tier,
     });
   } catch (error) {
     logger.error('Error in ask command', { error, userId: ctx.from?.id });
 
-    await ctx.reply(
-      '❌ Sorry, I encountered an error while processing your request.\n' +
-        'Please try again later.',
-    );
+    await ctx.reply(ctx.i18n('ai_error'));
   }
 };

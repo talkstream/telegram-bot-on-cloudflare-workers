@@ -36,7 +36,7 @@
 - **🤖 grammY** - Modern Telegram Bot framework
 - **🗄️ D1 Database** - Cloudflare's distributed SQLite
 - **💾 KV Storage** - Key-value storage for caching and sessions
-- **🧠 Google Gemini** - AI integration (easily replaceable)
+- **🧠 Multi-Provider AI** - Support for Google Gemini, OpenAI, xAI Grok, DeepSeek, Cloudflare AI
 - **🔍 Sentry** - Error tracking and performance monitoring
 
 ### Developer Experience
@@ -57,6 +57,8 @@
 - **📊 Health checks** - Monitor all dependencies
 - **🔄 Session management** - Persistent user sessions
 - **💰 Telegram Stars** - Payment integration ready
+- **🎨 Provider Abstraction** - Switch AI providers without code changes
+- **💸 Cost Tracking** - Monitor AI usage and costs across providers
 
 ### Cloudflare Workers Tier Optimization
 
@@ -76,13 +78,13 @@
 - **Lightweight mode** - Minimal features for fast responses
 - **Aggressive caching** - Reduce KV operations (1K writes/day limit)
 - **Request batching** - Optimize Telegram API calls
-- **No AI features** - Disabled to save processing time
+- **Limited AI features** - Disabled by default to save processing time
 - **Sequential operations** - Avoid parallel processing overhead
 
 ### Cloudflare Workers Paid Plan (30s CPU limit)
 
 - **Full feature set** - All capabilities enabled
-- **AI integration** - Gemini API with smart retries
+- **AI integration** - Multiple LLM providers with smart retries
 - **Parallel processing** - Concurrent health checks & operations
 - **Advanced caching** - Edge cache + KV + memory layers
 - **Extended timeouts** - Configurable per operation type
@@ -109,7 +111,7 @@ The wireframe automatically optimizes based on your Cloudflare Workers plan:
 - Node.js 20+ and npm 10+
 - [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - [Telegram Bot Token](https://t.me/botfather)
-- [Google Gemini API Key](https://makersuite.google.com/app/apikey) (optional, for AI features)
+- AI Provider API Key (optional) - [Google Gemini](https://makersuite.google.com/app/apikey), [OpenAI](https://platform.openai.com/api-keys), [xAI](https://console.x.ai), [DeepSeek](https://platform.deepseek.com), or Cloudflare AI
 - [Wrangler CLI](https://developers.cloudflare.com/workers/cli-wrangler/install-update)
 
 ### 1. Clone and Install
@@ -133,7 +135,9 @@ cp wrangler.toml.example wrangler.toml
 # Edit .dev.vars with your values
 # TELEGRAM_BOT_TOKEN=your_bot_token_here
 # TELEGRAM_WEBHOOK_SECRET=your_secret_here
-# GEMINI_API_KEY=your_gemini_key_here
+# AI_PROVIDER=google-ai  # Options: google-ai, openai, xai, deepseek, cloudflare-ai
+# GEMINI_API_KEY=your_gemini_key_here  # For Google Gemini
+# See .dev.vars.example for more AI provider options
 ```
 
 ### 3. Create D1 Database
@@ -229,8 +233,18 @@ Configure secrets for production:
 ```bash
 wrangler secret put TELEGRAM_BOT_TOKEN
 wrangler secret put TELEGRAM_WEBHOOK_SECRET
-wrangler secret put GEMINI_API_KEY
 wrangler secret put SENTRY_DSN
+
+# AI Provider Secrets (add only what you need)
+wrangler secret put GEMINI_API_KEY      # Google Gemini
+wrangler secret put OPENAI_API_KEY      # OpenAI
+wrangler secret put XAI_API_KEY         # xAI Grok
+wrangler secret put DEEPSEEK_API_KEY    # DeepSeek
+wrangler secret put CLOUDFLARE_AI_ACCOUNT_ID
+wrangler secret put CLOUDFLARE_AI_API_TOKEN
+
+# Owner configuration
+wrangler secret put BOT_OWNER_IDS
 ```
 
 ## 📚 Best Practices
@@ -392,8 +406,84 @@ To enable automatic deployment:
 - **Commands** - Add new commands in `src/adapters/telegram/commands/`
 - **Callbacks** - Handle button clicks in `src/adapters/telegram/callbacks/`
 - **Services** - Business logic in `src/services/`
+- **AI Providers** - LLM adapters in `src/lib/ai/adapters/`
 - **Database** - Migrations in `migrations/`
 - **Tests** - Test files in `src/__tests__/`
+
+### AI Provider System
+
+The wireframe includes a sophisticated multi-provider AI system:
+
+- **🎨 Provider Abstraction** - Switch between AI providers without code changes
+- **💰 Cost Tracking** - Monitor usage and costs across all providers
+- **🔄 Automatic Fallback** - Failover to backup providers on errors
+- **🔔 Smart Selection** - Automatically choose the best available provider
+- **🧪 Mock Provider** - Test your bot without API costs
+
+Supported providers:
+
+- Google Gemini (default)
+- OpenAI (GPT-4o, GPT-3.5)
+- xAI Grok
+- DeepSeek
+- Cloudflare Workers AI
+
+### Access Control System
+
+The wireframe includes a comprehensive role-based access control system:
+
+- **🔐 Three-tier roles** - Owner, Admin, and User levels
+- **📝 Access requests** - Users can request access through the bot
+- **✅ Request management** - Admins can approve/reject requests
+- **🐛 Debug mode** - Owners can enable tiered debug visibility
+- **🌍 Internationalization** - Full i18n support for all messages
+
+#### Role Hierarchy
+
+1. **Owner** (configured via `BOT_OWNER_IDS`)
+   - Full bot control and configuration
+   - Can manage administrators
+   - Access to technical information and debug mode
+   - Example commands: `/info`, `/admin`, `/debug`
+
+2. **Admin** (granted by owners)
+   - Can review and process access requests
+   - See debug messages when enabled (level 2+)
+   - Example command: `/requests`
+
+3. **User** (default role)
+   - Basic bot functionality
+   - Must request access if bot is restricted
+   - Example commands: `/start`, `/help`, `/ask`
+
+#### Configuration
+
+```bash
+# Required in .dev.vars or secrets
+BOT_OWNER_IDS=123456789,987654321  # Comma-separated Telegram user IDs
+```
+
+#### Access Request Flow
+
+1. New user starts bot with `/start`
+2. If access is restricted, user sees "Request Access" button
+3. Admin receives notification and reviews with `/requests`
+4. User gets notified when request is approved/rejected
+5. Approved users gain full bot functionality
+
+#### Debug Mode
+
+Owners can control debug visibility:
+
+- **Level 1**: Only owners see debug messages
+- **Level 2**: Owners and admins see debug messages
+- **Level 3**: Everyone sees debug messages
+
+```bash
+/debug on 2   # Enable debug for owners and admins
+/debug off    # Disable debug mode
+/debug status # Check current debug status
+```
 
 ## 🔒 Security
 

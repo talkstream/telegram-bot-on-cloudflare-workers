@@ -80,7 +80,13 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'ai',
       check: async () => {
         try {
-          return env.GEMINI_API_KEY.length > 20;
+          return Boolean(
+            (env.GEMINI_API_KEY && env.GEMINI_API_KEY.length > 20) ||
+              (env.OPENAI_API_KEY && env.OPENAI_API_KEY.length > 20) ||
+              (env.XAI_API_KEY && env.XAI_API_KEY.length > 20) ||
+              (env.DEEPSEEK_API_KEY && env.DEEPSEEK_API_KEY.length > 20) ||
+              (env.CLOUDFLARE_AI_ACCOUNT_ID && env.CLOUDFLARE_AI_ACCOUNT_ID.length > 0),
+          );
         } catch (error) {
           logger.error('AI service check failed', { error });
           return false;
@@ -99,9 +105,12 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
 
   // Update status based on results
   results.forEach(({ name, healthy }) => {
-    status.services[name as keyof typeof status.services] = healthy;
-    if (!healthy) {
-      status.status = 'degraded';
+    const serviceName = name as keyof typeof status.services;
+    if (serviceName in status.services) {
+      status.services[serviceName] = healthy;
+      if (!healthy) {
+        status.status = 'degraded';
+      }
     }
   });
 

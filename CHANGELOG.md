@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-07-18
+
+### Added
+
+- Example implementation of role-based access control system
+  - Owner, Admin, and User roles with hierarchical permissions
+  - Access request workflow with approval/rejection example
+  - Admin notification system for new access requests
+  - Inline keyboard UI examples for access management
+- Example owner-exclusive commands
+  - `/admin` - Example command for managing admin users (add, remove, list)
+  - `/debug` - Example command for controlling debug mode with 3 visibility levels
+  - `/info` - Example command for viewing system information and statistics
+- Example admin command
+  - `/requests` - Example for reviewing and processing access requests
+- Example access callbacks for user interaction
+  - Request access, cancel request, approve/reject workflow examples
+  - Next request navigation for efficient processing
+- Complete test coverage for all example features
+  - Auth middleware tests
+  - Owner command tests
+  - Admin command tests
+  - Access callback tests
+  - AI service tests
+- Example security patterns with granular permission checks
+- Example error visibility with debug mode levels
+  - Level 1: Owners see all debug messages
+  - Level 2: Owners and admins see debug messages
+  - Level 3: All users see debug messages
+
+### Changed
+
+- Start command example now includes access control checks
+- Example bot configuration requires explicit access grant for new users
+- Enhanced user session example with role tracking
+
+### Fixed
+
+- Added comprehensive i18n support for all example messages
+- Fixed test mocking for InlineKeyboard
+- Resolved all test failures with proper mock context
+
+### Removed
+
+- Removed AI_MIGRATION_GUIDE.md (no longer needed)
+
 ## [1.0.2] - 2025-07-18
 
 ### Added
@@ -96,4 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added setup and deployment guides
 - Included architectural documentation
 
+[1.1.0]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.1.0
+[1.0.2]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.0.2
+[1.0.1]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.0.1
 [1.0.0]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.0.0

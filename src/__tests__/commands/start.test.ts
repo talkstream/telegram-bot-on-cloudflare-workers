@@ -10,12 +10,19 @@ vi.mock('@/services/user-service', () => ({
   getUserService: () => mockUserService,
 }));
 
+// Mock the auth module
+vi.mock('@/middleware/auth', () => ({
+  hasAccess: vi.fn().mockResolvedValue(true),
+  isOwner: vi.fn().mockReturnValue(false),
+  isAdmin: vi.fn().mockReturnValue(false),
+}));
+
 describe('Start Command', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should send welcome message with inline keyboard', async () => {
+  it('should send welcome message with inline keyboard for users with access', async () => {
     const ctx = createMockContext({
       from: {
         id: 123456,
@@ -32,6 +39,20 @@ describe('Start Command', () => {
       },
     });
 
+    // Mock user service response
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: undefined,
+      languageCode: 'en',
+      isPremium: false,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
     await startCommand(ctx);
 
     expect(ctx.reply).toHaveBeenCalledWith(
@@ -45,6 +66,100 @@ describe('Start Command', () => {
               expect.objectContaining({ text: '⚙️ Settings' }),
             ]),
           ]),
+        }),
+      }),
+    );
+  });
+
+  it('should show access denied message for users without access', async () => {
+    const { hasAccess } = await import('@/middleware/auth');
+    vi.mocked(hasAccess).mockResolvedValueOnce(false);
+
+    const ctx = createMockContext({
+      from: {
+        id: 123456,
+        is_bot: false,
+        first_name: 'John',
+        username: 'johndoe',
+        language_code: 'en',
+      },
+    });
+
+    // Mock user service response
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: undefined,
+      languageCode: 'en',
+      isPremium: false,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Mock DB response for pending request check
+    ctx.env.DB.prepare = vi.fn().mockReturnValue({
+      bind: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null), // No pending request
+    });
+
+    await startCommand(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '⚠️ You do not have access to this bot.',
+      expect.objectContaining({
+        parse_mode: 'HTML',
+        reply_markup: expect.objectContaining({
+          text: expect.any(Function),
+        }),
+      }),
+    );
+  });
+
+  it('should show pending request message if user has pending request', async () => {
+    const { hasAccess } = await import('@/middleware/auth');
+    vi.mocked(hasAccess).mockResolvedValueOnce(false);
+
+    const ctx = createMockContext({
+      from: {
+        id: 123456,
+        is_bot: false,
+        first_name: 'John',
+        username: 'johndoe',
+        language_code: 'en',
+      },
+    });
+
+    // Mock user service response
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: undefined,
+      languageCode: 'en',
+      isPremium: false,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Mock DB response for pending request
+    ctx.env.DB.prepare = vi.fn().mockReturnValue({
+      bind: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue({ id: 1, status: 'pending' }),
+    });
+
+    await startCommand(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      'Your access request is pending approval.',
+      expect.objectContaining({
+        parse_mode: 'HTML',
+        reply_markup: expect.objectContaining({
+          text: expect.any(Function),
         }),
       }),
     );
@@ -95,6 +210,19 @@ describe('Start Command', () => {
         is_bot: false,
         first_name: 'John',
       },
+    });
+
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: undefined,
+      firstName: 'John',
+      lastName: undefined,
+      languageCode: undefined,
+      isPremium: false,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     await startCommand(ctx);

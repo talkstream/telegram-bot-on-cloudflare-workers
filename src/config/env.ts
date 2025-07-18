@@ -12,7 +12,29 @@ const envSchema = z.object({
   DB: z.any().optional(), // Cloudflare D1 Database binding
   CACHE: z.any().optional(), // Cloudflare KV Namespace binding
   RATE_LIMIT: z.any().optional(), // Cloudflare KV Namespace binding
-  GEMINI_API_KEY: z.string().min(1), // Required for Gemini integration
+
+  // AI Provider configuration
+  AI_PROVIDER: z.string().optional().default('google-ai'),
+  AI_PROVIDERS_CONFIG: z.string().optional(), // JSON config for providers
+
+  // Provider API Keys (all optional - only needed if provider is used)
+  GEMINI_API_KEY: z.string().optional(), // Google Gemini
+  OPENAI_API_KEY: z.string().optional(), // OpenAI
+  XAI_API_KEY: z.string().optional(), // xAI Grok
+  DEEPSEEK_API_KEY: z.string().optional(), // DeepSeek
+  CLOUDFLARE_AI_ACCOUNT_ID: z.string().optional(), // Cloudflare AI
+  CLOUDFLARE_AI_API_TOKEN: z.string().optional(), // Cloudflare AI
+
+  // Cost tracking
+  AI_COST_TRACKING_ENABLED: z
+    .string()
+    .transform((val) => val === 'true')
+    .optional(),
+  AI_COST_CONFIG_URL: z.string().url().optional(),
+
+  // Owner configuration
+  BOT_OWNER_IDS: z.string().optional(), // Comma-separated list of owner Telegram IDs
+
   // Add other environment variables here
 });
 
