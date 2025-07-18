@@ -41,11 +41,12 @@ Clone and setup github.com/talkstream/telegram-bot-on-cloudflare-workers
 ```
 
 Claude Code will guide you through:
-- ✅ Installing dependencies  
-- ✅ Setting up MCP servers if needed  
-- ✅ Creating your Telegram bot  
-- ✅ Configuring Cloudflare resources  
-- ✅ Running tests and starting locally  
+
+- ✅ Installing dependencies
+- ✅ Setting up MCP servers if needed
+- ✅ Creating your Telegram bot
+- ✅ Configuring Cloudflare resources
+- ✅ Running tests and starting locally
 
 [Full AI Setup Instructions](./CLAUDE_SETUP.md) | [Manual Setup](#-quick-start-manual-setup)
 

@@ -23,6 +23,7 @@ claude mcp add sentry https://mcp.sentry.dev
 ```
 
 Show progress:
+
 ```
 🔧 Checking MCP servers...
 ✅ GitMCP: Available
@@ -35,6 +36,7 @@ Show progress:
 ### 1.1 Clone Repository
 
 Use GitMCP to clone the repository:
+
 ```
 📥 Cloning repository...
 [████████████████████████████████] 100% Complete
@@ -43,15 +45,18 @@ Use GitMCP to clone the repository:
 ### 1.2 Environment Check
 
 Check system requirements:
+
 ```
 🔍 Checking environment...
 ```
 
 Required:
+
 - Node.js 20.0.0 or higher
 - npm 10.0.0 or higher
 
 If missing, provide installation instructions:
+
 - **Node.js**: Direct to https://nodejs.org/ or suggest using nvm
 - **npm**: Usually comes with Node.js
 
@@ -62,6 +67,7 @@ npm install
 ```
 
 Show progress:
+
 ```
 📦 Installing dependencies...
 [████████████████░░░░░░░░░░░░░░░░] 50% - Installing grammY...
@@ -81,7 +87,7 @@ Please follow these steps:
 4. Choose a username (must end with 'bot', e.g., "myawesome_bot")
 5. Copy the token you receive
 
-📝 Enter your bot token: 
+📝 Enter your bot token:
 ```
 
 Validate the token format (should match: `\d{10}:[A-Za-z0-9_-]{35}`)
@@ -96,7 +102,7 @@ To get your Telegram User ID:
 2. Start the bot
 3. It will show your User ID
 
-📝 Enter your Telegram User ID: 
+📝 Enter your Telegram User ID:
 ```
 
 ### 2.3 AI Provider Setup (Optional)
@@ -112,10 +118,11 @@ Available providers:
 5. Cloudflare AI
 6. Skip (use mock AI for testing)
 
-Choose provider [1-6]: 
+Choose provider [1-6]:
 ```
 
 If user chooses a provider, help them get the API key:
+
 - **Gemini**: Direct to https://makersuite.google.com/app/apikey
 - **OpenAI**: Direct to https://platform.openai.com/api-keys
 - Show appropriate links for other providers
@@ -125,15 +132,16 @@ If user chooses a provider, help them get the API key:
 ```
 🛡️ Error Monitoring with Sentry (Optional)
 
-Would you like to set up error monitoring? [y/N]: 
+Would you like to set up error monitoring? [y/N]:
 ```
 
 If yes:
+
 ```
 Please provide your Sentry DSN:
 (Get it from https://sentry.io/settings/YOUR-ORG/projects/YOUR-PROJECT/keys/)
 
-📝 Sentry DSN (or press Enter to skip): 
+📝 Sentry DSN (or press Enter to skip):
 ```
 
 ## ☁️ Phase 3: Cloudflare Setup
@@ -149,6 +157,7 @@ Run: `wrangler login`
 ### 3.2 Create D1 Database
 
 Using Cloudflare MCP:
+
 ```
 💾 Creating D1 Database...
 Database Name: telegram-bot-db
@@ -159,6 +168,7 @@ Capture the database ID from the response.
 ### 3.3 Create KV Namespaces
 
 Create three KV namespaces:
+
 ```
 📚 Creating KV Namespaces...
 [████████░░░░░░░░░░░░░░░░░░░░░░░░] 33% - Creating CACHE namespace...
@@ -181,6 +191,7 @@ webhook_secret = secrets.token_urlsafe(32)
 ### 4.2 Create .dev.vars
 
 Create `.dev.vars` file with all collected information:
+
 ```
 📝 Creating configuration files...
 ✅ .dev.vars created
@@ -189,6 +200,7 @@ Create `.dev.vars` file with all collected information:
 ### 4.3 Update wrangler.toml
 
 Update `wrangler.toml` with the collected IDs:
+
 ```
 ✅ wrangler.toml updated with your resource IDs
 ```
@@ -236,6 +248,7 @@ Wait for the server to start and capture the tunnel URL.
 ```
 
 Use the tunnel URL to set the webhook:
+
 ```bash
 curl "https://api.telegram.org/bot{TOKEN}/setWebhook?url={TUNNEL_URL}/webhook&secret_token={SECRET}"
 ```
@@ -292,34 +305,38 @@ For each phase, implement proper error handling:
 ### Common Errors and Solutions:
 
 1. **Node.js version too old**
+
    ```
    ❌ Node.js 18.x detected, but 20.x required
-   
+
    Solution:
    • Install Node.js 20+ from https://nodejs.org/
    • Or use nvm: nvm install 20 && nvm use 20
    ```
 
 2. **Invalid bot token**
+
    ```
    ❌ Invalid bot token format
-   
+
    Bot tokens look like: 1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890
    Please check your token and try again.
    ```
 
 3. **Cloudflare authentication failed**
+
    ```
    ❌ Not logged in to Cloudflare
-   
+
    Please run: wrangler login
    Then try again.
    ```
 
 4. **Database creation failed**
+
    ```
    ❌ Failed to create D1 database
-   
+
    Possible solutions:
    • Check your Cloudflare account limits
    • Ensure you have a valid account
@@ -327,13 +344,14 @@ For each phase, implement proper error handling:
    ```
 
 5. **Tests failed**
+
    ```
    ❌ Some tests failed
-   
+
    This might be due to:
    • Missing environment variables
    • Database not properly initialized
-   
+
    Run 'npm run test:watch' to debug
    ```
 
@@ -362,6 +380,7 @@ For each phase, implement proper error handling:
 ## 🎯 Success Criteria
 
 The setup is considered successful when:
+
 - ✅ All dependencies installed
 - ✅ Configuration files created
 - ✅ Cloudflare resources provisioned
@@ -374,6 +393,7 @@ The setup is considered successful when:
 ## 🔄 Rollback Plan
 
 If setup fails at any point:
+
 1. Document what was completed
 2. Provide cleanup commands if needed
 3. Save partial configuration for retry
