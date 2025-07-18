@@ -1,0 +1,57 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged for code formatting and linting
+npx lint-staged
+
+# Check if configuration files that affect CLAUDE_SETUP.md have changed
+CONFIG_FILES=(
+  "docs/setup-config.json"
+  "package.json"
+  ".dev.vars.example"
+  "wrangler.toml.example"
+)
+
+MIGRATIONS_CHANGED=$(git diff --cached --name-only | grep -E "^migrations/.*\.sql$" || true)
+CONFIG_CHANGED=false
+
+for file in "${CONFIG_FILES[@]}"; do
+  if git diff --cached --name-only | grep -q "^$file$"; then
+    CONFIG_CHANGED=true
+    break
+  fi
+done
+
+if [ "$CONFIG_CHANGED" = true ] || [ -n "$MIGRATIONS_CHANGED" ]; then
+  echo ""
+  echo "⚠️  Configuration files that affect CLAUDE_SETUP.md have changed!"
+  echo ""
+  echo "📝 Please update CLAUDE_SETUP.md by running:"
+  echo "   npm run docs:generate"
+  echo ""
+  echo "Changed files:"
+  git diff --cached --name-only | grep -E "(${CONFIG_FILES[*]// /|}|^migrations/.*\.sql$)" | sed 's/^/   - /'
+  echo ""
+  
+  # Check if CLAUDE_SETUP.md is up to date
+  if npm run docs:check > /dev/null 2>&1; then
+    echo "✅ CLAUDE_SETUP.md is up to date"
+  else
+    echo "❌ CLAUDE_SETUP.md is outdated!"
+    echo ""
+    echo "Run the following commands:"
+    echo "   npm run docs:generate"
+    echo "   git add CLAUDE_SETUP.md"
+    echo ""
+    read -p "Do you want to update it now? (y/N) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      npm run docs:generate
+      git add CLAUDE_SETUP.md
+      echo "✅ CLAUDE_SETUP.md has been updated and staged"
+    else
+      echo "⚠️  Remember to update CLAUDE_SETUP.md before pushing!"
+      exit 1
+    fi
+  fi
+fi

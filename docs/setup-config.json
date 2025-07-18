@@ -1,0 +1,408 @@
+{
+  "$schema": "./setup-config.schema.json",
+  "metadata": {
+    "title": "Claude Code Automated Setup Instructions",
+    "description": "This file contains instructions for Claude Code AI assistant. When a user asks to setup this project, follow these steps exactly.",
+    "version": "1.0.0",
+    "lastUpdated": "2024-01-19"
+  },
+  "mcp_servers": [
+    {
+      "name": "cloudflare-mcp",
+      "displayName": "Cloudflare MCP",
+      "urls": [
+        "https://observability.mcp.cloudflare.com/sse",
+        "https://bindings.mcp.cloudflare.com/sse"
+      ],
+      "required": true,
+      "description": "Required for creating Cloudflare resources"
+    },
+    {
+      "name": "gitmcp",
+      "displayName": "GitMCP",
+      "urls": ["https://gitmcp.io/talkstream/telegram-bot-on-cloudflare-workers"],
+      "required": true,
+      "description": "Required for cloning the repository"
+    },
+    {
+      "name": "sentry",
+      "displayName": "Sentry MCP",
+      "urls": ["https://mcp.sentry.dev"],
+      "required": false,
+      "description": "Optional for error monitoring setup"
+    }
+  ],
+  "requirements": {
+    "node": {
+      "minimum": "20.0.0",
+      "recommended": "20.x LTS",
+      "installUrl": "https://nodejs.org/"
+    },
+    "npm": {
+      "minimum": "10.0.0",
+      "note": "Usually comes with Node.js"
+    }
+  },
+  "environment_variables": {
+    "required": [
+      {
+        "name": "TELEGRAM_BOT_TOKEN",
+        "description": "Bot token from @BotFather",
+        "validation": "^\\d{10}:[A-Za-z0-9_-]{35}$",
+        "example": "1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890",
+        "instructions": [
+          "Open Telegram and search for @BotFather",
+          "Send /newbot command",
+          "Choose a name for your bot (e.g., 'My Awesome Bot')",
+          "Choose a username (must end with 'bot', e.g., 'myawesome_bot')",
+          "Copy the token you receive"
+        ]
+      },
+      {
+        "name": "TELEGRAM_WEBHOOK_SECRET",
+        "description": "Secret for webhook validation",
+        "generated": true,
+        "generator": "secrets.token_urlsafe(32)"
+      },
+      {
+        "name": "BOT_OWNER_IDS",
+        "description": "Telegram user IDs with owner privileges",
+        "validation": "^\\d+(,\\d+)*$",
+        "example": "123456789,987654321",
+        "instructions": [
+          "Open Telegram and search for @userinfobot",
+          "Start the bot",
+          "It will show your User ID"
+        ]
+      }
+    ],
+    "optional": [
+      {
+        "name": "SENTRY_DSN",
+        "description": "Error monitoring with Sentry",
+        "validation": "^https://[a-f0-9]+@[a-z0-9.-]+/\\d+$",
+        "example": "https://abc123@sentry.io/1234567",
+        "setupUrl": "https://sentry.io/settings/YOUR-ORG/projects/YOUR-PROJECT/keys/"
+      },
+      {
+        "name": "AI_PROVIDER",
+        "description": "AI provider selection",
+        "default": "google-ai",
+        "options": ["google-ai", "openai", "xai", "deepseek", "cloudflare-ai"],
+        "note": "Additional API key required based on selection"
+      },
+      {
+        "name": "GEMINI_API_KEY",
+        "description": "Google Gemini API key",
+        "condition": "AI_PROVIDER === 'google-ai'",
+        "setupUrl": "https://makersuite.google.com/app/apikey"
+      },
+      {
+        "name": "OPENAI_API_KEY",
+        "description": "OpenAI API key",
+        "condition": "AI_PROVIDER === 'openai'",
+        "setupUrl": "https://platform.openai.com/api-keys"
+      },
+      {
+        "name": "XAI_API_KEY",
+        "description": "xAI Grok API key",
+        "condition": "AI_PROVIDER === 'xai'",
+        "setupUrl": "https://console.x.ai"
+      },
+      {
+        "name": "DEEPSEEK_API_KEY",
+        "description": "DeepSeek API key",
+        "condition": "AI_PROVIDER === 'deepseek'",
+        "setupUrl": "https://platform.deepseek.com"
+      },
+      {
+        "name": "CLOUDFLARE_AI_ACCOUNT_ID",
+        "description": "Cloudflare account ID for AI",
+        "condition": "AI_PROVIDER === 'cloudflare-ai'"
+      },
+      {
+        "name": "CLOUDFLARE_AI_API_TOKEN",
+        "description": "Cloudflare API token for AI",
+        "condition": "AI_PROVIDER === 'cloudflare-ai'"
+      },
+      {
+        "name": "TIER",
+        "description": "Cloudflare Workers tier",
+        "default": "free",
+        "options": ["free", "paid"]
+      }
+    ]
+  },
+  "cloudflare_resources": {
+    "d1_database": {
+      "name": "telegram-bot-db",
+      "binding": "DB",
+      "migrations": [
+        "0001_create_users_table.sql",
+        "0002_add_telegram_stars_tables.sql",
+        "0003_add_access_control.sql",
+        "0004_add_bot_settings.sql"
+      ]
+    },
+    "kv_namespaces": [
+      {
+        "name": "CACHE",
+        "binding": "CACHE",
+        "description": "General purpose cache"
+      },
+      {
+        "name": "RATE_LIMIT",
+        "binding": "RATE_LIMIT",
+        "description": "Rate limiting data"
+      },
+      {
+        "name": "SESSIONS",
+        "binding": "SESSIONS",
+        "description": "User session storage"
+      }
+    ]
+  },
+  "setup_phases": [
+    {
+      "id": "pre-setup",
+      "name": "Pre-Setup Phase",
+      "emoji": "📋",
+      "steps": [
+        {
+          "name": "Check and Install MCP Servers",
+          "description": "Verify required MCP servers are available",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "project-setup",
+      "name": "Project Setup",
+      "emoji": "🚀",
+      "steps": [
+        {
+          "name": "Clone Repository",
+          "description": "Use GitMCP to clone the repository",
+          "showProgress": true
+        },
+        {
+          "name": "Environment Check",
+          "description": "Verify Node.js and npm versions",
+          "critical": true
+        },
+        {
+          "name": "Install Dependencies",
+          "command": "npm install",
+          "showProgress": true
+        }
+      ]
+    },
+    {
+      "id": "token-collection",
+      "name": "Token Collection",
+      "emoji": "🔐",
+      "steps": [
+        {
+          "name": "Telegram Bot Token",
+          "interactive": true,
+          "validation": true
+        },
+        {
+          "name": "Bot Owner ID",
+          "interactive": true,
+          "validation": true
+        },
+        {
+          "name": "AI Provider Setup",
+          "interactive": true,
+          "optional": true
+        },
+        {
+          "name": "Sentry Setup",
+          "interactive": true,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "cloudflare-setup",
+      "name": "Cloudflare Setup",
+      "emoji": "☁️",
+      "steps": [
+        {
+          "name": "Authentication",
+          "command": "wrangler login",
+          "description": "Authenticate with Cloudflare"
+        },
+        {
+          "name": "Create D1 Database",
+          "useMcp": true,
+          "description": "Create SQLite database at the edge"
+        },
+        {
+          "name": "Create KV Namespaces",
+          "useMcp": true,
+          "showProgress": true,
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "configuration",
+      "name": "Configuration",
+      "emoji": "⚙️",
+      "steps": [
+        {
+          "name": "Generate Webhook Secret",
+          "automatic": true
+        },
+        {
+          "name": "Create .dev.vars",
+          "description": "Create local environment file"
+        },
+        {
+          "name": "Update wrangler.toml",
+          "description": "Update with resource IDs"
+        }
+      ]
+    },
+    {
+      "id": "database-setup",
+      "name": "Database Setup",
+      "emoji": "🗄️",
+      "steps": [
+        {
+          "name": "Run Migrations",
+          "command": "npm run db:apply:local",
+          "showProgress": true,
+          "progressSteps": 4
+        }
+      ]
+    },
+    {
+      "id": "testing-launch",
+      "name": "Testing & Launch",
+      "emoji": "🧪",
+      "steps": [
+        {
+          "name": "Run Tests",
+          "command": "npm test",
+          "allowFailure": false
+        },
+        {
+          "name": "Start Development Server",
+          "command": "npm run dev",
+          "captureOutput": ["tunnel_url"]
+        },
+        {
+          "name": "Set Webhook",
+          "requiresOutput": ["tunnel_url"],
+          "apiCall": true
+        },
+        {
+          "name": "Test Bot",
+          "interactive": true,
+          "verification": true
+        }
+      ]
+    }
+  ],
+  "success_dashboard": {
+    "show": true,
+    "sections": [
+      {
+        "title": "Bot Information",
+        "items": ["bot_name", "bot_username", "local_url", "tunnel_url"]
+      },
+      {
+        "title": "Resources Created",
+        "items": ["d1_database", "kv_namespaces"]
+      },
+      {
+        "title": "Test Results",
+        "items": ["tests_passed", "webhook_active", "bot_responding"]
+      },
+      {
+        "title": "Next Steps",
+        "items": [
+          "Try more commands: /help, /settings",
+          "Check the logs: npm run tail",
+          "Deploy to production: npm run deploy"
+        ]
+      },
+      {
+        "title": "Documentation",
+        "items": ["Documentation: docs/README.md", "Troubleshooting: docs/TROUBLESHOOTING.md"]
+      }
+    ]
+  },
+  "error_handling": {
+    "common_errors": [
+      {
+        "id": "node-version",
+        "pattern": "Node.js .* detected, but .* required",
+        "message": "Node.js version too old",
+        "solutions": [
+          "Install Node.js 20+ from https://nodejs.org/",
+          "Or use nvm: nvm install 20 && nvm use 20"
+        ]
+      },
+      {
+        "id": "invalid-token",
+        "pattern": "Invalid bot token",
+        "message": "Invalid bot token format",
+        "solutions": [
+          "Bot tokens look like: 1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890",
+          "Please check your token and try again"
+        ]
+      },
+      {
+        "id": "cloudflare-auth",
+        "pattern": "Not logged in to Cloudflare",
+        "message": "Cloudflare authentication failed",
+        "solutions": ["Please run: wrangler login", "Then try again"]
+      },
+      {
+        "id": "database-creation",
+        "pattern": "Failed to create D1 database",
+        "message": "Database creation failed",
+        "solutions": [
+          "Check your Cloudflare account limits",
+          "Ensure you have a valid account",
+          "Try a different database name"
+        ]
+      },
+      {
+        "id": "tests-failed",
+        "pattern": "Some tests failed",
+        "message": "Tests failed",
+        "solutions": [
+          "This might be due to:",
+          "• Missing environment variables",
+          "• Database not properly initialized",
+          "",
+          "Run 'npm run test:watch' to debug"
+        ]
+      }
+    ]
+  },
+  "implementation_notes": {
+    "console_colors": {
+      "success": "green",
+      "error": "red",
+      "info": "blue",
+      "warning": "yellow"
+    },
+    "progress_indicators": {
+      "style": "bar",
+      "width": 32,
+      "completeChar": "█",
+      "incompleteChar": "░"
+    },
+    "validation": {
+      "immediate": true,
+      "showErrors": true,
+      "allowRetry": true
+    }
+  }
+}

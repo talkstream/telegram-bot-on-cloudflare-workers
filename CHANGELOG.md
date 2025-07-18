@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-07-18
+
+### Added
+
+- Automated CLAUDE_SETUP.md generation system
+  - Single source of truth configuration in docs/setup-config.json
+  - Node.js generator script with checksum validation
+  - GitHub Action for automated documentation updates
+  - Pre-commit hook for synchronization checks
+- Comprehensive CLAUDE_SETUP_MAINTENANCE.md documentation
+- New npm scripts: `docs:generate` and `docs:check`
+- AI-friendly badges and quick start sections in README files
+
+### Changed
+
+- CLAUDE_SETUP.md now generated from structured configuration
+- Enhanced setup instructions with progress indicators
+- Improved error handling documentation
+
 ## [1.1.1] - 2025-07-18
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "name": "telegram-bot-cloudflare-wireframe",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Production-ready wireframe for creating Telegram bots on Cloudflare Workers with TypeScript",
   "type": "module",
   "main": "./src/index.ts",
@@ -25,7 +25,9 @@
     "db:apply:remote": "wrangler d1 migrations apply DB --env production",
     "secrets:list": "wrangler secret list --env production",
     "tail": "wrangler tail --env production",
-    "tail:staging": "wrangler tail --env staging"
+    "tail:staging": "wrangler tail --env staging",
+    "docs:generate": "node scripts/generate-claude-setup.js",
+    "docs:check": "node scripts/generate-claude-setup.js --check"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.53",

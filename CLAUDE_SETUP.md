@@ -26,28 +26,40 @@ Show progress:
 
 ```
 🔧 Checking MCP servers...
-✅ GitMCP: Available
 ✅ Cloudflare MCP: Available
-✅ Sentry MCP: Available
+✅ GitMCP: Available
 ```
 
 ## 🚀 Phase 1: Project Setup
 
 ### 1.1 Clone Repository
 
-Use GitMCP to clone the repository:
+Use GitMCP to clone the repository
+
+Show progress:
 
 ```
-📥 Cloning repository...
-[████████████████████████████████] 100% Complete
+📦 Clone Repository...
+[████████████████░░░░░░░░░░░░░░░░] 50% - In progress...
 ```
 
 ### 1.2 Environment Check
 
-Check system requirements:
+Verify Node.js and npm versions
+
+**⚠️ This step is critical and must succeed to continue.**
+
+### 1.3 Install Dependencies
+
+```bash
+npm install
+```
+
+Show progress:
 
 ```
-🔍 Checking environment...
+📦 Install Dependencies...
+[████████████████░░░░░░░░░░░░░░░░] 50% - In progress...
 ```
 
 Required:
@@ -60,80 +72,75 @@ If missing, provide installation instructions:
 - **Node.js**: Direct to https://nodejs.org/ or suggest using nvm
 - **npm**: Usually comes with Node.js
 
-### 1.3 Install Dependencies
-
-```bash
-npm install
-```
-
-Show progress:
-
-```
-📦 Installing dependencies...
-[████████████████░░░░░░░░░░░░░░░░] 50% - Installing grammY...
-```
-
 ## 🔐 Phase 2: Token Collection
 
-### 2.1 Telegram Bot Token
+### 2.1 TELEGRAM_BOT_TOKEN
 
 ```
-🤖 Let's create your Telegram bot!
+🤖 Bot token from @BotFather
 
-Please follow these steps:
 1. Open Telegram and search for @BotFather
 2. Send /newbot command
-3. Choose a name for your bot (e.g., "My Awesome Bot")
-4. Choose a username (must end with 'bot', e.g., "myawesome_bot")
+3. Choose a name for your bot (e.g., 'My Awesome Bot')
+4. Choose a username (must end with 'bot', e.g., 'myawesome_bot')
 5. Copy the token you receive
 
-📝 Enter your bot token:
+📝 Enter your telegram bot token:
 ```
 
-Validate the token format (should match: `\d{10}:[A-Za-z0-9_-]{35}`)
+Validate the format: `^\d{10}:[A-Za-z0-9_-]{35}$`
+Example: `1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890`
 
-### 2.2 Bot Owner ID
+### 2.2 BOT_OWNER_IDS
 
 ```
-👤 Now let's set up bot ownership!
+👤 Telegram user IDs with owner privileges
 
-To get your Telegram User ID:
 1. Open Telegram and search for @userinfobot
 2. Start the bot
 3. It will show your User ID
 
-📝 Enter your Telegram User ID:
+📝 Enter your bot owner ids:
 ```
 
-### 2.3 AI Provider Setup (Optional)
+Validate the format: `^\d+(,\d+)*$`
+Example: `123456789,987654321`
+
+### 2.4 AI_PROVIDER (Optional)
 
 ```
-🧠 AI Provider Configuration (Optional)
+🧠 AI provider selection
 
-Available providers:
+Available options:
 1. Google Gemini (Recommended - has free tier)
 2. OpenAI
 3. xAI (Grok)
 4. DeepSeek
 5. Cloudflare AI
-6. Skip (use mock AI for testing)
 
-Choose provider [1-6]:
+Choose option [1-5]:
 ```
 
 If user chooses a provider, help them get the API key:
 
-- **Gemini**: Direct to https://makersuite.google.com/app/apikey
-- **OpenAI**: Direct to https://platform.openai.com/api-keys
+- **GEMINI**: Direct to https://makersuite.google.com/app/apikey
+- **OPENAI**: Direct to https://platform.openai.com/api-keys
+- **XAI**: Direct to https://console.x.ai
+- **DEEPSEEK**: Direct to https://platform.deepseek.com
 - Show appropriate links for other providers
 
-### 2.4 Sentry Setup (Optional)
+### 2.4 SENTRY_DSN (Optional)
 
 ```
-🛡️ Error Monitoring with Sentry (Optional)
+🛡️ Error monitoring with Sentry
 
-Would you like to set up error monitoring? [y/N]:
+Get it from: https://sentry.io/settings/YOUR-ORG/projects/YOUR-PROJECT/keys/
+
+📝 SENTRY_DSN (or press Enter to skip):
 ```
+
+Validate the format: `^https://[a-f0-9]+@[a-z0-9.-]+/\d+$`
+Example: `https://abc123@sentry.io/1234567`
 
 If yes:
 
@@ -148,13 +155,25 @@ Please provide your Sentry DSN:
 
 ### 3.1 Authentication
 
-```
-🔑 Authenticating with Cloudflare...
-```
+Authenticate with Cloudflare
 
-Run: `wrangler login`
+```bash
+wrangler login
+```
 
 ### 3.2 Create D1 Database
+
+Create SQLite database at the edge
+
+### 3.3 Create KV Namespaces
+
+Show progress:
+
+```
+[██████████░░░░░░░░░░░░░░░░░░░░░░] 33% - Item 1 of 3...
+[█████████████████████░░░░░░░░░░░] 66% - Item 2 of 3...
+[████████████████████████████████] 100% - Item 3 of 3...
+```
 
 Using Cloudflare MCP:
 
@@ -171,8 +190,8 @@ Create three KV namespaces:
 
 ```
 📚 Creating KV Namespaces...
-[████████░░░░░░░░░░░░░░░░░░░░░░░░] 33% - Creating CACHE namespace...
-[████████████████░░░░░░░░░░░░░░░░] 66% - Creating RATE_LIMIT namespace...
+[██████████░░░░░░░░░░░░░░░░░░░░░░] 33% - Creating CACHE namespace...
+[█████████████████████░░░░░░░░░░░] 66% - Creating RATE_LIMIT namespace...
 [████████████████████████████████] 100% - Creating SESSIONS namespace...
 ```
 
@@ -211,10 +230,10 @@ Update `wrangler.toml` with the collected IDs:
 
 ```
 🔨 Setting up database...
-[████████░░░░░░░░░░░░░░░░░░░░░░░░] 25% - Creating users table...
-[████████████████░░░░░░░░░░░░░░░░] 50% - Adding Telegram Stars tables...
-[████████████████████████░░░░░░░░] 75% - Adding access control...
-[████████████████████████████████] 100% - Adding bot settings...
+[████████░░░░░░░░░░░░░░░░░░░░░░░░] 25% - 0001_create_users_table.sql...
+[████████████████░░░░░░░░░░░░░░░░] 50% - 0002_add_telegram_stars_tables.sql...
+[████████████████████████░░░░░░░░] 75% - 0003_add_access_control.sql...
+[████████████████████████████████] 100% - 0004_add_bot_settings.sql...
 ```
 
 Run: `npm run db:apply:local`
@@ -223,35 +242,19 @@ Run: `npm run db:apply:local`
 
 ### 6.1 Run Tests
 
+```bash
+npm test
 ```
-🧪 Running tests...
-```
-
-Run: `npm test`
-
-If tests fail, help debug the issues.
 
 ### 6.2 Start Development Server
 
+```bash
+npm run dev
 ```
-🚀 Starting development server...
-```
-
-Run: `npm run dev`
-
-Wait for the server to start and capture the tunnel URL.
 
 ### 6.3 Set Webhook
 
-```
-🔗 Setting up webhook...
-```
-
-Use the tunnel URL to set the webhook:
-
-```bash
-curl "https://api.telegram.org/bot{TOKEN}/setWebhook?url={TUNNEL_URL}/webhook&secret_token={SECRET}"
-```
+### 6.4 Test Bot
 
 ### 6.4 Test Bot
 
@@ -273,27 +276,29 @@ Waiting for test message...
 ║                    🎉 Setup Complete! 🎉                   ║
 ╠════════════════════════════════════════════════════════════╣
 ║                                                            ║
-║  🤖 Bot Name:     {bot_name}                              ║
-║  🔗 Bot URL:      https://t.me/{bot_username}             ║
-║  🌐 Local URL:    http://localhost:8787                   ║
-║  🚇 Tunnel URL:   {tunnel_url}                            ║
+║  Bot Information:                                         ║
+║     • {bot_name}                                           ║
+║     • {bot_username}                                       ║
+║     • {local_url}                                          ║
+║     • {tunnel_url}                                         ║
 ║                                                            ║
-║  📊 Resources Created:                                     ║
-║     • D1 Database: telegram-bot-db                        ║
-║     • KV Namespaces: CACHE, RATE_LIMIT, SESSIONS         ║
+║  Resources Created:                                       ║
+║     • {d1_database}                                        ║
+║     • {kv_namespaces}                                      ║
 ║                                                            ║
-║  🧪 Test Results:                                          ║
-║     • All tests passed ✅                                  ║
-║     • Webhook active ✅                                    ║
-║     • Bot responding ✅                                    ║
+║  Test Results:                                            ║
+║     • {tests_passed}                                       ║
+║     • {webhook_active}                                     ║
+║     • {bot_responding}                                     ║
 ║                                                            ║
-║  📚 Next Steps:                                            ║
-║     1. Try more commands: /help, /settings                ║
-║     2. Check the logs: npm run tail                       ║
-║     3. Deploy to production: npm run deploy               ║
+║  Next Steps:                                              ║
+║     • Try more commands: /help, /settings                  ║
+║     • Check the logs: npm run tail                         ║
+║     • Deploy to production: npm run deploy                 ║
 ║                                                            ║
-║  📖 Documentation: docs/README.md                          ║
-║  ❓ Troubleshooting: docs/TROUBLESHOOTING.md              ║
+║  Documentation:                                           ║
+║     • Documentation: docs/README.md                        ║
+║     • Troubleshooting: docs/TROUBLESHOOTING.md             ║
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
 ```
@@ -307,20 +312,21 @@ For each phase, implement proper error handling:
 1. **Node.js version too old**
 
    ```
-   ❌ Node.js 18.x detected, but 20.x required
+   ❌ Node.js .* detected, but .* required
 
    Solution:
    • Install Node.js 20+ from https://nodejs.org/
    • Or use nvm: nvm install 20 && nvm use 20
    ```
 
-2. **Invalid bot token**
+2. **Invalid bot token format**
 
    ```
-   ❌ Invalid bot token format
+   ❌ Invalid bot token
 
-   Bot tokens look like: 1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890
-   Please check your token and try again.
+   Solution:
+   • Bot tokens look like: 1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890
+   • Please check your token and try again
    ```
 
 3. **Cloudflare authentication failed**
@@ -328,8 +334,9 @@ For each phase, implement proper error handling:
    ```
    ❌ Not logged in to Cloudflare
 
-   Please run: wrangler login
-   Then try again.
+   Solution:
+   • Please run: wrangler login
+   • Then try again
    ```
 
 4. **Database creation failed**
@@ -337,7 +344,7 @@ For each phase, implement proper error handling:
    ```
    ❌ Failed to create D1 database
 
-   Possible solutions:
+   Solution:
    • Check your Cloudflare account limits
    • Ensure you have a valid account
    • Try a different database name
@@ -348,20 +355,21 @@ For each phase, implement proper error handling:
    ```
    ❌ Some tests failed
 
-   This might be due to:
-   • Missing environment variables
-   • Database not properly initialized
-
-   Run 'npm run test:watch' to debug
+   Solution:
+   • This might be due to:
+   • • Missing environment variables
+   • • Database not properly initialized
+   •
+   • Run 'npm run test:watch' to debug
    ```
 
 ## 📝 Implementation Notes
 
 1. **Use console colors for better UX**:
    - ✅ Green for success
-   - ❌ Red for errors
-   - 🔵 Blue for information
-   - 🟡 Yellow for warnings
+   - ❌ Red for error
+   - 🔵 Blue for info
+   - 🟡 Yellow for warning
 
 2. **Save progress state** in case of interruption
 
@@ -398,3 +406,5 @@ If setup fails at any point:
 2. Provide cleanup commands if needed
 3. Save partial configuration for retry
 4. Offer to start over or continue from failure point
+
+<!-- CONFIG_CHECKSUM:89ccadd7ef9e7c5c7699517c33719b57 -->

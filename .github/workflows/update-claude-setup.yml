@@ -1,0 +1,159 @@
+name: Update CLAUDE_SETUP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/setup-config.json'
+      - 'scripts/generate-claude-setup.js'
+      - 'package.json'
+      - '.dev.vars.example'
+      - 'wrangler.toml.example'
+      - 'migrations/*.sql'
+
+  pull_request:
+    paths:
+      - 'docs/setup-config.json'
+      - 'scripts/generate-claude-setup.js'
+      - 'package.json'
+      - '.dev.vars.example'
+      - 'wrangler.toml.example'
+      - 'migrations/*.sql'
+      - 'CLAUDE_SETUP.md'
+
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update CLAUDE_SETUP.md'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check if CLAUDE_SETUP.md is up to date
+        id: check
+        run: |
+          if npm run docs:check; then
+            echo "up_to_date=true" >> $GITHUB_OUTPUT
+            echo "✅ CLAUDE_SETUP.md is up to date"
+          else
+            echo "up_to_date=false" >> $GITHUB_OUTPUT
+            echo "❌ CLAUDE_SETUP.md needs to be updated"
+          fi
+
+      - name: Generate CLAUDE_SETUP.md
+        if: steps.check.outputs.up_to_date == 'false' || github.event.inputs.force_update == 'true'
+        run: npm run docs:generate
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          if git diff --exit-code CLAUDE_SETUP.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 CLAUDE_SETUP.md has been updated"
+          fi
+
+      # For PRs, add a comment if the file is outdated
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.check.outputs.up_to_date == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `⚠️ **CLAUDE_SETUP.md is outdated**
+
+            The setup configuration has changed, but CLAUDE_SETUP.md hasn't been updated.
+            Please run \`npm run docs:generate\` to update the file and commit the changes.
+
+            <details>
+            <summary>How to fix</summary>
+
+            \`\`\`bash
+            # Update CLAUDE_SETUP.md
+            npm run docs:generate
+
+            # Commit the changes
+            git add CLAUDE_SETUP.md
+            git commit -m "docs: update CLAUDE_SETUP.md"
+            git push
+            \`\`\`
+            </details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # For push to main, create a PR with the updates
+      - name: Create Pull Request
+        if: |
+          github.event_name == 'push' && 
+          github.ref == 'refs/heads/main' && 
+          steps.git-check.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'docs: update CLAUDE_SETUP.md'
+          title: 'docs: update CLAUDE_SETUP.md based on configuration changes'
+          body: |
+            ## 🤖 Automated Update
+
+            This PR updates `CLAUDE_SETUP.md` to match the current setup configuration.
+
+            ### What changed?
+            The following files were modified, triggering this update:
+            - `docs/setup-config.json`
+            - Configuration files (package.json, .dev.vars.example, etc.)
+            - Migration files
+
+            ### Why is this needed?
+            The CLAUDE_SETUP.md file is automatically generated from the setup configuration to ensure it always provides accurate instructions for Claude Code.
+
+            ### Review checklist
+            - [ ] Review the changes to ensure they accurately reflect the setup process
+            - [ ] Verify all new environment variables are documented
+            - [ ] Check that migration steps are correctly listed
+            - [ ] Ensure error handling covers new scenarios
+
+            ---
+            *This PR was automatically created by the update-claude-setup workflow.*
+          branch: update-claude-setup
+          delete-branch: true
+          labels: |
+            documentation
+            automated
+          reviewers: |
+            ${{ github.actor }}
+
+      # Fail the workflow if running in PR and file is outdated
+      - name: Fail if outdated (PR only)
+        if: github.event_name == 'pull_request' && steps.check.outputs.up_to_date == 'false'
+        run: |
+          echo "❌ CLAUDE_SETUP.md is outdated. Please update it before merging."
+          exit 1
