@@ -50,6 +50,7 @@
     "wrangler": "^4.5.0"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.55",
     "@google/generative-ai": "^0.24.1",
     "@sentry/cloudflare": "^9.38.0",
     "grammy": "^1.31.0",

@@ -10,6 +10,7 @@ declare global {
     GEMINI_API_KEY: string;
     SENTRY_DSN?: string;
     ENVIRONMENT: 'development' | 'staging' | 'production';
+    TIER?: 'free' | 'paid';
 
     // Bindings
     DB: D1Database;

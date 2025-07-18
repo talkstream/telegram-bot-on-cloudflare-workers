@@ -20,56 +20,90 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
     },
   };
 
-  // Check D1 Database
+  // Define health check tasks
+  const healthChecks = [];
+
+  // Database health check
   if (env.DB) {
-    try {
-      const result = await env.DB.prepare('SELECT 1 as health').first();
-      status.services.database = result?.health === 1;
-    } catch (error) {
-      logger.error('D1 health check failed', { error });
-      status.services.database = false;
-      status.status = 'degraded';
-    }
+    healthChecks.push({
+      name: 'database',
+      check: async () => {
+        try {
+          const result = await env.DB.prepare('SELECT 1 as health').first();
+          return result?.health === 1;
+        } catch (error) {
+          logger.error('D1 health check failed', { error });
+          return false;
+        }
+      },
+    });
   }
 
-  // Check KV Cache
+  // KV Cache health check
   if (env.CACHE) {
-    try {
-      const testKey = `health_check_${Date.now()}`;
-      await env.CACHE.put(testKey, 'ok', { expirationTtl: 60 });
-      const value = await env.CACHE.get(testKey);
-      status.services.cache = value === 'ok';
-      await env.CACHE.delete(testKey);
-    } catch (error) {
-      logger.error('KV cache health check failed', { error });
-      status.services.cache = false;
-      status.status = 'degraded';
-    }
+    healthChecks.push({
+      name: 'cache',
+      check: async () => {
+        try {
+          const testKey = `health_check_${Date.now()}`;
+          await env.CACHE.put(testKey, 'ok', { expirationTtl: 60 });
+          const value = await env.CACHE.get(testKey);
+          const isHealthy = value === 'ok';
+          await env.CACHE.delete(testKey);
+          return isHealthy;
+        } catch (error) {
+          logger.error('KV cache health check failed', { error });
+          return false;
+        }
+      },
+    });
   }
 
-  // Check Telegram Bot Token
+  // Telegram Bot Token check (synchronous, but wrapped for consistency)
   if (env.TELEGRAM_BOT_TOKEN) {
-    try {
-      // Just verify token format
-      status.services.telegram = /^\d+:[A-Za-z0-9_-]{35}$/.test(env.TELEGRAM_BOT_TOKEN);
-    } catch (error) {
-      logger.error('Telegram token check failed', { error });
-      status.services.telegram = false;
-      status.status = 'degraded';
-    }
+    healthChecks.push({
+      name: 'telegram',
+      check: async () => {
+        try {
+          return /^\d+:[A-Za-z0-9_-]{35}$/.test(env.TELEGRAM_BOT_TOKEN);
+        } catch (error) {
+          logger.error('Telegram token check failed', { error });
+          return false;
+        }
+      },
+    });
   }
 
-  // Check AI Service (Gemini)
+  // AI Service check (synchronous, but wrapped for consistency)
   if (env.GEMINI_API_KEY) {
-    try {
-      // Just verify API key format
-      status.services.ai = env.GEMINI_API_KEY.length > 20;
-    } catch (error) {
-      logger.error('AI service check failed', { error });
-      status.services.ai = false;
+    healthChecks.push({
+      name: 'ai',
+      check: async () => {
+        try {
+          return env.GEMINI_API_KEY.length > 20;
+        } catch (error) {
+          logger.error('AI service check failed', { error });
+          return false;
+        }
+      },
+    });
+  }
+
+  // Execute all health checks in parallel
+  const results = await Promise.all(
+    healthChecks.map(async ({ name, check }) => ({
+      name,
+      healthy: await check(),
+    }))
+  );
+
+  // Update status based on results
+  results.forEach(({ name, healthy }) => {
+    status.services[name as keyof typeof status.services] = healthy;
+    if (!healthy) {
       status.status = 'degraded';
     }
-  }
+  });
 
   // Determine overall status
   const criticalServices = [status.services.database, status.services.telegram];

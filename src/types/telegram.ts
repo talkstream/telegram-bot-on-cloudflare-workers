@@ -8,6 +8,7 @@ import type { TelegramStarsService } from '@/domain/services/telegram-stars.serv
 import type { PaymentRepository } from '@/domain/payments/repository';
 import type { UserSession } from '@/services/session-service';
 import type { getMessage } from '@/lib/i18n';
+import type { TelegramRequestBatcher } from '@/lib/telegram-batcher';
 
 // Session data structure
 export interface SessionData {
@@ -26,11 +27,12 @@ export type BotContext = GrammyContext &
     session?: UserSession | undefined;
     services: {
       session: SessionService;
-      gemini: GeminiService;
+      gemini: GeminiService | null;
       telegramStars: TelegramStarsService;
       paymentRepo: PaymentRepository;
     };
     i18n: (key: Parameters<typeof getMessage>[1], ...args: unknown[]) => string;
+    batcher?: TelegramRequestBatcher;
   };
 
 // Command handler type

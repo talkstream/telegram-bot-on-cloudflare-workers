@@ -6,13 +6,20 @@ import { GeminiService } from '@/services/gemini-service';
 import { getMessage } from '@/lib/i18n';
 import { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import { PaymentRepository } from '@/domain/payments/repository';
+import { batcherMiddleware } from '@/lib/telegram-batcher';
+import { MultiLayerCache } from '@/lib/multi-layer-cache';
 
 export function createBot(env: Env) {
   const bot = new Bot<BotContext>(env.TELEGRAM_BOT_TOKEN);
-  const sessionService = new SessionService(env.SESSIONS);
-  const geminiService = new GeminiService(env.GEMINI_API_KEY);
+  const tier = env.TIER || 'free';
+  
+  // Create multi-layer cache if cache namespace is available
+  const multiLayerCache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
+  
+  const sessionService = new SessionService(env.SESSIONS, tier, multiLayerCache);
+  const geminiService = new GeminiService(env.GEMINI_API_KEY, tier);
   const paymentRepo = new PaymentRepository(env.DB);
-  const telegramStarsService = new TelegramStarsService(bot.api.raw, paymentRepo);
+  const telegramStarsService = new TelegramStarsService(bot.api.raw, paymentRepo, tier);
 
   // Middleware to attach services, session, and i18n to the context
   bot.use(async (ctx, next) => {
@@ -31,6 +38,13 @@ export function createBot(env: Env) {
     }
     await next();
   });
+
+  // Add request batching middleware for better performance
+  bot.use(batcherMiddleware({
+    maxBatchSize: env.TIER === 'free' ? 10 : 30,
+    batchIntervalMs: env.TIER === 'free' ? 5 : 25,
+    timeoutMs: env.TIER === 'free' ? 2000 : 5000,
+  }));
 
   // Example commands and handlers (these would typically be moved to src/adapters/telegram/commands/ and callbacks/)
   bot.command('start', async (ctx) => {
@@ -53,6 +67,11 @@ export function createBot(env: Env) {
       await ctx.reply(ctx.i18n('gemini_prompt_needed'));
       return;
     }
+    if (!ctx.services.gemini) {
+      await ctx.reply(ctx.i18n('gemini_not_available'));
+      return;
+    }
+    
     try {
       await ctx.reply(ctx.i18n('gemini_thinking'));
       const response = await ctx.services.gemini.generateText(prompt);

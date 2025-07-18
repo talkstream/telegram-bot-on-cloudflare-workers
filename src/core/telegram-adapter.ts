@@ -10,6 +10,7 @@ import {
 import { setupCommands } from '../adapters/telegram/commands';
 import { setupCallbacks } from '../adapters/telegram/callbacks';
 import { setUserContext, clearUserContext } from '../config/sentry'; // Re-using Sentry helpers
+import { getTierConfig } from '../config/tiers';
 
 import { createBot } from './bot';
 
@@ -20,11 +21,20 @@ export class TelegramAdapter {
   private env: Env;
   private initialized = false;
   private processedUpdates = new Map<number, number>(); // update_id -> timestamp
+  private tier: 'free' | 'paid';
 
   constructor(env: Env) {
     this.env = env;
-    this.bot = createBot(env); // Use our createBot function
-    this.setupHandlers();
+    this.tier = env.TIER || 'free';
+    
+    // For now, use standard bot creation
+    // Will initialize tier-aware bot on first update
+    this.bot = createBot(env);
+    
+    const config = getTierConfig(this.tier);
+    if (this.tier === 'paid' || !config.optimization.lazyLoadDependencies) {
+      this.setupHandlers();
+    }
   }
 
   private setupHandlers(): void {

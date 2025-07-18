@@ -58,6 +58,45 @@
 - **🔄 Session management** - Persistent user sessions
 - **💰 Telegram Stars** - Payment integration ready
 
+### Cloudflare Workers Tier Optimization
+
+- **🆓 Cloudflare Workers Free Plan** - Optimized for 10ms CPU limit
+- **💎 Cloudflare Workers Paid Plan** - Full features with extended timeouts
+- **🚀 Auto-scaling** - Tier-aware resource management
+- **⚡ Request Batching** - Reduce API overhead
+- **🔄 Smart Caching** - Multi-layer cache system
+- **⏱️ Timeout Protection** - Configurable API timeouts
+
+## 🎯 Cloudflare Workers Performance Tiers
+
+> **📌 Important**: This wireframe is **100% free and open-source**. The tiers below refer to **Cloudflare Workers plans**, not our wireframe. You can use this wireframe for free forever, regardless of which Cloudflare plan you choose.
+
+### Cloudflare Workers Free Plan (10ms CPU limit)
+- **Lightweight mode** - Minimal features for fast responses
+- **Aggressive caching** - Reduce KV operations (1K writes/day limit)
+- **Request batching** - Optimize Telegram API calls
+- **No AI features** - Disabled to save processing time
+- **Sequential operations** - Avoid parallel processing overhead
+
+### Cloudflare Workers Paid Plan (30s CPU limit)
+- **Full feature set** - All capabilities enabled
+- **AI integration** - Gemini API with smart retries
+- **Parallel processing** - Concurrent health checks & operations
+- **Advanced caching** - Edge cache + KV + memory layers
+- **Extended timeouts** - Configurable per operation type
+
+### Tier Configuration
+
+```bash
+# Set your Cloudflare Workers plan in .dev.vars or wrangler.toml
+TIER="free"  # for Cloudflare Workers Free Plan
+TIER="paid"  # for Cloudflare Workers Paid Plan
+```
+
+The wireframe automatically optimizes based on your Cloudflare Workers plan:
+- **Free Plan**: Fast responses, limited features (optimized for 10ms CPU limit)
+- **Paid Plan**: Full functionality, better reliability (up to 30s CPU time)
+
 ## 🚀 Quick Start
 
 > **📖 Need detailed setup instructions?** Check out our comprehensive [Setup Guide](SETUP.md) for step-by-step configuration with screenshots and troubleshooting.
@@ -294,7 +333,7 @@ This wireframe might **not** be the best choice for:
 
 ### 1. **📹 Heavy Media Processing**
 
-- **Why not**: Cloudflare Workers have CPU time limits (50ms)
+- **Why not**: Cloudflare Workers have CPU time limits (10ms free / 30s paid)
 - **Alternative**: Use traditional servers with FFmpeg or cloud functions with longer timeouts
 
 ### 2. **🔄 Long-Running Tasks**
@@ -410,6 +449,46 @@ We appreciate your help in keeping this project secure!
 - **Test coverage** - Write tests for new features
 - **Documentation** - Update docs for API changes
 - **Security first** - Consider security implications
+
+## 🔧 Recommended MCP Servers
+
+### Accelerate Development with Model Context Protocol
+
+[MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers enable AI assistants like Claude to interact with your development tools. Here are the recommended MCP servers for this project:
+
+#### Essential MCP Servers
+
+1. **Cloudflare MCP Servers** - [Official Documentation](https://github.com/cloudflare/mcp-server-cloudflare)
+   - **Remote servers available at:**
+     - Observability: `https://observability.mcp.cloudflare.com/sse`
+     - Workers Bindings: `https://bindings.mcp.cloudflare.com/sse`
+   - Manage Workers, KV, D1, R2 resources
+   - Deploy and configure services
+   - Monitor logs and analytics
+   - Handle secrets and environment variables
+
+2. **Git MCP Server (GitMCP)** - [GitMCP.io](https://gitmcp.io)
+   - **Remote server for this project:** `https://gitmcp.io/talkstream/telegram-bot-on-cloudflare-workers`
+   - Access any GitHub repository content instantly
+   - No installation required - just use the URL format
+   - Read-only access to public repositories
+   - Perfect for exploring codebases and documentation
+
+3. **Sentry MCP Server** - [Official Repository](https://github.com/getsentry/sentry-mcp)
+   - **Remote server available at:** `https://mcp.sentry.dev`
+   - Official server maintained by Sentry
+   - Retrieve and analyze error reports
+   - Performance monitoring with 16 different tool calls
+   - OAuth support for secure authentication
+   - Built on Cloudflare's remote MCP infrastructure
+
+#### How These Servers Help This Project
+
+- **Cloudflare Server**: Essential for managing all Cloudflare resources (Workers, KV, D1) used by this bot
+- **Git Server**: Access and explore repository content directly without leaving your development environment
+- **Sentry Server**: Quickly diagnose production issues reported by your bot users with official Sentry integration
+
+These MCP servers significantly accelerate development by enabling natural language interactions with your tools, reducing context switching, and automating repetitive tasks.
 
 ## ⚡ Performance & Cloudflare Plans
 

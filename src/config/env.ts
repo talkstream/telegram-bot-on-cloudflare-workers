@@ -7,6 +7,7 @@ const envSchema = z.object({
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   ENVIRONMENT: z.string().optional(),
+  TIER: z.enum(['free', 'paid']).optional().default('free'),
   SESSIONS: z.any().optional(), // Cloudflare KV Namespace binding
   DB: z.any().optional(), // Cloudflare D1 Database binding
   CACHE: z.any().optional(), // Cloudflare KV Namespace binding

@@ -2,6 +2,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 
 import type { Env } from '@/types';
 import { logger } from '@/lib/logger';
+import { withTimeout, getTimeoutConfig } from '@/lib/timeout-wrapper';
 
 export interface User {
   id: number;
@@ -26,7 +27,11 @@ export interface CreateUserData {
 }
 
 export class UserService {
-  constructor(private db: D1Database) {}
+  private tier: 'free' | 'paid';
+  
+  constructor(private db: D1Database, tier: 'free' | 'paid' = 'free') {
+    this.tier = tier;
+  }
 
   async createOrUpdateUser(data: CreateUserData): Promise<User> {
     const existingUser = await this.getByTelegramId(data.telegramId);
@@ -93,19 +98,27 @@ export class UserService {
   }
 
   async getByTelegramId(telegramId: number): Promise<User | null> {
-    const result = await this.db
-      .prepare(
-        `
-      SELECT id, telegram_id as telegramId, username, first_name as firstName, 
-             last_name as lastName, language_code as languageCode, 
-             is_premium as isPremium, stars_balance as starsBalance,
-             created_at as createdAt, updated_at as updatedAt
-      FROM users 
-      WHERE telegram_id = ?
-    `,
-      )
-      .bind(telegramId)
-      .first<User>();
+    const timeouts = getTimeoutConfig(this.tier);
+    
+    const result = await withTimeout(
+      this.db
+        .prepare(
+          `
+        SELECT id, telegram_id as telegramId, username, first_name as firstName, 
+               last_name as lastName, language_code as languageCode, 
+               is_premium as isPremium, stars_balance as starsBalance,
+               created_at as createdAt, updated_at as updatedAt
+        FROM users 
+        WHERE telegram_id = ?
+      `,
+        )
+        .bind(telegramId)
+        .first<User>(),
+      {
+        timeoutMs: timeouts.database,
+        operation: 'UserService.getByTelegramId',
+      }
+    );
 
     return result;
   }
@@ -146,5 +159,5 @@ export class UserService {
 
 // Factory function to create UserService instance
 export function getUserService(env: Env): UserService {
-  return new UserService(env.DB);
+  return new UserService(env.DB, env.TIER || 'free');
 }

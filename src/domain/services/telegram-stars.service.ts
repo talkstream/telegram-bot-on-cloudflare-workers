@@ -3,14 +3,17 @@ import type { PreCheckoutQuery } from 'grammy/types';
 
 import { PaymentRepository } from '../payments/repository';
 import { logger } from '../../lib/logger';
+import { withTimeout, getTimeoutConfig } from '../../lib/timeout-wrapper';
 
 export class TelegramStarsService {
   private api: RawApi;
   private paymentRepository: PaymentRepository;
+  private tier: 'free' | 'paid';
 
-  constructor(api: RawApi, paymentRepository: PaymentRepository) {
+  constructor(api: RawApi, paymentRepository: PaymentRepository, tier: 'free' | 'paid' = 'free') {
     this.api = api;
     this.paymentRepository = paymentRepository;
+    this.tier = tier;
   }
 
   async createDirectMessageInvoice(
@@ -25,19 +28,27 @@ export class TelegramStarsService {
       targetMaskedId: targetMaskedId,
     });
 
-    const invoiceLink = await this.api.sendInvoice({
-      chat_id: telegramId,
-      title: 'Direct Message',
-      description: `Send a direct message for ${starsAmount} Stars`,
-      payload: invoicePayload,
-      provider_token: '', // Telegram Stars does not require a provider token; for other providers, configure here
-      currency: 'XTR', // Telegram Stars currency
-      prices: [{ label: 'Direct Message', amount: starsAmount * 100 }], // amount in smallest units (cents)
-      max_tip_amount: 0,
-      suggested_tip_amounts: [],
-      start_parameter: 'direct_message',
-      provider_data: '',
-    });
+    const timeouts = getTimeoutConfig(this.tier);
+    
+    const invoiceLink = await withTimeout(
+      this.api.sendInvoice({
+        chat_id: telegramId,
+        title: 'Direct Message',
+        description: `Send a direct message for ${starsAmount} Stars`,
+        payload: invoicePayload,
+        provider_token: '', // Telegram Stars does not require a provider token; for other providers, configure here
+        currency: 'XTR', // Telegram Stars currency
+        prices: [{ label: 'Direct Message', amount: starsAmount * 100 }], // amount in smallest units (cents)
+        max_tip_amount: 0,
+        suggested_tip_amounts: [],
+        start_parameter: 'direct_message',
+        provider_data: '',
+      }),
+      {
+        timeoutMs: timeouts.api,
+        operation: 'Telegram sendInvoice',
+      }
+    );
 
     // For now, assume the result is the invoice link
     const linkUrl = typeof invoiceLink === 'string' ? invoiceLink : '';
