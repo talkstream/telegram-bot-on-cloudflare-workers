@@ -3,6 +3,7 @@
 ## Telegram Webhook Types
 
 ### Core Update Type
+
 ```typescript
 interface TelegramUpdate {
   update_id: number;
@@ -23,6 +24,7 @@ interface TelegramUpdate {
 ```
 
 ### Message Type
+
 ```typescript
 interface Message {
   message_id: number;
@@ -39,6 +41,7 @@ interface Message {
 ## Webhook Request/Response Flow
 
 ### Incoming Webhook Request
+
 ```http
 POST /webhook
 Content-Type: application/json
@@ -67,6 +70,7 @@ X-Telegram-Bot-Api-Secret-Token: your-secret-token
 ```
 
 ### Expected Response
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -88,6 +92,7 @@ Content-Type: application/json
 ## Command Handling
 
 ### Command Registration
+
 ```typescript
 // In src/adapters/telegram/commands/index.ts
 bot.command('start', startCommand);
@@ -104,6 +109,7 @@ bot.command('info', requireOwner, infoCommand);
 ```
 
 ### Command Handler Interface
+
 ```typescript
 type CommandHandler = (ctx: BotContext) => Promise<void>;
 
@@ -117,16 +123,18 @@ interface BotContext extends Context {
 ## Callback Query Handling
 
 ### Callback Data Format
+
 ```typescript
 // Format: "action:subaction:id:params"
 // Examples:
-"menu:main"
-"settings:language:ru"
-"access:approve:123456"
-"page:2:search:telegram"
+'menu:main';
+'settings:language:ru';
+'access:approve:123456';
+'page:2:search:telegram';
 ```
 
 ### Callback Handler
+
 ```typescript
 bot.callbackQuery(/^menu:/, menuCallback);
 bot.callbackQuery(/^settings:/, settingsCallback);
@@ -136,6 +144,7 @@ bot.callbackQuery(/^access:/, accessCallback);
 ## Error Handling
 
 ### Error Response Format
+
 ```typescript
 interface ErrorResponse {
   ok: false;
@@ -145,16 +154,18 @@ interface ErrorResponse {
 ```
 
 ### Common Error Codes
-| Code | Description | Solution |
-|------|-------------|----------|
-| 400 | Bad Request | Check request format and parameters |
-| 401 | Unauthorized | Verify bot token |
-| 403 | Forbidden | Check bot permissions in chat |
-| 404 | Not Found | Verify chat/user exists |
-| 409 | Conflict | Webhook already set, unset first |
-| 429 | Too Many Requests | Implement rate limiting |
+
+| Code | Description       | Solution                            |
+| ---- | ----------------- | ----------------------------------- |
+| 400  | Bad Request       | Check request format and parameters |
+| 401  | Unauthorized      | Verify bot token                    |
+| 403  | Forbidden         | Check bot permissions in chat       |
+| 404  | Not Found         | Verify chat/user exists             |
+| 409  | Conflict          | Webhook already set, unset first    |
+| 429  | Too Many Requests | Implement rate limiting             |
 
 ### Error Handling Example
+
 ```typescript
 try {
   await ctx.reply('Hello!');
@@ -175,18 +186,20 @@ try {
 ## Rate Limiting
 
 ### Telegram API Limits
+
 - **Global**: 30 messages/second
 - **Per Chat**: 1 message/second
 - **Per Chat Burst**: 20 messages/minute
 - **Bulk Messages**: 50 messages/request
 
 ### Implementation
+
 ```typescript
 // Built-in rate limiter
 const limiter = createRateLimiter({
   windowMs: 1000,
   max: 30,
-  keyGenerator: (ctx) => ctx.from?.id || 'anonymous'
+  keyGenerator: (ctx) => ctx.from?.id || 'anonymous',
 });
 
 bot.use(limiter);
@@ -195,24 +208,25 @@ bot.use(limiter);
 ## Environment Variables
 
 ### Required Variables
+
 ```typescript
 interface Env {
   // Core
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_WEBHOOK_SECRET?: string;
   ENVIRONMENT: 'development' | 'staging' | 'production';
-  
+
   // Storage
   SESSIONS: KVNamespace;
   DB?: D1Database;
   CACHE?: DurableObjectNamespace;
-  
+
   // Features
   TIER?: 'free' | 'paid';
   SENTRY_DSN?: string;
   BOT_OWNER_IDS?: string;
   BOT_ADMIN_IDS?: string;
-  
+
   // AI Providers
   GEMINI_API_KEY?: string;
   OPENAI_API_KEY?: string;
@@ -222,6 +236,7 @@ interface Env {
 ```
 
 ### Validation with Zod
+
 ```typescript
 const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
@@ -234,6 +249,7 @@ const envSchema = z.object({
 ## Database Schema
 
 ### Users Table
+
 ```sql
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -248,6 +264,7 @@ CREATE TABLE users (
 ```
 
 ### Access Control Tables
+
 ```sql
 CREATE TABLE user_roles (
   user_id INTEGER PRIMARY KEY,
@@ -271,6 +288,7 @@ CREATE TABLE access_requests (
 ## Session Management
 
 ### Session Structure
+
 ```typescript
 interface SessionData {
   userId?: number;
@@ -283,12 +301,13 @@ interface SessionData {
 ```
 
 ### KV Operations
+
 ```typescript
 // Save session
 await ctx.env.SESSIONS.put(
   `session:${userId}`,
   JSON.stringify(sessionData),
-  { expirationTtl: 86400 } // 24 hours
+  { expirationTtl: 86400 }, // 24 hours
 );
 
 // Load session
@@ -302,6 +321,7 @@ await ctx.env.SESSIONS.delete(`session:${userId}`);
 ## Webhook Security
 
 ### Validation Method
+
 ```typescript
 function validateWebhookSecret(request: Request, secret: string): boolean {
   const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
@@ -310,6 +330,7 @@ function validateWebhookSecret(request: Request, secret: string): boolean {
 ```
 
 ### IP Whitelisting (Optional)
+
 ```typescript
 const TELEGRAM_IPS = [
   '149.154.160.0/20',
@@ -318,13 +339,14 @@ const TELEGRAM_IPS = [
 ];
 
 function validateTelegramIP(ip: string): boolean {
-  return TELEGRAM_IPS.some(range => isInRange(ip, range));
+  return TELEGRAM_IPS.some((range) => isInRange(ip, range));
 }
 ```
 
 ## Testing Webhooks
 
 ### Local Development
+
 ```bash
 # Wrangler provides a tunnel
 npm run dev
@@ -334,6 +356,7 @@ npm run dev
 ```
 
 ### Manual Testing
+
 ```bash
 # Send test update
 curl -X POST http://localhost:8787/webhook \
@@ -363,4 +386,4 @@ curl -X POST http://localhost:8787/webhook \
 
 ---
 
-*For the complete Telegram Bot API documentation, visit [core.telegram.org/bots/api](https://core.telegram.org/bots/api)*
+_For the complete Telegram Bot API documentation, visit [core.telegram.org/bots/api](https://core.telegram.org/bots/api)_

@@ -7,14 +7,14 @@ graph TB
     subgraph "Telegram"
         T[Telegram API]
     end
-    
+
     subgraph "Cloudflare Edge Network"
         W[Workers Runtime]
         KV[(KV Storage)]
         D1[(D1 Database)]
         DO[Durable Objects]
     end
-    
+
     subgraph "Bot Application"
         WH[Webhook Handler]
         TA[Telegram Adapter]
@@ -23,12 +23,12 @@ graph TB
         CB[Callback Handler]
         AI[AI Service]
     end
-    
+
     subgraph "External Services"
         S[Sentry]
         G[Gemini/OpenAI]
     end
-    
+
     T -->|Webhook| W
     W --> WH
     WH --> TA
@@ -46,32 +46,38 @@ graph TB
 ## 🛠️ Technology Stack
 
 ### Core Runtime
+
 - **Cloudflare Workers** - V8 isolates for edge computing
 - **TypeScript 5.x** - Type-safe development with strict mode
 - **Hono 4.x** - Ultra-fast web framework optimized for edge
 
 ### Bot Framework
+
 - **grammY 1.x** - Modern Telegram Bot API framework
 - **grammY Plugins** - Conversations, menus, and more
 
 ### Storage Solutions
+
 - **KV Namespace** - Key-value storage for sessions and caching
 - **D1 Database** - SQLite at the edge for structured data
 - **Durable Objects** - Stateful coordination (optional)
 
 ### Development Tools
+
 - **Wrangler 3.x** - Cloudflare Workers CLI
 - **Vitest** - Fast unit testing framework
 - **ESLint 9** - Modern linting with flat config
 - **Prettier** - Code formatting
 
 ### Monitoring & AI
+
 - **Sentry** - Error tracking and performance monitoring
 - **Multi-Provider AI** - Gemini, OpenAI, xAI, DeepSeek, Cloudflare AI
 
 ## ⚡ Quick Start (3 Minutes)
 
 ### 1. Clone and Install (30 seconds)
+
 ```bash
 git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git my-bot
 cd my-bot
@@ -79,6 +85,7 @@ npm install
 ```
 
 ### 2. Configure Environment (1 minute)
+
 ```bash
 # Copy example configuration
 cp .env.example .dev.vars
@@ -88,11 +95,13 @@ TELEGRAM_BOT_TOKEN=your_bot_token_here
 ```
 
 ### 3. Run Locally (30 seconds)
+
 ```bash
 npm run dev
 ```
 
 ### 4. Set Webhook (1 minute)
+
 ```bash
 # After getting your worker URL from wrangler
 curl "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook?url=https://<YOUR_WORKER>.workers.dev/webhook"
@@ -125,26 +134,34 @@ That's it! Your bot is running locally. 🎉
 ## 🎯 Key Concepts
 
 ### 1. Edge-First Architecture
+
 The bot runs on Cloudflare's global edge network, providing:
+
 - Low latency responses worldwide
 - Automatic scaling
 - Built-in DDoS protection
 - Zero cold starts in most regions
 
 ### 2. Webhook-Based Processing
+
 Unlike polling bots, this wireframe uses webhooks for:
+
 - Real-time message processing
 - Efficient resource usage
 - No wasted API calls
 - Immediate response to users
 
 ### 3. Tier-Aware Optimization
+
 The wireframe automatically adapts to your Cloudflare plan:
+
 - **Free Tier**: Lightweight adapter, essential features (10ms CPU)
 - **Paid Tier**: Full features, AI integration, advanced caching (30s CPU)
 
 ### 4. Type Safety Throughout
+
 Every component is fully typed:
+
 - Telegram API types
 - Environment variables
 - Database schemas
@@ -153,16 +170,19 @@ Every component is fully typed:
 ## 🔥 Performance Characteristics
 
 ### Response Times
+
 - **P50**: < 50ms globally
 - **P95**: < 150ms globally
 - **P99**: < 300ms globally
 
 ### Resource Usage
+
 - **Memory**: < 128MB per request
 - **CPU Time**: < 10ms (free) / < 30s (paid)
 - **Startup Time**: < 5ms (no cold starts)
 
 ### Scalability
+
 - **Requests**: Unlimited concurrent
 - **Geographic**: 200+ locations
 - **Rate Limits**: Respects Telegram limits automatically
@@ -184,4 +204,4 @@ Every component is fully typed:
 
 ---
 
-*Built with passion and care for the developer community.*
+_Built with passion and care for the developer community._

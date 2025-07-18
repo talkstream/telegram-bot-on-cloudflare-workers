@@ -5,18 +5,22 @@ Welcome to the comprehensive documentation for the Telegram Bot Cloudflare Worke
 ## 📋 Table of Contents
 
 ### Getting Started
+
 - [Project Overview](./PROJECT_OVERVIEW.md) - Architecture, technology stack, and quick start guide
 - [Development Guide](./DEVELOPMENT_GUIDE.md) - Local setup, testing, and debugging
 
 ### Architecture & Design
+
 - [Architecture Decisions](./ARCHITECTURE_DECISIONS.md) - Key design choices and rationale
 - [API Reference](./API_REFERENCE.md) - Telegram API types and webhook handling
 
 ### Deployment & Operations
+
 - [Deployment Guide](./DEPLOYMENT.md) - Production deployment and configuration
 - [Troubleshooting](./TROUBLESHOOTING.md) - Common issues and solutions
 
 ### Code Patterns
+
 - [Webhook Validation](./patterns/webhook-validation.js) - Secure webhook handling
 - [Error Handling](./patterns/error-handling.js) - Robust error management
 - [Command Router](./patterns/command-router.js) - Command dispatching pattern
@@ -61,4 +65,4 @@ Found an issue or want to improve the documentation? Please:
 
 ---
 
-*This documentation is maintained with the same care and passion as the code itself.*
+_This documentation is maintained with the same care and passion as the code itself._

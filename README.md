@@ -36,11 +36,12 @@ Every architectural decision here reflects a deep understanding of what develope
 If this wireframe resonates with your vision of what development tools should be, consider supporting its continued evolution:
 
 **Cryptocurrency:**
+
 - **TON**: `UQCASJtr_1FfSjcLW_mnx8WuKxT18fXEv5zHrfHhkrwQj2lT`
 - **USDT (BEP20)**: `0x16DD8C11BFF0D85D934789C25f77a1def24772F1`
 - **USDT (TRC20)**: `TR333FszR3b7crQR4mNufw56vRWxbTTTxS`
 
-*Your support is invested thoughtfully into making this project even better. Thank you for being part of this journey.*
+_Your support is invested thoughtfully into making this project even better. Thank you for being part of this journey._
 
 ---
 
@@ -672,24 +673,28 @@ Reusable patterns for common tasks:
 ## 🚀 Roadmap
 
 ### Phase 1: Core Enhancements (Days or Hours)
+
 - [ ] Plugin system for modular features
 - [ ] Database migrations toolkit
 - [ ] Advanced caching strategies
 - [ ] WebSocket support for real-time features
 
 ### Phase 2: Developer Tools (Days or Hours)
+
 - [ ] CLI tool for scaffolding commands
 - [ ] Visual bot flow designer
 - [ ] Automated performance profiler
 - [ ] Integration test framework
 
 ### Phase 3: Ecosystem (Days or Hours)
+
 - [ ] Plugin marketplace
 - [ ] Starter templates gallery
 - [ ] Community middleware
 - [ ] Video tutorials series
 
 ### Phase 4: Enterprise Features (Days or Hours)
+
 - [ ] Multi-tenant architecture
 - [ ] Advanced analytics dashboard
 - [ ] A/B testing framework

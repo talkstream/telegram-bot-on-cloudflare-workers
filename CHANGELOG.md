@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-07-18
+
+### Fixed
+
+- Documentation pattern files now include comprehensive headers explaining their purpose and referencing actual wireframe files
+- Fixed ESLint errors in documentation pattern files:
+  - Added proper function parameter prefixes for unused parameters
+  - Added mock implementations for Sentry (Toucan.js) integration examples
+  - Resolved undefined reference errors in command-router.js and webhook-validation.js
+- Applied consistent code formatting across all documentation files
+
+### Changed
+
+- Enhanced documentation patterns to better demonstrate actual wireframe implementation patterns
+- Pattern files now serve as working examples that reference the corresponding production code
+
 ## [1.1.0] - 2025-07-18
 
 ### Added

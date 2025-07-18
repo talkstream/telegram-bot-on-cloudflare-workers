@@ -3,6 +3,7 @@
 ## Prerequisites
 
 Before deploying, ensure you have:
+
 - ✅ Cloudflare account
 - ✅ Telegram bot token from [@BotFather](https://t.me/botfather)
 - ✅ All tests passing (`npm test`)
@@ -12,18 +13,21 @@ Before deploying, ensure you have:
 ## Deployment Environments
 
 ### Development (Local)
+
 - URL: `http://localhost:8787` (with tunnel)
 - Resources: Local KV, D1
 - Logging: Console output
 - Hot reload: Enabled
 
 ### Staging
+
 - URL: `https://bot-staging.<your-subdomain>.workers.dev`
 - Resources: Separate KV, D1 instances
 - Logging: Wrangler tail
 - Purpose: Pre-production testing
 
 ### Production
+
 - URL: `https://bot.<your-subdomain>.workers.dev`
 - Resources: Production KV, D1
 - Logging: Sentry + Wrangler tail
@@ -34,6 +38,7 @@ Before deploying, ensure you have:
 ### 1. Prepare Cloudflare Resources
 
 #### Create KV Namespaces
+
 ```bash
 # Production
 wrangler kv:namespace create "SESSIONS"
@@ -45,6 +50,7 @@ wrangler kv:namespace create "SESSIONS" --env staging
 ```
 
 #### Create D1 Databases
+
 ```bash
 # Production
 wrangler d1 create telegram-bot-db
@@ -56,6 +62,7 @@ wrangler d1 create telegram-bot-db-staging
 ```
 
 ### 2. Update wrangler.toml
+
 ```toml
 name = "telegram-bot"
 main = "src/index.ts"
@@ -91,6 +98,7 @@ database_id = "xxxx-xxxx-xxxx"
 ### 3. Set Secrets
 
 #### Required Secrets
+
 ```bash
 # Set for production
 wrangler secret put TELEGRAM_BOT_TOKEN --env production
@@ -102,6 +110,7 @@ wrangler secret put TELEGRAM_WEBHOOK_SECRET --env staging
 ```
 
 #### Optional Secrets
+
 ```bash
 # Production only
 wrangler secret put SENTRY_DSN --env production
@@ -185,12 +194,14 @@ npm run tail
 ### 2. Set GitHub Secrets
 
 In your repository settings:
+
 - `CLOUDFLARE_API_TOKEN`: Your API token
 - `CLOUDFLARE_ACCOUNT_ID`: Your account ID
 
 ### 3. GitHub Actions Workflow
 
 The included workflow (`.github/workflows/deploy.yml`) automatically:
+
 1. Runs tests on every push
 2. Deploys to staging on `develop` branch
 3. Deploys to production on `main` branch
@@ -251,6 +262,7 @@ wrangler tail --env production --search "user:123456"
 ### Sentry Dashboard
 
 Monitor errors and performance:
+
 1. Go to [Sentry](https://sentry.io)
 2. Select your project
 3. View issues, performance, and user feedback
@@ -278,6 +290,7 @@ curl https://bot.yourdomain.com/health
 ### Automated Monitoring
 
 Set up uptime monitoring:
+
 1. Use Cloudflare Analytics
 2. Set up external monitors (UptimeRobot, Pingdom)
 3. Configure alerts for downtime
@@ -297,18 +310,21 @@ wrangler rollback [deployment-id]
 ### Emergency Procedures
 
 1. **Immediate Stop**:
+
 ```bash
 # Remove webhook
 curl "https://api.telegram.org/bot<TOKEN>/deleteWebhook"
 ```
 
 2. **Revert Code**:
+
 ```bash
 git revert HEAD
 git push origin main
 ```
 
 3. **Deploy Previous Version**:
+
 ```bash
 git checkout <previous-tag>
 npm run deploy
@@ -317,6 +333,7 @@ npm run deploy
 ## Cost Optimization
 
 ### Free Tier Limits
+
 - 100,000 requests/day
 - 10ms CPU time per request
 - 1MB worker size
@@ -324,21 +341,24 @@ npm run deploy
 ### Optimization Tips
 
 1. **Use Lightweight Adapter**:
+
 ```toml
 [env.production]
 vars = { TIER = "free" }
 ```
 
 2. **Enable Caching**:
+
 ```typescript
 return new Response(data, {
   headers: {
-    'Cache-Control': 'public, max-age=300'
-  }
+    'Cache-Control': 'public, max-age=300',
+  },
 });
 ```
 
 3. **Minimize Dependencies**:
+
 ```bash
 # Check bundle size
 wrangler deploy --dry-run --outdir dist
@@ -361,6 +381,7 @@ ls -la dist/
 ### Common Issues
 
 #### "Script too large"
+
 ```bash
 # Check size
 npm run build
@@ -368,12 +389,14 @@ npm run build
 ```
 
 #### "KV namespace not found"
+
 ```bash
 # Verify binding in wrangler.toml
 # Check namespace ID is correct
 ```
 
 #### "Webhook not working"
+
 ```bash
 # Check webhook info
 curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
@@ -383,17 +406,20 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ## Post-Deployment
 
 ### 1. Announce to Users
+
 ```typescript
 // Send announcement
 await notifyUsers('🎉 Bot updated with new features!');
 ```
 
 ### 2. Monitor Metrics
+
 - Response times
 - Error rates
 - User engagement
 
 ### 3. Gather Feedback
+
 - User reports
 - Performance data
 - Feature requests
@@ -411,4 +437,4 @@ await notifyUsers('🎉 Bot updated with new features!');
 
 ---
 
-*For issues during deployment, see the [Troubleshooting Guide](./TROUBLESHOOTING.md).*
+_For issues during deployment, see the [Troubleshooting Guide](./TROUBLESHOOTING.md)._

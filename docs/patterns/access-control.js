@@ -1,6 +1,6 @@
 /**
  * Access Control Pattern
- * 
+ *
  * Role-based access control (RBAC) implementation for Telegram bots
  * with hierarchical permissions, access requests, and audit logging.
  */
@@ -8,9 +8,9 @@
 // Role Hierarchy
 export const ROLES = {
   OWNER: 'owner',
-  ADMIN: 'admin', 
+  ADMIN: 'admin',
   USER: 'user',
-  GUEST: 'guest'
+  GUEST: 'guest',
 };
 
 // Role hierarchy (higher roles inherit lower role permissions)
@@ -18,7 +18,7 @@ export const ROLE_HIERARCHY = {
   [ROLES.OWNER]: [ROLES.ADMIN, ROLES.USER, ROLES.GUEST],
   [ROLES.ADMIN]: [ROLES.USER, ROLES.GUEST],
   [ROLES.USER]: [ROLES.GUEST],
-  [ROLES.GUEST]: []
+  [ROLES.GUEST]: [],
 };
 
 // Access Control Service
@@ -59,12 +59,17 @@ export class AccessControlService {
 
   // Get user's role from database
   async getUserRole(userId) {
-    const result = await this.db.prepare(`
+    const result = await this.db
+      .prepare(
+        `
       SELECT r.role 
       FROM users u
       JOIN user_roles r ON u.id = r.user_id
       WHERE u.telegram_id = ?
-    `).bind(userId).first();
+    `,
+      )
+      .bind(userId)
+      .first();
 
     return result?.role;
   }
@@ -72,7 +77,7 @@ export class AccessControlService {
   // Check if role includes another role (hierarchy)
   roleIncludes(userRole, requiredRole) {
     if (userRole === requiredRole) return true;
-    
+
     const hierarchy = ROLE_HIERARCHY[userRole] || [];
     return hierarchy.includes(requiredRole);
   }
@@ -81,7 +86,7 @@ export class AccessControlService {
   async grantRole(userId, role, grantedBy) {
     // Get or create user
     const user = await this.getOrCreateUser(userId);
-    
+
     // Check if already has role
     const existingRole = await this.getUserRole(userId);
     if (existingRole === role) {
@@ -89,10 +94,15 @@ export class AccessControlService {
     }
 
     // Insert or update role
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       INSERT OR REPLACE INTO user_roles (user_id, role, granted_by, granted_at)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-    `).bind(user.id, role, grantedBy).run();
+    `,
+      )
+      .bind(user.id, role, grantedBy)
+      .run();
 
     // Clear cache
     await this.cache.delete(`role:${userId}`);
@@ -116,9 +126,14 @@ export class AccessControlService {
     }
 
     // Delete role
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       DELETE FROM user_roles WHERE user_id = ?
-    `).bind(user.id).run();
+    `,
+      )
+      .bind(user.id)
+      .run();
 
     // Clear cache
     await this.cache.delete(`role:${userId}`);
@@ -138,34 +153,37 @@ export class AccessControlService {
 
   // Helper methods
   async getOrCreateUser(telegramId) {
-    let user = await this.db.prepare(
-      'SELECT * FROM users WHERE telegram_id = ?'
-    ).bind(telegramId).first();
+    let user = await this.db
+      .prepare('SELECT * FROM users WHERE telegram_id = ?')
+      .bind(telegramId)
+      .first();
 
     if (!user) {
-      await this.db.prepare(
-        'INSERT INTO users (telegram_id) VALUES (?)'
-      ).bind(telegramId).run();
-      
-      user = await this.db.prepare(
-        'SELECT * FROM users WHERE telegram_id = ?'
-      ).bind(telegramId).first();
+      await this.db.prepare('INSERT INTO users (telegram_id) VALUES (?)').bind(telegramId).run();
+
+      user = await this.db
+        .prepare('SELECT * FROM users WHERE telegram_id = ?')
+        .bind(telegramId)
+        .first();
     }
 
     return user;
   }
 
   async getUser(telegramId) {
-    return this.db.prepare(
-      'SELECT * FROM users WHERE telegram_id = ?'
-    ).bind(telegramId).first();
+    return this.db.prepare('SELECT * FROM users WHERE telegram_id = ?').bind(telegramId).first();
   }
 
   async logAudit(userId, action, details) {
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       INSERT INTO audit_logs (user_id, action, details, created_at)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-    `).bind(userId, action, JSON.stringify(details)).run();
+    `,
+      )
+      .bind(userId, action, JSON.stringify(details))
+      .run();
   }
 }
 
@@ -196,28 +214,30 @@ export function createAccessMiddleware(accessService) {
 
       const hasPermission = await accessService.hasPermission(userId, permission);
       if (!hasPermission) {
-        return ctx.reply('🚫 You don\'t have permission to perform this action');
+        return ctx.reply("🚫 You don't have permission to perform this action");
       }
 
       await next();
     },
 
     // Require any of the roles
-    requireAnyRole: (...roles) => async (ctx, next) => {
-      const userId = ctx.from?.id;
-      if (!userId) {
-        return ctx.reply('❌ Unable to identify user');
-      }
-
-      for (const role of roles) {
-        if (await accessService.hasRole(userId, role)) {
-          await next();
-          return;
+    requireAnyRole:
+      (...roles) =>
+      async (ctx, next) => {
+        const userId = ctx.from?.id;
+        if (!userId) {
+          return ctx.reply('❌ Unable to identify user');
         }
-      }
 
-      return ctx.reply('🚫 You don\'t have the required role for this command');
-    }
+        for (const role of roles) {
+          if (await accessService.hasRole(userId, role)) {
+            await next();
+            return;
+          }
+        }
+
+        return ctx.reply("🚫 You don't have the required role for this command");
+      },
   };
 }
 
@@ -231,42 +251,63 @@ export class AccessRequestManager {
   // Create access request
   async createRequest(userId, userData) {
     // Check if already has access
-    const existingRole = await this.db.prepare(`
+    const existingRole = await this.db
+      .prepare(
+        `
       SELECT r.role FROM users u
       JOIN user_roles r ON u.id = r.user_id
       WHERE u.telegram_id = ?
-    `).bind(userId).first();
+    `,
+      )
+      .bind(userId)
+      .first();
 
     if (existingRole) {
       return { success: false, reason: 'already_has_access' };
     }
 
     // Check for pending request
-    const pendingRequest = await this.db.prepare(`
+    const pendingRequest = await this.db
+      .prepare(
+        `
       SELECT * FROM access_requests
       WHERE user_id = ? AND status = 'pending'
-    `).bind(userId).first();
+    `,
+      )
+      .bind(userId)
+      .first();
 
     if (pendingRequest) {
       return { success: false, reason: 'request_exists' };
     }
 
     // Create user if not exists
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       INSERT OR IGNORE INTO users (telegram_id, username, first_name, last_name)
       VALUES (?, ?, ?, ?)
-    `).bind(userId, userData.username, userData.first_name, userData.last_name).run();
+    `,
+      )
+      .bind(userId, userData.username, userData.first_name, userData.last_name)
+      .run();
 
     // Get user ID
-    const user = await this.db.prepare(
-      'SELECT id FROM users WHERE telegram_id = ?'
-    ).bind(userId).first();
+    const user = await this.db
+      .prepare('SELECT id FROM users WHERE telegram_id = ?')
+      .bind(userId)
+      .first();
 
     // Create request
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       INSERT INTO access_requests (user_id, status, requested_at)
       VALUES (?, 'pending', CURRENT_TIMESTAMP)
-    `).bind(user.id).run();
+    `,
+      )
+      .bind(user.id)
+      .run();
 
     // Notify admins
     await this.notifyAdmins(userId, userData);
@@ -276,31 +317,43 @@ export class AccessRequestManager {
 
   // Approve access request
   async approveRequest(requestId, approvedBy, role = ROLES.USER) {
-    const request = await this.db.prepare(
-      'SELECT * FROM access_requests WHERE id = ?'
-    ).bind(requestId).first();
+    const request = await this.db
+      .prepare('SELECT * FROM access_requests WHERE id = ?')
+      .bind(requestId)
+      .first();
 
     if (!request || request.status !== 'pending') {
       return { success: false, reason: 'invalid_request' };
     }
 
     // Update request
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       UPDATE access_requests 
       SET status = 'approved', resolved_at = CURRENT_TIMESTAMP, resolved_by = ?
       WHERE id = ?
-    `).bind(approvedBy, requestId).run();
+    `,
+      )
+      .bind(approvedBy, requestId)
+      .run();
 
     // Get user info
-    const user = await this.db.prepare(
-      'SELECT * FROM users WHERE id = ?'
-    ).bind(request.user_id).first();
+    const user = await this.db
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .bind(request.user_id)
+      .first();
 
     // Grant role
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       INSERT INTO user_roles (user_id, role, granted_by, granted_at)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-    `).bind(request.user_id, role, approvedBy).run();
+    `,
+      )
+      .bind(request.user_id, role, approvedBy)
+      .run();
 
     // Notify user
     await this.notifyUser(user.telegram_id, 'approved', role);
@@ -310,25 +363,32 @@ export class AccessRequestManager {
 
   // Reject access request
   async rejectRequest(requestId, rejectedBy, reason) {
-    const request = await this.db.prepare(
-      'SELECT * FROM access_requests WHERE id = ?'
-    ).bind(requestId).first();
+    const request = await this.db
+      .prepare('SELECT * FROM access_requests WHERE id = ?')
+      .bind(requestId)
+      .first();
 
     if (!request || request.status !== 'pending') {
       return { success: false, reason: 'invalid_request' };
     }
 
     // Update request
-    await this.db.prepare(`
+    await this.db
+      .prepare(
+        `
       UPDATE access_requests 
       SET status = 'rejected', resolved_at = CURRENT_TIMESTAMP, resolved_by = ?, rejection_reason = ?
       WHERE id = ?
-    `).bind(rejectedBy, reason, requestId).run();
+    `,
+      )
+      .bind(rejectedBy, reason, requestId)
+      .run();
 
     // Get user info
-    const user = await this.db.prepare(
-      'SELECT * FROM users WHERE id = ?'
-    ).bind(request.user_id).first();
+    const user = await this.db
+      .prepare('SELECT * FROM users WHERE id = ?')
+      .bind(request.user_id)
+      .first();
 
     // Notify user
     await this.notifyUser(user.telegram_id, 'rejected', null, reason);
@@ -338,15 +398,19 @@ export class AccessRequestManager {
 
   // Notify admins about new request
   async notifyAdmins(userId, userData) {
-    const admins = await this.db.prepare(`
+    const admins = await this.db
+      .prepare(
+        `
       SELECT u.telegram_id 
       FROM users u
       JOIN user_roles r ON u.id = r.user_id
       WHERE r.role IN ('admin', 'owner')
-    `).all();
+    `,
+      )
+      .all();
 
     const userInfo = userData.username ? `@${userData.username}` : userData.first_name;
-    
+
     for (const admin of admins.results) {
       try {
         await this.bot.api.sendMessage(
@@ -354,11 +418,9 @@ export class AccessRequestManager {
           `🔔 New access request from ${userInfo} (ID: ${userId})`,
           {
             reply_markup: {
-              inline_keyboard: [[
-                { text: '📋 View Requests', callback_data: 'admin:requests' }
-              ]]
-            }
-          }
+              inline_keyboard: [[{ text: '📋 View Requests', callback_data: 'admin:requests' }]],
+            },
+          },
         );
       } catch (error) {
         console.error(`Failed to notify admin ${admin.telegram_id}:`, error);
@@ -370,7 +432,7 @@ export class AccessRequestManager {
   async notifyUser(userId, status, role, reason) {
     const messages = {
       approved: `🎉 Your access request has been approved! You now have ${role} access.`,
-      rejected: `❌ Your access request has been rejected${reason ? `: ${reason}` : '.'}`
+      rejected: `❌ Your access request has been rejected${reason ? `: ${reason}` : '.'}`,
     };
 
     try {
@@ -389,22 +451,11 @@ export const DEFAULT_PERMISSIONS = {
     'view_logs',
     'change_settings',
     'use_debug',
-    'manage_bot'
+    'manage_bot',
   ],
-  [ROLES.ADMIN]: [
-    'manage_users',
-    'view_logs',
-    'change_settings',
-    'moderate_content'
-  ],
-  [ROLES.USER]: [
-    'use_commands',
-    'view_stats',
-    'use_features'
-  ],
-  [ROLES.GUEST]: [
-    'view_info'
-  ]
+  [ROLES.ADMIN]: ['manage_users', 'view_logs', 'change_settings', 'moderate_content'],
+  [ROLES.USER]: ['use_commands', 'view_stats', 'use_features'],
+  [ROLES.GUEST]: ['view_info'],
 };
 
 // Database Schema

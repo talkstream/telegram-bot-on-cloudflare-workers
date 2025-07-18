@@ -1,8 +1,22 @@
 /**
  * Command Router Pattern
- * 
- * Flexible command routing system for Telegram bots with support for
- * subcommands, aliases, permissions, and dynamic loading.
+ *
+ * This pattern demonstrates the flexible command routing system used in the
+ * Telegram Bot Cloudflare Workers Wireframe. It shows how to organize commands
+ * with support for subcommands, aliases, permissions, and dynamic loading.
+ *
+ * Files in wireframe using this pattern:
+ * - /src/adapters/telegram/commands/index.ts - Command registration
+ * - /src/core/telegram-adapter.ts - Command routing implementation
+ * - /src/adapters/telegram/commands/owner/admin.ts - Subcommand example
+ * - /src/adapters/telegram/commands/owner/debug.ts - Permission-based commands
+ *
+ * Key features demonstrated:
+ * 1. Modular command organization
+ * 2. Subcommand support (e.g., /admin add, /admin remove)
+ * 3. Permission-based access control
+ * 4. Command aliases for user convenience
+ * 5. Dynamic command loading and registration
  */
 
 // Command Registry
@@ -16,14 +30,14 @@ export class CommandRouter {
       prefix: '/',
       caseSensitive: false,
       defaultCommand: 'help',
-      ...options
+      ...options,
     };
   }
 
   // Register a command
   register(command, handler, options = {}) {
     const cmd = this.normalizeCommand(command);
-    
+
     this.commands.set(cmd, {
       handler,
       description: options.description || '',
@@ -32,19 +46,19 @@ export class CommandRouter {
       permissions: options.permissions || [],
       hidden: options.hidden || false,
       category: options.category || 'general',
-      middleware: options.middleware || []
+      middleware: options.middleware || [],
     });
-    
+
     // Register aliases
     if (options.aliases) {
-      options.aliases.forEach(alias => {
+      options.aliases.forEach((alias) => {
         this.aliases.set(this.normalizeCommand(alias), cmd);
       });
     }
-    
+
     // Register with bot
     this.bot.command(command, ...this.middleware, ...options.middleware, handler);
-    
+
     return this;
   }
 
@@ -57,7 +71,7 @@ export class CommandRouter {
         this.register(name, config.handler, config);
       }
     });
-    
+
     return this;
   }
 
@@ -76,7 +90,7 @@ export class CommandRouter {
   // List all commands
   list(options = {}) {
     const { category, includeHidden = false } = options;
-    
+
     return Array.from(this.commands.entries())
       .filter(([_, cmd]) => {
         if (!includeHidden && cmd.hidden) return false;
@@ -85,7 +99,7 @@ export class CommandRouter {
       })
       .map(([name, cmd]) => ({
         name,
-        ...cmd
+        ...cmd,
       }));
   }
 
@@ -93,26 +107,26 @@ export class CommandRouter {
   generateHelp(ctx, category = null) {
     const commands = this.list({ category });
     const categories = {};
-    
+
     // Group by category
-    commands.forEach(cmd => {
+    commands.forEach((cmd) => {
       if (!categories[cmd.category]) {
         categories[cmd.category] = [];
       }
       categories[cmd.category].push(cmd);
     });
-    
+
     // Build help text
     let help = '📚 **Available Commands**\n\n';
-    
+
     Object.entries(categories).forEach(([cat, cmds]) => {
       help += `**${this.formatCategory(cat)}**\n`;
-      cmds.forEach(cmd => {
+      cmds.forEach((cmd) => {
         help += `• \`${cmd.usage}\` - ${cmd.description}\n`;
       });
       help += '\n';
     });
-    
+
     return help;
   }
 
@@ -144,7 +158,7 @@ export class SubcommandRouter {
   on(subcommand, handler, options = {}) {
     this.subcommands.set(subcommand, {
       handler,
-      ...options
+      ...options,
     });
     return this;
   }
@@ -154,24 +168,24 @@ export class SubcommandRouter {
     return async (ctx) => {
       const args = ctx.match?.trim().split(/\s+/) || [];
       const subcommand = args[0] || this.defaultSubcommand;
-      
+
       const sub = this.subcommands.get(subcommand);
       if (!sub) {
         return this.handleUnknownSubcommand(ctx, subcommand);
       }
-      
+
       // Check permissions
       if (sub.permissions) {
         const hasPermission = await this.checkPermissions(ctx, sub.permissions);
         if (!hasPermission) {
-          return ctx.reply('🚫 You don\'t have permission to use this command.');
+          return ctx.reply("🚫 You don't have permission to use this command.");
         }
       }
-      
+
       // Update context with parsed arguments
       ctx.args = args.slice(1);
       ctx.subcommand = subcommand;
-      
+
       // Execute handler
       return sub.handler(ctx);
     };
@@ -180,14 +194,14 @@ export class SubcommandRouter {
   // Handle unknown subcommand
   async handleUnknownSubcommand(ctx, subcommand) {
     const available = Array.from(this.subcommands.keys())
-      .filter(key => !this.subcommands.get(key).hidden)
+      .filter((key) => !this.subcommands.get(key).hidden)
       .join(', ');
-    
+
     return ctx.reply(
       `❓ Unknown subcommand: ${subcommand}\n\n` +
-      `Available subcommands: ${available}\n` +
-      `Use \`/${this.name} help\` for more information.`,
-      { parse_mode: 'Markdown' }
+        `Available subcommands: ${available}\n` +
+        `Use \`/${this.name} help\` for more information.`,
+      { parse_mode: 'Markdown' },
     );
   }
 
@@ -205,7 +219,7 @@ export class SubcommandRouter {
   // Generate help for subcommands
   generateHelp() {
     let help = `📋 **${this.name} commands**\n\n`;
-    
+
     this.subcommands.forEach((sub, name) => {
       if (!sub.hidden) {
         help += `• \`/${this.name} ${name}\``;
@@ -214,19 +228,31 @@ export class SubcommandRouter {
         help += '\n';
       }
     });
-    
+
     return help;
   }
 }
 
 // Dynamic Command Loading
 export async function loadCommands(router, directory) {
+  // Implementation would need to include file system operations
+  // This is a conceptual example
+  const getCommandFiles = async (_dir) => {
+    // Return array of command file paths
+    return [];
+  };
+
+  const getCommandName = (filePath) => {
+    // Extract command name from file path
+    return filePath.split('/').pop().replace('.js', '');
+  };
+
   const commandFiles = await getCommandFiles(directory);
-  
+
   for (const file of commandFiles) {
     const module = await import(file);
     const commandName = getCommandName(file);
-    
+
     if (module.default) {
       router.register(commandName, module.default, module.config || {});
     } else if (module.command) {
@@ -238,44 +264,46 @@ export async function loadCommands(router, directory) {
 // Permission Middleware
 export const permissions = {
   owner: (ctx) => {
-    const ownerIds = ctx.env.BOT_OWNER_IDS?.split(',').map(id => parseInt(id)) || [];
+    const ownerIds = ctx.env.BOT_OWNER_IDS?.split(',').map((id) => parseInt(id)) || [];
     return ownerIds.includes(ctx.from?.id);
   },
-  
+
   admin: (ctx) => {
-    const adminIds = ctx.env.BOT_ADMIN_IDS?.split(',').map(id => parseInt(id)) || [];
-    const ownerIds = ctx.env.BOT_OWNER_IDS?.split(',').map(id => parseInt(id)) || [];
+    const adminIds = ctx.env.BOT_ADMIN_IDS?.split(',').map((id) => parseInt(id)) || [];
+    const ownerIds = ctx.env.BOT_OWNER_IDS?.split(',').map((id) => parseInt(id)) || [];
     return [...ownerIds, ...adminIds].includes(ctx.from?.id);
   },
-  
+
   user: async (ctx) => {
     // Check if user has access
     if (!ctx.env.DB) return true; // No DB, allow all
-    
+
     const result = await ctx.env.DB.prepare(
-      'SELECT role FROM user_roles WHERE user_id = (SELECT id FROM users WHERE telegram_id = ?)'
-    ).bind(ctx.from?.id).first();
-    
+      'SELECT role FROM user_roles WHERE user_id = (SELECT id FROM users WHERE telegram_id = ?)',
+    )
+      .bind(ctx.from?.id)
+      .first();
+
     return result !== null;
   },
-  
+
   private: (ctx) => ctx.chat?.type === 'private',
-  
+
   group: (ctx) => ['group', 'supergroup'].includes(ctx.chat?.type),
-  
-  custom: (checkFn) => checkFn
+
+  custom: (checkFn) => checkFn,
 };
 
 // Command Parsing Utilities
 export function parseCommand(text) {
   const match = text.match(/^\/([^\s@]+)(?:@(\S+))?\s*(.*)?$/);
   if (!match) return null;
-  
+
   return {
     command: match[1],
     botUsername: match[2],
     args: match[3]?.trim() || '',
-    argsArray: match[3]?.trim().split(/\s+/).filter(Boolean) || []
+    argsArray: match[3]?.trim().split(/\s+/).filter(Boolean) || [],
   };
 }
 
@@ -300,14 +328,14 @@ export class ArgumentParser {
   flags() {
     const flags = {};
     const positional = [];
-    
+
     for (let i = 0; i < this.args.length; i++) {
       const arg = this.args[i];
-      
+
       if (arg.startsWith('--')) {
         const key = arg.slice(2);
         const next = this.args[i + 1];
-        
+
         if (next && !next.startsWith('-')) {
           flags[key] = next;
           i++;
@@ -316,14 +344,14 @@ export class ArgumentParser {
         }
       } else if (arg.startsWith('-')) {
         const chars = arg.slice(1).split('');
-        chars.forEach(char => {
+        chars.forEach((char) => {
           flags[char] = true;
         });
       } else {
         positional.push(arg);
       }
     }
-    
+
     return { flags, positional };
   }
 }
