@@ -21,7 +21,7 @@ export const batchExampleCommand: CommandHandler = async (ctx) => {
     }
 
     const chatId = ctx.chat?.id;
-    
+
     if (!chatId) {
       await ctx.reply('❌ Unable to identify chat');
       return;
@@ -35,25 +35,25 @@ export const batchExampleCommand: CommandHandler = async (ctx) => {
       ctx.batcher.batchRequest('sendMessage', {
         chat_id: chatId,
         text: '📦 Message 1: This is sent via the batcher!',
-      })
+      }),
     );
 
     messagePromises.push(
       ctx.batcher.batchRequest('sendMessage', {
         chat_id: chatId,
         text: '🚀 Message 2: Multiple messages sent efficiently!',
-      })
+      }),
     );
 
     messagePromises.push(
       ctx.batcher.batchRequest('sendMessage', {
         chat_id: chatId,
         text: '⚡ Message 3: Great for free tier performance!',
-      })
+      }),
     );
 
     // Wait for all messages to be sent
-    const results = await Promise.all(messagePromises) as Array<{ message_id: number }>;
+    const results = (await Promise.all(messagePromises)) as Array<{ message_id: number }>;
 
     logger.info('Batch messages sent', {
       userId,
@@ -64,20 +64,21 @@ export const batchExampleCommand: CommandHandler = async (ctx) => {
     // Send a final message with statistics
     await ctx.reply(
       `✅ Successfully sent ${results.length} batched messages!\n\n` +
-      `This technique improves performance by:\n` +
-      `• Reducing overhead for multiple API calls\n` +
-      `• Batching requests within time windows\n` +
-      `• Essential for free tier's 10ms CPU limit`
+        `This technique improves performance by:\n` +
+        `• Reducing overhead for multiple API calls\n` +
+        `• Batching requests within time windows\n` +
+        `• Essential for free tier's 10ms CPU limit`,
     );
 
     // Example 2: Delete messages after a delay (demonstrating cleanup)
     setTimeout(async () => {
       try {
-        const deletePromises = results.map((result) =>
-          ctx.batcher?.batchRequest('deleteMessage', {
-            chat_id: chatId,
-            message_id: result.message_id,
-          }) ?? Promise.reject(new Error('Batcher not available'))
+        const deletePromises = results.map(
+          (result) =>
+            ctx.batcher?.batchRequest('deleteMessage', {
+              chat_id: chatId,
+              message_id: result.message_id,
+            }) ?? Promise.reject(new Error('Batcher not available')),
         );
 
         await Promise.all(deletePromises);
@@ -86,7 +87,6 @@ export const batchExampleCommand: CommandHandler = async (ctx) => {
         logger.error('Error deleting batch messages', { error, userId });
       }
     }, 5000); // Delete after 5 seconds
-
   } catch (error) {
     logger.error('Error in batch example command', { error, userId });
     await ctx.reply('❌ An error occurred while demonstrating batching.');

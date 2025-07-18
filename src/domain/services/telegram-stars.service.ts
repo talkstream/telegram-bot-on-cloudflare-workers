@@ -29,7 +29,7 @@ export class TelegramStarsService {
     });
 
     const timeouts = getTimeoutConfig(this.tier);
-    
+
     const invoiceLink = await withTimeout(
       this.api.sendInvoice({
         chat_id: telegramId,
@@ -47,7 +47,7 @@ export class TelegramStarsService {
       {
         timeoutMs: timeouts.api,
         operation: 'Telegram sendInvoice',
-      }
+      },
     );
 
     // For now, assume the result is the invoice link

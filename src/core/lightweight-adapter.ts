@@ -1,6 +1,6 @@
 /**
  * Lightweight Adapter for Free Tier
- * 
+ *
  * This adapter provides a minimal bot configuration optimized for
  * Cloudflare Workers' free tier with its 10ms CPU time limit.
  */
@@ -53,10 +53,10 @@ export class LightweightAdapter {
     // 1. Basic context setup (no heavy services)
     this.bot.use(async (ctx, next) => {
       ctx.env = env;
-      
+
       // Minimal i18n - just English
       ctx.i18n = (key: string) => key;
-      
+
       await next();
     });
 
@@ -89,9 +89,9 @@ export class LightweightAdapter {
     this.bot.command('help', async (ctx) => {
       await ctx.reply(
         '📋 Available commands:\n' +
-        '/start - Start the bot\n' +
-        '/help - Show this help\n' +
-        '/status - Check bot status'
+          '/start - Start the bot\n' +
+          '/help - Show this help\n' +
+          '/status - Check bot status',
       );
     });
 
@@ -110,21 +110,17 @@ export class LightweightAdapter {
    */
   private async initializeFullMode(env: Env): Promise<void> {
     // Lazy load heavy dependencies
-    const [
-      { SessionService },
-      { GeminiService },
-      { getMessage },
-      { batcherMiddleware },
-    ] = await Promise.all([
-      import('@/services/session-service'),
-      import('@/services/gemini-service'),
-      import('@/lib/i18n'),
-      import('@/lib/telegram-batcher'),
-    ]);
+    const [{ SessionService }, { GeminiService }, { getMessage }, { batcherMiddleware }] =
+      await Promise.all([
+        import('@/services/session-service'),
+        import('@/services/gemini-service'),
+        import('@/lib/i18n'),
+        import('@/lib/telegram-batcher'),
+      ]);
 
     // Initialize services
     const sessionService = new SessionService(env.SESSIONS);
-    const geminiService = this.config.features.aiEnabled 
+    const geminiService = this.config.features.aiEnabled
       ? new GeminiService(env.GEMINI_API_KEY, 'paid')
       : null;
 
@@ -151,11 +147,13 @@ export class LightweightAdapter {
 
     // Add request batching for better performance
     if (this.config.features.requestBatching) {
-      this.bot.use(batcherMiddleware({
-        maxBatchSize: this.config.performance.maxBatchSize,
-        batchIntervalMs: this.config.performance.batchIntervalMs,
-        timeoutMs: this.config.performance.requestTimeoutMs,
-      }));
+      this.bot.use(
+        batcherMiddleware({
+          maxBatchSize: this.config.performance.maxBatchSize,
+          batchIntervalMs: this.config.performance.batchIntervalMs,
+          timeoutMs: this.config.performance.requestTimeoutMs,
+        }),
+      );
     }
 
     // Load command handlers dynamically
@@ -194,7 +192,6 @@ export class LightweightAdapter {
       // Register callbacks
       this.bot.callbackQuery('menu:', callbackModules[0].mainMenuCallback);
       this.bot.callbackQuery('settings:', callbackModules[1].languageSettingCallback);
-
     } catch (error) {
       logger.error('Error loading command handlers', { error });
     }
@@ -221,6 +218,6 @@ export class LightweightAdapter {
 export async function createTierAwareBot(env: Env): Promise<Bot<BotContext>> {
   const tier = env.TIER || 'free';
   const adapter = new LightweightAdapter({ tier, env });
-  
+
   return adapter.initialize(env);
 }

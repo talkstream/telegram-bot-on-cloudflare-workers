@@ -12,10 +12,10 @@ import { MultiLayerCache } from '@/lib/multi-layer-cache';
 export function createBot(env: Env) {
   const bot = new Bot<BotContext>(env.TELEGRAM_BOT_TOKEN);
   const tier = env.TIER || 'free';
-  
+
   // Create multi-layer cache if cache namespace is available
   const multiLayerCache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
-  
+
   const sessionService = new SessionService(env.SESSIONS, tier, multiLayerCache);
   const geminiService = new GeminiService(env.GEMINI_API_KEY, tier);
   const paymentRepo = new PaymentRepository(env.DB);
@@ -40,11 +40,13 @@ export function createBot(env: Env) {
   });
 
   // Add request batching middleware for better performance
-  bot.use(batcherMiddleware({
-    maxBatchSize: env.TIER === 'free' ? 10 : 30,
-    batchIntervalMs: env.TIER === 'free' ? 5 : 25,
-    timeoutMs: env.TIER === 'free' ? 2000 : 5000,
-  }));
+  bot.use(
+    batcherMiddleware({
+      maxBatchSize: env.TIER === 'free' ? 10 : 30,
+      batchIntervalMs: env.TIER === 'free' ? 5 : 25,
+      timeoutMs: env.TIER === 'free' ? 2000 : 5000,
+    }),
+  );
 
   // Example commands and handlers (these would typically be moved to src/adapters/telegram/commands/ and callbacks/)
   bot.command('start', async (ctx) => {
@@ -71,7 +73,7 @@ export function createBot(env: Env) {
       await ctx.reply(ctx.i18n('gemini_not_available'));
       return;
     }
-    
+
     try {
       await ctx.reply(ctx.i18n('gemini_thinking'));
       const response = await ctx.services.gemini.generateText(prompt);

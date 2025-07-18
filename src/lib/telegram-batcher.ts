@@ -100,14 +100,14 @@ export class TelegramRequestBatcher {
             const result = await Promise.race([
               this.executeRequest(request),
               new Promise((_resolve, reject) =>
-                setTimeout(() => reject(new Error('Request timeout')), this.options.timeoutMs)
+                setTimeout(() => reject(new Error('Request timeout')), this.options.timeoutMs),
               ),
             ]);
             request.resolve(result);
           } catch (error) {
             request.reject(error);
           }
-        })
+        }),
       );
 
       const duration = Date.now() - startTime;
@@ -137,7 +137,9 @@ export class TelegramRequestBatcher {
   protected async executeRequest(_request: BatchedRequest): Promise<unknown> {
     // This is a placeholder - actual implementation would use Grammy's bot API
     // For now, we'll throw an error to indicate this needs to be connected
-    throw new Error('TelegramRequestBatcher.executeRequest must be implemented with Grammy bot instance');
+    throw new Error(
+      'TelegramRequestBatcher.executeRequest must be implemented with Grammy bot instance',
+    );
   }
 
   /**
@@ -170,7 +172,7 @@ export class TelegramRequestBatcher {
 class GrammyTelegramBatcher extends TelegramRequestBatcher {
   constructor(
     private ctx: BotContext,
-    options?: BatcherOptions
+    options?: BatcherOptions,
   ) {
     super(options);
   }
@@ -181,17 +183,37 @@ class GrammyTelegramBatcher extends TelegramRequestBatcher {
     // Map common methods to Grammy API calls
     switch (method) {
       case 'sendMessage':
-        return await this.ctx.api.sendMessage(params.chat_id as string | number, params.text as string, params);
+        return await this.ctx.api.sendMessage(
+          params.chat_id as string | number,
+          params.text as string,
+          params,
+        );
       case 'editMessageText':
-        return await this.ctx.api.editMessageText(params.chat_id as string | number, params.message_id as number, params.text as string, params);
+        return await this.ctx.api.editMessageText(
+          params.chat_id as string | number,
+          params.message_id as number,
+          params.text as string,
+          params,
+        );
       case 'answerCallbackQuery':
         return await this.ctx.api.answerCallbackQuery(params.callback_query_id as string, params);
       case 'deleteMessage':
-        return await this.ctx.api.deleteMessage(params.chat_id as string | number, params.message_id as number);
+        return await this.ctx.api.deleteMessage(
+          params.chat_id as string | number,
+          params.message_id as number,
+        );
       case 'sendPhoto':
-        return await this.ctx.api.sendPhoto(params.chat_id as string | number, params.photo as string, params);
+        return await this.ctx.api.sendPhoto(
+          params.chat_id as string | number,
+          params.photo as string,
+          params,
+        );
       case 'sendDocument':
-        return await this.ctx.api.sendDocument(params.chat_id as string | number, params.document as string, params);
+        return await this.ctx.api.sendDocument(
+          params.chat_id as string | number,
+          params.document as string,
+          params,
+        );
       default:
         // For other methods, we need to use the raw API
         // This is a limitation we need to handle properly
@@ -205,7 +227,7 @@ class GrammyTelegramBatcher extends TelegramRequestBatcher {
  */
 export function createTelegramBatcher(
   ctx: BotContext,
-  options?: BatcherOptions
+  options?: BatcherOptions,
 ): TelegramRequestBatcher {
   return new GrammyTelegramBatcher(ctx, options);
 }

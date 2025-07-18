@@ -48,6 +48,7 @@ This wireframe is designed with a modular and scalable architecture:
 ## Ready to Use
 
 This wireframe provides a solid foundation for building production-ready Telegram bots on Cloudflare Workers. The architecture is designed to scale with your project needs while maintaining code quality and performance.
+
 ## Remote MCP Servers Configuration (2025-01-18)
 
 Successfully configured Remote MCP servers for Claude Code:
@@ -69,12 +70,14 @@ Successfully configured Remote MCP servers for Claude Code:
    - Built on Cloudflare infrastructure
 
 ### Important Notes:
+
 - Use 'claude mcp add --transport sse' for SSE servers
 - Use 'claude mcp add --transport http' for HTTP servers
 - Authentication via '/mcp' command in Claude Code
 - No local installations required for remote servers
 
 ### Cleaned up:
+
 - Removed incorrect local MCP configurations
 - Deleted unnecessary npm packages from ~/.claude/local
 - Updated README files with correct Remote MCP URLs

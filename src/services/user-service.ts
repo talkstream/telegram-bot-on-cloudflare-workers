@@ -28,8 +28,11 @@ export interface CreateUserData {
 
 export class UserService {
   private tier: 'free' | 'paid';
-  
-  constructor(private db: D1Database, tier: 'free' | 'paid' = 'free') {
+
+  constructor(
+    private db: D1Database,
+    tier: 'free' | 'paid' = 'free',
+  ) {
     this.tier = tier;
   }
 
@@ -99,7 +102,7 @@ export class UserService {
 
   async getByTelegramId(telegramId: number): Promise<User | null> {
     const timeouts = getTimeoutConfig(this.tier);
-    
+
     const result = await withTimeout(
       this.db
         .prepare(
@@ -117,7 +120,7 @@ export class UserService {
       {
         timeoutMs: timeouts.database,
         operation: 'UserService.getByTelegramId',
-      }
+      },
     );
 
     return result;

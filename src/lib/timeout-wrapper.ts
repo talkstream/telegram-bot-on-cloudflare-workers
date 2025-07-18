@@ -13,7 +13,7 @@ export class TimeoutError extends Error {
   constructor(
     message: string,
     public readonly timeoutMs: number,
-    public readonly operation?: string
+    public readonly operation?: string,
   ) {
     super(message);
     this.name = 'TimeoutError';
@@ -28,11 +28,9 @@ export class TimeoutError extends Error {
  */
 export async function withTimeout<T>(
   promise: Promise<T>,
-  options: TimeoutOptions | number
+  options: TimeoutOptions | number,
 ): Promise<T> {
-  const config: TimeoutOptions = typeof options === 'number' 
-    ? { timeoutMs: options }
-    : options;
+  const config: TimeoutOptions = typeof options === 'number' ? { timeoutMs: options } : options;
 
   const { timeoutMs, errorMessage, operation } = config;
 
@@ -64,13 +62,11 @@ export async function withTimeout<T>(
  * @returns Timeout wrapper function
  */
 export function createTimeoutWrapper(defaultTimeoutMs: number) {
-  return <T>(
-    promise: Promise<T>,
-    options?: Partial<TimeoutOptions> | number
-  ): Promise<T> => {
-    const config: TimeoutOptions = typeof options === 'number'
-      ? { timeoutMs: options }
-      : { timeoutMs: defaultTimeoutMs, ...options };
+  return <T>(promise: Promise<T>, options?: Partial<TimeoutOptions> | number): Promise<T> => {
+    const config: TimeoutOptions =
+      typeof options === 'number'
+        ? { timeoutMs: options }
+        : { timeoutMs: defaultTimeoutMs, ...options };
 
     return withTimeout(promise, config);
   };
@@ -81,16 +77,16 @@ export function createTimeoutWrapper(defaultTimeoutMs: number) {
  */
 export const TIMEOUT_CONFIGS = {
   free: {
-    api: 2000,        // 2s for API calls
-    database: 1000,   // 1s for database
-    cache: 500,       // 500ms for cache
-    default: 1500,    // 1.5s default
+    api: 2000, // 2s for API calls
+    database: 1000, // 1s for database
+    cache: 500, // 500ms for cache
+    default: 1500, // 1.5s default
   },
   paid: {
-    api: 10000,       // 10s for API calls
-    database: 5000,   // 5s for database
-    cache: 2000,      // 2s for cache
-    default: 7500,    // 7.5s default
+    api: 10000, // 10s for API calls
+    database: 5000, // 5s for database
+    cache: 2000, // 2s for cache
+    default: 7500, // 7.5s default
   },
 } as const;
 
@@ -117,7 +113,7 @@ export async function retryWithTimeout<T>(
     backoffMultiplier?: number;
     timeoutMs?: number;
     operation?: string;
-  } = {}
+  } = {},
 ): Promise<T> {
   const {
     maxRetries = 3,
@@ -136,7 +132,7 @@ export async function retryWithTimeout<T>(
         timeoutMs,
         operation: `${operation} (attempt ${attempt}/${maxRetries})`,
       });
-      
+
       if (attempt > 1) {
         logger.info('Retry successful', {
           operation,
@@ -144,11 +140,11 @@ export async function retryWithTimeout<T>(
           totalAttempts: maxRetries,
         });
       }
-      
+
       return result;
     } catch (error) {
       lastError = error;
-      
+
       if (attempt < maxRetries) {
         logger.warn('Operation failed, retrying', {
           operation,
@@ -157,8 +153,8 @@ export async function retryWithTimeout<T>(
           error: error instanceof Error ? error.message : 'Unknown error',
           nextDelayMs: delay,
         });
-        
-        await new Promise(resolve => setTimeout(resolve, delay));
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= backoffMultiplier;
       }
     }
@@ -185,26 +181,25 @@ export async function batchWithTimeout<T>(
     timeoutMs?: number;
     concurrency?: number;
     continueOnError?: boolean;
-  } = {}
+  } = {},
 ): Promise<Array<{ success: boolean; value?: T; error?: Error }>> {
-  const {
-    timeoutMs = 5000,
-    concurrency = 10,
-    continueOnError = true,
-  } = options;
+  const { timeoutMs = 5000, concurrency = 10, continueOnError = true } = options;
 
   const results: Array<{ success: boolean; value?: T; error?: Error }> = [];
   const executing: Array<Promise<void>> = [];
 
   for (let i = 0; i < operations.length; i++) {
     const operation = operations[i];
-    
-    const promise = withTimeout(operation?.() || Promise.reject(new Error('Invalid operation')), timeoutMs)
-      .then(value => {
+
+    const promise = withTimeout(
+      operation?.() || Promise.reject(new Error('Invalid operation')),
+      timeoutMs,
+    )
+      .then((value) => {
         results[i] = { success: true, value };
         return value;
       })
-      .catch(error => {
+      .catch((error) => {
         results[i] = { success: false, error };
         if (!continueOnError) throw error;
       });

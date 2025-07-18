@@ -1,6 +1,6 @@
 /**
  * Tier Configuration for Cloudflare Workers
- * 
+ *
  * This module defines configurations for both free and paid tiers,
  * optimizing for the constraints and capabilities of each tier.
  */
@@ -153,7 +153,7 @@ export function getTierConfig(tier?: 'free' | 'paid'): TierConfig {
  */
 export function isFeatureEnabled(
   feature: keyof TierConfig['features'],
-  tier?: 'free' | 'paid'
+  tier?: 'free' | 'paid',
 ): boolean {
   const config = getTierConfig(tier);
   return config.features[feature];
@@ -164,7 +164,7 @@ export function isFeatureEnabled(
  */
 export function getPerformanceSetting<K extends keyof TierConfig['performance']>(
   setting: K,
-  tier?: 'free' | 'paid'
+  tier?: 'free' | 'paid',
 ): TierConfig['performance'][K] {
   const config = getTierConfig(tier);
   return config.performance[setting];
@@ -175,7 +175,7 @@ export function getPerformanceSetting<K extends keyof TierConfig['performance']>
  */
 export function createFeatureFlag<T>(
   featureName: keyof TierConfig['features'],
-  tier?: 'free' | 'paid'
+  tier?: 'free' | 'paid',
 ) {
   return (fn: () => T, fallback?: T): T | undefined => {
     if (isFeatureEnabled(featureName, tier)) {
@@ -192,15 +192,15 @@ export function tierAwareLog(
   level: 'info' | 'warn' | 'error',
   message: string,
   data?: unknown,
-  tier?: 'free' | 'paid'
+  tier?: 'free' | 'paid',
 ): void {
   const config = getTierConfig(tier);
-  
+
   // On free tier, only log warnings and errors
   if (config.name === 'free' && level === 'info') {
     return;
   }
-  
+
   // Import logger dynamically to avoid circular dependencies
   import('../lib/logger')
     .then(({ logger }) => {
@@ -217,17 +217,17 @@ export function tierAwareLog(
  */
 export function enforceTierLimits(tier?: 'free' | 'paid') {
   const config = getTierConfig(tier);
-  
+
   return {
     checkSubrequestLimit: (count: number): boolean => {
       return count < config.limits.subrequests;
     },
-    
+
     checkMemoryUsage: (): boolean => {
       // This is a placeholder - actual memory checking would be more complex
       return true;
     },
-    
+
     shouldCache: (operation: string): boolean => {
       // More aggressive caching for free tier
       return config.name === 'free' || operation.includes('expensive');

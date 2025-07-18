@@ -4,25 +4,25 @@ import { isFeatureEnabled } from '@/config/tiers';
 
 export const askCommand: CommandHandler = async (ctx) => {
   const tier = ctx.env.TIER || 'free';
-  
+
   // Check if AI is enabled for this tier
   if (!isFeatureEnabled('aiEnabled', tier)) {
     await ctx.reply(
       '🚫 AI features are not available in the free tier.\n\n' +
-      'Upgrade to the paid tier to access:\n' +
-      '• AI-powered responses\n' +
-      '• Advanced text generation\n' +
-      '• Smart assistance'
+        'Upgrade to the paid tier to access:\n' +
+        '• AI-powered responses\n' +
+        '• Advanced text generation\n' +
+        '• Smart assistance',
     );
     return;
   }
 
   const prompt = ctx.match;
-  
+
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
     await ctx.reply(
       '💭 Please provide a question or prompt after the command.\n\n' +
-      'Example: /ask What is the weather like today?'
+        'Example: /ask What is the weather like today?',
     );
     return;
   }
@@ -53,10 +53,10 @@ export const askCommand: CommandHandler = async (ctx) => {
     });
   } catch (error) {
     logger.error('Error in ask command', { error, userId: ctx.from?.id });
-    
+
     await ctx.reply(
       '❌ Sorry, I encountered an error while processing your request.\n' +
-      'Please try again later.'
+        'Please try again later.',
     );
   }
 };

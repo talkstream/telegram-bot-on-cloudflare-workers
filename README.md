@@ -72,6 +72,7 @@
 > **📌 Important**: This wireframe is **100% free and open-source**. The tiers below refer to **Cloudflare Workers plans**, not our wireframe. You can use this wireframe for free forever, regardless of which Cloudflare plan you choose.
 
 ### Cloudflare Workers Free Plan (10ms CPU limit)
+
 - **Lightweight mode** - Minimal features for fast responses
 - **Aggressive caching** - Reduce KV operations (1K writes/day limit)
 - **Request batching** - Optimize Telegram API calls
@@ -79,6 +80,7 @@
 - **Sequential operations** - Avoid parallel processing overhead
 
 ### Cloudflare Workers Paid Plan (30s CPU limit)
+
 - **Full feature set** - All capabilities enabled
 - **AI integration** - Gemini API with smart retries
 - **Parallel processing** - Concurrent health checks & operations
@@ -94,6 +96,7 @@ TIER="paid"  # for Cloudflare Workers Paid Plan
 ```
 
 The wireframe automatically optimizes based on your Cloudflare Workers plan:
+
 - **Free Plan**: Fast responses, limited features (optimized for 10ms CPU limit)
 - **Paid Plan**: Full functionality, better reliability (up to 30s CPU time)
 

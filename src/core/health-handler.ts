@@ -94,7 +94,7 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
     healthChecks.map(async ({ name, check }) => ({
       name,
       healthy: await check(),
-    }))
+    })),
   );
 
   // Update status based on results

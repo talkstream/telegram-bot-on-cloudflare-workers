@@ -20,7 +20,7 @@ export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: Exec
         ctx.waitUntil(
           cleanupSessions(env).catch((error) => {
             logger.error('Session cleanup failed', { error });
-          })
+          }),
         );
       }
 
@@ -29,7 +29,7 @@ export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: Exec
         ctx.waitUntil(
           logCacheStats(env).catch((error) => {
             logger.error('Cache stats logging failed', { error });
-          })
+          }),
         );
       }
     }
@@ -63,7 +63,7 @@ async function cleanupSessions(env: Env): Promise<void> {
 async function logCacheStats(env: Env): Promise<void> {
   const tier = env.TIER || 'free';
   const cache = new MultiLayerCache(env.CACHE, tier);
-  
+
   const stats = cache.getStats();
   logger.info('Cache statistics', stats);
 }

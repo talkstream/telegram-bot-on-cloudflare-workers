@@ -16,21 +16,18 @@ export class GeminiService {
 
   async generateText(prompt: string): Promise<string> {
     const timeouts = getTimeoutConfig(this.tier);
-    
+
     return retryWithTimeout(
       async () => {
         try {
-          const result = await withTimeout(
-            this.model.generateContent(prompt),
-            {
-              timeoutMs: timeouts.api,
-              operation: 'Gemini generateContent',
-              errorMessage: `Gemini API timed out after ${timeouts.api}ms`,
-            }
-          );
-          
+          const result = await withTimeout(this.model.generateContent(prompt), {
+            timeoutMs: timeouts.api,
+            operation: 'Gemini generateContent',
+            errorMessage: `Gemini API timed out after ${timeouts.api}ms`,
+          });
+
           const response = await result.response;
-          
+
           const text = response.text();
           logger.info('Gemini API call successful.');
           return text;
@@ -44,7 +41,7 @@ export class GeminiService {
         retryDelayMs: 100,
         timeoutMs: timeouts.api,
         operation: 'Gemini generateText',
-      }
+      },
     );
   }
 }

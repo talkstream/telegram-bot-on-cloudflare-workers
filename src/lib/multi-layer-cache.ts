@@ -1,6 +1,6 @@
 /**
  * Multi-Layer Caching System
- * 
+ *
  * Implements a hierarchical caching strategy:
  * 1. Memory Cache (in-request) - Fastest, limited by request lifetime
  * 2. KV Cache (cross-request) - Persistent across requests
@@ -42,9 +42,7 @@ export class MultiLayerCache {
     this.stats = new Map();
 
     // Cache API is only available in paid tier
-    this.cacheApi = tier === 'paid' && typeof caches !== 'undefined' 
-      ? caches.default 
-      : null;
+    this.cacheApi = tier === 'paid' && typeof caches !== 'undefined' ? caches.default : null;
   }
 
   /**
@@ -170,7 +168,7 @@ export class MultiLayerCache {
   async getOrSet<T>(
     key: string,
     factory: () => Promise<T>,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<T> {
     // Try to get from cache first
     const cached = await this.get<T>(key);
@@ -204,7 +202,7 @@ export class MultiLayerCache {
 
   private setInMemory<T>(key: string, value: T, ttlSeconds: number): void {
     const maxSize = this.config.optimization.inMemoryCacheSize;
-    
+
     // Implement simple LRU eviction if cache is full
     if (this.memoryCache.size >= maxSize) {
       const firstKey = this.memoryCache.keys().next().value;
@@ -245,7 +243,7 @@ export class MultiLayerCache {
     try {
       const request = this.buildCacheRequest(key);
       const response = await this.cacheApi.match(request);
-      
+
       if (response) {
         const data = await response.json();
         return data as T;

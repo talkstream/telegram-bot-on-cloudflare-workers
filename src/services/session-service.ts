@@ -106,9 +106,7 @@ export class SessionService {
     const key = this.getSessionKey(userId);
 
     // Delete from both cache and KV
-    const deletePromises: Promise<void>[] = [
-      this.sessionsKv.delete(key),
-    ];
+    const deletePromises: Promise<void>[] = [this.sessionsKv.delete(key)];
 
     if (this.cache) {
       deletePromises.push(this.cache.delete(key));
