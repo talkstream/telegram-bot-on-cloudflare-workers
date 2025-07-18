@@ -27,6 +27,30 @@
 
 ---
 
+## ⚡ Quick Start with Claude Code
+
+<p align="center">
+  <a href="https://claude.ai"><img src="https://img.shields.io/badge/Claude%20Code-Ready-5865F2?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude Code Ready" /></a>
+  <a href="./CLAUDE_SETUP.md"><img src="https://img.shields.io/badge/AI-Friendly-10a37f?style=for-the-badge&logo=openai&logoColor=white" alt="AI Friendly" /></a>
+</p>
+
+Start your bot with one command:
+
+```bash
+Clone and setup github.com/talkstream/telegram-bot-on-cloudflare-workers
+```
+
+Claude Code will guide you through:
+- ✅ Installing dependencies  
+- ✅ Setting up MCP servers if needed  
+- ✅ Creating your Telegram bot  
+- ✅ Configuring Cloudflare resources  
+- ✅ Running tests and starting locally  
+
+[Full AI Setup Instructions](./CLAUDE_SETUP.md) | [Manual Setup](#-quick-start-manual-setup)
+
+---
+
 ## 💫 Support the Project
 
 This wireframe is crafted with passion and care, drawing from decades of experience in IT communities and modern technical ecosystems. It's built by someone who believes that great tools should be both powerful and delightful to use.
@@ -120,7 +144,7 @@ The wireframe automatically optimizes based on your Cloudflare Workers plan:
 - **Free Plan**: Fast responses, limited features (optimized for 10ms CPU limit)
 - **Paid Plan**: Full functionality, better reliability (up to 30s CPU time)
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Manual Setup)
 
 > **📖 Need detailed setup instructions?** Check out our comprehensive [Setup Guide](SETUP.md) for step-by-step configuration with screenshots and troubleshooting.
 
