@@ -96,3 +96,6 @@ Thumbs.db
 *.pem
 *.key
 *.crt
+
+# Website (exclude from main repository)
+website/
