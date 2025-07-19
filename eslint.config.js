@@ -17,6 +17,7 @@ export default [
       '**/*.config.ts',
       '**/coverage/**',
       '**/.husky/**',
+      '**/website/**',
     ],
   },
 
