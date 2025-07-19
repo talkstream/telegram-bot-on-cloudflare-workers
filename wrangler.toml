@@ -37,10 +37,19 @@ name = "telegram-bot-wireframe-staging"
 
 [env.production]
 name = "telegram-bot-wireframe"
+
 # Production KV Namespaces
-# [[env.production.kv_namespaces]]
-# binding = "SESSIONS"
-# id = "your_production_kv_namespace_id"
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "b4265a5422504dfe96d64807fce3b8f8"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "aa2506f14eab45689df2ef5c77230368"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "41a10c14fb80402a9116d747c17cde6a"
 
 # Production D1 Database
 # [[env.production.d1_databases]]
