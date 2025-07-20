@@ -4,6 +4,9 @@
 
 export * from './connector.js';
 export * from './messaging.js';
+export * from './storage.js';
+export * from './cloud-platform.js';
+export * from './monitoring.js';
 export {
   type AIConnector,
   type CompletionRequest,
