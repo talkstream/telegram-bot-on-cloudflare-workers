@@ -57,4 +57,4 @@ app.post('/webhook/:token', rateLimiter(), async (c) => {
   return c.text('OK', 200);
 });
 
-export default { ...wrapSentry(app), scheduled: handleScheduled };
+export default wrapSentry(app, { scheduled: handleScheduled });

@@ -1,4 +1,4 @@
-import {
+import type {
   AIConnector,
   CompletionRequest,
   CompletionResponse,
@@ -15,7 +15,8 @@ import {
   Cost,
   AICapabilities,
 } from '../../core/interfaces/ai.js';
-import { ConnectorType, ConnectorCapabilities } from '../../core/interfaces/connector.js';
+import { ConnectorType } from '../../core/interfaces/connector.js';
+import type { ConnectorCapabilities, ConnectorConfig } from '../../core/interfaces/connector.js';
 
 import { BaseConnector } from './base-connector.js';
 
@@ -66,7 +67,7 @@ export abstract class BaseAIConnector extends BaseConnector implements AIConnect
   /**
    * Stream text generation (optional)
    */
-  async *stream(request: CompletionRequest): AsyncIterator<StreamChunk> {
+  async *stream(request: CompletionRequest): AsyncGenerator<StreamChunk> {
     const capabilities = this.getAICapabilities();
     if (!capabilities.supportsStreaming) {
       throw new Error('Streaming not supported');
@@ -305,7 +306,7 @@ export abstract class BaseAIConnector extends BaseConnector implements AIConnect
    * Abstract methods for implementations
    */
   protected abstract doComplete(request: CompletionRequest): Promise<CompletionResponse>;
-  protected abstract doStream(request: CompletionRequest): AsyncIterator<StreamChunk>;
+  protected abstract doStream(request: CompletionRequest): AsyncGenerator<StreamChunk>;
   protected abstract doEmbeddings(texts: string[]): Promise<Embedding[]>;
   protected abstract doVision(images: VisionInput[], prompt: string): Promise<VisionResponse>;
   protected abstract doAudio(audio: AudioInput, options?: AudioOptions): Promise<AudioResponse>;

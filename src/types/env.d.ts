@@ -8,7 +8,9 @@ declare global {
     TELEGRAM_BOT_TOKEN: string;
     TELEGRAM_WEBHOOK_SECRET: string;
     SENTRY_DSN?: string;
-    ENVIRONMENT: 'development' | 'staging' | 'production';
+    SENTRY_DEBUG?: boolean;
+    ENVIRONMENT?: 'development' | 'staging' | 'production';
+    RELEASE?: string;
     TIER?: 'free' | 'paid';
 
     // AI Provider configuration

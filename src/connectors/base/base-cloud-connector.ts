@@ -1,4 +1,4 @@
-import {
+import type {
   CloudConnector,
   DeployConfig,
   DeployResult,
@@ -17,7 +17,8 @@ import {
   CloudCapabilities,
   ListOptions,
 } from '../../core/interfaces/cloud.js';
-import { ConnectorType, ConnectorCapabilities } from '../../core/interfaces/connector.js';
+import { ConnectorType } from '../../core/interfaces/connector.js';
+import type { ConnectorCapabilities, ConnectorConfig } from '../../core/interfaces/connector.js';
 
 import { BaseConnector } from './base-connector.js';
 
@@ -99,7 +100,7 @@ export abstract class BaseCloudConnector extends BaseConnector implements CloudC
   /**
    * Get logs
    */
-  async *getLogs(options?: LogOptions): AsyncIterator<LogEntry> {
+  async *getLogs(options?: LogOptions): AsyncGenerator<LogEntry> {
     yield* this.doGetLogs(options);
   }
 
@@ -287,7 +288,7 @@ export abstract class BaseCloudConnector extends BaseConnector implements CloudC
   protected abstract doRollback(deploymentId: string): Promise<void>;
   protected abstract getDeploymentInfo(deploymentId: string): Promise<Deployment | null>;
   protected abstract doListDeployments(options?: ListOptions): Promise<Deployment[]>;
-  protected abstract doGetLogs(options?: LogOptions): AsyncIterator<LogEntry>;
+  protected abstract doGetLogs(options?: LogOptions): AsyncGenerator<LogEntry>;
   protected abstract doGetMetrics(options: MetricOptions): Promise<Metrics>;
   protected abstract validateCloudCredentials(): Promise<void>;
 

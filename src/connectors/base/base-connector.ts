@@ -1,11 +1,11 @@
-import {
+import type {
   Connector,
-  ConnectorType,
   ConnectorConfig,
   ValidationResult,
   ConnectorCapabilities,
   HealthStatus,
 } from '../../core/interfaces/connector.js';
+import { ConnectorType } from '../../core/interfaces/connector.js';
 import { EventBus, CommonEventType } from '../../core/events/event-bus.js';
 
 /**
@@ -71,7 +71,7 @@ export abstract class BaseConnector implements Connector {
   validateConfig(config: ConnectorConfig): ValidationResult {
     const errors = this.doValidateConfig(config);
     return {
-      valid: errors.length === 0,
+      valid: !errors || errors.length === 0,
       errors,
     };
   }

@@ -1,4 +1,4 @@
-import {
+import type {
   MessagingConnector,
   UnifiedMessage,
   MessageResult,
@@ -6,9 +6,10 @@ import {
   BotCommand,
   WebhookOptions,
   MessagingCapabilities,
-  Platform,
 } from '../../core/interfaces/messaging.js';
-import { ConnectorType, ConnectorCapabilities } from '../../core/interfaces/connector.js';
+import { Platform, AttachmentType } from '../../core/interfaces/messaging.js';
+import { ConnectorType } from '../../core/interfaces/connector.js';
+import type { ConnectorCapabilities } from '../../core/interfaces/connector.js';
 import { CommonEventType } from '../../core/events/event-bus.js';
 
 import { BaseConnector } from './base-connector.js';
@@ -193,7 +194,7 @@ export abstract class BaseMessagingConnector extends BaseConnector implements Me
    * Get batch size for bulk operations
    */
   protected getBatchSize(): number {
-    return this.getConfig<number>('batchSize', 10);
+    return this.getConfig<number>('batchSize', 10) ?? 10;
   }
 
   /**
@@ -202,16 +203,16 @@ export abstract class BaseMessagingConnector extends BaseConnector implements Me
   protected getSupportedFileTypes(caps: MessagingCapabilities): string[] {
     const types: string[] = [];
 
-    if (caps.supportedAttachmentTypes.includes('PHOTO' as any)) {
+    if (caps.supportedAttachmentTypes.includes(AttachmentType.PHOTO)) {
       types.push('image/jpeg', 'image/png', 'image/gif', 'image/webp');
     }
-    if (caps.supportedAttachmentTypes.includes('VIDEO' as any)) {
+    if (caps.supportedAttachmentTypes.includes(AttachmentType.VIDEO)) {
       types.push('video/mp4', 'video/mpeg');
     }
-    if (caps.supportedAttachmentTypes.includes('AUDIO' as any)) {
+    if (caps.supportedAttachmentTypes.includes(AttachmentType.AUDIO)) {
       types.push('audio/mpeg', 'audio/ogg', 'audio/wav');
     }
-    if (caps.supportedAttachmentTypes.includes('DOCUMENT' as any)) {
+    if (caps.supportedAttachmentTypes.includes(AttachmentType.DOCUMENT)) {
       types.push('application/pdf', 'application/zip', 'text/plain');
     }
 
