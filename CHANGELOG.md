@@ -5,6 +5,89 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-20
+
+### 🚨 BREAKING CHANGES
+
+- Complete architecture rewrite for multi-platform support
+- `TelegramAdapter` replaced with connector-based architecture
+- All services now communicate through EventBus
+- Direct Cloudflare dependencies replaced with platform interfaces
+- No backward compatibility with v1.x
+
+### ✨ Added
+
+- **Universal Platform Architecture**
+  - Multi-cloud support (Cloudflare, AWS, GCP, Azure)
+  - Multi-messaging platform interfaces (Telegram implemented, Discord/Slack ready)
+  - Platform-agnostic storage interfaces (KV, Database, Object, Cache)
+  - Cloud platform factory with registry pattern
+
+- **Event-Driven Architecture**
+  - Central EventBus for decoupled communication
+  - Scoped event buses for namespaced events
+  - Event history and filtering capabilities
+  - Async/sync event handling modes
+
+- **Connector System**
+  - `ICloudPlatformConnector` for cloud services
+  - `IMessagingConnector` for messaging platforms
+  - `IMonitoringConnector` for observability
+  - `IAIConnector` for AI providers
+  - `IPaymentConnector` for payment systems
+
+- **Monitoring Abstraction**
+  - Platform-agnostic monitoring interface
+  - SentryConnector with dynamic SDK loading
+  - MonitoringFactory for creating connectors
+  - Support for multiple monitoring providers
+
+- **Plugin System**
+  - Hot-swappable plugins with lifecycle hooks
+  - Plugin-specific storage and events
+  - Command and middleware registration
+  - Self-contained plugin architecture
+
+- **Performance Optimizations**
+  - Request batching for API calls
+  - Duplicate message protection
+  - Multi-layer caching system
+  - EventBus performance metrics
+
+- **Testing Infrastructure**
+  - Integration tests for multi-platform scenarios
+  - EventBus performance benchmarks
+  - Mock implementations for unfinished connectors
+  - 172 tests with 100% TypeScript strict mode
+
+- **Documentation**
+  - PROJECT_STATE.md for tracking implementation
+  - DEVELOPMENT_WORKFLOW.md for contributors
+  - CLOUD_PLATFORMS.md for deployment options
+  - Example bot implementations
+
+### 🔧 Changed
+
+- Refactored all services to use connector pattern
+- Updated BotContext to include cloud platform and monitoring
+- Migrated from direct Cloudflare usage to interfaces
+- Enhanced TypeScript strict mode compliance
+- Improved error handling with monitoring integration
+
+### 🐛 Fixed
+
+- All TypeScript strict mode warnings (11 total)
+- Sentry integration type issues
+- Platform detection in various environments
+- Session management across platforms
+
+### 📚 Documentation
+
+- Updated README with v1.2 features and examples
+- Added comprehensive setup instructions
+- Created example implementations
+- Enhanced API documentation
+
 ## [1.1.2] - 2025-07-18
 
 ### Added

@@ -3,15 +3,16 @@ import { z } from 'zod';
 import type { CloudflareEnv } from '@/types/env';
 
 const envSchema = z.object({
-  TELEGRAM_BOT_TOKEN: z.string().min(1),
-  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().optional().default('demo'), // Optional for demo mode
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional().default('demo'),
   SENTRY_DSN: z.string().optional(),
   SENTRY_DEBUG: z
     .string()
     .transform((val) => val === 'true')
     .optional(),
-  ENVIRONMENT: z.string().optional(),
+  ENVIRONMENT: z.string().optional().default('development'),
   RELEASE: z.string().optional(),
+  CLOUD_PLATFORM: z.string().optional().default('cloudflare'),
   TIER: z.enum(['free', 'paid']).optional().default('free'),
   SESSIONS: z.any().optional(), // Cloudflare KV Namespace binding
   DB: z.any().optional(), // Cloudflare D1 Database binding

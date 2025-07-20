@@ -5,8 +5,8 @@ import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
 declare global {
   interface CloudflareEnv extends Record<string, unknown> {
     // Environment Variables
-    TELEGRAM_BOT_TOKEN: string;
-    TELEGRAM_WEBHOOK_SECRET: string;
+    TELEGRAM_BOT_TOKEN?: string; // Optional for demo mode
+    TELEGRAM_WEBHOOK_SECRET?: string;
     SENTRY_DSN?: string;
     SENTRY_DEBUG?: boolean;
     ENVIRONMENT?: 'development' | 'staging' | 'production';
@@ -33,11 +33,11 @@ declare global {
     // Owner configuration
     BOT_OWNER_IDS?: string;
 
-    // Bindings
-    DB: D1Database;
-    CACHE: KVNamespace;
-    RATE_LIMIT: KVNamespace;
-    SESSIONS: KVNamespace;
+    // Bindings - all optional for demo mode
+    DB?: D1Database;
+    CACHE?: KVNamespace;
+    RATE_LIMIT?: KVNamespace;
+    SESSIONS?: KVNamespace;
 
     // Cloudflare AI binding (runtime)
     AI?: {

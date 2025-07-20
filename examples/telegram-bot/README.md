@@ -1,174 +1,163 @@
-# Telegram Bot on Cloudflare Workers Example
+# 🤖 Basic Telegram Bot Example
 
-This example demonstrates how to deploy a Telegram bot using the Cloudflare Workers wireframe.
+This example shows how to create a simple Telegram bot using the Wireframe v1.2 platform.
+
+## Features
+
+- ✅ Basic command handling (`/start`, `/help`)
+- ✅ AI integration with multiple providers
+- ✅ User session management
+- ✅ Rate limiting
+- ✅ Error tracking with Sentry
 
 ## Quick Start
 
-### 1. Prerequisites
-
-- Cloudflare account
-- Wrangler CLI installed (`npm install -g wrangler`)
-- Telegram Bot Token from [@BotFather](https://t.me/botfather)
-
-### 2. Setup
-
-1. Clone the wireframe repository:
+### 1. Clone and Setup
 
 ```bash
+# Clone the wireframe
 git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
 cd telegram-bot-on-cloudflare-workers
+
+# Install dependencies
 npm install
+
+# Copy this example
+cp -r examples/telegram-bot my-bot
+cd my-bot
 ```
 
-2. Navigate to the example:
+### 2. Configure Environment
+
+Create `.dev.vars` file:
+
+```env
+# Required
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_WEBHOOK_SECRET=your_webhook_secret_here
+
+# Optional AI Provider (choose one)
+AI_PROVIDER=google-ai
+GEMINI_API_KEY=your_gemini_key_here
+
+# Optional Monitoring
+SENTRY_DSN=your_sentry_dsn_here
+
+# Environment
+ENVIRONMENT=development
+```
+
+### 3. Create Cloudflare Resources
 
 ```bash
-cd examples/telegram-bot
+# Create D1 database
+wrangler d1 create my-bot-db
+
+# Create KV namespaces
+wrangler kv:namespace create CACHE
+wrangler kv:namespace create RATE_LIMIT
+wrangler kv:namespace create SESSIONS
+
+# Update wrangler.toml with the IDs
 ```
 
-3. Configure your bot:
+### 4. Run Locally
 
 ```bash
-# Set your Telegram Bot Token
-wrangler secret put TELEGRAM_BOT_TOKEN
-# Enter your bot token when prompted
+# Start development server
+npm run dev
 
-# Set webhook secret (generate a random string)
-wrangler secret put TELEGRAM_WEBHOOK_SECRET
-# Enter a secure random string
-
-# Set admin user ID (your Telegram user ID)
-wrangler secret put ADMIN_USER_ID
-# Enter your Telegram user ID
-
-# Optional: Set Gemini API key for AI features
-wrangler secret put GEMINI_API_KEY
+# Your bot is now running at http://localhost:8787
 ```
 
-4. Create KV namespaces:
-
-```bash
-wrangler kv:namespace create "KV_CACHE"
-wrangler kv:namespace create "USER_SESSIONS"
-wrangler kv:namespace create "STARS_STORE"
-```
-
-5. Update `wrangler.toml` with your namespace IDs from the output above.
-
-### 3. Deploy
+### 5. Deploy to Production
 
 ```bash
 # Deploy to Cloudflare Workers
-wrangler deploy
+npm run deploy
 
-# The command will output your worker URL, e.g.:
-# https://telegram-bot-example.your-subdomain.workers.dev
-```
-
-### 4. Set Webhook
-
-```bash
-# Set the webhook URL for your bot
-curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
+# Set webhook
+curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://telegram-bot-example.your-subdomain.workers.dev/telegram-webhook",
-    "secret_token": "<YOUR_WEBHOOK_SECRET>"
+    "url": "https://your-bot.workers.dev/webhook/<YOUR_SECRET>",
+    "secret_token": "<YOUR_SECRET>"
   }'
 ```
 
-### 5. Test Your Bot
+## Project Structure
 
-Open Telegram and search for your bot by its username. Send `/start` to begin!
-
-## Available Commands
-
-- `/start` - Start the bot and see the main menu
-- `/help` - Show available commands
-- `/hello` - Get a friendly greeting
-- `/weather [location]` - Get weather information
-- `/echo [text]` - Echo your message
-- `/status` - Check bot status
-- `/crypto [coin]` - Get cryptocurrency price
-- `/settings` - Open settings menu
-
-## Features Demonstrated
-
-- ✅ Command handling
-- ✅ Inline keyboards
-- ✅ Callback queries
-- ✅ Inline queries
-- ✅ Scheduled tasks
-- ✅ KV storage integration
-- ✅ Error handling
-- ✅ TypeScript support
-
-## Customization
-
-### Adding New Commands
-
-Edit `bot.ts` and add your command to the `customCommands` object:
-
-```typescript
-const customCommands = {
-  yourcommand: async (ctx: Context) => {
-    await ctx.reply('Your response here!');
-  },
-};
+```
+telegram-bot/
+├── bot.ts              # Main bot file
+├── commands/           # Custom commands
+│   ├── start.ts        # /start command
+│   └── help.ts         # /help command
+├── wrangler.toml       # Cloudflare configuration
+├── package.json        # Dependencies
+└── README.md           # This file
 ```
 
-### Adding Scheduled Tasks
+## Customizing Your Bot
 
-Edit the `scheduled` handler in `bot.ts`:
+### Adding Commands
+
+Create a new command in `commands/weather.ts`:
 
 ```typescript
-async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-  if (event.cron === '0 */6 * * *') { // Every 6 hours
-    // Your scheduled task logic
-  }
+import { CommandContext } from '../../src/types';
+
+export async function handleWeatherCommand(ctx: CommandContext) {
+  const city = ctx.args.join(' ') || 'London';
+
+  // Use AI to generate weather info
+  const response = await ctx.ai.complete({
+    prompt: `What's the weather like in ${city}? Be brief and friendly.`,
+    maxTokens: 100,
+  });
+
+  await ctx.reply(response.content || "Sorry, I couldn't get the weather.");
 }
 ```
 
-Add the schedule to `wrangler.toml`:
+Register it in `bot.ts`:
 
-```toml
-[[triggers]]
-crons = ["0 */6 * * *"]
+```typescript
+bot.command('weather', handleWeatherCommand);
 ```
 
-## Production Considerations
+### Using Plugins
 
-1. **Rate Limiting**: The wireframe includes built-in rate limiting
-2. **Error Handling**: Comprehensive error handling is implemented
-3. **Logging**: Use `wrangler tail` to view real-time logs
-4. **Monitoring**: Set up Cloudflare Analytics for monitoring
-5. **Secrets**: Never commit secrets to version control
+Add a reminder plugin:
 
-## Troubleshooting
+```typescript
+import { ReminderPlugin } from './plugins/reminder-plugin';
 
-### Bot not responding?
+// Install plugin
+bot.use(new ReminderPlugin());
+```
 
-- Check webhook is set correctly: `curl https://api.telegram.org/bot<TOKEN>/getWebhookInfo`
-- View logs: `wrangler tail`
+### Multi-Platform Support
 
-### Deployment errors?
+The same code can work on different cloud platforms:
 
-- Ensure all secrets are set
-- Check KV namespace IDs in wrangler.toml
-- Verify Node.js compatibility flag is enabled
+```bash
+# Deploy to AWS Lambda
+CLOUD_PLATFORM=aws npm run deploy
+
+# Deploy to Google Cloud Functions
+CLOUD_PLATFORM=gcp npm run deploy
+```
 
 ## Next Steps
 
-- Implement database storage with D1
-- Add AI features with Gemini integration
-- Implement payment processing with Telegram Stars
-- Add multi-language support
-- Create admin dashboard
+- 📚 Read the [full documentation](../../README.md)
+- 🔌 Explore [available plugins](../plugins/)
+- 🌍 Learn about [multi-platform deployment](../../docs/CLOUD_PLATFORMS.md)
+- 💡 Check [advanced examples](../advanced/)
 
 ## Support
 
-For issues and questions:
-
-- GitHub: [telegram-bot-on-cloudflare-workers](https://github.com/talkstream/telegram-bot-on-cloudflare-workers)
-- Documentation: [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
-- Telegram API: [Telegram Bot API](https://core.telegram.org/bots/api)
+- [GitHub Issues](https://github.com/talkstream/telegram-bot-on-cloudflare-workers/issues)
+- [Telegram Group](https://t.me/your-support-group)
+- [Documentation](../../docs/)

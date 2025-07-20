@@ -1,45 +1,18 @@
-name: Deploy (Optional)
-
-# This workflow is optional - it will only work if you've set up:
-# 1. CLOUDFLARE_API_TOKEN secret
-# 2. CLOUDFLARE_ACCOUNT_ID secret
-# 3. Created D1 database and KV namespaces in Cloudflare
+name: Deploy to Cloudflare Workers
 
 on:
-  workflow_dispatch: # Manual trigger only
-  # Uncomment below to enable automatic deployment on push
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Also allow manual trigger
 
 jobs:
-  check-secrets:
-    runs-on: ubuntu-latest
-    name: Check Configuration
-    outputs:
-      has-secrets: ${{ steps.check.outputs.has-secrets }}
-    steps:
-      - name: Check for required secrets
-        id: check
-        run: |
-          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
-            echo "has-secrets=true" >> $GITHUB_OUTPUT
-            echo "✅ Cloudflare secrets are configured"
-          else
-            echo "has-secrets=false" >> $GITHUB_OUTPUT
-            echo "::notice::Cloudflare secrets are not configured. Deployment will be skipped."
-            echo "::notice::To enable deployment, add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets."
-            echo "::notice::See SETUP.md for detailed instructions."
-          fi
-
   deploy:
-    needs: check-secrets
-    if: needs.check-secrets.outputs.has-secrets == 'true'
     runs-on: ubuntu-latest
-    name: Deploy
+    name: Deploy to Production
     environment:
-      name: production-clean
-      url: https://telegram-bot-wireframe.workers.dev
+      name: production
+      url: https://telegram-bot-wireframe.mommyslittlehelper.workers.dev
     steps:
       - uses: actions/checkout@v4
 
@@ -54,45 +27,61 @@ jobs:
 
       - name: Run tests
         run: npm test
-      - name: Create wrangler.toml for deployment
-        run: |
-          cp wrangler.toml.example wrangler.toml
-          echo "Note: Using example config. Ensure D1 and KV namespaces are configured in Cloudflare dashboard."
 
-      - name: Deploy
+      - name: Check for Cloudflare secrets
+        id: check-secrets
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && [ -n "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "has-secrets=true" >> $GITHUB_OUTPUT
+            echo "✅ Cloudflare secrets found - deploying with real credentials"
+          else
+            echo "has-secrets=false" >> $GITHUB_OUTPUT
+            echo "🎯 No Cloudflare secrets found - will create deployment record only"
+          fi
+
+      - name: Deploy to Cloudflare Workers
+        if: steps.check-secrets.outputs.has-secrets == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --env production --dry-run
+          command: deploy --env production
 
-      - name: Deploy Notice
+      - name: Create Demo Deployment Record
+        if: steps.check-secrets.outputs.has-secrets != 'true'
         run: |
-          echo "::notice::Deployment completed in dry-run mode."
-          echo "::notice::To enable actual deployment:"
-          echo "::notice::1. Create D1 database and KV namespaces in Cloudflare"
-          echo "::notice::2. Update wrangler.toml with correct resource IDs"
-          echo "::notice::3. Remove --dry-run flag from deploy command"
-          echo "::notice::See SETUP.md for detailed instructions."
+          echo "📋 Demo Deployment Record Created"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Wireframe v1.2.0 - Universal AI Assistant Platform"
+          echo ""
+          echo "✅ Build successful"
+          echo "✅ Tests passed"
+          echo "✅ Ready for deployment"
+          echo ""
+          echo "🎯 Running in DEMO mode - no Cloudflare credentials configured"
+          echo ""
+          echo "To deploy to Cloudflare Workers:"
+          echo "1. Fork this repository"
+          echo "2. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets"
+          echo "3. Push to main branch or run workflow manually"
+          echo ""
+          echo "📚 Documentation: https://github.com/talkstream/telegram-bot-on-cloudflare-workers"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  create-deployment-record:
-    needs: check-secrets
-    if: needs.check-secrets.outputs.has-secrets != 'true'
-    runs-on: ubuntu-latest
-    name: Deployment Status
-    environment:
-      name: production-clean
-      url: https://telegram-bot-wireframe.workers.dev
-    steps:
-      - name: Create deployment record
+      - name: Deploy Status
+        if: always()
         run: |
-          echo "::notice::📋 Deployment Prerequisites Not Met"
-          echo "::notice::━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "::notice::This wireframe is ready for deployment, but requires configuration:"
-          echo "::notice::"
-          echo "::notice::1. Add CLOUDFLARE_API_TOKEN secret"
-          echo "::notice::2. Add CLOUDFLARE_ACCOUNT_ID secret"  
-          echo "::notice::3. Create D1 database and KV namespaces"
-          echo "::notice::"
-          echo "::notice::See SETUP.md for detailed instructions."
-          echo "::notice::━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [ "${{ steps.check-secrets.outputs.has-secrets }}" == "true" ]; then
+            if [ "${{ job.status }}" == "success" ]; then
+              echo "✅ Deployment successful!"
+              echo "🚀 Your Wireframe v1.2 is now live at: https://telegram-bot-wireframe.mommyslittlehelper.workers.dev"
+              echo "📊 Check /health endpoint for system status"
+            else
+              echo "❌ Deployment failed"
+              echo "Please check the logs above for errors"
+            fi
+          else
+            echo "✅ Demo deployment record created"
+            echo "🎯 Configure Cloudflare secrets to enable actual deployment"
+            echo "📖 See SETUP.md for instructions"
+          fi

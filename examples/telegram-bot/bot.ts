@@ -1,177 +1,109 @@
-import { TelegramAdapter } from '../../src/core/telegram-adapter.js';
-import { CoreBot } from '../../src/core/bot.js';
-import { logger } from '../../src/lib/logger.js';
-import type { Context } from 'grammy';
-import type { Env } from '../../src/types/env.js';
-
 /**
- * Example Telegram bot implementation using the wireframe
+ * Basic Telegram Bot Example
+ *
+ * This example demonstrates how to create a simple Telegram bot
+ * using the Wireframe v1.2 platform with TypeScript.
  */
 
-// Define custom commands
-const customCommands = {
-  // Simple hello command
-  hello: async (ctx: Context) => {
-    await ctx.reply("👋 Hello! I'm your friendly Telegram bot built with Cloudflare Workers!");
-  },
+import { Bot } from '../../src/core/bot';
+import { TelegramConnector } from '../../src/connectors/messaging/telegram';
+import { CloudPlatformFactory } from '../../src/core/cloud/platform-factory';
+import { MonitoringFactory } from '../../src/connectors/monitoring/monitoring-factory';
+import type { Env } from '../../src/types/env';
 
-  // Weather command (mock implementation)
-  weather: async (ctx: Context) => {
-    const location = ctx.match || 'World';
-    await ctx.reply(`🌤️ The weather in ${location} is perfect for coding!`);
-  },
+// Command handlers
+async function handleStartCommand(ctx: any) {
+  const userName = ctx.from?.first_name || 'friend';
 
-  // Echo command
-  echo: async (ctx: Context) => {
-    const text = ctx.match || "You didn't provide any text to echo!";
-    await ctx.reply(`🔊 Echo: ${text}`);
-  },
+  await ctx.reply(
+    `👋 Hello ${userName}! Welcome to Wireframe Bot.\n\n` +
+      `I'm a simple bot built with the Wireframe platform. Try these commands:\n\n` +
+      `/help - Show available commands\n` +
+      `/echo <text> - Echo your message\n` +
+      `/weather <city> - Get weather info (AI-powered)\n` +
+      `/about - Learn about Wireframe`,
+  );
+}
 
-  // Status command
-  status: async (ctx: Context) => {
-    const uptime = process.uptime ? process.uptime() : 'N/A';
-    await ctx.reply(
-      `🤖 Bot Status:\n` +
-        `✅ Online\n` +
-        `⏱️ Uptime: ${uptime} seconds\n` +
-        `🌐 Platform: Cloudflare Workers\n` +
-        `🚀 Framework: Telegram Bot Wireframe`,
-    );
-  },
+async function handleHelpCommand(ctx: any) {
+  await ctx.reply(
+    `📚 *Available Commands*\n\n` +
+      `/start - Welcome message\n` +
+      `/help - This help message\n` +
+      `/echo <text> - Echo your message\n` +
+      `/weather <city> - Get weather info\n` +
+      `/about - About this bot\n\n` +
+      `This bot is built with Wireframe v1.2 🚀`,
+    { parse_mode: 'Markdown' },
+  );
+}
 
-  // Crypto price command (mock)
-  crypto: async (ctx: Context) => {
-    const coin = ctx.match || 'BTC';
-    const mockPrice = Math.floor(Math.random() * 50000) + 20000;
-    await ctx.reply(
-      `💰 ${coin.toUpperCase()} Price:\n` +
-        `📈 $${mockPrice.toLocaleString()}\n` +
-        `📊 24h Change: +${(Math.random() * 10).toFixed(2)}%`,
-    );
-  },
-};
+async function handleEchoCommand(ctx: any) {
+  const text = ctx.match || 'Hello!';
+  await ctx.reply(`🔊 ${text}`);
+}
 
-// Export the main handler for Cloudflare Workers
+async function handleWeatherCommand(ctx: any) {
+  const city = ctx.match || 'London';
+
+  // In a real bot, you would use the AI service here
+  await ctx.reply(
+    `🌤️ Weather in ${city}:\n\n` +
+      `Temperature: 22°C\n` +
+      `Conditions: Partly cloudy\n` +
+      `Humidity: 65%\n\n` +
+      `_This is a demo response. Connect an AI provider for real weather data!_`,
+    { parse_mode: 'Markdown' },
+  );
+}
+
+async function handleAboutCommand(ctx: any) {
+  await ctx.reply(
+    `🚀 *About Wireframe*\n\n` +
+      `This bot is built with Wireframe v1.2 - a universal AI assistant platform.\n\n` +
+      `✨ Features:\n` +
+      `• Multi-cloud deployment (Cloudflare, AWS, GCP)\n` +
+      `• Multi-messaging platforms (Telegram, Discord, Slack)\n` +
+      `• AI provider abstraction\n` +
+      `• Plugin system\n` +
+      `• TypeScript with 100% type safety\n\n` +
+      `[Learn more](https://github.com/talkstream/telegram-bot-on-cloudflare-workers)`,
+    { parse_mode: 'Markdown', disable_web_page_preview: true },
+  );
+}
+
+// Main handler
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
-      // Initialize the Telegram adapter
-      const adapter = new TelegramAdapter(env);
+      // Initialize monitoring
+      const monitoring = await MonitoringFactory.createFromEnv(env);
 
-      // Create the bot instance
-      const bot = new CoreBot(env, adapter);
+      // Create cloud platform connector
+      const cloudPlatform = CloudPlatformFactory.createFromTypedEnv(env);
 
-      // Register custom commands
-      Object.entries(customCommands).forEach(([command, handler]) => {
-        bot.command(command, handler);
+      // Create bot instance
+      const bot = new Bot({
+        connector: new TelegramConnector({
+          token: env.TELEGRAM_BOT_TOKEN,
+          webhookSecret: env.TELEGRAM_WEBHOOK_SECRET,
+        }),
+        cloudPlatform,
+        monitoring,
       });
 
-      // Add inline query handler
-      bot.on('inline_query', async (ctx) => {
-        const query = ctx.inlineQuery?.query || '';
-
-        const results = [
-          {
-            type: 'article' as const,
-            id: '1',
-            title: 'Send a greeting',
-            input_message_content: {
-              message_text: `👋 Hello from Telegram Bot on Cloudflare Workers!`,
-            },
-          },
-          {
-            type: 'article' as const,
-            id: '2',
-            title: 'Send bot info',
-            input_message_content: {
-              message_text: `🤖 This bot is powered by Cloudflare Workers and the Telegram Bot Wireframe!`,
-            },
-          },
-        ];
-
-        if (query) {
-          results.push({
-            type: 'article' as const,
-            id: '3',
-            title: `Echo: ${query}`,
-            input_message_content: {
-              message_text: `Echo: ${query}`,
-            },
-          });
-        }
-
-        await ctx.answerInlineQuery(results);
-      });
-
-      // Add callback query handler for inline keyboards
-      bot.on('callback_query', async (ctx) => {
-        const data = ctx.callbackQuery?.data;
-
-        switch (data) {
-          case 'help':
-            await ctx.answerCallbackQuery('Opening help menu...');
-            await ctx.reply(
-              '📚 Available Commands:\n\n' +
-                '/start - Start the bot\n' +
-                '/help - Show this help menu\n' +
-                '/hello - Get a greeting\n' +
-                '/weather [location] - Get weather info\n' +
-                '/echo [text] - Echo your message\n' +
-                '/status - Check bot status\n' +
-                '/crypto [coin] - Get crypto price\n' +
-                '/settings - Open settings menu',
-            );
-            break;
-
-          case 'about':
-            await ctx.answerCallbackQuery('Loading about info...');
-            await ctx.reply(
-              '🤖 About This Bot\n\n' +
-                'This is an example Telegram bot built with:\n' +
-                '• Cloudflare Workers\n' +
-                '• Telegram Bot API\n' +
-                '• TypeScript\n' +
-                '• Grammy Framework\n\n' +
-                'Source: github.com/talkstream/telegram-bot-on-cloudflare-workers',
-            );
-            break;
-
-          default:
-            await ctx.answerCallbackQuery('Unknown action');
-        }
-      });
+      // Register commands
+      bot.command('start', handleStartCommand);
+      bot.command('help', handleHelpCommand);
+      bot.command('echo', handleEchoCommand);
+      bot.command('weather', handleWeatherCommand);
+      bot.command('about', handleAboutCommand);
 
       // Handle the request
-      return await bot.handleUpdate(request);
+      return await bot.handleRequest(request);
     } catch (error) {
-      logger.error('Bot error:', error);
+      console.error('Bot error:', error);
       return new Response('Internal Server Error', { status: 500 });
-    }
-  },
-
-  // Scheduled handler for periodic tasks
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    logger.info('Running scheduled task', { cron: event.cron });
-
-    // Example: Send daily statistics to admin
-    if (event.cron === '0 0 * * *') {
-      // Daily at midnight
-      const adapter = new TelegramAdapter(env);
-      const adminId = env.ADMIN_USER_ID;
-
-      if (adminId) {
-        try {
-          await adapter.bot.api.sendMessage(
-            adminId,
-            '📊 Daily Report:\n' +
-              '• Bot is running smoothly\n' +
-              '• All systems operational\n' +
-              '• Have a great day!',
-          );
-        } catch (error) {
-          logger.error('Failed to send daily report:', error);
-        }
-      }
     }
   },
 };

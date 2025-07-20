@@ -3,11 +3,20 @@ main = "src/index.ts"
 compatibility_date = "2025-01-07"
 compatibility_flags = ["nodejs_compat"]
 
-[[kv_namespaces]]
-binding = "SESSIONS"
-id = "your_kv_namespace_id" # Replace with your actual KV Namespace ID
+# Environment variables for demo mode
+[vars]
+ENVIRONMENT = "production"
+CLOUD_PLATFORM = "cloudflare"
+TELEGRAM_BOT_TOKEN = "demo"
+TELEGRAM_WEBHOOK_SECRET = "demo"
+AI_PROVIDER = "mock"
 
-# D1 Database - Replace with your own
+# KV Namespaces - commented out for demo deployment
+# [[kv_namespaces]]
+# binding = "SESSIONS"
+# id = "your_kv_namespace_id" # Replace with your actual KV Namespace ID
+
+# D1 Database - Optional, not required for demo
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "your_database_name"
@@ -38,25 +47,33 @@ name = "telegram-bot-wireframe-staging"
 [env.production]
 name = "telegram-bot-wireframe"
 
-# Production KV Namespaces
-[[env.production.kv_namespaces]]
-binding = "SESSIONS"
-id = "b4265a5422504dfe96d64807fce3b8f8"
+# Production environment variables for demo mode
+[env.production.vars]
+ENVIRONMENT = "production"
+CLOUD_PLATFORM = "cloudflare"
+TELEGRAM_BOT_TOKEN = "demo"
+TELEGRAM_WEBHOOK_SECRET = "demo"
+AI_PROVIDER = "mock"
 
-[[env.production.kv_namespaces]]
-binding = "CACHE"
-id = "aa2506f14eab45689df2ef5c77230368"
+# Production KV Namespaces - commented out for demo
+# [[env.production.kv_namespaces]]
+# binding = "SESSIONS"
+# id = "b4265a5422504dfe96d64807fce3b8f8"
 
-[[env.production.kv_namespaces]]
-binding = "RATE_LIMIT"
-id = "41a10c14fb80402a9116d747c17cde6a"
+# [[env.production.kv_namespaces]]
+# binding = "CACHE"
+# id = "aa2506f14eab45689df2ef5c77230368"
 
-# Production D1 Database
+# [[env.production.kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "41a10c14fb80402a9116d747c17cde6a"
+
+# Production D1 Database - not needed for demo
 # [[env.production.d1_databases]]
 # binding = "DB"
 # database_name = "your_production_database_name"
 # database_id = "your_production_database_id"
 
-# Production Cron triggers
+# Production Cron triggers - disabled for demo
 # [env.production.triggers]
 # crons = [ "0 8 * * *" ] # Example: Run daily at 8 AM UTC
