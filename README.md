@@ -27,6 +27,22 @@
 
 ---
 
+## 🆕 What's New in v1.2
+
+### Universal Connector Architecture
+
+- **Event-driven architecture** with EventBus for decoupled communication
+- **Service connectors** for AI, Session, and Payment services
+- **Plugin system** for extensible functionality
+- **Request batching** for optimized API calls
+- **Duplicate message protection** to prevent processing the same update twice
+
+### Breaking Changes
+
+- No backward compatibility with v1.x
+- TelegramAdapter replaced with TelegramConnector
+- All services now communicate through EventBus
+
 ## ⚡ Quick Start with Claude Code
 
 <p align="center">
@@ -236,25 +252,30 @@ curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook" \
 
 ## 🏗️ Architecture
 
+### Connector-Based Architecture (v1.2)
+
+Wireframe v1.2 introduces a revolutionary connector-based architecture that decouples services from platforms:
+
 ```
 src/
-├── adapters/           # External service adapters
-│   └── telegram/       # Telegram bot implementation
-│       ├── commands/   # Command handlers
-│       ├── callbacks/  # Callback query handlers
-│       └── handlers/   # Event handlers
-├── config/             # Configuration files
+├── connectors/         # Platform & Service Connectors
+│   ├── messaging/      # Messaging platform connectors
+│   │   └── telegram/   # Telegram implementation
+│   ├── ai/             # AI service connector
+│   ├── session/        # Session management connector
+│   └── payment/        # Payment service connector
 ├── core/               # Core framework components
-│   ├── plugins/        # Plugin system
 │   ├── events/         # Event bus for decoupled communication
-│   └── interfaces/     # Core interfaces (messaging, AI, cloud)
-├── domain/             # Domain models and repositories
-├── handlers/           # HTTP request handlers
-├── lib/                # Shared libraries
-├── middleware/         # Express-style middleware
-├── services/           # Business services
-├── shared/             # Shared utilities
-├── types/              # TypeScript type definitions
+│   ├── plugins/        # Plugin system
+│   └── interfaces/     # Core interfaces
+├── services/           # Business logic services
+│   ├── ai-service.ts   # AI processing logic
+│   ├── session-service.ts # Session management
+│   └── payment-service.ts # Payment handling
+├── plugins/            # Extensible plugins
+│   ├── start-plugin.ts # Start command handler
+│   ├── ai-plugin.ts    # AI commands plugin
+│   └── settings-plugin.ts # User settings plugin
 └── index.ts            # Application entry point
 
 examples/
@@ -269,60 +290,78 @@ examples/
 
 ### Key Design Patterns
 
-- **Clean Architecture** - Clear separation of concerns
-- **Repository Pattern** - Abstract data access
-- **Dependency Injection** - Loose coupling between components
-- **Middleware Pattern** - Composable request processing
-- **Command Pattern** - Organized bot command handling
-- **Plugin System** - Modular feature development
-- **Event-Driven** - Decoupled communication via event bus
-- **Adapter Pattern** - Support multiple platforms and providers
+- **Connector Pattern** - Platform-agnostic service integration
+- **Event-Driven Architecture** - All communication through EventBus
+- **Plugin System** - Hot-swappable feature modules
+- **Service Abstraction** - Business logic separated from connectors
+- **Request/Response Events** - Async service communication
+- **Batch Processing** - Optimized API calls
+- **Repository Pattern** - Clean data access layer
+- **TypeScript Strict Mode** - 100% type safety
 
 ## 📦 Examples
 
-### Basic Telegram Bot
+### Event-Driven Command
 
 ```typescript
-// examples/telegram-bot/bot.ts
-import { TelegramAdapter } from '../../src/core/telegram-adapter.js';
-import { CoreBot } from '../../src/core/bot.js';
+// Using the new event-driven architecture
+import { Plugin, PluginContext } from './core/plugins/plugin';
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const adapter = new TelegramAdapter(env);
-    const bot = new CoreBot(env, adapter);
+export class MyPlugin implements Plugin {
+  id = 'my-plugin';
 
-    // Add your commands
-    bot.command('hello', async (ctx) => {
-      await ctx.reply('👋 Hello from Cloudflare Workers!');
-    });
+  async install(context: PluginContext) {
+    // Register command through plugin system
+    context.commands.set('hello', {
+      name: 'hello',
+      description: 'Greet the user',
+      handler: async (args, ctx) => {
+        await ctx.reply('👋 Hello from Wireframe v1.2!');
 
-    return await bot.handleUpdate(request);
-  },
-};
-```
-
-### Plugin Example
-
-```typescript
-// Create reusable plugins
-export class ReminderPlugin extends BasePlugin {
-  id = 'reminder-plugin';
-  name = 'Reminder Plugin';
-
-  getCommands(): PluginCommand[] {
-    return [
-      {
-        name: 'remind',
-        description: 'Set a reminder',
-        handler: this.handleRemindCommand.bind(this),
+        // Emit custom event
+        context.eventBus.emit('greeting:sent', {
+          userId: ctx.sender.id,
+          timestamp: Date.now(),
+        });
       },
-    ];
+    });
   }
 }
 ```
 
-See the `examples/` directory for complete working examples.
+### Service Integration Example
+
+```typescript
+// Integrate with AI service through events
+context.eventBus.emit('ai:complete', {
+  prompt: 'What is the weather today?',
+  requestId: 'req_123',
+  options: { maxTokens: 500 },
+});
+
+// Listen for response
+context.eventBus.once('ai:complete:success', (event) => {
+  console.log('AI Response:', event.payload.response.content);
+});
+```
+
+### Connector Communication
+
+```typescript
+// Services communicate through standardized events
+// Payment example:
+context.eventBus.emit('payment:create_invoice', {
+  playerId: 123,
+  invoiceType: 'premium_upgrade',
+  starsAmount: 100,
+});
+
+// Session management:
+context.eventBus.emit('session:get', {
+  userId: 'user123',
+  requestId: 'req_456',
+});
+```
 
 ## 🚀 Deployment
 

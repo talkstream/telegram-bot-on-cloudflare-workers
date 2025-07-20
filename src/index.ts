@@ -34,6 +34,39 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector> {
     // Initialize infrastructure
     const eventBus = new EventBus();
 
+    // Initialize service connectors
+    if (env.AI_PROVIDER) {
+      const { AIServiceConnector } = await import('./connectors/ai/ai-service-connector');
+      new AIServiceConnector(
+        eventBus,
+        {
+          defaultProvider: 'google',
+          fallbackProviders: ['openai'],
+        },
+        (env.TIER as 'free' | 'paid') || 'free',
+      );
+    }
+
+    if (env.SESSIONS) {
+      const { SessionServiceConnector } = await import(
+        './connectors/session/session-service-connector'
+      );
+      new SessionServiceConnector(eventBus, {
+        sessionsKv: env.SESSIONS,
+        tier: (env.TIER as 'free' | 'paid') || 'free',
+      });
+    }
+
+    if (env.DB) {
+      const { PaymentServiceConnector } = await import(
+        './connectors/payment/payment-service-connector'
+      );
+      new PaymentServiceConnector(eventBus, {
+        db: env.DB,
+        tier: (env.TIER as 'free' | 'paid') || 'free',
+      });
+    }
+
     // Create and initialize TelegramConnector
     const telegramConnector = new TelegramConnector();
     await telegramConnector.initialize({
@@ -43,6 +76,11 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector> {
       // Additional config
       parseMode: 'HTML',
       linkPreview: false,
+      batch: {
+        enabled: true,
+        maxSize: 30,
+        delay: 50,
+      },
     });
 
     // TODO: Load plugins

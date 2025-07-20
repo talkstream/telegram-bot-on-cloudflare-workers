@@ -135,6 +135,11 @@ export interface PluginContext {
   storage: PluginStorage;
 
   /**
+   * Commands registry
+   */
+  commands: Map<string, PluginCommand>;
+
+  /**
    * Get other plugins
    */
   getPlugin(id: string): Plugin | undefined;
@@ -188,7 +193,12 @@ export interface CommandContext {
   /**
    * Command sender
    */
-  sender: unknown;
+  sender: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+  };
 
   /**
    * Command arguments
@@ -316,10 +326,10 @@ export interface PluginHooks {
 }
 
 export interface Logger {
-  debug(message: string, ...args: unknown[]): void;
-  info(message: string, ...args: unknown[]): void;
-  warn(message: string, ...args: unknown[]): void;
-  error(message: string, ...args: unknown[]): void;
+  debug(message: string, metadata?: Record<string, unknown>): void;
+  info(message: string, metadata?: Record<string, unknown>): void;
+  warn(message: string, metadata?: Record<string, unknown>): void;
+  error(message: string, metadata?: Record<string, unknown>): void;
 }
 
 export interface PluginStorage {

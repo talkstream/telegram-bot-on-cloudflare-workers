@@ -267,6 +267,7 @@ export class PluginManager implements IPluginManager {
       dataDir: `${this.dataDir}/${plugin.id}`,
       logger: this.createPluginLogger(plugin),
       storage: this.storageFactory(plugin.id),
+      commands: new Map(),
       getPlugin: (id: string) => this.get(id),
       getConnector: (id: string) => this.getConnector(id),
       registerService: (id: string, service: unknown) =>
@@ -278,14 +279,14 @@ export class PluginManager implements IPluginManager {
   private createPluginLogger(plugin: Plugin): Logger {
     const prefix = `[${plugin.name}]`;
     return {
-      debug: (message: string, ...args: unknown[]) =>
-        this.logger.debug(`${prefix} ${message}`, ...args),
-      info: (message: string, ...args: unknown[]) =>
-        this.logger.info(`${prefix} ${message}`, ...args),
-      warn: (message: string, ...args: unknown[]) =>
-        this.logger.warn(`${prefix} ${message}`, ...args),
-      error: (message: string, ...args: unknown[]) =>
-        this.logger.error(`${prefix} ${message}`, ...args),
+      debug: (message: string, metadata?: Record<string, unknown>) =>
+        this.logger.debug(`${prefix} ${message}`, metadata),
+      info: (message: string, metadata?: Record<string, unknown>) =>
+        this.logger.info(`${prefix} ${message}`, metadata),
+      warn: (message: string, metadata?: Record<string, unknown>) =>
+        this.logger.warn(`${prefix} ${message}`, metadata),
+      error: (message: string, metadata?: Record<string, unknown>) =>
+        this.logger.error(`${prefix} ${message}`, metadata),
     };
   }
 
