@@ -61,7 +61,7 @@ export class TelegramConnector extends BaseMessagingConnector {
     recipient: string;
     message: UnifiedMessage;
     resolve: (value: MessageResult) => void;
-    reject: (reason?: any) => void;
+    reject: (reason?: unknown) => void;
   }> = [];
   private batchTimer?: NodeJS.Timeout;
   private readonly DEFAULT_BATCH_SIZE = 30; // Telegram API limit

@@ -3,14 +3,14 @@
  * Bridges the PaymentService with the new connector architecture
  */
 
-import type { D1Database } from '@cloudflare/workers-types';
-
 import type { EventBus } from '../../core/events/event-bus';
 import { PaymentService } from '../../services/payment-service';
 import { logger } from '../../lib/logger';
 
+import type { IDatabaseStore } from '@/core/interfaces/storage';
+
 export interface PaymentConnectorConfig {
-  db: D1Database;
+  db: IDatabaseStore;
   tier?: 'free' | 'paid';
 }
 

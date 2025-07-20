@@ -81,7 +81,7 @@ export class TelegramCommandHandler {
   /**
    * Register all commands with bot
    */
-  registerCommands(bot: Bot<any>): void {
+  registerCommands(bot: Bot<TelegramContext>): void {
     this.commands.forEach((command, name) => {
       bot.command(name, async (ctx) => {
         await this.handleCommand(ctx as TelegramContext, name);

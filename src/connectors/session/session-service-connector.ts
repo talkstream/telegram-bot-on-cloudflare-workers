@@ -3,16 +3,16 @@
  * Bridges the existing SessionService with the new connector architecture
  */
 
-import type { KVNamespace } from '@cloudflare/workers-types';
-
 import type { EventBus } from '../../core/events/event-bus';
-import { SessionService } from '../../services/session-service';
 import type { UserSession, SessionOptions } from '../../services/session-service';
 import type { MultiLayerCache } from '../../lib/multi-layer-cache';
+import { SessionService } from '../../services/session-service';
 import { logger } from '../../lib/logger';
 
+import type { IKeyValueStore } from '@/core/interfaces/storage';
+
 export interface SessionServiceConfig {
-  sessionsKv: KVNamespace;
+  sessionsKv: IKeyValueStore;
   tier?: 'free' | 'paid';
   cache?: MultiLayerCache;
 }
