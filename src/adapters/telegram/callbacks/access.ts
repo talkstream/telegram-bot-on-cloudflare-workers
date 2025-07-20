@@ -3,6 +3,13 @@ import { InlineKeyboard } from 'grammy';
 import type { BotContext } from '@/types';
 import { logger } from '@/lib/logger';
 
+// Type guard to ensure DB is available
+function assertDB(db: unknown): asserts db is NonNullable<BotContext['env']['DB']> {
+  if (!db) {
+    throw new Error('Database is not available');
+  }
+}
+
 /**
  * Handle access request callback
  */
@@ -24,15 +31,19 @@ export async function handleAccessRequest(ctx: BotContext) {
     return;
   }
 
+  const db = ctx.env.DB;
+  assertDB(db);
+
   try {
     // Check if user already has a pending request
-    const existingRequest = await ctx.env.DB.prepare(
-      `
+    const existingRequest = await db
+      .prepare(
+        `
       SELECT id FROM access_requests 
       WHERE user_id = ? AND status = 'pending'
       LIMIT 1
     `,
-    )
+      )
       .bind(userId)
       .first<{ id: number }>();
 
@@ -42,12 +53,13 @@ export async function handleAccessRequest(ctx: BotContext) {
     }
 
     // Create new access request
-    await ctx.env.DB.prepare(
-      `
+    await db
+      .prepare(
+        `
       INSERT INTO access_requests (user_id, username, first_name, status, created_at)
       VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
     `,
-    )
+      )
       .bind(userId, ctx.from.username ?? null, ctx.from.first_name)
       .run();
 
@@ -90,14 +102,18 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
     return;
   }
 
+  const db = ctx.env.DB;
+  assertDB(db);
+
   try {
     // Verify request belongs to user
-    const request = await ctx.env.DB.prepare(
-      `
+    const request = await db
+      .prepare(
+        `
       SELECT id FROM access_requests 
       WHERE id = ? AND user_id = ? AND status = 'pending'
     `,
-    )
+      )
       .bind(parseInt(requestId), userId)
       .first();
 
@@ -107,13 +123,14 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
     }
 
     // Cancel the request
-    await ctx.env.DB.prepare(
-      `
+    await db
+      .prepare(
+        `
       UPDATE access_requests 
       SET status = 'cancelled', processed_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `,
-    )
+      )
       .bind(parseInt(requestId))
       .run();
 
@@ -142,14 +159,18 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
     return;
   }
 
+  const db = ctx.env.DB;
+  assertDB(db);
+
   try {
     // Get request details
-    const request = await ctx.env.DB.prepare(
-      `
+    const request = await db
+      .prepare(
+        `
       SELECT * FROM access_requests 
       WHERE id = ? AND status = 'pending'
     `,
-    )
+      )
       .bind(parseInt(requestId))
       .first<{ id: number; user_id: number; username: string; first_name: string }>();
 
@@ -159,23 +180,25 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
     }
 
     // Update request status
-    await ctx.env.DB.prepare(
-      `
+    await db
+      .prepare(
+        `
       UPDATE access_requests 
       SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = ?
       WHERE id = ?
     `,
-    )
+      )
       .bind(adminId, parseInt(requestId))
       .run();
 
     // Grant access to user
-    await ctx.env.DB.prepare(
-      `
+    await db
+      .prepare(
+        `
       INSERT OR REPLACE INTO users (telegram_id, username, first_name, role, created_at)
       VALUES (?, ?, ?, 'user', CURRENT_TIMESTAMP)
     `,
-    )
+      )
       .bind(request.user_id, request.username, request.first_name)
       .run();
 
@@ -232,14 +255,18 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
     return;
   }
 
+  const db = ctx.env.DB;
+  assertDB(db);
+
   try {
     // Get request details
-    const request = await ctx.env.DB.prepare(
-      `
+    const request = await db
+      .prepare(
+        `
       SELECT * FROM access_requests 
       WHERE id = ? AND status = 'pending'
     `,
-    )
+      )
       .bind(parseInt(requestId))
       .first<{ id: number; user_id: number; username: string }>();
 
@@ -249,13 +276,14 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
     }
 
     // Update request status
-    await ctx.env.DB.prepare(
-      `
+    await db
+      .prepare(
+        `
       UPDATE access_requests 
       SET status = 'rejected', processed_at = CURRENT_TIMESTAMP, processed_by = ?
       WHERE id = ?
     `,
-    )
+      )
       .bind(adminId, parseInt(requestId))
       .run();
 
@@ -316,22 +344,27 @@ export async function handleNextRequest(ctx: BotContext) {
     return;
   }
 
+  const db = ctx.env.DB;
+  assertDB(db);
+
   try {
     // Get next pending request
-    const request = await ctx.env.DB.prepare(
-      `
+    const request = await db
+      .prepare(
+        `
       SELECT * FROM access_requests 
       WHERE status = 'pending'
       ORDER BY created_at ASC
       LIMIT 1
     `,
-    ).first<{
-      id: number;
-      user_id: number;
-      username: string;
-      first_name: string;
-      created_at: string;
-    }>();
+      )
+      .first<{
+        id: number;
+        user_id: number;
+        username: string;
+        first_name: string;
+        created_at: string;
+      }>();
 
     if (!request) {
       await ctx.editMessageText(ctx.i18n('no_pending_requests'), { parse_mode: 'HTML' });
@@ -378,14 +411,19 @@ async function notifyAdmins(
     return;
   }
 
+  const db = ctx.env.DB;
+  assertDB(db);
+
   try {
     // Get all admins
-    const admins = await ctx.env.DB.prepare(
-      `
+    const admins = await db
+      .prepare(
+        `
       SELECT telegram_id FROM users 
       WHERE role IN ('admin', 'owner')
     `,
-    ).all<{ telegram_id: number }>();
+      )
+      .all<{ telegram_id: number }>();
 
     const keyboard = new InlineKeyboard().text(ctx.i18n('review_request'), 'request_next');
 

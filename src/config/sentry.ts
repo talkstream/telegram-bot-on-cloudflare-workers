@@ -1,14 +1,17 @@
 import type { Hono } from 'hono';
 
-import type { Env } from './env';
-import type { IMonitoringConnector } from '../core/interfaces/monitoring';
 import { MonitoringFactory } from '../connectors/monitoring/monitoring-factory';
+import type { IMonitoringConnector } from '../core/interfaces/monitoring';
+
+import type { Env } from './env';
 
 let monitoringConnector: IMonitoringConnector | null = null;
 
 export async function initSentry(env: Env): Promise<IMonitoringConnector | null> {
   if (!monitoringConnector && env.SENTRY_DSN) {
-    monitoringConnector = await MonitoringFactory.createFromEnv(env as unknown as Record<string, string | undefined>);
+    monitoringConnector = await MonitoringFactory.createFromEnv(
+      env as unknown as Record<string, string | undefined>,
+    );
   }
   return monitoringConnector;
 }

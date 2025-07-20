@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { CloudPlatformFactory, cloudPlatformRegistry } from '../../core/cloud/platform-factory';
 import { CloudflareConnector } from '../../connectors/cloud/cloudflare/cloudflare-connector';
 import { AWSConnector } from '../../connectors/cloud/aws/aws-connector';
@@ -28,7 +29,7 @@ describe('Multi-Platform Integration', () => {
         KV_BINDING: 'MY_KV',
         D1_BINDING: 'DB',
       };
-      
+
       const cloudflareConnector = CloudPlatformFactory.createFromTypedEnv(cloudflareEnv as any);
       expect(cloudflareConnector).toBeInstanceOf(CloudflareConnector);
       expect(cloudflareConnector.platform).toBe('cloudflare');
@@ -38,7 +39,7 @@ describe('Multi-Platform Integration', () => {
         CLOUD_PLATFORM: 'aws',
         AWS_REGION: 'us-east-1',
       };
-      
+
       const awsConnector = CloudPlatformFactory.createFromTypedEnv(awsEnv as any);
       expect(awsConnector).toBeInstanceOf(AWSConnector);
       expect(awsConnector.platform).toBe('aws');
@@ -46,7 +47,7 @@ describe('Multi-Platform Integration', () => {
 
     it('should emit events when platforms are registered', async () => {
       const events: any[] = [];
-      
+
       eventBus.on(CommonEventType.CONNECTOR_REGISTERED, (event) => {
         events.push(event);
       });
@@ -56,9 +57,9 @@ describe('Multi-Platform Integration', () => {
         CLOUD_PLATFORM: 'cloudflare',
         AI_BINDING: 'AI',
       };
-      
+
       const connector = CloudPlatformFactory.createFromTypedEnv(env as any);
-      
+
       // Emit registration event
       eventBus.emit(
         CommonEventType.CONNECTOR_REGISTERED,
@@ -67,11 +68,11 @@ describe('Multi-Platform Integration', () => {
           platform: connector.platform,
           connector,
         },
-        'CloudPlatformFactory'
+        'CloudPlatformFactory',
       );
 
       // Wait for async event processing
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(events).toHaveLength(1);
       expect(events[0].payload.platform).toBe('cloudflare');
@@ -92,16 +93,17 @@ describe('Multi-Platform Integration', () => {
         }),
       ];
 
-      platforms.forEach(platform => {
+      platforms.forEach((platform) => {
         const features = platform.getFeatures();
-        
+
         expect(features).toHaveProperty('hasEdgeCache');
         expect(features).toHaveProperty('hasWebSockets');
         expect(features).toHaveProperty('hasCron');
         expect(features).toHaveProperty('hasQueues');
         expect(features).toHaveProperty('maxRequestDuration');
         expect(features).toHaveProperty('maxMemory');
-        
+
+        // eslint-disable-next-line no-console
         console.log(`${platform.platform} features:`, features);
       });
     });
@@ -112,7 +114,7 @@ describe('Multi-Platform Integration', () => {
         ctx: {} as any,
         request: new Request('https://example.com'),
       });
-      
+
       const aws = new AWSConnector({
         env: { DYNAMODB_TABLES: { users: 'users-table' } },
       });
@@ -120,13 +122,13 @@ describe('Multi-Platform Integration', () => {
       // Both should provide the same interface methods
       expect(typeof cloudflare.getKeyValueStore).toBe('function');
       expect(typeof aws.getKeyValueStore).toBe('function');
-      
+
       expect(typeof cloudflare.getDatabaseStore).toBe('function');
       expect(typeof aws.getDatabaseStore).toBe('function');
-      
+
       expect(typeof cloudflare.getObjectStore).toBe('function');
       expect(typeof aws.getObjectStore).toBe('function');
-      
+
       expect(typeof cloudflare.getCacheStore).toBe('function');
       expect(typeof aws.getCacheStore).toBe('function');
     });
@@ -165,7 +167,7 @@ describe('Multi-Platform Integration', () => {
         R2: {},
         AI: {},
       };
-      
+
       const cloudflare = CloudPlatformFactory.createFromTypedEnv(cloudflareEnv as any);
       const cfEnv = cloudflare.getEnv();
       expect(cfEnv.CLOUD_PLATFORM).toBe('cloudflare');
@@ -177,7 +179,7 @@ describe('Multi-Platform Integration', () => {
         AWS_ACCESS_KEY_ID: 'test-key',
         AWS_SECRET_ACCESS_KEY: 'test-secret',
       };
-      
+
       const aws = CloudPlatformFactory.createFromTypedEnv(awsEnv as any);
       const awsEnvVars = aws.getEnv();
       expect(awsEnvVars.CLOUD_PLATFORM).toBe('aws');
@@ -188,12 +190,12 @@ describe('Multi-Platform Integration', () => {
   describe('Event-Driven Platform Communication', () => {
     it('should use EventBus for platform operations', async () => {
       const events: any[] = [];
-      
+
       // Subscribe to connector events
       eventBus.on(CommonEventType.CONNECTOR_INITIALIZED, (event) => {
         events.push({ type: event.type, ...event });
       });
-      
+
       eventBus.on(CommonEventType.CONNECTOR_ERROR, (event) => {
         events.push({ type: event.type, ...event });
       });
@@ -212,7 +214,7 @@ describe('Multi-Platform Integration', () => {
           platform: connector.platform,
           features: connector.getFeatures(),
         },
-        'PlatformManager'
+        'PlatformManager',
       );
 
       // Simulate error
@@ -223,11 +225,11 @@ describe('Multi-Platform Integration', () => {
           error: new Error('Failed to connect to DynamoDB'),
           context: { region: 'us-east-1' },
         },
-        'AWSConnector'
+        'AWSConnector',
       );
 
       // Wait for async events
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(events).toHaveLength(2);
       expect(events[0].type).toBe(CommonEventType.CONNECTOR_INITIALIZED);
@@ -239,30 +241,34 @@ describe('Multi-Platform Integration', () => {
     it('should handle platform-specific events with scoped EventBus', async () => {
       const cloudflareEvents: any[] = [];
       const awsEvents: any[] = [];
-      
+
       // Create scoped event buses
       const cfEventBus = eventBus.scope('cloudflare');
       const awsEventBus = eventBus.scope('aws');
-      
+
       // Subscribe to scoped events
       cfEventBus.on('cache:hit', (event) => {
         cloudflareEvents.push(event);
       });
-      
+
       awsEventBus.on('lambda:invoked', (event) => {
         awsEvents.push(event);
       });
 
       // Emit platform-specific events
       cfEventBus.emit('cache:hit', { key: 'user:123', ttl: 3600 }, 'CacheService');
-      awsEventBus.emit('lambda:invoked', { functionName: 'processOrder', duration: 250 }, 'LambdaService');
+      awsEventBus.emit(
+        'lambda:invoked',
+        { functionName: 'processOrder', duration: 250 },
+        'LambdaService',
+      );
 
       // Wait for async events
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(cloudflareEvents).toHaveLength(1);
       expect(cloudflareEvents[0].payload.key).toBe('user:123');
-      
+
       expect(awsEvents).toHaveLength(1);
       expect(awsEvents[0].payload.functionName).toBe('processOrder');
     });
@@ -291,13 +297,13 @@ describe('Multi-Platform Integration', () => {
 
       for (const platform of platforms) {
         const kvStore = platform.getKeyValueStore('test-namespace');
-        
+
         // All KV stores should implement the same interface
         expect(typeof kvStore.get).toBe('function');
         expect(typeof kvStore.put).toBe('function');
         expect(typeof kvStore.delete).toBe('function');
         expect(typeof kvStore.list).toBe('function');
-        
+
         // Test basic operations (will be mocked for AWS)
         await kvStore.put('test-key', 'test-value');
         const value = await kvStore.get('test-key');
@@ -320,21 +326,21 @@ describe('Multi-Platform Integration', () => {
         ctx: {} as any,
         request: new Request('https://example.com'),
       });
-      
+
       const kvStore = cloudflare.getKeyValueStore('test');
-      
+
       // Cloudflare-specific features like TTL
       await kvStore.put('temp-key', 'temp-value', {
         expirationTtl: 3600,
         metadata: { created: Date.now() },
       });
-      
+
       // List with cursor (Cloudflare-specific)
       const result = await kvStore.list({
         prefix: 'temp-',
         limit: 10,
       });
-      
+
       expect(result).toHaveProperty('keys');
       expect(result).toHaveProperty('list_complete');
     });
@@ -343,7 +349,7 @@ describe('Multi-Platform Integration', () => {
   describe('Error Handling Across Platforms', () => {
     it('should handle platform-specific errors consistently', async () => {
       const errors: any[] = [];
-      
+
       eventBus.on(CommonEventType.CONNECTOR_ERROR, (event) => {
         errors.push(event.payload);
       });
@@ -364,7 +370,7 @@ describe('Multi-Platform Integration', () => {
             error,
             operation: 'getObjectStore',
           },
-          'CloudflareConnector'
+          'CloudflareConnector',
         );
       }
 
@@ -380,15 +386,15 @@ describe('Multi-Platform Integration', () => {
             error,
             operation: 'getObjectStore',
           },
-          'AWSConnector'
+          'AWSConnector',
         );
       }
 
       // Wait for events
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(errors).toHaveLength(2);
-      errors.forEach(error => {
+      errors.forEach((error) => {
         expect(error).toHaveProperty('platform');
         expect(error).toHaveProperty('error');
         expect(error).toHaveProperty('operation');
