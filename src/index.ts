@@ -10,6 +10,9 @@ import { healthHandler } from './core/health-handler';
 import { errorHandler } from './middleware/error-handler';
 import { EventBus } from './core/events/event-bus';
 import { TelegramConnector } from './connectors/messaging/telegram';
+import { CloudPlatformFactory } from './core/cloud/platform-factory';
+// Register all cloud connectors
+import './connectors/cloud';
 
 // Initialize the app
 const app = new Hono<{ Bindings: Env }>();
@@ -47,12 +50,15 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector> {
       );
     }
 
+    // Create cloud platform connector using factory
+    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+
     if (env.SESSIONS) {
       const { SessionServiceConnector } = await import(
         './connectors/session/session-service-connector'
       );
       new SessionServiceConnector(eventBus, {
-        sessionsKv: env.SESSIONS,
+        sessionsKv: cloudConnector.getKeyValueStore('SESSIONS'),
         tier: (env.TIER as 'free' | 'paid') || 'free',
       });
     }
@@ -62,7 +68,7 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector> {
         './connectors/payment/payment-service-connector'
       );
       new PaymentServiceConnector(eventBus, {
-        db: env.DB,
+        db: cloudConnector.getDatabaseStore('DB'),
         tier: (env.TIER as 'free' | 'paid') || 'free',
       });
     }

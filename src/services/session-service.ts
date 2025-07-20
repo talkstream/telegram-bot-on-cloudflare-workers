@@ -1,5 +1,4 @@
-import type { KVNamespace } from '@cloudflare/workers-types';
-
+import type { IKeyValueStore } from '@/core/interfaces/storage';
 import { getTierConfig } from '@/config/tiers';
 import { logger } from '@/lib/logger';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
@@ -18,12 +17,12 @@ export interface SessionOptions {
 }
 
 export class SessionService {
-  private sessionsKv: KVNamespace;
+  private sessionsKv: IKeyValueStore;
   private cache?: MultiLayerCache;
   private tier: 'free' | 'paid';
   private config: ReturnType<typeof getTierConfig>;
 
-  constructor(sessionsKv: KVNamespace, tier: 'free' | 'paid' = 'free', cache?: MultiLayerCache) {
+  constructor(sessionsKv: IKeyValueStore, tier: 'free' | 'paid' = 'free', cache?: MultiLayerCache) {
     this.sessionsKv = sessionsKv;
     this.tier = tier;
     this.config = getTierConfig(tier);
@@ -49,10 +48,8 @@ export class SessionService {
     }
 
     // Fallback to KV
-    const sessionStr = await this.sessionsKv.get(key);
-    if (!sessionStr) return null;
-
-    const session = JSON.parse(sessionStr) as UserSession;
+    const session = await this.sessionsKv.get<UserSession>(key);
+    if (!session) return null;
 
     // Check expiration
     if (this.isSessionExpired(session)) {
@@ -142,10 +139,9 @@ export class SessionService {
 
     for (const key of sessions.keys) {
       try {
-        const sessionStr = await this.sessionsKv.get(key.name);
-        if (!sessionStr) continue;
+        const session = await this.sessionsKv.get<UserSession>(key.name);
+        if (!session) continue;
 
-        const session = JSON.parse(sessionStr) as UserSession;
         if (this.isSessionExpired(session)) {
           await this.sessionsKv.delete(key.name);
           cleaned++;

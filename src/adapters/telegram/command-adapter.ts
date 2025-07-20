@@ -6,6 +6,8 @@ import type { Bot } from 'grammy';
 
 import type { PluginCommand } from '../../core/plugins/plugin';
 import type { EventBus } from '../../core/events/event-bus';
+import type { CommandArgs } from '../../types/command-args';
+import type { TelegramContext } from '../../connectors/messaging/telegram/types';
 import { TelegramCommandHandler } from '../../connectors/messaging/telegram/handlers/command-handler';
 
 import { setupCommands as setupLegacyCommands } from './commands';
@@ -74,7 +76,7 @@ export function createPluginCommands(): PluginCommand[] {
       name: 'ask',
       description: 'Ask AI a question',
       handler: async (args, ctx) => {
-        const question = (args as any)._raw as string;
+        const question = (args as CommandArgs)._raw;
         if (!question) {
           await ctx.reply(
             'Please provide a question after the command.\nExample: /ask What is the weather today?',
@@ -142,7 +144,7 @@ export function createPluginCommands(): PluginCommand[] {
 /**
  * Setup legacy command handlers with new TelegramConnector
  */
-export function setupCommandsWithConnector(bot: Bot<BotContext>, eventBus: EventBus): void {
+export function setupCommandsWithConnector(bot: Bot<TelegramContext>, eventBus: EventBus): void {
   logger.info('Setting up commands with new connector architecture');
 
   // Create plugin commands

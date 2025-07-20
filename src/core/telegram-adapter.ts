@@ -48,8 +48,8 @@ export class TelegramAdapter {
     setupCallbacks(this.bot);
 
     // Register payment handlers
-    this.bot.on('pre_checkout_query', (ctx) => handlePreCheckoutQuery(ctx, this.env));
-    this.bot.on('message:successful_payment', (ctx) => handleSuccessfulPayment(ctx, this.env));
+    this.bot.on('pre_checkout_query', (ctx) => handlePreCheckoutQuery(ctx));
+    this.bot.on('message:successful_payment', (ctx) => handleSuccessfulPayment(ctx));
 
     // Error handling
     this.bot.catch((err) => {

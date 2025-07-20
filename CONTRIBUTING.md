@@ -97,11 +97,47 @@ Feature requests are welcome! Please provide:
 - Focus on constructive feedback
 - Assume good intentions
 
+## 🤖 Bot-Driven Development
+
+We encourage contributors to build real bots using Wireframe and contribute improvements back. This ensures the framework evolves based on actual usage.
+
+### How It Works
+
+1. **Build Your Bot**: Use Wireframe to create a real Telegram bot
+2. **Identify Gaps**: Note missing features or pain points
+3. **Improve Framework**: Contribute enhancements back to Wireframe
+4. **Share Examples**: Add your bot patterns to our examples
+
+### Contribution Workflow
+
+```bash
+# Create a worktree for your bot development
+git worktree add ../wireframe-mybot feature/mybot
+
+# Develop your bot and framework improvements in parallel
+cd ../wireframe-mybot
+# ... work on your bot ...
+
+# When you find something to improve in the framework
+git add -p  # Select framework improvements
+git commit -m "feat: add feature discovered during bot development"
+git push origin feature/framework-improvement
+```
+
+### What We're Looking For
+
+- **Real-world patterns** that emerge from bot development
+- **Missing abstractions** discovered through actual use
+- **Performance optimizations** based on production experience
+- **Documentation improvements** from implementation challenges
+- **Test cases** derived from real scenarios
+
 ## 📚 Resources
 
+- [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) - Detailed development guide
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [grammY Documentation](https://grammy.dev/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
 
-Thank you for contributing to make this the best Telegram bot wireframe for Cloudflare Workers!
+Thank you for contributing to make Wireframe the best universal AI assistant platform!

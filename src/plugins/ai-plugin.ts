@@ -4,6 +4,7 @@
  */
 
 import type { Plugin, PluginContext, PluginCommand } from '../core/plugins/plugin';
+import type { CommandArgs } from '../types/command-args';
 
 export class AIPlugin implements Plugin {
   id = 'ai-plugin';
@@ -28,7 +29,7 @@ export class AIPlugin implements Plugin {
       description: 'Ask AI a question',
       aliases: ['ai', 'chat'],
       handler: async (args, commandContext) => {
-        const question = (args as any)._raw as string;
+        const question = (args as CommandArgs)._raw;
 
         if (!question || question.trim().length === 0) {
           await commandContext.reply(

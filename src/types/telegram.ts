@@ -9,6 +9,8 @@ import type { PaymentRepository } from '@/domain/payments/repository';
 import type { UserSession } from '@/services/session-service';
 import type { getMessage } from '@/lib/i18n';
 import type { TelegramRequestBatcher } from '@/lib/telegram-batcher';
+import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
+import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
 
 // Session data structure
 export interface SessionData {
@@ -24,6 +26,8 @@ export interface SessionData {
 export type BotContext = GrammyContext &
   SessionFlavor<SessionData> & {
     env: Env;
+    cloudConnector: ICloudPlatformConnector;
+    monitoring: IMonitoringConnector | null;
     session?: UserSession | undefined;
     services: {
       session: SessionService;

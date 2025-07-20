@@ -1,6 +1,6 @@
-# 📚 Telegram Bot Cloudflare Workers Documentation
+# 📚 Wireframe Documentation
 
-Welcome to the comprehensive documentation for the Telegram Bot Cloudflare Workers wireframe. This documentation is designed to help developers understand, extend, and deploy production-ready Telegram bots on Cloudflare's edge computing platform.
+Welcome to the comprehensive documentation for Wireframe - the universal AI assistant platform. This documentation is designed to help developers understand, extend, and deploy production-ready AI assistants on any cloud platform.
 
 ## 📋 Table of Contents
 
@@ -12,7 +12,8 @@ Welcome to the comprehensive documentation for the Telegram Bot Cloudflare Worke
 ### Architecture & Design
 
 - [Architecture Decisions](./ARCHITECTURE_DECISIONS.md) - Key design choices and rationale
-- [API Reference](./API_REFERENCE.md) - Telegram API types and webhook handling
+- [Cloud Platforms](./CLOUD_PLATFORMS.md) - Multi-cloud deployment guide
+- [API Reference](./API_REFERENCE.md) - Complete API documentation
 
 ### Deployment & Operations
 
@@ -34,18 +35,19 @@ Welcome to the comprehensive documentation for the Telegram Bot Cloudflare Worke
 
 ## 🎯 Who This Documentation Is For
 
-- **Developers** building Telegram bots on Cloudflare Workers
-- **Teams** looking for a production-ready bot architecture
-- **Contributors** wanting to understand and extend the wireframe
+- **Developers** building AI assistants on any cloud platform
+- **Teams** looking for a production-ready multi-cloud architecture
+- **Contributors** wanting to understand and extend the platform
 
 ## 💡 Key Concepts
 
-This wireframe embraces several core principles:
+This platform embraces several core principles:
 
-1. **Edge-First Architecture** - Leverage Cloudflare's global network
+1. **Cloud-Agnostic Architecture** - Deploy on any cloud platform
 2. **Type Safety** - 100% TypeScript with strict mode
-3. **Performance Optimization** - Tier-aware resource management
+3. **Performance Optimization** - Platform-aware resource management
 4. **Developer Experience** - Clear patterns and comprehensive tooling
+5. **Extensibility** - Plugin system and connector architecture
 
 ## 📖 How to Use This Documentation
 

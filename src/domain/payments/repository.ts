@@ -1,6 +1,7 @@
-import { D1Database } from '@cloudflare/workers-types';
-
 import { logger } from '../../lib/logger';
+
+import type { IDatabaseStore } from '@/core/interfaces/storage';
+
 
 export interface TelegramPayment {
   id?: number;
@@ -28,9 +29,9 @@ export interface PendingInvoice {
 }
 
 export class PaymentRepository {
-  private db: D1Database;
+  private db: IDatabaseStore;
 
-  constructor(db: D1Database) {
+  constructor(db: IDatabaseStore) {
     this.db = db;
   }
 
@@ -53,7 +54,9 @@ export class PaymentRepository {
           payment.status,
         )
         .run();
-      return result.meta.last_row_id as number;
+      // TODO: Remove 'any' when IDatabaseStore provides proper meta types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (result.meta as any).last_row_id as number;
     } catch (error) {
       logger.error('Failed to record payment', { error, payment });
       throw new Error('Failed to record payment');
@@ -79,7 +82,9 @@ export class PaymentRepository {
           invoice.expires_at,
         )
         .run();
-      return result.meta.last_row_id as number;
+      // TODO: Remove 'any' when IDatabaseStore provides proper meta types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (result.meta as any).last_row_id as number;
     } catch (error) {
       logger.error('Failed to save pending invoice', { error, invoice });
       throw new Error('Failed to save pending invoice');

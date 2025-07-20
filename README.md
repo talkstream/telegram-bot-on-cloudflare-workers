@@ -29,8 +29,10 @@
 
 ## 🆕 What's New in v1.2
 
-### Universal Connector Architecture
+### Universal Platform Architecture
 
+- **Multi-cloud support** - Deploy on Cloudflare, AWS, GCP, or any cloud
+- **Platform abstraction** - Zero code changes when switching providers
 - **Event-driven architecture** with EventBus for decoupled communication
 - **Service connectors** for AI, Session, and Payment services
 - **Plugin system** for extensible functionality
@@ -42,6 +44,7 @@
 - No backward compatibility with v1.x
 - TelegramAdapter replaced with TelegramConnector
 - All services now communicate through EventBus
+- Direct Cloudflare dependencies replaced with platform interfaces
 
 ## ⚡ Quick Start with Claude Code
 
@@ -90,13 +93,14 @@ _Your support is invested thoughtfully into making this project even better. Tha
 
 ### Core Technologies
 
-- **🔥 Cloudflare Workers** - Edge computing with global distribution
+- **☁️ Multi-Cloud** - Deploy on Cloudflare, AWS, GCP, Azure, or any cloud
 - **📘 TypeScript** - Full type safety with strict mode
-- **🤖 grammY** - Modern Telegram Bot framework
-- **🗄️ D1 Database** - Cloudflare's distributed SQLite
-- **💾 KV Storage** - Key-value storage for caching and sessions
+- **🤖 grammY** - Modern Telegram Bot framework (extensible to Discord, Slack, etc.)
+- **🗄️ SQL Database** - Platform-agnostic database interface (D1, RDS, Cloud SQL)
+- **💾 KV Storage** - Universal key-value storage abstraction
 - **🧠 Multi-Provider AI** - Support for Google Gemini, OpenAI, xAI Grok, DeepSeek, Cloudflare AI
 - **🔍 Sentry** - Error tracking and performance monitoring
+- **🔌 Plugin System** - Extend with custom functionality
 
 ### Developer Experience
 
@@ -160,6 +164,19 @@ The wireframe automatically optimizes based on your Cloudflare Workers plan:
 
 - **Free Plan**: Fast responses, limited features (optimized for 10ms CPU limit)
 - **Paid Plan**: Full functionality, better reliability (up to 30s CPU time)
+
+## 🌩️ Choose Your Cloud Platform
+
+Wireframe v1.2 supports multiple cloud platforms out of the box:
+
+```bash
+# Set your preferred cloud platform
+CLOUD_PLATFORM=cloudflare  # Default: Cloudflare Workers
+CLOUD_PLATFORM=aws         # AWS Lambda + DynamoDB
+CLOUD_PLATFORM=gcp         # Google Cloud Functions
+```
+
+[Learn more about multi-cloud deployment →](docs/CLOUD_PLATFORMS.md)
 
 ## 🚀 Quick Start (Manual Setup)
 

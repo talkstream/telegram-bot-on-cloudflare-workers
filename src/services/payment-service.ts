@@ -2,14 +2,15 @@
  * Payment service for handling Telegram payments
  */
 
-import type { D1Database } from '@cloudflare/workers-types';
 
 import { PaymentRepository } from '../domain/payments/repository';
 import type { TelegramPayment, PendingInvoice } from '../domain/payments/repository';
 import { logger } from '../lib/logger';
 
+import type { IDatabaseStore } from '@/core/interfaces/storage';
+
 export interface PaymentServiceConfig {
-  db: D1Database;
+  db: IDatabaseStore;
   tier?: 'free' | 'paid';
 }
 

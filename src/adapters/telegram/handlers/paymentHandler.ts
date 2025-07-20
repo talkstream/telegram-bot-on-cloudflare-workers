@@ -1,12 +1,11 @@
 import type { BotContext } from '../../../types';
-import type { Env } from '../../../config/env';
 import { PaymentRepository } from '../../../domain/payments/repository';
 import { TelegramStarsService } from '../../../domain/services/telegram-stars.service';
 import { logger } from '../../../lib/logger';
 
-export async function handlePreCheckoutQuery(ctx: BotContext, env: Env): Promise<void> {
+export async function handlePreCheckoutQuery(ctx: BotContext): Promise<void> {
   const query = ctx.preCheckoutQuery;
-  const paymentRepo = new PaymentRepository(env.DB);
+  const paymentRepo = new PaymentRepository(ctx.cloudConnector.getDatabaseStore('DB'));
   const starsService = new TelegramStarsService(ctx.api.raw, paymentRepo);
 
   try {
@@ -22,7 +21,7 @@ export async function handlePreCheckoutQuery(ctx: BotContext, env: Env): Promise
   }
 }
 
-export async function handleSuccessfulPayment(ctx: BotContext, env: Env): Promise<void> {
+export async function handleSuccessfulPayment(ctx: BotContext): Promise<void> {
   const payment = ctx.message?.successful_payment;
   if (!payment) {
     logger.error('No successful payment in message', { message: ctx.message });
@@ -37,7 +36,7 @@ export async function handleSuccessfulPayment(ctx: BotContext, env: Env): Promis
 
   const payload = JSON.parse(payment.invoice_payload);
   const chargeId = payment.telegram_payment_charge_id;
-  const paymentRepo = new PaymentRepository(env.DB);
+  const paymentRepo = new PaymentRepository(ctx.cloudConnector.getDatabaseStore('DB'));
 
   try {
     // Record payment

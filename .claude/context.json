@@ -1,0 +1,73 @@
+{
+  "project": {
+    "name": "Wireframe",
+    "version": "1.2.0",
+    "description": "Universal AI assistant platform for deploying on any messaging platform and cloud provider",
+    "type": "framework",
+    "primaryUseCase": "Telegram + Cloudflare Workers"
+  },
+  "architecture": {
+    "pattern": "connector-based",
+    "communication": "event-driven",
+    "components": [
+      "messaging-connectors",
+      "cloud-connectors", 
+      "ai-connectors",
+      "plugin-system",
+      "event-bus"
+    ]
+  },
+  "principles": [
+    "platform-independence",
+    "zero-code-changes-on-switch",
+    "type-safety-100-percent",
+    "connector-pattern-everywhere",
+    "event-driven-communication"
+  ],
+  "currentState": {
+    "implemented": [
+      "telegram-connector",
+      "cloudflare-connector",
+      "event-bus",
+      "plugin-system",
+      "multi-ai-support"
+    ],
+    "inProgress": [
+      "aws-connector",
+      "gcp-connector",
+      "discord-connector"
+    ],
+    "planned": [
+      "slack-connector",
+      "whatsapp-connector",
+      "azure-connector"
+    ]
+  },
+  "development": {
+    "typeScript": {
+      "strict": true,
+      "noAny": true,
+      "exactOptionalPropertyTypes": true
+    },
+    "testing": {
+      "framework": "vitest",
+      "coverage": "istanbul"
+    },
+    "quality": {
+      "noWarnings": true,
+      "eslint": "v9",
+      "prettier": true
+    }
+  },
+  "workflow": {
+    "approach": "bot-driven-development",
+    "contribution": "real-world-usage-feedback",
+    "priority": "developer-experience"
+  },
+  "references": {
+    "strategicPlan": "/docs/STRATEGIC_PLAN.md",
+    "projectState": "/docs/PROJECT_STATE.md",
+    "developmentWorkflow": "/docs/DEVELOPMENT_WORKFLOW.md",
+    "architecture": "/docs/ARCHITECTURE_DECISIONS.md"
+  }
+}

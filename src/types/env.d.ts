@@ -3,7 +3,7 @@
 import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
 
 declare global {
-  interface CloudflareEnv {
+  interface CloudflareEnv extends Record<string, unknown> {
     // Environment Variables
     TELEGRAM_BOT_TOKEN: string;
     TELEGRAM_WEBHOOK_SECRET: string;
@@ -12,6 +12,7 @@ declare global {
     ENVIRONMENT?: 'development' | 'staging' | 'production';
     RELEASE?: string;
     TIER?: 'free' | 'paid';
+    CLOUD_PLATFORM?: 'cloudflare' | 'aws' | 'gcp' | 'azure' | 'local';
 
     // AI Provider configuration
     AI_PROVIDER?: string;

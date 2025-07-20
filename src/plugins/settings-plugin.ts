@@ -4,6 +4,7 @@
  */
 
 import type { Plugin, PluginContext, PluginCommand } from '../core/plugins/plugin';
+import type { CommandArgs } from '../types/command-args';
 
 interface UserSettings {
   language: string;
@@ -70,7 +71,7 @@ export class SettingsPlugin implements Plugin {
       description: 'Change bot language',
       aliases: ['lang'],
       handler: async (args, commandContext) => {
-        const langCode = (args as any)._positional?.[0];
+        const langCode = (args as CommandArgs)._positional?.[0];
 
         if (!langCode) {
           await commandContext.reply(
@@ -97,7 +98,7 @@ export class SettingsPlugin implements Plugin {
 
     // Listen for settings events
     context.eventBus.on('settings:update', async (event) => {
-      const payload = event.payload as { userId: string; setting: keyof UserSettings; value: any };
+      const payload = event.payload as { userId: string; setting: keyof UserSettings; value: unknown };
       await this.updateUserSetting(payload.userId, payload.setting, payload.value);
     });
 
@@ -126,13 +127,14 @@ export class SettingsPlugin implements Plugin {
   private async updateUserSetting(
     userId: string,
     setting: keyof UserSettings,
-    value: any,
+    value: unknown,
   ): Promise<void> {
     if (!this.context) return;
 
     const settings = await this.getUserSettings(userId);
     // Type-safe setting update
-    (settings as any)[setting] = value;
+    const mutableSettings = settings as Record<keyof UserSettings, unknown>;
+    mutableSettings[setting] = value;
 
     const key = `settings:${userId}`;
     await this.context.storage.set(key, settings);
