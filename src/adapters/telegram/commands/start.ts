@@ -35,6 +35,14 @@ export const startCommand: CommandHandler = async (ctx) => {
     const userHasAccess = await hasAccess(ctx);
 
     if (!userHasAccess) {
+      // Check if DB is available (demo mode check)
+      if (!ctx.env.DB) {
+        await ctx.reply(
+          '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+        );
+        return;
+      }
+
       // Check if user has pending request
       const pendingRequest = await ctx.env.DB.prepare(
         `

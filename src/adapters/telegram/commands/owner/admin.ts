@@ -39,6 +39,14 @@ async function showAdminHelp(ctx: Parameters<CommandHandler>[0]) {
  */
 async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: string) {
   try {
+    // Check if DB is available (demo mode check)
+    if (!ctx.env.DB) {
+      await ctx.reply(
+        '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+      );
+      return;
+    }
+
     let targetUserId: number | undefined;
 
     // Check if a message was forwarded

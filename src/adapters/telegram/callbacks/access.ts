@@ -13,6 +13,17 @@ export async function handleAccessRequest(ctx: BotContext) {
     return;
   }
 
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    await ctx.answerCallbackQuery('Access control is disabled in demo mode');
+    await ctx.editMessageText(
+      '🎯 Demo Mode: Access control features require a database.\n' +
+        'Configure D1 database to enable this functionality.',
+      { parse_mode: 'HTML' },
+    );
+    return;
+  }
+
   try {
     // Check if user already has a pending request
     const existingRequest = await ctx.env.DB.prepare(
@@ -73,6 +84,12 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
     return;
   }
 
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    await ctx.answerCallbackQuery('Access control is disabled in demo mode');
+    return;
+  }
+
   try {
     // Verify request belongs to user
     const request = await ctx.env.DB.prepare(
@@ -100,8 +117,7 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
       .bind(parseInt(requestId))
       .run();
 
-    // Update message
-    await ctx.editMessageText(ctx.i18n('request_cancelled'), { parse_mode: 'HTML' });
+    await ctx.editMessageText(ctx.i18n('access_request_cancelled'), { parse_mode: 'HTML' });
 
     logger.info('Access request cancelled', { requestId, userId });
   } catch (error) {
@@ -115,34 +131,38 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
  */
 export async function handleAccessApprove(ctx: BotContext, requestId: string) {
   const adminId = ctx.from?.id;
-  if (!adminId) return;
+  if (!adminId) {
+    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    return;
+  }
+
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    await ctx.answerCallbackQuery('Access control is disabled in demo mode');
+    return;
+  }
 
   try {
     // Get request details
     const request = await ctx.env.DB.prepare(
       `
-      SELECT user_id, username, first_name 
-      FROM access_requests 
+      SELECT * FROM access_requests 
       WHERE id = ? AND status = 'pending'
     `,
     )
       .bind(parseInt(requestId))
-      .first<{
-        user_id: number;
-        username: string | null;
-        first_name: string;
-      }>();
+      .first<{ id: number; user_id: number; username: string; first_name: string }>();
 
     if (!request) {
       await ctx.answerCallbackQuery(ctx.i18n('request_not_found'));
       return;
     }
 
-    // Approve the request
+    // Update request status
     await ctx.env.DB.prepare(
       `
       UPDATE access_requests 
-      SET status = 'approved', processed_by = ?, processed_at = CURRENT_TIMESTAMP
+      SET status = 'approved', processed_at = CURRENT_TIMESTAMP, processed_by = ?
       WHERE id = ?
     `,
     )
@@ -152,37 +172,46 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
     // Grant access to user
     await ctx.env.DB.prepare(
       `
-      UPDATE users SET has_access = true WHERE telegram_id = ?
+      INSERT OR REPLACE INTO users (telegram_id, username, first_name, role, created_at)
+      VALUES (?, ?, ?, 'user', CURRENT_TIMESTAMP)
     `,
     )
-      .bind(request.user_id)
+      .bind(request.user_id, request.username, request.first_name)
       .run();
 
-    // Update message
-    await ctx.editMessageText(ctx.i18n('request_approved', { userId: request.user_id }), {
-      parse_mode: 'HTML',
-    });
+    // Update admin's message
+    const keyboard = new InlineKeyboard().text(ctx.i18n('view_next_request'), 'request_next');
+
+    await ctx.editMessageText(
+      ctx.i18n('access_request_approved', {
+        userId: request.user_id,
+        username: request.username || ctx.i18n('no_username'),
+      }),
+      {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      },
+    );
+
+    // Notify user
+    try {
+      await ctx.api.sendMessage(request.user_id, ctx.i18n('access_granted_notification'), {
+        parse_mode: 'HTML',
+      });
+    } catch (error) {
+      logger.error('Failed to notify user about access approval', {
+        error,
+        userId: request.user_id,
+      });
+    }
 
     logger.info('Access request approved', {
       requestId,
       userId: request.user_id,
-      approvedBy: adminId,
+      adminId,
     });
-
-    // Notify the user
-    try {
-      await ctx.api.sendMessage(request.user_id, ctx.i18n('access_approved'));
-    } catch (error) {
-      logger.info('Could not notify user about approval', {
-        userId: request.user_id,
-        error,
-      });
-    }
-
-    // Show next request if any
-    await showNextRequest(ctx);
   } catch (error) {
-    logger.error('Failed to approve access request', { error, requestId });
+    logger.error('Failed to approve access request', { error, requestId, adminId });
     await ctx.answerCallbackQuery(ctx.i18n('general_error'));
   }
 }
@@ -192,146 +221,146 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
  */
 export async function handleAccessReject(ctx: BotContext, requestId: string) {
   const adminId = ctx.from?.id;
-  if (!adminId) return;
+  if (!adminId) {
+    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    return;
+  }
+
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    await ctx.answerCallbackQuery('Access control is disabled in demo mode');
+    return;
+  }
 
   try {
     // Get request details
     const request = await ctx.env.DB.prepare(
       `
-      SELECT user_id, username, first_name 
-      FROM access_requests 
+      SELECT * FROM access_requests 
       WHERE id = ? AND status = 'pending'
     `,
     )
       .bind(parseInt(requestId))
-      .first<{
-        user_id: number;
-        username: string | null;
-        first_name: string;
-      }>();
+      .first<{ id: number; user_id: number; username: string }>();
 
     if (!request) {
       await ctx.answerCallbackQuery(ctx.i18n('request_not_found'));
       return;
     }
 
-    // Reject the request
+    // Update request status
     await ctx.env.DB.prepare(
       `
       UPDATE access_requests 
-      SET status = 'rejected', processed_by = ?, processed_at = CURRENT_TIMESTAMP
+      SET status = 'rejected', processed_at = CURRENT_TIMESTAMP, processed_by = ?
       WHERE id = ?
     `,
     )
       .bind(adminId, parseInt(requestId))
       .run();
 
-    // Update message
-    await ctx.editMessageText(ctx.i18n('request_rejected', { userId: request.user_id }), {
-      parse_mode: 'HTML',
-    });
+    // Update admin's message
+    const keyboard = new InlineKeyboard().text(ctx.i18n('view_next_request'), 'request_next');
+
+    await ctx.editMessageText(
+      ctx.i18n('access_request_rejected', {
+        userId: request.user_id,
+        username: request.username || ctx.i18n('no_username'),
+      }),
+      {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      },
+    );
+
+    // Notify user
+    try {
+      await ctx.api.sendMessage(request.user_id, ctx.i18n('access_denied_notification'), {
+        parse_mode: 'HTML',
+      });
+    } catch (error) {
+      logger.error('Failed to notify user about access rejection', {
+        error,
+        userId: request.user_id,
+      });
+    }
 
     logger.info('Access request rejected', {
       requestId,
       userId: request.user_id,
-      rejectedBy: adminId,
+      adminId,
     });
-
-    // Notify the user
-    try {
-      await ctx.api.sendMessage(request.user_id, ctx.i18n('access_rejected'));
-    } catch (error) {
-      logger.info('Could not notify user about rejection', {
-        userId: request.user_id,
-        error,
-      });
-    }
-
-    // Show next request if any
-    await showNextRequest(ctx);
   } catch (error) {
-    logger.error('Failed to reject access request', { error, requestId });
+    logger.error('Failed to reject access request', { error, requestId, adminId });
     await ctx.answerCallbackQuery(ctx.i18n('general_error'));
   }
 }
 
 /**
- * Handle next request navigation
+ * Handle showing next pending request
  */
-export async function handleAccessNext(ctx: BotContext, _currentRequestId: string) {
-  await showNextRequest(ctx);
-}
+export async function handleNextRequest(ctx: BotContext) {
+  const adminId = ctx.from?.id;
+  if (!adminId) {
+    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    return;
+  }
 
-/**
- * Helper function to show next pending request
- */
-async function showNextRequest(ctx: BotContext) {
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    await ctx.editMessageText(
+      '🎯 Demo Mode: Access control features require a database.\n' +
+        'Configure D1 database to enable this functionality.',
+      { parse_mode: 'HTML' },
+    );
+    return;
+  }
+
   try {
     // Get next pending request
-    const nextRequest = await ctx.env.DB.prepare(
+    const request = await ctx.env.DB.prepare(
       `
-      SELECT 
-        r.id,
-        r.user_id,
-        r.username,
-        r.first_name,
-        r.created_at
-      FROM access_requests r
-      WHERE r.status = 'pending'
-      ORDER BY r.created_at ASC
+      SELECT * FROM access_requests 
+      WHERE status = 'pending'
+      ORDER BY created_at ASC
       LIMIT 1
     `,
     ).first<{
       id: number;
       user_id: number;
-      username: string | null;
+      username: string;
       first_name: string;
       created_at: string;
     }>();
 
-    if (!nextRequest) {
+    if (!request) {
       await ctx.editMessageText(ctx.i18n('no_pending_requests'), { parse_mode: 'HTML' });
       return;
     }
 
-    // Get total pending count
-    const countResult = await ctx.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM access_requests WHERE status = ?',
-    )
-      .bind('pending')
-      .first<{ count: number }>();
-
-    const totalPending = countResult?.count || 0;
-
-    // Build request info message
-    const requestDate = new Date(nextRequest.created_at).toLocaleString();
-
-    const requestInfo = ctx.i18n('request_info', {
-      name: nextRequest.first_name,
-      username: nextRequest.username || '',
-      userId: nextRequest.user_id,
-      date: requestDate,
-    });
-
-    let message = `📋 <b>${ctx.i18n('access_request')} #${nextRequest.id}</b>\n\n${requestInfo}`;
-    message += `\n\n📊 ${ctx.i18n('request_count')}: 1/${totalPending}`;
-
-    // Create inline keyboard
+    // Show request details
     const keyboard = new InlineKeyboard()
-      .text(ctx.i18n('approve'), `access:approve:${nextRequest.id}`)
-      .text(ctx.i18n('reject'), `access:reject:${nextRequest.id}`);
+      .text(ctx.i18n('approve'), `approve_${request.id}`)
+      .text(ctx.i18n('reject'), `reject_${request.id}`)
+      .row()
+      .text(ctx.i18n('view_next_request'), 'request_next');
 
-    if (totalPending > 1) {
-      keyboard.row().text(ctx.i18n('next'), `access:next:${nextRequest.id}`);
-    }
-
-    await ctx.editMessageText(message, {
-      parse_mode: 'HTML',
-      reply_markup: keyboard,
-    });
+    await ctx.editMessageText(
+      ctx.i18n('access_request_details', {
+        id: request.id,
+        userId: request.user_id,
+        username: request.username || ctx.i18n('no_username'),
+        firstName: request.first_name,
+        date: new Date(request.created_at).toLocaleString(),
+      }),
+      {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      },
+    );
   } catch (error) {
-    logger.error('Failed to show next request', { error });
-    await ctx.editMessageText(ctx.i18n('requests_error'), { parse_mode: 'HTML' });
+    logger.error('Failed to get next request', { error, adminId });
+    await ctx.editMessageText(ctx.i18n('general_error'), { parse_mode: 'HTML' });
   }
 }
 
@@ -344,41 +373,40 @@ async function notifyAdmins(
   username: string | null,
   firstName: string,
 ) {
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    return;
+  }
+
   try {
     // Get all admins
     const admins = await ctx.env.DB.prepare(
       `
-      SELECT user_id FROM user_roles WHERE role = 'admin'
+      SELECT telegram_id FROM users 
+      WHERE role IN ('admin', 'owner')
     `,
-    ).all<{ user_id: number }>();
+    ).all<{ telegram_id: number }>();
 
-    // Get owner IDs
-    const ownerIds =
-      ctx.env.BOT_OWNER_IDS?.split(',').map((id: string) => parseInt(id.trim())) || [];
+    const keyboard = new InlineKeyboard().text(ctx.i18n('review_request'), 'request_next');
 
-    // Combine admin and owner IDs
-    const notifyIds = new Set([...admins.results.map((a) => a.user_id), ...ownerIds]);
-
-    // Prepare notification message
-    const userInfo = username ? `@${username}` : firstName;
-    const message = ctx.i18n('new_access_request_notification', {
-      userInfo,
+    const message = ctx.i18n('new_access_request', {
       userId,
+      username: username || ctx.i18n('no_username'),
+      firstName,
     });
 
-    // Send notifications
-    for (const adminId of notifyIds) {
+    // Send notification to each admin
+    for (const admin of admins.results) {
       try {
-        await ctx.api.sendMessage(adminId, message, {
+        await ctx.api.sendMessage(admin.telegram_id, message, {
           parse_mode: 'HTML',
-          reply_markup: new InlineKeyboard().text(ctx.i18n('view_requests'), 'view_requests'),
+          reply_markup: keyboard,
         });
       } catch (error) {
-        // Admin might have blocked the bot
-        logger.info('Could not notify admin', { adminId, error });
+        logger.error('Failed to notify admin', { error, adminId: admin.telegram_id });
       }
     }
   } catch (error) {
-    logger.error('Failed to notify admins', { error });
+    logger.error('Failed to notify admins about access request', { error, userId });
   }
 }

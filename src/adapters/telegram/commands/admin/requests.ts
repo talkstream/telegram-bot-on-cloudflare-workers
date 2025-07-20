@@ -9,6 +9,14 @@ import { logger } from '@/lib/logger';
  */
 export const requestsCommand: CommandHandler = async (ctx) => {
   try {
+    // Check if DB is available (demo mode check)
+    if (!ctx.env.DB) {
+      await ctx.reply(
+        '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+      );
+      return;
+    }
+
     // Get pending requests
     const requests = await ctx.env.DB.prepare(
       `

@@ -39,6 +39,14 @@ async function showDebugHelp(ctx: Parameters<CommandHandler>[0]) {
  */
 async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: string) {
   try {
+    // Check if DB is available (demo mode check)
+    if (!ctx.env.DB) {
+      await ctx.reply(
+        '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+      );
+      return;
+    }
+
     const level = levelStr ? parseInt(levelStr) : 1;
 
     if (isNaN(level) || level < 1 || level > 3) {

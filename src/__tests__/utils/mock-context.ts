@@ -107,6 +107,18 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
       access_rejected: 'Your access request has been rejected.',
       new_access_request_notification: '🔔 New access request from {userInfo} (ID: {userId})',
       view_requests: 'View Requests',
+      access_request_approved: '✅ Access granted to user {userId} (@{username})',
+      access_request_rejected: '❌ Access denied to user {userId} (@{username})',
+      no_username: 'No username',
+      view_next_request: 'Next Request',
+      access_granted_notification:
+        '🎉 Your access request has been approved! You can now use the bot.',
+      access_denied_notification: 'Your access request has been rejected.',
+      access_request_details:
+        '📋 <b>Access Request #{id}</b>\n\nName: {firstName}\nUsername: @{username}\nUser ID: {userId}\nRequested: {date}',
+      new_access_request: '🔔 New access request from {firstName} (@{username}, ID: {userId})',
+      review_request: 'Review Request',
+      access_request_cancelled: 'Your access request has been cancelled.',
       // Batch command
       batch_info:
         '🚀 Request Batching Demo\n\nThis bot uses intelligent request batching to optimize API calls.\n\nFeatures:\n• Automatic grouping of similar requests\n• Reduced API calls and costs\n• Improved performance\n• Tier-aware batching (more aggressive on free tier)',

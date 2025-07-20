@@ -37,6 +37,12 @@ export async function isAdmin(ctx: BotContext): Promise<boolean> {
   // Owners are always admins
   if (isOwner(ctx)) return true;
 
+  // Check if DB is available (demo mode check)
+  if (!ctx.env.DB) {
+    logger.debug('Database not available in demo mode');
+    return false;
+  }
+
   try {
     const userRole = await ctx.env.DB.prepare('SELECT role FROM user_roles WHERE user_id = ?')
       .bind(userId)
@@ -63,6 +69,12 @@ export async function hasAccess(ctx: BotContext): Promise<boolean> {
   // Owners and admins always have access
   if (await isAdmin(ctx)) return true;
 
+  // In demo mode without DB, grant access to all
+  if (!ctx.env.DB) {
+    logger.debug('Database not available in demo mode - granting access');
+    return true;
+  }
+
   try {
     const user = await ctx.env.DB.prepare('SELECT has_access FROM users WHERE telegram_id = ?')
       .bind(userId)
@@ -83,6 +95,11 @@ export async function hasAccess(ctx: BotContext): Promise<boolean> {
  * @returns current debug level
  */
 export async function getDebugLevel(ctx: BotContext): Promise<number> {
+  // In demo mode without DB, return default debug level
+  if (!ctx.env.DB) {
+    return 3; // Show debug to all in demo mode
+  }
+
   try {
     const setting = await ctx.env.DB.prepare('SELECT value FROM bot_settings WHERE key = ?')
       .bind('debug_level')

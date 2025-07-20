@@ -8,7 +8,7 @@ import {
   handleAccessCancel,
   handleAccessApprove,
   handleAccessReject,
-  handleAccessNext,
+  handleNextRequest,
 } from '@/adapters/telegram/callbacks/access';
 
 // Mock the auth module
@@ -228,18 +228,20 @@ describe('Access Callbacks', () => {
 
       await handleAccessApprove(ctx, '10');
 
-      expect(ctx.editMessageText).toHaveBeenCalledTimes(2);
-      expect(ctx.editMessageText).toHaveBeenNthCalledWith(1, '✅ Access granted to user 123456', {
-        parse_mode: 'HTML',
-      });
-      expect(ctx.editMessageText).toHaveBeenNthCalledWith(2, 'No pending access requests.', {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
+        '✅ Access granted to user 123456 (@newuser)',
+        expect.objectContaining({
+          parse_mode: 'HTML',
+          reply_markup: expect.any(Object),
+        }),
+      );
 
       // Verify notification was sent
       expect(ctx.api.sendMessage).toHaveBeenCalledWith(
         123456,
         '🎉 Your access request has been approved! You can now use the bot.',
+        { parse_mode: 'HTML' },
       );
     });
 
@@ -305,23 +307,25 @@ describe('Access Callbacks', () => {
 
       await handleAccessReject(ctx, '10');
 
-      expect(ctx.editMessageText).toHaveBeenCalledTimes(2);
-      expect(ctx.editMessageText).toHaveBeenNthCalledWith(1, '❌ Access denied to user 123456', {
-        parse_mode: 'HTML',
-      });
-      expect(ctx.editMessageText).toHaveBeenNthCalledWith(2, 'No pending access requests.', {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
+        '❌ Access denied to user 123456 (@newuser)',
+        expect.objectContaining({
+          parse_mode: 'HTML',
+          reply_markup: expect.any(Object),
+        }),
+      );
 
       // Verify notification was sent
       expect(ctx.api.sendMessage).toHaveBeenCalledWith(
         123456,
         'Your access request has been rejected.',
+        { parse_mode: 'HTML' },
       );
     });
   });
 
-  describe('handleAccessNext', () => {
+  describe('handleNextRequest', () => {
     it('should show next pending request', async () => {
       const ctx = createMockCallbackContext('access:next:10', {
         from: {
@@ -341,7 +345,7 @@ describe('Access Callbacks', () => {
             bind: vi.fn().mockReturnThis(),
             first: vi.fn().mockResolvedValue({
               id: 11,
-              user_id: 789012,
+              user_id: 654321,
               username: 'anotheruser',
               first_name: 'Jane',
               created_at: '2025-01-18T12:00:00Z',
@@ -356,7 +360,7 @@ describe('Access Callbacks', () => {
         }
       });
 
-      await handleAccessNext(ctx, '10');
+      await handleNextRequest(ctx);
 
       expect(ctx.editMessageText).toHaveBeenCalledWith(
         expect.stringContaining('📋 <b>Access Request #11</b>'),
@@ -369,7 +373,7 @@ describe('Access Callbacks', () => {
       const messageContent = ctx.editMessageText.mock.calls[0][0];
       expect(messageContent).toContain('Name: Jane');
       expect(messageContent).toContain('Username: @anotheruser');
-      expect(messageContent).toContain('📊 Pending requests: 1/5');
+      expect(messageContent).toContain('User ID: 654321');
     });
 
     it('should show no pending requests message', async () => {
@@ -387,7 +391,7 @@ describe('Access Callbacks', () => {
         first: vi.fn().mockResolvedValue(null),
       });
 
-      await handleAccessNext(ctx, '10');
+      await handleNextRequest(ctx);
 
       expect(ctx.editMessageText).toHaveBeenCalledWith('No pending access requests.', {
         parse_mode: 'HTML',

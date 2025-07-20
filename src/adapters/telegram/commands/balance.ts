@@ -11,6 +11,14 @@ export const balanceCommand: CommandHandler = async (ctx) => {
   }
 
   try {
+    // Check if DB is available (demo mode check)
+    if (!ctx.env.DB) {
+      await ctx.reply(
+        '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+      );
+      return;
+    }
+
     const starsService = new StarsService(ctx.env.DB);
     const stars = await starsService.getStarsBalance(userId);
 
