@@ -18,6 +18,8 @@ export default [
       '**/coverage/**',
       '**/.husky/**',
       '**/website/**',
+      '**/examples/**',
+      '**/scripts/**',
     ],
   },
 

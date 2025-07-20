@@ -149,6 +149,24 @@ The wireframe automatically optimizes based on your Cloudflare Workers plan:
 
 > **📖 Need detailed setup instructions?** Check out our comprehensive [Setup Guide](SETUP.md) for step-by-step configuration with screenshots and troubleshooting.
 
+### One-Command Deploy
+
+```bash
+# Clone and deploy a working Telegram bot in 5 minutes
+git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
+cd telegram-bot-on-cloudflare-workers
+npm install
+npm run setup:bot  # Interactive setup wizard
+```
+
+The setup wizard will:
+
+- ✅ Create your Telegram bot via @BotFather
+- ✅ Configure all required secrets
+- ✅ Create KV namespaces and D1 database
+- ✅ Deploy to Cloudflare Workers
+- ✅ Set up webhook automatically
+
 ### Prerequisites
 
 - Node.js 20+ and npm 10+
@@ -226,16 +244,27 @@ src/
 │       ├── callbacks/  # Callback query handlers
 │       └── handlers/   # Event handlers
 ├── config/             # Configuration files
-├── core/               # Core business logic
+├── core/               # Core framework components
+│   ├── plugins/        # Plugin system
+│   ├── events/         # Event bus for decoupled communication
+│   └── interfaces/     # Core interfaces (messaging, AI, cloud)
 ├── domain/             # Domain models and repositories
 ├── handlers/           # HTTP request handlers
 ├── lib/                # Shared libraries
 ├── middleware/         # Express-style middleware
 ├── services/           # Business services
 ├── shared/             # Shared utilities
-│   └── utils/          # Utility functions
 ├── types/              # TypeScript type definitions
 └── index.ts            # Application entry point
+
+examples/
+├── telegram-bot/       # Basic Telegram bot example
+│   ├── bot.ts          # Complete working bot
+│   ├── wrangler.toml   # Deployment configuration
+│   └── README.md       # Quick start guide
+└── telegram-plugin/    # Plugin system example
+    ├── reminder-plugin.ts    # Example reminder plugin
+    └── bot-with-plugins.ts   # Bot with plugin integration
 ```
 
 ### Key Design Patterns
@@ -245,6 +274,55 @@ src/
 - **Dependency Injection** - Loose coupling between components
 - **Middleware Pattern** - Composable request processing
 - **Command Pattern** - Organized bot command handling
+- **Plugin System** - Modular feature development
+- **Event-Driven** - Decoupled communication via event bus
+- **Adapter Pattern** - Support multiple platforms and providers
+
+## 📦 Examples
+
+### Basic Telegram Bot
+
+```typescript
+// examples/telegram-bot/bot.ts
+import { TelegramAdapter } from '../../src/core/telegram-adapter.js';
+import { CoreBot } from '../../src/core/bot.js';
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const adapter = new TelegramAdapter(env);
+    const bot = new CoreBot(env, adapter);
+
+    // Add your commands
+    bot.command('hello', async (ctx) => {
+      await ctx.reply('👋 Hello from Cloudflare Workers!');
+    });
+
+    return await bot.handleUpdate(request);
+  },
+};
+```
+
+### Plugin Example
+
+```typescript
+// Create reusable plugins
+export class ReminderPlugin extends BasePlugin {
+  id = 'reminder-plugin';
+  name = 'Reminder Plugin';
+
+  getCommands(): PluginCommand[] {
+    return [
+      {
+        name: 'remind',
+        description: 'Set a reminder',
+        handler: this.handleRemindCommand.bind(this),
+      },
+    ];
+  }
+}
+```
+
+See the `examples/` directory for complete working examples.
 
 ## 🚀 Deployment
 
@@ -570,6 +648,38 @@ Found a security vulnerability? Please report it responsibly:
 4. Allow reasonable time for a fix before public disclosure
 
 We appreciate your help in keeping this project secure!
+
+## 🎯 Framework Features
+
+### Plugin System
+
+Extend your bot with modular plugins:
+
+- **🔌 Hot-swappable** - Install/uninstall plugins at runtime
+- **📦 Self-contained** - Each plugin manages its own state
+- **🔔 Event-driven** - Plugins communicate via event bus
+- **💾 Persistent storage** - KV-backed storage per plugin
+- **⚡ Lifecycle hooks** - Control plugin behavior
+
+### Event Bus
+
+Decoupled communication between components:
+
+- **📡 Global events** - System-wide notifications
+- **🎯 Scoped events** - Plugin-specific namespaces
+- **⏱️ Event history** - Track and replay events
+- **🔍 Filtering** - Subscribe to specific event types
+- **⚡ Async/sync** - Choose your handling strategy
+
+### Multi-Platform Support
+
+The framework is designed for multiple platforms:
+
+- **Telegram** - Full implementation included
+- **Discord** - Connector interface ready
+- **Slack** - Connector interface ready
+- **WhatsApp** - Connector interface ready
+- **Custom** - Easy to add new platforms
 
 ## 🤝 Contributing
 
