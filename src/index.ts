@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import type { Update } from 'grammy/types';
 
 import type { Env } from './config/env';
 import { validateEnv } from './config/env';
@@ -8,10 +7,9 @@ import { rateLimiter } from './middleware/rate-limiter';
 import { wrapSentry } from './config/sentry';
 import { handleScheduled } from './core/scheduled-handler';
 import { healthHandler } from './core/health-handler';
-import { UpdateSchema } from './lib/telegram-types';
 import { errorHandler } from './middleware/error-handler';
-import { ValidationError } from './lib/errors';
-import { TelegramAdapter } from './core/telegram-adapter';
+import { EventBus } from './core/events/event-bus';
+import { TelegramConnector } from './connectors/messaging/telegram';
 
 // Initialize the app
 const app = new Hono<{ Bindings: Env }>();
@@ -26,7 +24,37 @@ app.use('*', loggerMiddleware());
 app.get('/', (c) => c.text('Hello, world!'));
 app.get('/health', healthHandler);
 
-// Telegram Webhook with security validation
+// Store connectors per environment
+const connectors = new Map<string, TelegramConnector>();
+
+async function getTelegramConnector(env: Env): Promise<TelegramConnector> {
+  const key = env.TELEGRAM_BOT_TOKEN;
+
+  if (!connectors.has(key)) {
+    // Initialize infrastructure
+    const eventBus = new EventBus();
+
+    // Create and initialize TelegramConnector
+    const telegramConnector = new TelegramConnector();
+    await telegramConnector.initialize({
+      token: env.TELEGRAM_BOT_TOKEN,
+      webhookSecret: env.TELEGRAM_WEBHOOK_SECRET,
+      eventBus,
+      // Additional config
+      parseMode: 'HTML',
+      linkPreview: false,
+    });
+
+    // TODO: Load plugins
+    // await pluginManager.loadPlugins();
+
+    connectors.set(key, telegramConnector);
+  }
+
+  return connectors.get(key) as TelegramConnector;
+}
+
+// Telegram Webhook with new connector architecture
 app.post('/webhook/:token', rateLimiter(), async (c) => {
   const env = validateEnv(c.env);
   const token = c.req.param('token');
@@ -42,19 +70,19 @@ app.post('/webhook/:token', rateLimiter(), async (c) => {
     return c.text('Unauthorized', 401);
   }
 
-  const telegramAdapter = new TelegramAdapter(env);
+  // Get or create connector
+  const telegramConnector = await getTelegramConnector(env);
 
-  // Validate incoming Telegram update
-  const rawBody = await c.req.json();
-  const parsedUpdate = UpdateSchema.safeParse(rawBody);
-
-  if (!parsedUpdate.success) {
-    throw new ValidationError('Invalid Telegram update payload.');
+  // Validate webhook request
+  const request = c.req.raw;
+  const isValid = await telegramConnector.validateWebhook(request);
+  if (!isValid) {
+    return c.text('Unauthorized', 401);
   }
 
-  // Cast to grammy Update type after validation
-  await telegramAdapter.handleUpdate(parsedUpdate.data as Update);
-  return c.text('OK', 200);
+  // Handle webhook
+  const response = await telegramConnector.handleWebhook(request);
+  return response;
 });
 
 export default wrapSentry(app, { scheduled: handleScheduled });
