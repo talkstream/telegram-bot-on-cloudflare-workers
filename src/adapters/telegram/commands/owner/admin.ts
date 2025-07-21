@@ -1,6 +1,7 @@
 import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
 import { hasDatabase } from '@/lib/env-guards';
+import { UserRole } from '@/core/interfaces/role-system';
 
 /**
  * Admin management command for bot owners.
@@ -84,29 +85,47 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
       return;
     }
 
-    // Check if already admin
-    const existingRole = await ctx.env.DB.prepare('SELECT role FROM user_roles WHERE user_id = ?')
-      .bind(targetUserId)
-      .first<{ role: string }>();
+    // Check if roleService is available for universal system
+    if (ctx.roleService) {
+      // Use universal role system
+      const currentRole = await ctx.roleService.getUserRole(targetUserId.toString());
+      if (currentRole === UserRole.ADMIN) {
+        await ctx.reply(ctx.i18n('admin_already'));
+        return;
+      }
 
-    if (existingRole?.role === 'admin') {
-      await ctx.reply(ctx.i18n('admin_already'));
-      return;
+      await ctx.roleService.assignRole({
+        id: targetUserId.toString(),
+        platformId: targetUserId.toString(),
+        platform: 'telegram',
+        role: UserRole.ADMIN,
+        grantedBy: ctx.from?.id?.toString(),
+      });
+    } else {
+      // Fallback to legacy system
+      const existingRole = await ctx.env.DB.prepare('SELECT role FROM user_roles WHERE user_id = ?')
+        .bind(targetUserId)
+        .first<{ role: string }>();
+
+      if (existingRole?.role === 'admin') {
+        await ctx.reply(ctx.i18n('admin_already'));
+        return;
+      }
+
+      // Add admin role
+      await ctx.env.DB.prepare(
+        `
+        INSERT INTO user_roles (user_id, role, granted_by, granted_at)
+        VALUES (?, 'admin', ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(user_id) DO UPDATE SET 
+          role = 'admin',
+          granted_by = excluded.granted_by,
+          granted_at = excluded.granted_at
+      `,
+      )
+        .bind(targetUserId, ctx.from?.id || 0)
+        .run();
     }
-
-    // Add admin role
-    await ctx.env.DB.prepare(
-      `
-      INSERT INTO user_roles (user_id, role, granted_by, granted_at)
-      VALUES (?, 'admin', ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(user_id) DO UPDATE SET 
-        role = 'admin',
-        granted_by = excluded.granted_by,
-        granted_at = excluded.granted_at
-    `,
-    )
-      .bind(targetUserId, ctx.from?.id || 0)
-      .run();
 
     // Update user access
     await ctx.env.DB.prepare('UPDATE users SET has_access = true WHERE telegram_id = ?')
@@ -156,20 +175,32 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
 
     const targetUserId = parseInt(userId);
 
-    // Check if user is an admin
-    const role = await ctx.env.DB.prepare('SELECT role FROM user_roles WHERE user_id = ?')
-      .bind(targetUserId)
-      .first<{ role: string }>();
+    // Check if roleService is available for universal system
+    if (ctx.roleService) {
+      // Use universal role system
+      const currentRole = await ctx.roleService.getUserRole(targetUserId.toString());
+      if (currentRole !== UserRole.ADMIN) {
+        await ctx.reply(ctx.i18n('admin_not_found'));
+        return;
+      }
 
-    if (!role || role.role !== 'admin') {
-      await ctx.reply(ctx.i18n('admin_not_found'));
-      return;
+      await ctx.roleService.removeRole(targetUserId.toString());
+    } else {
+      // Fallback to legacy system
+      const role = await ctx.env.DB.prepare('SELECT role FROM user_roles WHERE user_id = ?')
+        .bind(targetUserId)
+        .first<{ role: string }>();
+
+      if (!role || role.role !== 'admin') {
+        await ctx.reply(ctx.i18n('admin_not_found'));
+        return;
+      }
+
+      // Remove admin role
+      await ctx.env.DB.prepare('DELETE FROM user_roles WHERE user_id = ? AND role = ?')
+        .bind(targetUserId, 'admin')
+        .run();
     }
-
-    // Remove admin role
-    await ctx.env.DB.prepare('DELETE FROM user_roles WHERE user_id = ? AND role = ?')
-      .bind(targetUserId, 'admin')
-      .run();
 
     await ctx.reply(ctx.i18n('admin_removed', { userId: targetUserId }), { parse_mode: 'HTML' });
 
@@ -204,38 +235,67 @@ async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
       return;
     }
 
-    const admins = await ctx.env.DB.prepare(
-      `
-      SELECT 
-        u.telegram_id,
-        u.first_name,
-        u.username,
-        r.granted_at,
-        r.granted_by
-      FROM user_roles r
-      JOIN users u ON r.user_id = u.telegram_id
-      WHERE r.role = 'admin'
-      ORDER BY r.granted_at DESC
-    `,
-    ).all<{
-      telegram_id: number;
-      first_name: string;
-      username: string | null;
-      granted_at: string;
-      granted_by: number;
-    }>();
-
-    if (!admins.results || admins.results.length === 0) {
-      await ctx.reply(ctx.i18n('admin_list_empty'));
-      return;
-    }
-
     let adminsList = '';
-    for (const admin of admins.results) {
-      const userInfo = admin.username ? `@${admin.username}` : admin.first_name;
-      const grantedDate = new Date(admin.granted_at as string).toLocaleDateString();
-      adminsList += `• ${userInfo} (ID: ${admin.telegram_id})\n`;
-      adminsList += `  ${ctx.i18n('added_date')}: ${grantedDate}\n\n`;
+
+    // Check if roleService is available for universal system
+    if (ctx.roleService) {
+      // Use universal role system
+      const users = await ctx.roleService.getUsersByRole(UserRole.ADMIN);
+
+      if (!users || users.length === 0) {
+        await ctx.reply(ctx.i18n('admin_list_empty'));
+        return;
+      }
+
+      // Get user details from Telegram users table
+      for (const roleUser of users) {
+        const user = await ctx.env.DB.prepare(
+          'SELECT telegram_id, first_name, username FROM users WHERE telegram_id = ?',
+        )
+          .bind(parseInt(roleUser.platformId))
+          .first<{ telegram_id: number; first_name: string; username: string | null }>();
+
+        if (user) {
+          const userInfo = user.username ? `@${user.username}` : user.first_name;
+          const grantedDate = new Date(roleUser.grantedAt).toLocaleDateString();
+          adminsList += `• ${userInfo} (ID: ${user.telegram_id})\n`;
+          adminsList += `  ${ctx.i18n('added_date')}: ${grantedDate}\n\n`;
+        }
+      }
+    } else {
+      // Fallback to legacy system
+      const admins = await ctx.env.DB.prepare(
+        `
+        SELECT 
+          u.telegram_id,
+          u.first_name,
+          u.username,
+          r.granted_at,
+          r.granted_by
+        FROM user_roles r
+        JOIN users u ON r.user_id = u.telegram_id
+        WHERE r.role = 'admin'
+        ORDER BY r.granted_at DESC
+      `,
+      ).all<{
+        telegram_id: number;
+        first_name: string;
+        username: string | null;
+        granted_at: string;
+        granted_by: number;
+      }>();
+
+      if (!admins.results || admins.results.length === 0) {
+        await ctx.reply(ctx.i18n('admin_list_empty'));
+        return;
+      }
+
+      for (const admin of admins.results) {
+        const userInfo = admin.username ? `@${admin.username}` : admin.first_name;
+        const grantedDate = new Date(admin.granted_at as string).toLocaleDateString();
+        adminsList += `• ${userInfo} (ID: ${admin.telegram_id})\n`;
+        adminsList += `  ${ctx.i18n('added_date')}: ${grantedDate}\n\n`;
+      }
     }
 
     await ctx.reply(ctx.i18n('admin_list', { admins: adminsList.trim() }), { parse_mode: 'HTML' });

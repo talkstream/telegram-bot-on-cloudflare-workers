@@ -11,6 +11,7 @@ import type { getMessage } from '@/lib/i18n';
 import type { TelegramRequestBatcher } from '@/lib/telegram-batcher';
 import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
 import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
+import type { RoleService } from '@/core/interfaces/role-system';
 
 // Session data structure
 export interface SessionData {
@@ -37,6 +38,7 @@ export type BotContext = GrammyContext &
     };
     i18n: (key: Parameters<typeof getMessage>[1], ...args: unknown[]) => string;
     batcher?: TelegramRequestBatcher;
+    roleService?: RoleService;
   };
 
 // Command handler type

@@ -8,12 +8,14 @@
 import { Bot } from 'grammy';
 
 import type { BotContext, Env } from '@/types';
-import { getBotToken } from '@/lib/env-guards';
+import { getBotToken, hasDatabase } from '@/lib/env-guards';
 import type { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import type { PaymentRepository } from '@/domain/payments/repository';
 import type { SessionService as ISessionService } from '@/services/session-service';
 import { getTierConfig } from '@/config/tiers';
 import { logger } from '@/lib/logger';
+import { UniversalRoleService } from '@/core/services/role-service';
+import { EventBus } from '@/core/events/event-bus';
 
 interface LightweightOptions {
   tier: 'free' | 'paid';
@@ -60,6 +62,16 @@ export class LightweightAdapter {
 
       // Minimal i18n - just English
       ctx.i18n = (key: string) => key;
+
+      // Add minimal role service if database available
+      if (hasDatabase(env)) {
+        const eventBus = new EventBus();
+        ctx.roleService = new UniversalRoleService(
+          env.DB,
+          env.BOT_OWNER_IDS?.split(',').map((id) => id.trim()) || [],
+          eventBus,
+        );
+      }
 
       await next();
     });
@@ -152,6 +164,17 @@ export class LightweightAdapter {
       }
     }
 
+    // Initialize role service for full mode
+    let roleService: UniversalRoleService | undefined;
+    if (hasDatabase(env)) {
+      const eventBus = new EventBus();
+      roleService = new UniversalRoleService(
+        env.DB,
+        env.BOT_OWNER_IDS?.split(',').map((id) => id.trim()) || [],
+        eventBus,
+      );
+    }
+
     // Full context setup
     this.bot.use(async (ctx, next) => {
       ctx.env = env;
@@ -167,6 +190,9 @@ export class LightweightAdapter {
         telegramStars: {} as TelegramStarsService, // Placeholder for lightweight mode
         paymentRepo: {} as PaymentRepository, // Placeholder for lightweight mode
       };
+
+      // Add role service to context
+      ctx.roleService = roleService;
 
       // Full i18n support
       const lang = ctx.from?.language_code === 'ru' ? 'ru' : 'en';
@@ -192,41 +218,25 @@ export class LightweightAdapter {
     }
 
     // Load command handlers dynamically
-    await this.loadCommandHandlers();
+    await this.loadCommandHandlers(roleService);
   }
 
   /**
    * Dynamically load command handlers
    */
-  private async loadCommandHandlers(): Promise<void> {
+  private async loadCommandHandlers(roleService?: UniversalRoleService): Promise<void> {
     try {
-      // Lazy load commands
-      const commandModules = await Promise.all([
-        import('@/adapters/telegram/commands/start'),
-        import('@/adapters/telegram/commands/help'),
-        import('@/adapters/telegram/commands/settings'),
-      ]);
+      // Import setupCommands function
+      const { setupCommands } = await import('@/adapters/telegram/commands');
 
-      // Register commands
-      this.bot.command('start', commandModules[0].startCommand);
-      this.bot.command('help', commandModules[1].helpCommand);
-      this.bot.command('settings', commandModules[2].settingsCommand);
-
-      // Conditionally load AI commands
-      if (this.config.features.aiEnabled) {
-        const { askCommand } = await import('@/adapters/telegram/commands/ask');
-        this.bot.command('ask', askCommand);
-      }
+      // Setup all commands with role service
+      setupCommands(this.bot, roleService);
 
       // Load callback handlers
-      const callbackModules = await Promise.all([
-        import('@/adapters/telegram/callbacks/menu'),
-        import('@/adapters/telegram/callbacks/settings'),
-      ]);
+      const { setupCallbacks } = await import('@/adapters/telegram/callbacks');
 
-      // Register callbacks
-      this.bot.callbackQuery('menu:', callbackModules[0].mainMenuCallback);
-      this.bot.callbackQuery('settings:', callbackModules[1].languageSettingCallback);
+      // Setup all callbacks
+      setupCallbacks(this.bot);
     } catch (error) {
       logger.error('Error loading command handlers', { error });
     }

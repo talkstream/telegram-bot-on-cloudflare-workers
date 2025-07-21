@@ -14,12 +14,32 @@ import { infoCommand, adminCommand, debugCommand } from './owner';
 import { requestsCommand } from './admin';
 
 // Import middleware
-import { requireOwner, requireAdmin } from '@/middleware/auth';
+import { createAuthMiddleware } from '@/middleware/auth-universal';
 import { logger } from '@/lib/logger';
 import type { BotContext } from '@/types';
+import { UniversalRoleService } from '@/core/services/role-service';
+import {
+  requireOwner as legacyRequireOwner,
+  requireAdmin as legacyRequireAdmin,
+} from '@/middleware/auth';
 
-export function setupCommands(bot: Bot<BotContext>): void {
+// Default auth middleware for backward compatibility
+function createDefaultAuthMiddleware() {
+  return {
+    requireOwner: legacyRequireOwner,
+    requireAdmin: legacyRequireAdmin,
+    requireAccess: async (_ctx: BotContext, next: () => Promise<void>) => {
+      // Default behavior for access check
+      await next();
+    },
+  };
+}
+
+export function setupCommands(bot: Bot<BotContext>, roleService?: UniversalRoleService): void {
   logger.info('Setting up bot commands');
+
+  // Create auth middleware factory
+  const auth = roleService ? createAuthMiddleware(roleService) : createDefaultAuthMiddleware();
 
   // Basic commands
   bot.command('start', startCommand);
@@ -34,12 +54,12 @@ export function setupCommands(bot: Bot<BotContext>): void {
   bot.command('batch', batchCommand);
 
   // Owner commands
-  bot.command('info', requireOwner, infoCommand);
-  bot.command('admin', requireOwner, adminCommand);
-  bot.command('debug', requireOwner, debugCommand);
+  bot.command('info', auth.requireOwner, infoCommand);
+  bot.command('admin', auth.requireOwner, adminCommand);
+  bot.command('debug', auth.requireOwner, debugCommand);
 
   // Admin commands
-  bot.command('requests', requireAdmin, requestsCommand);
+  bot.command('requests', auth.requireAdmin, requestsCommand);
 
   // Set bot commands for menu
   bot.api

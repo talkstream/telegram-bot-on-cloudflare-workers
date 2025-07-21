@@ -58,8 +58,9 @@ export class RoleConnector implements Connector {
     logger.info('Initializing role connector', { platform: this.config.platformName });
 
     // Subscribe to role events
-    await this.eventBus.on('role.change', async (event: RoleChangeEvent) => {
-      await this.handleRoleChange(event);
+    await this.eventBus.on('role.change', async (event) => {
+      // Cast to RoleChangeEvent as we know this event type
+      await this.handleRoleChange(event.payload as RoleChangeEvent);
     });
 
     this.isInitialized = true;
@@ -138,10 +139,17 @@ export class RoleConnector implements Connector {
         await this.checkUserRole(event.data);
         break;
       case 'user.assign_role':
-        await this.assignUserRole(event.data);
+        await this.assignUserRole(
+          event.data as {
+            userId: string;
+            platformId: string;
+            role: UserRole;
+            grantedBy?: string;
+          },
+        );
         break;
       case 'user.remove_role':
-        await this.removeUserRole(event.data);
+        await this.removeUserRole(event.data as { userId: string });
         break;
       default:
         logger.debug('Unknown event type for role connector', { type: event.type });
