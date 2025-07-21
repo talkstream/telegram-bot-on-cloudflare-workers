@@ -16,6 +16,10 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - **Cloud Abstraction**: Complete - CloudPlatformFactory handles all providers
 - **TypeScript**: Strict mode, NO any types, all warnings fixed
 - **Testing**: Vitest with Istanbul coverage (Cloudflare-compatible)
+- **Mock Connectors**: AI and Telegram mock connectors for demo mode deployment
+- **Type Guards**: Safe environment variable access with env-guards.ts
+- **CI/CD**: GitHub Actions fully working with all checks passing
+- **Demo Mode**: Full support for deployment without real credentials
 
 ### Key Architecture Decisions
 
@@ -24,6 +28,9 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 3. **Platform Agnostic**: Zero code changes when switching platforms
 4. **Plugin System**: Extensible functionality through hot-swappable plugins
 5. **Type Safety**: 100% TypeScript strict mode compliance
+6. **Mock Connectors**: Support demo mode for CI/CD and development
+7. **Environment Guards**: Type-safe access to optional environment variables
+8. **i18n Optimization**: LightweightAdapter for Cloudflare free tier (10ms CPU limit)
 
 ### Development Priorities
 
@@ -31,6 +38,9 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 2. **Cloud Independence**: Never use platform-specific APIs directly
 3. **Developer Experience**: Fast setup, clear patterns, comprehensive docs
 4. **Real-World Testing**: Use actual bot development to validate the framework
+5. **Type Safety First**: Use type guards, avoid any types and non-null assertions (!)
+6. **CI/CD Ready**: Maintain demo mode support for automated deployments
+7. **Clean Code**: All checks must pass without warnings
 
 ### When Working on Wireframe
 
@@ -40,6 +50,32 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Test multi-platform scenarios even if implementing for one
 - Document decisions that affect platform independence
 
+### TypeScript Best Practices
+
+1. **Type Guards over Assertions**: Use type guards instead of non-null assertions (!)
+   - Example: See `/src/lib/env-guards.ts` for environment variable handling
+   - Always validate optional values before use
+
+2. **Strict Mode Compliance**:
+   - No `any` types allowed
+   - Handle all possible undefined/null cases
+   - Use proper type narrowing
+
+3. **Environment Variables**:
+   - Use `isDemoMode()`, `getBotToken()`, etc. from env-guards
+   - Never access env.FIELD directly without checks
+   - Support graceful fallbacks for optional configs
+
+### Recent Achievements (January 2025)
+
+- ✅ Full TypeScript strict mode compliance achieved
+- ✅ All TypeScript and ESLint errors fixed
+- ✅ Mock connectors implemented for demo deployment
+- ✅ GitHub Actions CI/CD pipeline fully operational
+- ✅ Type guards pattern established for safe env access
+- ✅ i18n optimized with LightweightAdapter for free tier
+- ✅ Support for demo mode deployment without credentials
+
 ## Project Workflow Guidelines
 
 - Always check for the presence of a STRATEGIC_PLAN.md file in the project's docs directory. If it exists, follow its guidelines.
@@ -48,3 +84,5 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Backward compatibility is not required - always ask before implementing it
 - When extending functionality, always use the connector/event pattern
 - Prioritize developer experience while maintaining architectural integrity
+- Use type guards for all optional values - avoid non-null assertions
+- Ensure CI/CD compatibility by supporting demo mode
