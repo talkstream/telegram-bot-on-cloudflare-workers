@@ -8,7 +8,7 @@ import { AWSConnector } from '@/connectors/cloud/aws/aws-connector';
 import '@/connectors/cloud';
 
 // Mock cloud platform bindings
-const mockCloudflareEnv = {
+const mockCloudflareEnv: Record<string, unknown> = {
   CLOUD_PLATFORM: 'cloudflare',
   TIER: 'paid',
   SESSIONS: {
@@ -29,7 +29,7 @@ const mockCloudflareEnv = {
   },
 };
 
-const mockAWSEnv = {
+const mockAWSEnv: Record<string, unknown> = {
   CLOUD_PLATFORM: 'aws',
   AWS_REGION: 'us-east-1',
   AWS_ACCESS_KEY_ID: 'test-key',
@@ -43,13 +43,13 @@ describe('Multi-Platform Integration (Simplified)', () => {
 
   describe('Cloud Platform Registration', () => {
     it('should have Cloudflare connector registered', () => {
-      const connector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
       expect(connector).toBeInstanceOf(CloudflareConnector);
       expect(connector.platform).toBe('cloudflare');
     });
 
     it('should have AWS connector registered', () => {
-      const connector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv);
       expect(connector).toBeInstanceOf(AWSConnector);
       expect(connector.platform).toBe('aws');
     });
@@ -57,7 +57,7 @@ describe('Multi-Platform Integration (Simplified)', () => {
 
   describe('Platform Feature Detection', () => {
     it('should return correct features for Cloudflare', () => {
-      const connector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
       const features = connector.getFeatures();
 
       expect(features.hasEdgeCache).toBe(true);
@@ -67,7 +67,7 @@ describe('Multi-Platform Integration (Simplified)', () => {
     });
 
     it('should return correct features for AWS', () => {
-      const connector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv);
       const features = connector.getFeatures();
 
       expect(features.hasWebSockets).toBe(true);
@@ -79,8 +79,8 @@ describe('Multi-Platform Integration (Simplified)', () => {
 
   describe('Storage Interface Consistency', () => {
     it('should provide consistent KV interface across platforms', () => {
-      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
-      const awsConnector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv as any);
+      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
+      const awsConnector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv);
 
       const cfKV = cfConnector.getKeyValueStore('SESSIONS');
       const awsKV = awsConnector.getKeyValueStore('SESSIONS');
@@ -98,8 +98,8 @@ describe('Multi-Platform Integration (Simplified)', () => {
     });
 
     it('should provide consistent DB interface across platforms', () => {
-      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
-      const awsConnector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv as any);
+      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
+      const awsConnector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv);
 
       const cfDB = cfConnector.getDatabaseStore('DB');
       const awsDB = awsConnector.getDatabaseStore('DB');
@@ -117,7 +117,7 @@ describe('Multi-Platform Integration (Simplified)', () => {
 
   describe('Platform-Specific Optimization', () => {
     it('should adapt timeout to platform limits', () => {
-      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
+      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
       const features = cfConnector.getFeatures();
 
       // Application logic should respect platform limits
@@ -129,8 +129,8 @@ describe('Multi-Platform Integration (Simplified)', () => {
     });
 
     it('should check feature availability before use', () => {
-      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
-      const awsConnector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv as any);
+      const cfConnector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
+      const awsConnector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv);
 
       const cfFeatures = cfConnector.getFeatures();
       const awsFeatures = awsConnector.getFeatures();
@@ -153,7 +153,7 @@ describe('Multi-Platform Integration (Simplified)', () => {
 
   describe('Environment Variable Handling', () => {
     it('should extract environment correctly for Cloudflare', () => {
-      const connector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(mockCloudflareEnv);
       const env = connector.getEnv();
 
       expect(env.CLOUD_PLATFORM).toBe('cloudflare');
@@ -161,7 +161,7 @@ describe('Multi-Platform Integration (Simplified)', () => {
     });
 
     it('should extract environment correctly for AWS', () => {
-      const connector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(mockAWSEnv);
       const env = connector.getEnv();
 
       expect(env.CLOUD_PLATFORM).toBe('aws');

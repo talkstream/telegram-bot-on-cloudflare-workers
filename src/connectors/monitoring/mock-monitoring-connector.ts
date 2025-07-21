@@ -69,7 +69,17 @@ export class MockMonitoringConnector implements IMonitoringConnector {
     return true;
   }
 
-  startTransaction(name: string, operation: string): any {
+  startTransaction(
+    name: string,
+    operation: string,
+  ): {
+    name: string;
+    operation: string;
+    startTime: number;
+    finish: () => void;
+    setTag: (key: string, value: string | number | boolean) => void;
+    setData: (key: string, value: unknown) => void;
+  } {
     const startTime = Date.now();
     console.info(`[MockMonitoring] Transaction started: ${name} (${operation})`);
 

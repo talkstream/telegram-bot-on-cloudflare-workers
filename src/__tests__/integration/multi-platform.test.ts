@@ -11,7 +11,13 @@ import { EventBus, CommonEventType } from '../../core/events/event-bus';
 import type { ICloudPlatformConnector } from '../../core/interfaces/cloud-platform';
 
 // Register AWS connector for tests
-cloudPlatformRegistry.register('aws', AWSConnector as any);
+// Type assertion is needed because AWSConnector expects specific config shape
+cloudPlatformRegistry.register(
+  'aws',
+  AWSConnector as unknown as new (config: {
+    env: Record<string, unknown>;
+  }) => ICloudPlatformConnector,
+);
 
 describe('Multi-Platform Integration', () => {
   let eventBus: EventBus;
@@ -23,30 +29,39 @@ describe('Multi-Platform Integration', () => {
   describe('Platform Registration and Creation', () => {
     it('should register and create different platform connectors', () => {
       // Cloudflare
-      const cloudflareEnv = {
+      const cloudflareEnv: Record<string, unknown> = {
         CLOUD_PLATFORM: 'cloudflare',
         AI_BINDING: 'AI',
         KV_BINDING: 'MY_KV',
         D1_BINDING: 'DB',
       };
 
-      const cloudflareConnector = CloudPlatformFactory.createFromTypedEnv(cloudflareEnv as any);
+      const cloudflareConnector = CloudPlatformFactory.createFromTypedEnv(cloudflareEnv);
       expect(cloudflareConnector).toBeInstanceOf(CloudflareConnector);
       expect(cloudflareConnector.platform).toBe('cloudflare');
 
       // AWS
-      const awsEnv = {
+      const awsEnv: Record<string, unknown> = {
         CLOUD_PLATFORM: 'aws',
         AWS_REGION: 'us-east-1',
       };
 
-      const awsConnector = CloudPlatformFactory.createFromTypedEnv(awsEnv as any);
+      const awsConnector = CloudPlatformFactory.createFromTypedEnv(awsEnv);
       expect(awsConnector).toBeInstanceOf(AWSConnector);
       expect(awsConnector.platform).toBe('aws');
     });
 
     it('should emit events when platforms are registered', async () => {
-      const events: any[] = [];
+      interface PlatformEvent {
+        type: string;
+        payload: {
+          type: string;
+          platform: string;
+          connector: ICloudPlatformConnector;
+        };
+        source: string;
+      }
+      const events: PlatformEvent[] = [];
 
       eventBus.on(CommonEventType.CONNECTOR_REGISTERED, (event) => {
         events.push(event);
@@ -58,7 +73,7 @@ describe('Multi-Platform Integration', () => {
         AI_BINDING: 'AI',
       };
 
-      const connector = CloudPlatformFactory.createFromTypedEnv(env as any);
+      const connector = CloudPlatformFactory.createFromTypedEnv(env);
 
       // Emit registration event
       eventBus.emit(
@@ -84,8 +99,8 @@ describe('Multi-Platform Integration', () => {
     it('should detect platform-specific features', () => {
       const platforms: ICloudPlatformConnector[] = [
         new CloudflareConnector({
-          env: { AI_BINDING: 'AI' } as any,
-          ctx: {} as any,
+          env: { AI_BINDING: 'AI' },
+          ctx: {} as ExecutionContext,
           request: new Request('https://example.com'),
         }),
         new AWSConnector({
@@ -110,8 +125,8 @@ describe('Multi-Platform Integration', () => {
 
     it('should provide consistent interfaces across platforms', () => {
       const cloudflare = new CloudflareConnector({
-        env: { MY_KV: {} } as any,
-        ctx: {} as any,
+        env: { MY_KV: {} },
+        ctx: {} as ExecutionContext,
         request: new Request('https://example.com'),
       });
 
@@ -145,7 +160,7 @@ describe('Multi-Platform Integration', () => {
 
       environments.forEach(({ CLOUD_PLATFORM, expectedPlatform }) => {
         try {
-          const connector = CloudPlatformFactory.createFromTypedEnv({ CLOUD_PLATFORM } as any);
+          const connector = CloudPlatformFactory.createFromTypedEnv({ CLOUD_PLATFORM });
           expect(connector.platform).toBe(expectedPlatform);
         } catch (error) {
           // GCP and Azure might not be implemented yet
@@ -168,7 +183,7 @@ describe('Multi-Platform Integration', () => {
         AI: {},
       };
 
-      const cloudflare = CloudPlatformFactory.createFromTypedEnv(cloudflareEnv as any);
+      const cloudflare = CloudPlatformFactory.createFromTypedEnv(cloudflareEnv);
       const cfEnv = cloudflare.getEnv();
       expect(cfEnv.CLOUD_PLATFORM).toBe('cloudflare');
 
@@ -180,7 +195,7 @@ describe('Multi-Platform Integration', () => {
         AWS_SECRET_ACCESS_KEY: 'test-secret',
       };
 
-      const aws = CloudPlatformFactory.createFromTypedEnv(awsEnv as any);
+      const aws = CloudPlatformFactory.createFromTypedEnv(awsEnv);
       const awsEnvVars = aws.getEnv();
       expect(awsEnvVars.CLOUD_PLATFORM).toBe('aws');
       expect(awsEnvVars.AWS_REGION).toBe('us-east-1');
@@ -189,7 +204,12 @@ describe('Multi-Platform Integration', () => {
 
   describe('Event-Driven Platform Communication', () => {
     it('should use EventBus for platform operations', async () => {
-      const events: any[] = [];
+      interface EventBusEvent {
+        type: string;
+        payload?: unknown;
+        source?: string;
+      }
+      const events: EventBusEvent[] = [];
 
       // Subscribe to connector events
       eventBus.on(CommonEventType.CONNECTOR_INITIALIZED, (event) => {
@@ -202,8 +222,8 @@ describe('Multi-Platform Integration', () => {
 
       // Simulate platform initialization
       const connector = new CloudflareConnector({
-        env: {} as any,
-        ctx: {} as any,
+        env: {},
+        ctx: {} as ExecutionContext,
         request: new Request('https://example.com'),
       });
 
@@ -239,8 +259,12 @@ describe('Multi-Platform Integration', () => {
     });
 
     it('should handle platform-specific events with scoped EventBus', async () => {
-      const cloudflareEvents: any[] = [];
-      const awsEvents: any[] = [];
+      interface PlatformSpecificEvent {
+        payload: Record<string, unknown>;
+        source?: string;
+      }
+      const cloudflareEvents: PlatformSpecificEvent[] = [];
+      const awsEvents: PlatformSpecificEvent[] = [];
 
       // Create scoped event buses
       const cfEventBus = eventBus.scope('cloudflare');
@@ -286,8 +310,8 @@ describe('Multi-Platform Integration', () => {
 
       const platforms = [
         new CloudflareConnector({
-          env: { 'test-namespace': mockKVStore } as any,
-          ctx: {} as any,
+          env: { 'test-namespace': mockKVStore },
+          ctx: {} as ExecutionContext,
           request: new Request('https://example.com'),
         }),
         new AWSConnector({
@@ -322,8 +346,8 @@ describe('Multi-Platform Integration', () => {
       };
 
       const cloudflare = new CloudflareConnector({
-        env: { test: mockKVStore } as any,
-        ctx: {} as any,
+        env: { test: mockKVStore },
+        ctx: {} as ExecutionContext,
         request: new Request('https://example.com'),
       });
 
@@ -348,7 +372,12 @@ describe('Multi-Platform Integration', () => {
 
   describe('Error Handling Across Platforms', () => {
     it('should handle platform-specific errors consistently', async () => {
-      const errors: any[] = [];
+      interface ErrorEvent {
+        platform: string;
+        error: unknown;
+        operation: string;
+      }
+      const errors: ErrorEvent[] = [];
 
       eventBus.on(CommonEventType.CONNECTOR_ERROR, (event) => {
         errors.push(event.payload);
@@ -357,8 +386,8 @@ describe('Multi-Platform Integration', () => {
       // Simulate Cloudflare error
       try {
         const cf = new CloudflareConnector({
-          env: {} as any,
-          ctx: {} as any,
+          env: {},
+          ctx: {} as ExecutionContext,
           request: new Request('https://example.com'),
         });
         cf.getObjectStore('non-existent-bucket');
