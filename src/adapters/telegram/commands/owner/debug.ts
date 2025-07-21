@@ -1,5 +1,6 @@
 import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
+import { hasDatabase } from '@/lib/env-guards';
 
 /**
  * Debug mode management command for bot owners.
@@ -40,7 +41,7 @@ async function showDebugHelp(ctx: Parameters<CommandHandler>[0]) {
 async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: string) {
   try {
     // Check if DB is available (demo mode check)
-    if (!ctx.env.DB) {
+    if (!hasDatabase(ctx.env)) {
       await ctx.reply(
         '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
       );
@@ -55,16 +56,15 @@ async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: stri
     }
 
     // Update debug level in bot settings
-    await ctx.env
-      .DB!.prepare(
-        `
+    await ctx.env.DB.prepare(
+      `
       INSERT INTO bot_settings (key, value, updated_at)
       VALUES ('debug_level', ?, CURRENT_TIMESTAMP)
       ON CONFLICT(key) DO UPDATE SET 
         value = excluded.value,
         updated_at = excluded.updated_at
     `,
-      )
+    )
       .bind(level.toString())
       .run();
 
@@ -87,18 +87,24 @@ async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: stri
  */
 async function handleDebugOff(ctx: Parameters<CommandHandler>[0]) {
   try {
+    // Check if DB is available (demo mode check)
+    if (!hasDatabase(ctx.env)) {
+      await ctx.reply(
+        '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+      );
+      return;
+    }
+
     // Set debug level to 0 (off)
-    await ctx.env
-      .DB!.prepare(
-        `
+    await ctx.env.DB.prepare(
+      `
       INSERT INTO bot_settings (key, value, updated_at)
       VALUES ('debug_level', '0', CURRENT_TIMESTAMP)
       ON CONFLICT(key) DO UPDATE SET 
         value = excluded.value,
         updated_at = excluded.updated_at
     `,
-      )
-      .run();
+    ).run();
 
     await ctx.reply(ctx.i18n('debug_disabled'));
 
@@ -116,8 +122,17 @@ async function handleDebugOff(ctx: Parameters<CommandHandler>[0]) {
  */
 async function handleDebugStatus(ctx: Parameters<CommandHandler>[0]) {
   try {
-    const setting = (await ctx.env
-      .DB!.prepare('SELECT value, updated_at FROM bot_settings WHERE key = ?')
+    // Check if DB is available (demo mode check)
+    if (!hasDatabase(ctx.env)) {
+      await ctx.reply(
+        '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+      );
+      return;
+    }
+
+    const setting = (await ctx.env.DB.prepare(
+      'SELECT value, updated_at FROM bot_settings WHERE key = ?',
+    )
       .bind('debug_level')
       .first()) as { value: string; updated_at: string } | null;
 

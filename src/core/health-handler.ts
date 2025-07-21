@@ -30,7 +30,8 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'database',
       check: async () => {
         try {
-          const result = await env.DB!.prepare('SELECT 1 as health').first();
+          if (!env.DB) return false;
+          const result = await env.DB.prepare('SELECT 1 as health').first();
           return result?.health === 1;
         } catch (error) {
           logger.error('D1 health check failed', { error });
@@ -46,11 +47,12 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'cache',
       check: async () => {
         try {
+          if (!env.CACHE) return false;
           const testKey = `health_check_${Date.now()}`;
-          await env.CACHE!.put(testKey, 'ok', { expirationTtl: 60 });
-          const value = await env.CACHE!.get(testKey);
+          await env.CACHE.put(testKey, 'ok', { expirationTtl: 60 });
+          const value = await env.CACHE.get(testKey);
           const isHealthy = value === 'ok';
-          await env.CACHE!.delete(testKey);
+          await env.CACHE.delete(testKey);
           return isHealthy;
         } catch (error) {
           logger.error('KV cache health check failed', { error });

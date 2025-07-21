@@ -1,3 +1,36 @@
+# 🚀 Release Notes
+
+## v1.2.1 (2025-01-21)
+
+### ✨ New Features
+
+- **Universal Role System** - Platform-agnostic role management that works across all messaging platforms
+  - Created `/src/core/services/role-service.ts` with full role hierarchy support
+  - Added `/src/core/interfaces/role-system.ts` with comprehensive type definitions
+  - Implemented `RoleConnector` for event-driven role management
+  - Added `TelegramRoleAdapter` for backwards compatibility
+
+### 🐛 Bug Fixes
+
+- Fixed all ESLint warnings (100% clean codebase)
+- Resolved all TypeScript strict mode issues
+- Removed all non-null assertions in favor of proper type guards
+- Fixed optional environment variable handling
+
+### 🛠️ Technical Improvements
+
+- Added `SECURITY` connector type to the connector system
+- Updated database schema for multi-platform role support
+- Created universal auth middleware in `/src/middleware/auth-universal.ts`
+- Improved type safety throughout the codebase
+
+### 📚 Documentation
+
+- Updated CLAUDE.md with recent changes
+- Updated PROJECT_STATE.md to reflect v1.2.1 improvements
+
+---
+
 # 🎉 Telegram Bot on Cloudflare Workers Wireframe v1.0.0
 
 We're excited to announce the first stable release of the Telegram Bot on Cloudflare Workers Wireframe!

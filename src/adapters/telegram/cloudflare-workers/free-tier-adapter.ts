@@ -11,6 +11,7 @@ import type { BotContext, Env } from '@/types';
 import { getBotToken } from '@/lib/env-guards';
 import type { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import type { PaymentRepository } from '@/domain/payments/repository';
+import type { SessionService as ISessionService } from '@/services/session-service';
 import { getTierConfig } from '@/config/tiers';
 import { logger } from '@/lib/logger';
 
@@ -155,7 +156,13 @@ export class LightweightAdapter {
     this.bot.use(async (ctx, next) => {
       ctx.env = env;
       ctx.services = {
-        session: sessionService || ({} as any),
+        session:
+          sessionService ||
+          ({
+            getSession: async () => ({}),
+            setSession: async () => {},
+            deleteSession: async () => {},
+          } as unknown as ISessionService),
         ai: aiService,
         telegramStars: {} as TelegramStarsService, // Placeholder for lightweight mode
         paymentRepo: {} as PaymentRepository, // Placeholder for lightweight mode

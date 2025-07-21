@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-01-21
+
+### Added
+
+- **Universal Role System**
+  - Platform-agnostic role management service
+  - Role hierarchy support (owner > admin > user)
+  - Event-driven role change notifications
+  - Security connector for access control
+  - TelegramRoleAdapter for backwards compatibility
+
+### Fixed
+
+- All ESLint warnings eliminated (100% clean)
+- TypeScript strict mode violations resolved
+- Non-null assertions replaced with type guards
+- Optional environment variable handling improved
+
+### Changed
+
+- Database schema updated for multi-platform role support
+- Auth middleware refactored to use universal role system
+- Connector types extended with SECURITY type
+
 ## [1.2.0] - 2025-01-20
 
 ### 🚨 BREAKING CHANGES

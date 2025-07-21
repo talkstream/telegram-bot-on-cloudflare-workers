@@ -60,6 +60,8 @@ export enum ConnectorType {
   DATABASE = 'database',
   PAYMENT = 'payment',
   ANALYTICS = 'analytics',
+  SECURITY = 'security',
+  SESSION = 'session',
 }
 
 export interface ConnectorConfig {

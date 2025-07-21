@@ -86,3 +86,21 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Prioritize developer experience while maintaining architectural integrity
 - Use type guards for all optional values - avoid non-null assertions
 - Ensure CI/CD compatibility by supporting demo mode
+
+## Recent Changes (v1.2.1)
+
+### Universal Role System
+
+- Created platform-agnostic role management in `/src/core/services/role-service.ts`
+- Added interfaces for roles, permissions, and hierarchy in `/src/core/interfaces/role-system.ts`
+- Implemented RoleConnector for event-driven role management
+- Added TelegramRoleAdapter for backwards compatibility
+- Created universal auth middleware in `/src/middleware/auth-universal.ts`
+- Database schema updated to support multi-platform roles
+
+### Code Quality Improvements
+
+- Fixed all ESLint warnings and errors
+- Resolved TypeScript strict mode issues
+- Added proper type guards for optional environment variables
+- Removed all non-null assertions in favor of type-safe checks
