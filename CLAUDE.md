@@ -97,6 +97,11 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Added TelegramRoleAdapter for backwards compatibility
 - Created universal auth middleware in `/src/middleware/auth-universal.ts`
 - Database schema updated to support multi-platform roles
+- **Integrated role system into Telegram adapter** with dual-mode support:
+  - LightweightAdapter now initializes UniversalRoleService when DB available
+  - Admin commands work seamlessly with both legacy and universal systems
+  - Help command adapts to available role service
+  - Full backwards compatibility maintained
 
 ### Code Quality Improvements
 

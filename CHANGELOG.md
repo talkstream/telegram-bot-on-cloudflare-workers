@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Event-driven role change notifications
   - Security connector for access control
   - TelegramRoleAdapter for backwards compatibility
+  - Integration with Telegram adapter (dual-mode support)
 
 ### Fixed
 
@@ -28,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database schema updated for multi-platform role support
 - Auth middleware refactored to use universal role system
 - Connector types extended with SECURITY type
+- Telegram commands updated for seamless legacy/universal role support
+- BotContext enhanced with optional roleService property
 
 ## [1.2.0] - 2025-01-20
 
