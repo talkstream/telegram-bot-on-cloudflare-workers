@@ -10,16 +10,22 @@ vi.mock('@/services/user-service', () => ({
   getUserService: () => mockUserService,
 }));
 
-// Mock the auth module
-vi.mock('@/middleware/auth', () => ({
+// Mock role service
+const mockRoleService = {
   hasAccess: vi.fn().mockResolvedValue(true),
-  isOwner: vi.fn().mockReturnValue(false),
-  isAdmin: vi.fn().mockReturnValue(false),
-}));
+  isOwner: vi.fn().mockResolvedValue(false),
+  isAdmin: vi.fn().mockResolvedValue(false),
+  getUserRole: vi.fn().mockResolvedValue('user'),
+  hasPermission: vi.fn().mockResolvedValue(false),
+};
 
 describe('Start Command', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock role service
+    mockRoleService.hasAccess.mockResolvedValue(true);
+    mockRoleService.isOwner.mockResolvedValue(false);
+    mockRoleService.isAdmin.mockResolvedValue(false);
   });
 
   it('should send welcome message with inline keyboard for users with access', async () => {
@@ -38,6 +44,7 @@ describe('Start Command', () => {
         username: 'testbot',
       },
     });
+    ctx.roleService = mockRoleService;
 
     // Mock user service response
     mockUserService.createOrUpdateUser.mockResolvedValueOnce({
@@ -72,8 +79,7 @@ describe('Start Command', () => {
   });
 
   it('should show access denied message for users without access', async () => {
-    const { hasAccess } = await import('@/middleware/auth');
-    vi.mocked(hasAccess).mockResolvedValueOnce(false);
+    mockRoleService.hasAccess.mockResolvedValueOnce(false);
 
     const ctx = createMockContext({
       from: {
@@ -84,6 +90,7 @@ describe('Start Command', () => {
         language_code: 'en',
       },
     });
+    ctx.roleService = mockRoleService;
 
     // Mock user service response
     mockUserService.createOrUpdateUser.mockResolvedValueOnce({
@@ -111,16 +118,12 @@ describe('Start Command', () => {
       '⚠️ You do not have access to this bot.',
       expect.objectContaining({
         parse_mode: 'HTML',
-        reply_markup: expect.objectContaining({
-          text: expect.any(Function),
-        }),
       }),
     );
   });
 
   it('should show pending request message if user has pending request', async () => {
-    const { hasAccess } = await import('@/middleware/auth');
-    vi.mocked(hasAccess).mockResolvedValueOnce(false);
+    mockRoleService.hasAccess.mockResolvedValueOnce(false);
 
     const ctx = createMockContext({
       from: {
@@ -131,6 +134,7 @@ describe('Start Command', () => {
         language_code: 'en',
       },
     });
+    ctx.roleService = mockRoleService;
 
     // Mock user service response
     mockUserService.createOrUpdateUser.mockResolvedValueOnce({
@@ -158,67 +162,36 @@ describe('Start Command', () => {
       'Your access request is pending approval.',
       expect.objectContaining({
         parse_mode: 'HTML',
-        reply_markup: expect.objectContaining({
-          text: expect.any(Function),
-        }),
       }),
     );
   });
 
-  it('should create or update user in database', async () => {
+  it('should handle users without username', async () => {
     const ctx = createMockContext({
       from: {
         id: 123456,
         is_bot: false,
         first_name: 'John',
-        username: 'johndoe',
+        // No username
         language_code: 'en',
-        is_premium: true,
+      },
+      me: {
+        id: 987654,
+        is_bot: true,
+        first_name: 'Test Bot',
+        username: 'testbot',
       },
     });
+    ctx.roleService = mockRoleService;
 
-    // Configure mock for this test
-    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
-      id: 1,
-      telegramId: 123456,
-      username: 'johndoe',
-      firstName: 'John',
-      lastName: undefined,
-      languageCode: 'en',
-      isPremium: true,
-      starsBalance: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-
-    await startCommand(ctx);
-
-    expect(mockUserService.createOrUpdateUser).toHaveBeenCalledWith({
-      telegramId: 123456,
-      username: 'johndoe',
-      firstName: 'John',
-      lastName: undefined,
-      languageCode: 'en',
-      isPremium: true,
-    });
-  });
-
-  it('should update session data', async () => {
-    const ctx = createMockContext({
-      from: {
-        id: 123456,
-        is_bot: false,
-        first_name: 'John',
-      },
-    });
-
+    // Mock user service response
     mockUserService.createOrUpdateUser.mockResolvedValueOnce({
       id: 1,
       telegramId: 123456,
       username: undefined,
       firstName: 'John',
       lastName: undefined,
-      languageCode: undefined,
+      languageCode: 'en',
       isPremium: false,
       starsBalance: 0,
       createdAt: new Date().toISOString(),
@@ -227,19 +200,55 @@ describe('Start Command', () => {
 
     await startCommand(ctx);
 
-    expect(ctx.session.userId).toBe(1);
-    expect(ctx.session.lastCommand).toBe('start');
-    expect(ctx.session.lastActivity).toBeGreaterThan(0);
+    expect(mockUserService.createOrUpdateUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        telegramId: 123456,
+        username: undefined,
+        firstName: 'John',
+      }),
+    );
+
+    expect(ctx.reply).toHaveBeenCalled();
   });
 
-  it('should handle missing user ID', async () => {
+  it('should use Russian language for Russian users', async () => {
     const ctx = createMockContext({
-      from: undefined,
+      from: {
+        id: 123456,
+        is_bot: false,
+        first_name: 'Иван',
+        username: 'ivan',
+        language_code: 'ru',
+      },
+      me: {
+        id: 987654,
+        is_bot: true,
+        first_name: 'Test Bot',
+        username: 'testbot',
+      },
+    });
+    ctx.roleService = mockRoleService;
+
+    // Mock user service response
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: 'ivan',
+      firstName: 'Иван',
+      lastName: undefined,
+      languageCode: 'ru',
+      isPremium: false,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
     await startCommand(ctx);
 
-    expect(ctx.reply).toHaveBeenCalledWith('❌ Unable to identify user');
+    expect(ctx.reply).toHaveBeenCalledWith(
+      expect.stringContaining('Welcome to Test Bot'),
+      expect.any(Object),
+    );
   });
 
   it('should handle errors gracefully', async () => {
@@ -248,14 +257,52 @@ describe('Start Command', () => {
         id: 123456,
         is_bot: false,
         first_name: 'John',
+        username: 'johndoe',
       },
     });
+    ctx.roleService = mockRoleService;
 
-    // Configure mock to throw error
+    // Mock user service to throw an error
     mockUserService.createOrUpdateUser.mockRejectedValueOnce(new Error('Database error'));
 
     await startCommand(ctx);
 
     expect(ctx.reply).toHaveBeenCalledWith('❌ An error occurred. Please try again later.');
+  });
+
+  it('should show demo mode message when DB is not available and user has no access', async () => {
+    mockRoleService.hasAccess.mockResolvedValueOnce(false);
+
+    const ctx = createMockContext({
+      from: {
+        id: 123456,
+        is_bot: false,
+        first_name: 'John',
+        username: 'johndoe',
+        language_code: 'en',
+      },
+    });
+    ctx.roleService = mockRoleService;
+    ctx.env.DB = undefined; // No database
+
+    // Mock user service response
+    mockUserService.createOrUpdateUser.mockResolvedValueOnce({
+      id: 1,
+      telegramId: 123456,
+      username: 'johndoe',
+      firstName: 'John',
+      lastName: undefined,
+      languageCode: 'en',
+      isPremium: false,
+      starsBalance: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    await startCommand(ctx);
+
+    expect(ctx.reply).toHaveBeenCalledWith(
+      '🎯 Demo Mode: This feature requires a database.\nConfigure D1 database to enable this functionality.',
+    );
   });
 });

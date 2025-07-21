@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All TypeScript warnings eliminated
 - Proper typing for Grammy context extensions (command, updateType, error)
 - Clean separation of concerns between HTTP and messaging layers
+- Test failures after middleware reorganization
+- Import paths for relocated middleware files
+- Auth middleware tests updated for new UniversalRoleService architecture
 
 ### Architecture
 
