@@ -30,8 +30,8 @@ This guide describes the development workflow for contributing to Wireframe, wit
 
 ```bash
 # Clone the repository
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-on-cloudflare-workers
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 
 # Install dependencies
 npm install

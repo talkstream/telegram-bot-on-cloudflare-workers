@@ -67,7 +67,7 @@ async function handleAboutCommand(ctx: any) {
       `• AI provider abstraction\n` +
       `• Plugin system\n` +
       `• TypeScript with 100% type safety\n\n` +
-      `[Learn more](https://github.com/talkstream/telegram-bot-on-cloudflare-workers)`,
+      `[Learn more](https://github.com/talkstream/typescript-wireframe-platform)`,
     { parse_mode: 'Markdown', disable_web_page_preview: true },
   );
 }

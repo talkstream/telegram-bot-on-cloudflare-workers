@@ -31,7 +31,7 @@ Welcome to the comprehensive documentation for Wireframe - the universal AI assi
 
 - [Main README](../README.md) - Project overview and features
 - [Russian README](../README.ru.md) - Документация на русском
-- [GitHub Repository](https://github.com/talkstream/telegram-bot-on-cloudflare-workers)
+- [GitHub Repository](https://github.com/talkstream/typescript-wireframe-platform)
 
 ## 🎯 Who This Documentation Is For
 

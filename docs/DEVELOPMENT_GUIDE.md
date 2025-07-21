@@ -13,7 +13,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git my-bot
+git clone https://github.com/talkstream/typescript-wireframe-platform.git my-bot
 cd my-bot
 ```
 
@@ -491,7 +491,7 @@ bot.on('message:document', async (ctx) => {
 - [grammY Documentation](https://grammy.dev)
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
-- [Project Issues](https://github.com/talkstream/telegram-bot-on-cloudflare-workers/issues)
+- [Project Issues](https://github.com/talkstream/typescript-wireframe-platform/issues)
 
 ---
 

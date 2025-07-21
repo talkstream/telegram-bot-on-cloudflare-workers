@@ -229,8 +229,8 @@ app.get('/demo', (c) => {
       </ol>
       
       <p>
-        <a href="https://github.com/talkstream/telegram-bot-on-cloudflare-workers">GitHub</a> |
-        <a href="https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.2.0">Release Notes</a>
+        <a href="https://github.com/talkstream/typescript-wireframe-platform">GitHub</a> |
+        <a href="https://github.com/talkstream/typescript-wireframe-platform/releases/tag/v1.2.0">Release Notes</a>
       </p>
     </body>
     </html>

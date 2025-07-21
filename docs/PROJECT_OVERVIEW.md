@@ -79,7 +79,7 @@ graph TB
 ### 1. Clone and Install (30 seconds)
 
 ```bash
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git my-bot
+git clone https://github.com/talkstream/typescript-wireframe-platform.git my-bot
 cd my-bot
 npm install
 ```

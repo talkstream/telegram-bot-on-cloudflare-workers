@@ -65,7 +65,7 @@ jobs:
           echo "2. Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets"
           echo "3. Push to main branch or run workflow manually"
           echo ""
-          echo "📚 Documentation: https://github.com/talkstream/telegram-bot-on-cloudflare-workers"
+          echo "📚 Documentation: https://github.com/talkstream/typescript-wireframe-platform"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: Deploy Status

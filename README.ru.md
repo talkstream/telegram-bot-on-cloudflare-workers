@@ -37,7 +37,7 @@
 Запустите бота одной командой:
 
 ```bash
-Clone and setup github.com/talkstream/telegram-bot-on-cloudflare-workers
+Clone and setup github.com/talkstream/typescript-wireframe-platform
 ```
 
 Claude Code проведёт вас через:
@@ -150,8 +150,8 @@ Wireframe автоматически оптимизируется под ваш 
 ### 1. Клонирование и установка
 
 ```bash
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-cloudflare-wireframe
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 npm install
 
 # Проверка настройки
@@ -628,7 +628,7 @@ BOT_OWNER_IDS=123456789,987654321  # Telegram ID через запятую
    - Управление секретами и переменными окружения
 
 2. **Git MCP Server (GitMCP)** - [GitMCP.io](https://gitmcp.io)
-   - **Удалённый сервер для этого проекта:** `https://gitmcp.io/talkstream/telegram-bot-on-cloudflare-workers`
+   - **Удалённый сервер для этого проекта:** `https://gitmcp.io/talkstream/typescript-wireframe-platform`
    - Мгновенный доступ к содержимому любого GitHub репозитория
    - Не требует установки - просто используйте формат URL
    - Доступ только для чтения к публичным репозиториям

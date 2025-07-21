@@ -76,7 +76,7 @@ This production-ready wireframe provides everything you need to build high-perfo
 
 ```bash
 # Clone the repository
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
 
 # Install dependencies
 npm install

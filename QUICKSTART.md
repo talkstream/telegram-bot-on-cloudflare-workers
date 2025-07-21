@@ -10,8 +10,8 @@
 
 ```bash
 # Clone and deploy
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-on-cloudflare-workers
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 npm install
 npm run setup:bot
 ```

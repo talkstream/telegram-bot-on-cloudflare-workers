@@ -20,7 +20,7 @@
     {
       "name": "gitmcp",
       "displayName": "GitMCP",
-      "urls": ["https://gitmcp.io/talkstream/telegram-bot-on-cloudflare-workers"],
+      "urls": ["https://gitmcp.io/talkstream/typescript-wireframe-platform"],
       "required": true,
       "description": "Required for cloning the repository"
     },

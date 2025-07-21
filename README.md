@@ -70,7 +70,7 @@
 Start your bot with one command:
 
 ```bash
-Clone and setup github.com/talkstream/telegram-bot-on-cloudflare-workers
+Clone and setup github.com/talkstream/typescript-wireframe-platform
 ```
 
 Claude Code will guide you through:
@@ -200,8 +200,8 @@ CLOUD_PLATFORM=gcp         # Google Cloud Functions
 
 ```bash
 # Clone and deploy a working Telegram bot in 5 minutes
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-on-cloudflare-workers
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 npm install
 npm run setup:bot  # Interactive setup wizard
 ```
@@ -225,8 +225,8 @@ The setup wizard will:
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-cloudflare-wireframe
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 npm install
 
 # Verify setup
@@ -784,7 +784,7 @@ The framework is designed for multiple platforms:
    - Handle secrets and environment variables
 
 2. **Git MCP Server (GitMCP)** - [GitMCP.io](https://gitmcp.io)
-   - **Remote server for this project:** `https://gitmcp.io/talkstream/telegram-bot-on-cloudflare-workers`
+   - **Remote server for this project:** `https://gitmcp.io/talkstream/typescript-wireframe-platform`
    - Access any GitHub repository content instantly
    - No installation required - just use the URL format
    - Read-only access to public repositories

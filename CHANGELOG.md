@@ -353,7 +353,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added setup and deployment guides
 - Included architectural documentation
 
-[1.1.0]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.1.0
-[1.0.2]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.0.2
-[1.0.1]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.0.1
-[1.0.0]: https://github.com/talkstream/telegram-bot-on-cloudflare-workers/releases/tag/v1.0.0
+[1.1.0]: https://github.com/talkstream/typescript-wireframe-platform/releases/tag/v1.1.0
+[1.0.2]: https://github.com/talkstream/typescript-wireframe-platform/releases/tag/v1.0.2
+[1.0.1]: https://github.com/talkstream/typescript-wireframe-platform/releases/tag/v1.0.1
+[1.0.0]: https://github.com/talkstream/typescript-wireframe-platform/releases/tag/v1.0.0

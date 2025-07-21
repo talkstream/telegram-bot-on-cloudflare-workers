@@ -36,8 +36,8 @@ Upgrade to the Paid plan if your bot needs:
 ## Step 1: Fork/Clone Repository
 
 ```bash
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-on-cloudflare-workers
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 npm install
 ```
 
@@ -251,4 +251,4 @@ This project uses Istanbul coverage provider instead of V8. If you encounter cov
 
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [grammY Documentation](https://grammy.dev/)
-- [GitHub Issues](https://github.com/yourusername/telegram-bot-cloudflare-wireframe/issues)
+- [GitHub Issues](https://github.com/yourusername/typescript-wireframe-platform/issues)

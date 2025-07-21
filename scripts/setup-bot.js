@@ -146,7 +146,7 @@ BOT_NAME="${config.botName}"
     // Update wrangler.toml
     const wranglerPath = path.join(process.cwd(), 'wrangler.toml');
     let wranglerConfig = await fs.readFile(wranglerPath, 'utf-8');
-    wranglerConfig = wranglerConfig.replace('telegram-bot-cloudflare-wireframe', config.botName);
+    wranglerConfig = wranglerConfig.replace('typescript-wireframe-platform', config.botName);
     await fs.writeFile(wranglerPath, wranglerConfig);
 
     spinner.succeed(chalk.green('Configuration files created'));

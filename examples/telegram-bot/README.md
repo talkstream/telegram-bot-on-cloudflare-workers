@@ -16,8 +16,8 @@ This example shows how to create a simple Telegram bot using the Wireframe v1.2 
 
 ```bash
 # Clone the wireframe
-git clone https://github.com/talkstream/telegram-bot-on-cloudflare-workers.git
-cd telegram-bot-on-cloudflare-workers
+git clone https://github.com/talkstream/typescript-wireframe-platform.git
+cd typescript-wireframe-platform
 
 # Install dependencies
 npm install
@@ -158,6 +158,6 @@ CLOUD_PLATFORM=gcp npm run deploy
 
 ## Support
 
-- [GitHub Issues](https://github.com/talkstream/telegram-bot-on-cloudflare-workers/issues)
+- [GitHub Issues](https://github.com/talkstream/typescript-wireframe-platform/issues)
 - [Telegram Group](https://t.me/your-support-group)
 - [Documentation](../../docs/)

@@ -255,7 +255,7 @@ When possible, include:
 
 ### Not sure what to contribute?
 
-- Check [GitHub Issues](https://github.com/talkstream/telegram-bot-on-cloudflare-workers/issues)
+- Check [GitHub Issues](https://github.com/talkstream/typescript-wireframe-platform/issues)
 - Look for `good first issue` labels
 - Ask in discussions
 

@@ -18,7 +18,7 @@ First, check if the required MCP servers are installed. If not, guide the user t
 
 claude mcp add cloudflare-mcp https://observability.mcp.cloudflare.com/sse
 claude mcp add cloudflare-mcp https://bindings.mcp.cloudflare.com/sse
-claude mcp add gitmcp https://gitmcp.io/talkstream/telegram-bot-on-cloudflare-workers
+claude mcp add gitmcp https://gitmcp.io/talkstream/typescript-wireframe-platform
 claude mcp add sentry https://mcp.sentry.dev
 ```
 
@@ -407,4 +407,4 @@ If setup fails at any point:
 3. Save partial configuration for retry
 4. Offer to start over or continue from failure point
 
-<!-- CONFIG_CHECKSUM:89ccadd7ef9e7c5c7699517c33719b57 -->
+<!-- CONFIG_CHECKSUM:7c145d8f9dee3cf49ba2675150fcb616 -->

@@ -487,7 +487,7 @@ bot.command('debug', requireOwner, async (ctx) => {
 
 If you're still stuck:
 
-1. **Check existing issues**: [GitHub Issues](https://github.com/talkstream/telegram-bot-on-cloudflare-workers/issues)
+1. **Check existing issues**: [GitHub Issues](https://github.com/talkstream/typescript-wireframe-platform/issues)
 2. **Create detailed bug report** with:
    - Error messages
    - Steps to reproduce
