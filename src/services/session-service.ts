@@ -1,5 +1,5 @@
 import type { IKeyValueStore } from '@/core/interfaces/storage';
-import { getTierConfig } from '@/config/tiers';
+import { getTierConfig } from '@/config/cloudflare-tiers';
 import { logger } from '@/lib/logger';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
 

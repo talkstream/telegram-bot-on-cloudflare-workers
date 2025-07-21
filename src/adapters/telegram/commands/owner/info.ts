@@ -2,6 +2,7 @@ import type { CommandHandler } from '@/types';
 import type { Env } from '@/types';
 import { logger } from '@/lib/logger';
 import { hasDatabase } from '@/lib/env-guards';
+import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
 
 /**
  * Technical information command for bot owners.
@@ -58,13 +59,16 @@ export const infoCommand: CommandHandler = async (ctx) => {
       : null;
 
     // Get AI provider statistics if available
-    let aiStats = ctx.i18n('info_ai_not_configured');
+    let aiStats = ctx.i18n.t('commands.info.ai_not_configured', { namespace: 'telegram' });
     if (ctx.services.ai) {
       const activeProvider = ctx.services.ai.getActiveProvider();
       const providers = ctx.services.ai.listProviders();
-      aiStats = ctx.i18n('info_ai_status', {
-        provider: activeProvider || 'None',
-        count: providers.length,
+      aiStats = ctx.i18n.t('commands.info.ai_status', {
+        namespace: 'telegram',
+        params: {
+          provider: activeProvider || 'None',
+          count: providers.length,
+        },
       });
     }
 
@@ -72,42 +76,82 @@ export const infoCommand: CommandHandler = async (ctx) => {
     const sessionCount = await getActiveSessionCount(env);
 
     // Build info message
-    let message = ctx.i18n('info_command_header') + '\n\n';
+    let message = ctx.i18n.t('commands.info.header', { namespace: 'telegram' }) + '\n\n';
 
-    message += ctx.i18n('info_system_status') + '\n';
-    message += ctx.i18n('info_uptime', { hours: uptimeHours, minutes: uptimeMinutes }) + '\n';
+    message += ctx.i18n.t('commands.info.system_status', { namespace: 'telegram' }) + '\n';
     message +=
-      ctx.i18n('info_environment', { environment: env.ENVIRONMENT || 'production' }) + '\n';
-    message += ctx.i18n('info_tier', { tier: env.TIER || 'free' }) + '\n\n';
+      ctx.i18n.t('commands.info.uptime', {
+        namespace: 'telegram',
+        params: { hours: uptimeHours, minutes: uptimeMinutes },
+      }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.environment', {
+        namespace: 'telegram',
+        params: { environment: env.ENVIRONMENT || 'production' },
+      }) + '\n';
+    // Get tier from resource constraints
+    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+    const constraints = cloudConnector.getResourceConstraints();
+    const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
+    message +=
+      ctx.i18n.t('commands.info.tier', { namespace: 'telegram', params: { tier } }) + '\n\n';
 
-    message += ctx.i18n('info_user_statistics') + '\n';
-    message += ctx.i18n('info_total_users', { count: userStats?.total_users || 0 }) + '\n';
-    message += ctx.i18n('info_active_users', { count: userStats?.active_users || 0 }) + '\n';
-    message += ctx.i18n('info_active_sessions', { count: sessionCount }) + '\n\n';
+    message += ctx.i18n.t('commands.info.user_statistics', { namespace: 'telegram' }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.total_users', {
+        namespace: 'telegram',
+        params: { count: userStats?.total_users || 0 },
+      }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.active_users', {
+        namespace: 'telegram',
+        params: { count: userStats?.active_users || 0 },
+      }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.active_sessions', {
+        namespace: 'telegram',
+        params: { count: sessionCount },
+      }) + '\n\n';
 
-    message += ctx.i18n('info_access_requests') + '\n';
-    message += ctx.i18n('info_pending', { count: requestStats?.pending_requests || 0 }) + '\n';
-    message += ctx.i18n('info_approved', { count: requestStats?.approved_requests || 0 }) + '\n';
-    message += ctx.i18n('info_rejected', { count: requestStats?.rejected_requests || 0 }) + '\n\n';
+    message += ctx.i18n.t('commands.info.access_requests', { namespace: 'telegram' }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.pending', {
+        namespace: 'telegram',
+        params: { count: requestStats?.pending_requests || 0 },
+      }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.approved', {
+        namespace: 'telegram',
+        params: { count: requestStats?.approved_requests || 0 },
+      }) + '\n';
+    message +=
+      ctx.i18n.t('commands.info.rejected', {
+        namespace: 'telegram',
+        params: { count: requestStats?.rejected_requests || 0 },
+      }) + '\n\n';
 
-    message += ctx.i18n('info_role_distribution') + '\n';
+    message += ctx.i18n.t('commands.info.role_distribution', { namespace: 'telegram' }) + '\n';
     if (roleStats?.results && roleStats.results.length > 0) {
       for (const stat of roleStats.results) {
         message += `${stat.role}: ${stat.count}\n`;
       }
     } else {
-      message += ctx.i18n('info_no_roles') + '\n';
+      message += ctx.i18n.t('commands.info.no_roles', { namespace: 'telegram' }) + '\n';
     }
     message += '\n';
 
-    message += ctx.i18n('info_ai_provider') + '\n';
+    message += ctx.i18n.t('commands.info.ai_provider', { namespace: 'telegram' }) + '\n';
     message += aiStats + '\n';
 
     // Show cost information if available
     if (ctx.services.ai?.getCostInfo) {
       const costInfo = ctx.services.ai.getCostInfo();
       if (costInfo) {
-        message += ctx.i18n('info_total_cost', { cost: costInfo.total.toFixed(4) }) + '\n';
+        message +=
+          ctx.i18n.t('commands.info.total_cost', {
+            namespace: 'telegram',
+            params: { cost: costInfo.total.toFixed(4) },
+          }) + '\n';
       }
     }
 
@@ -116,7 +160,7 @@ export const infoCommand: CommandHandler = async (ctx) => {
     logger.info('Bot info requested', { userId: ctx.from?.id });
   } catch (error) {
     logger.error('Failed to get bot info', { error });
-    await ctx.reply(ctx.i18n('info_error'));
+    await ctx.reply(ctx.i18n.t('commands.info.error', { namespace: 'telegram' }));
   }
 };
 

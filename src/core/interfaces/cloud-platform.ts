@@ -4,6 +4,7 @@
  */
 
 import type { IKeyValueStore, IDatabaseStore, IObjectStore, ICacheStore } from './storage';
+import type { ResourceConstraints } from './resource-constraints';
 
 /**
  * Cloud platform capabilities
@@ -50,6 +51,12 @@ export interface ICloudPlatformConnector {
     maxRequestDuration: number; // in milliseconds
     maxMemory: number; // in MB
   };
+
+  /**
+   * Get resource constraints for the current platform configuration
+   * This replaces the Cloudflare-specific 'tier' concept
+   */
+  getResourceConstraints(): ResourceConstraints;
 }
 
 /**

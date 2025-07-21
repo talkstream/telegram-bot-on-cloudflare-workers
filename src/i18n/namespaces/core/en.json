@@ -1,0 +1,14 @@
+{
+  "system": {
+    "health": {
+      "ok": "ok",
+      "degraded": "degraded",
+      "error": "error",
+      "not_configured": "not_configured"
+    },
+    "errors": {
+      "general": "❌ An error occurred. Please try again later.",
+      "user_identification": "❌ Unable to identify user"
+    }
+  }
+}

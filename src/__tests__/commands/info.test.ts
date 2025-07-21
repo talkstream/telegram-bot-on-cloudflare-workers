@@ -33,7 +33,7 @@ describe('Info Command', () => {
 
     // Mock environment
     ctx.env.ENVIRONMENT = 'production';
-    ctx.env.TIER = 'paid';
+    ctx.env.TIER = 'paid'; // Keep for CloudflareConnector to read
     ctx.env.BOT_OWNER_IDS = '123456';
 
     // Mock session with bot start time

@@ -10,8 +10,9 @@ import {
 import { setupCommands } from '../adapters/telegram/commands';
 import { setupCallbacks } from '../adapters/telegram/callbacks';
 import { setUserContext, clearUserContext } from '../config/sentry'; // Re-using Sentry helpers
-import { getTierConfig } from '../config/tiers';
+import { getTierConfig } from '../config/cloudflare-tiers';
 
+import { CloudPlatformFactory } from './cloud/platform-factory';
 import { createBot } from './bot';
 
 import type { BotContext } from '@/types';
@@ -26,7 +27,10 @@ export class TelegramAdapter {
 
   constructor(env: Env) {
     this.env = env;
-    this.tier = env.TIER || 'free';
+    // Get tier from platform constraints
+    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+    const constraints = cloudConnector.getResourceConstraints();
+    this.tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
     this.initPromise = this.initialize();
   }
 

@@ -75,7 +75,7 @@ export function setupCallbacks(bot: Bot<BotContext>): void {
   bot.callbackQuery('view_requests', async (ctx) => {
     await ctx.answerCallbackQuery();
     // Simply notify about using the command
-    await ctx.reply(ctx.i18n('use_requests_command'));
+    await ctx.reply(ctx.i18n.t('messages.use_requests_command', { namespace: 'access' }));
   });
 
   // Generic callback handler for unhandled callbacks

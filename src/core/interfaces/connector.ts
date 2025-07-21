@@ -62,6 +62,7 @@ export enum ConnectorType {
   ANALYTICS = 'analytics',
   SECURITY = 'security',
   SESSION = 'session',
+  I18N = 'i18n',
 }
 
 export interface ConnectorConfig {

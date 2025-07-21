@@ -169,6 +169,27 @@ it('should handle Telegram rate limits gracefully', async () => {
 });
 ```
 
+### 4. Automated Contribution Tool
+
+To streamline the contribution process:
+
+```bash
+# Instead of manual git add -p
+npm run contribute
+
+# Auto-detect contribution type
+npm run contribute:auto
+```
+
+This tool:
+
+- Works with your existing worktree setup
+- Automates the cherry-picking process
+- Generates tests and documentation
+- Prepares PR with proper format
+
+See [Easy Contribute Guide](./EASY_CONTRIBUTE.md) for details.
+
 ## 🏗️ Architecture Guidelines
 
 ### 1. Maintain Abstraction Layers

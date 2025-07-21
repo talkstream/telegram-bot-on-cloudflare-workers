@@ -4,7 +4,7 @@ import { UserRole } from '@/core/interfaces/role-system';
 
 export const helpCommand: CommandHandler = async (ctx) => {
   // Build help message based on user role
-  let helpMessage = ctx.i18n('help_user');
+  let helpMessage = ctx.i18n.t('commands.help.user', { namespace: 'telegram' });
 
   // Determine user role using roleService
   let isAdmin = false;
@@ -23,12 +23,12 @@ export const helpCommand: CommandHandler = async (ctx) => {
 
   // Add admin commands if user is admin
   if (isAdmin || isOwner) {
-    helpMessage += ctx.i18n('help_admin');
+    helpMessage += ctx.i18n.t('commands.help.admin', { namespace: 'telegram' });
   }
 
   // Add owner commands if user is owner
   if (isOwner) {
-    helpMessage += ctx.i18n('help_owner');
+    helpMessage += ctx.i18n.t('commands.help.owner', { namespace: 'telegram' });
   }
 
   await ctx.reply(helpMessage, {

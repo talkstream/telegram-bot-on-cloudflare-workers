@@ -8,10 +8,11 @@ import { PaymentService } from '../../services/payment-service';
 import { logger } from '../../lib/logger';
 
 import type { IDatabaseStore } from '@/core/interfaces/storage';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
 
 export interface PaymentConnectorConfig {
   db: IDatabaseStore;
-  tier?: 'free' | 'paid';
+  constraints?: ResourceConstraints;
 }
 
 export class PaymentServiceConnector {
@@ -21,8 +22,29 @@ export class PaymentServiceConnector {
     private eventBus: EventBus,
     config: PaymentConnectorConfig,
   ) {
-    this.paymentService = new PaymentService(config);
+    // Map constraints to tier for backward compatibility with PaymentService
+    // TODO: Refactor PaymentService to use ResourceConstraints directly
+    const mappedConfig = {
+      db: config.db,
+      tier: this.constraintsToTier(config.constraints),
+    };
+    this.paymentService = new PaymentService(mappedConfig);
     this.setupEventHandlers();
+  }
+
+  /**
+   * Convert ResourceConstraints to tier for backward compatibility
+   * This is a temporary solution until PaymentService is refactored
+   */
+  private constraintsToTier(constraints?: ResourceConstraints): 'free' | 'paid' {
+    if (!constraints) return 'free';
+
+    // If database feature is available (payments require DB)
+    if (constraints.features.has('database') && constraints.storage.maxDBWritesPerDay > 10000) {
+      return 'paid';
+    }
+
+    return 'free';
   }
 
   /**

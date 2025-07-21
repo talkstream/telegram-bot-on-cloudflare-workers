@@ -28,7 +28,13 @@
     "tail": "wrangler tail --env production",
     "tail:staging": "wrangler tail --env staging",
     "docs:generate": "node scripts/generate-claude-setup.js",
-    "docs:check": "node scripts/generate-claude-setup.js --check"
+    "docs:check": "node scripts/generate-claude-setup.js --check",
+    "contribute": "tsx scripts/contribute.ts",
+    "contribute:auto": "tsx scripts/contribute.ts --auto",
+    "contribute:perf": "tsx scripts/contribute.ts --type=performance",
+    "contribute:pattern": "tsx scripts/contribute.ts --type=pattern",
+    "contribute:fix": "tsx scripts/contribute.ts --type=bugfix",
+    "contribute:feature": "tsx scripts/contribute.ts --type=feature"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.53",
@@ -42,6 +48,7 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-promise": "^7.2.1",
     "chalk": "^5.3.0",
+    "commander": "^11.1.0",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
     "inquirer": "^10.1.8",

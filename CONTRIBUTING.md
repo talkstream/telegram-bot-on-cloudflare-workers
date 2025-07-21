@@ -132,6 +132,39 @@ git push origin feature/framework-improvement
 - **Documentation improvements** from implementation challenges
 - **Test cases** derived from real scenarios
 
+### Automated Contribution Process
+
+For a streamlined contribution experience, we provide automated tools:
+
+```bash
+# Interactive contribution wizard
+npm run contribute
+
+# Auto-detect valuable patterns from your changes
+npm run contribute:auto
+```
+
+This tool will:
+
+- Analyze your recent changes
+- Identify contribution type (pattern/performance/fix/feature)
+- Extract relevant code snippets
+- Generate appropriate tests
+- Prepare PR description
+- Guide you through the submission process
+
+#### For Claude Code Users
+
+Simply tell Claude:
+
+- "contribute this pattern to wireframe"
+- "this optimization should be in wireframe"
+- "submit this fix upstream"
+
+Claude Code will use the automated tools to prepare your contribution.
+
+See [Easy Contribute Guide](docs/EASY_CONTRIBUTE.md) for detailed instructions.
+
 ## 📚 Resources
 
 - [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) - Detailed development guide

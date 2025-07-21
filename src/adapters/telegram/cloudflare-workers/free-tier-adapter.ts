@@ -12,10 +12,12 @@ import { getBotToken, hasDatabase } from '@/lib/env-guards';
 import type { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import type { PaymentRepository } from '@/domain/payments/repository';
 import type { SessionService as ISessionService } from '@/services/session-service';
-import { getTierConfig } from '@/config/tiers';
+import { getTierConfig } from '@/config/cloudflare-tiers';
 import { logger } from '@/lib/logger';
 import { UniversalRoleService } from '@/core/services/role-service';
 import { EventBus } from '@/core/events/event-bus';
+import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import type { I18nConnector } from '@/core/interfaces/i18n';
 
 interface LightweightOptions {
   tier: 'free' | 'paid';
@@ -60,8 +62,23 @@ export class LightweightAdapter {
     this.bot.use(async (ctx, next) => {
       ctx.env = env;
 
-      // Minimal i18n - just English
-      ctx.i18n = (key: string) => key;
+      // Minimal i18n - returns key as is for free tier
+      // We'll create a proper minimal implementation later
+      ctx.i18n = new Proxy({} as I18nConnector, {
+        get: (_target, prop) => {
+          if (prop === 't') {
+            return (key: string) => key;
+          }
+          if (prop === 'setLanguage') {
+            return async () => {};
+          }
+          if (prop === 'getLanguage') {
+            return () => 'en';
+          }
+          // Return reasonable defaults for other methods
+          return () => {};
+        },
+      });
 
       // Add minimal role service if database available
       if (hasDatabase(env)) {
@@ -126,14 +143,24 @@ export class LightweightAdapter {
    */
   private async initializeFullMode(env: Env): Promise<void> {
     // Lazy load heavy dependencies
-    const [{ SessionService }, { getMessage }, { batcherMiddleware }] = await Promise.all([
+    const [
+      { SessionService },
+      { batcherMiddleware },
+      { I18nFactory },
+      { EventBus: EventBusImport },
+    ] = await Promise.all([
       import('@/services/session-service'),
-      import('@/lib/i18n'),
       import('@/lib/telegram-batcher'),
+      import('@/connectors/i18n/i18n-factory'),
+      import('@/core/events/event-bus'),
     ]);
 
     // Initialize services
     const sessionService = env.SESSIONS ? new SessionService(env.SESSIONS) : null;
+
+    // Create event bus and i18n connector
+    const eventBus = new EventBusImport();
+    const i18nConnector = await I18nFactory.createFromEnv(env, eventBus);
 
     // Load AI service if enabled
     let aiService = null;
@@ -200,7 +227,8 @@ export class LightweightAdapter {
 
       // Full i18n support
       const lang = ctx.from?.language_code === 'ru' ? 'ru' : 'en';
-      ctx.i18n = (key, ...args) => getMessage(lang, key, ...args);
+      await i18nConnector.setLanguage(lang);
+      ctx.i18n = i18nConnector;
 
       // Load user session
       if (ctx.from?.id && this.config.features.sessionPersistence && sessionService) {
@@ -265,7 +293,11 @@ export class LightweightAdapter {
  * Factory function to create appropriate bot based on tier
  */
 export async function createTierAwareBot(env: Env): Promise<Bot<BotContext>> {
-  const tier = env.TIER || 'free';
+  // Get tier from resource constraints
+  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const constraints = cloudConnector.getResourceConstraints();
+  const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
+
   const adapter = new LightweightAdapter({ tier, env });
 
   return adapter.initialize(env);

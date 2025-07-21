@@ -16,7 +16,9 @@ function assertDB(db: unknown): asserts db is NonNullable<BotContext['env']['DB'
 export async function handleAccessRequest(ctx: BotContext) {
   const userId = ctx.from?.id;
   if (!userId) {
-    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    await ctx.answerCallbackQuery(
+      ctx.i18n.t('messages.user_identification_error', { namespace: 'access' }),
+    );
     return;
   }
 
@@ -48,7 +50,7 @@ export async function handleAccessRequest(ctx: BotContext) {
       .first<{ id: number }>();
 
     if (existingRequest) {
-      await ctx.answerCallbackQuery(ctx.i18n('access_request_exists'));
+      await ctx.answerCallbackQuery(ctx.i18n.t('request.exists', { namespace: 'access' }));
       return;
     }
 
@@ -64,7 +66,9 @@ export async function handleAccessRequest(ctx: BotContext) {
       .run();
 
     // Update message
-    await ctx.editMessageText(ctx.i18n('access_request_sent'), { parse_mode: 'HTML' });
+    await ctx.editMessageText(ctx.i18n.t('request.sent', { namespace: 'access' }), {
+      parse_mode: 'HTML',
+    });
 
     logger.info('Access request created', {
       userId,
@@ -75,7 +79,7 @@ export async function handleAccessRequest(ctx: BotContext) {
     await notifyAdmins(ctx, userId, ctx.from.username ?? null, ctx.from.first_name);
   } catch (error) {
     logger.error('Failed to create access request', { error, userId });
-    await ctx.answerCallbackQuery(ctx.i18n('general_error'));
+    await ctx.answerCallbackQuery(ctx.i18n.t('messages.general_error', { namespace: 'access' }));
   }
 }
 
@@ -83,7 +87,7 @@ export async function handleAccessRequest(ctx: BotContext) {
  * Handle access request status check
  */
 export async function handleAccessStatus(ctx: BotContext) {
-  await ctx.answerCallbackQuery(ctx.i18n('access_pending'));
+  await ctx.answerCallbackQuery(ctx.i18n.t('request.pending', { namespace: 'access' }));
 }
 
 /**
@@ -92,7 +96,9 @@ export async function handleAccessStatus(ctx: BotContext) {
 export async function handleAccessCancel(ctx: BotContext, requestId: string) {
   const userId = ctx.from?.id;
   if (!userId) {
-    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    await ctx.answerCallbackQuery(
+      ctx.i18n.t('messages.user_identification_error', { namespace: 'access' }),
+    );
     return;
   }
 
@@ -118,7 +124,7 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
       .first();
 
     if (!request) {
-      await ctx.answerCallbackQuery(ctx.i18n('request_not_found'));
+      await ctx.answerCallbackQuery(ctx.i18n.t('request.not_found', { namespace: 'access' }));
       return;
     }
 
@@ -134,12 +140,14 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
       .bind(parseInt(requestId))
       .run();
 
-    await ctx.editMessageText(ctx.i18n('access_request_cancelled'), { parse_mode: 'HTML' });
+    await ctx.editMessageText(ctx.i18n.t('request.cancelled', { namespace: 'access' }), {
+      parse_mode: 'HTML',
+    });
 
     logger.info('Access request cancelled', { requestId, userId });
   } catch (error) {
     logger.error('Failed to cancel access request', { error, requestId, userId });
-    await ctx.answerCallbackQuery(ctx.i18n('general_error'));
+    await ctx.answerCallbackQuery(ctx.i18n.t('messages.general_error', { namespace: 'access' }));
   }
 }
 
@@ -149,7 +157,9 @@ export async function handleAccessCancel(ctx: BotContext, requestId: string) {
 export async function handleAccessApprove(ctx: BotContext, requestId: string) {
   const adminId = ctx.from?.id;
   if (!adminId) {
-    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    await ctx.answerCallbackQuery(
+      ctx.i18n.t('messages.user_identification_error', { namespace: 'access' }),
+    );
     return;
   }
 
@@ -175,7 +185,7 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
       .first<{ id: number; user_id: number; username: string; first_name: string }>();
 
     if (!request) {
-      await ctx.answerCallbackQuery(ctx.i18n('request_not_found'));
+      await ctx.answerCallbackQuery(ctx.i18n.t('request.not_found', { namespace: 'access' }));
       return;
     }
 
@@ -203,12 +213,18 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
       .run();
 
     // Update admin's message
-    const keyboard = new InlineKeyboard().text(ctx.i18n('view_next_request'), 'request_next');
+    const keyboard = new InlineKeyboard().text(
+      ctx.i18n.t('buttons.view_next', { namespace: 'access' }),
+      'request_next',
+    );
 
     await ctx.editMessageText(
-      ctx.i18n('access_request_approved', {
-        userId: request.user_id,
-        username: request.username || ctx.i18n('no_username'),
+      ctx.i18n.t('request.approved', {
+        params: {
+          userId: request.user_id,
+          username: request.username || ctx.i18n.t('messages.no_username', { namespace: 'access' }),
+        },
+        namespace: 'access',
       }),
       {
         parse_mode: 'HTML',
@@ -218,9 +234,13 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
 
     // Notify user
     try {
-      await ctx.api.sendMessage(request.user_id, ctx.i18n('access_granted_notification'), {
-        parse_mode: 'HTML',
-      });
+      await ctx.api.sendMessage(
+        request.user_id,
+        ctx.i18n.t('notifications.granted', { namespace: 'access' }),
+        {
+          parse_mode: 'HTML',
+        },
+      );
     } catch (error) {
       logger.error('Failed to notify user about access approval', {
         error,
@@ -235,7 +255,7 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
     });
   } catch (error) {
     logger.error('Failed to approve access request', { error, requestId, adminId });
-    await ctx.answerCallbackQuery(ctx.i18n('general_error'));
+    await ctx.answerCallbackQuery(ctx.i18n.t('messages.general_error', { namespace: 'access' }));
   }
 }
 
@@ -245,7 +265,9 @@ export async function handleAccessApprove(ctx: BotContext, requestId: string) {
 export async function handleAccessReject(ctx: BotContext, requestId: string) {
   const adminId = ctx.from?.id;
   if (!adminId) {
-    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    await ctx.answerCallbackQuery(
+      ctx.i18n.t('messages.user_identification_error', { namespace: 'access' }),
+    );
     return;
   }
 
@@ -271,7 +293,7 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
       .first<{ id: number; user_id: number; username: string }>();
 
     if (!request) {
-      await ctx.answerCallbackQuery(ctx.i18n('request_not_found'));
+      await ctx.answerCallbackQuery(ctx.i18n.t('request.not_found', { namespace: 'access' }));
       return;
     }
 
@@ -288,12 +310,18 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
       .run();
 
     // Update admin's message
-    const keyboard = new InlineKeyboard().text(ctx.i18n('view_next_request'), 'request_next');
+    const keyboard = new InlineKeyboard().text(
+      ctx.i18n.t('buttons.view_next', { namespace: 'access' }),
+      'request_next',
+    );
 
     await ctx.editMessageText(
-      ctx.i18n('access_request_rejected', {
-        userId: request.user_id,
-        username: request.username || ctx.i18n('no_username'),
+      ctx.i18n.t('request.rejected', {
+        params: {
+          userId: request.user_id,
+          username: request.username || ctx.i18n.t('messages.no_username', { namespace: 'access' }),
+        },
+        namespace: 'access',
       }),
       {
         parse_mode: 'HTML',
@@ -303,9 +331,13 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
 
     // Notify user
     try {
-      await ctx.api.sendMessage(request.user_id, ctx.i18n('access_denied_notification'), {
-        parse_mode: 'HTML',
-      });
+      await ctx.api.sendMessage(
+        request.user_id,
+        ctx.i18n.t('notifications.denied', { namespace: 'access' }),
+        {
+          parse_mode: 'HTML',
+        },
+      );
     } catch (error) {
       logger.error('Failed to notify user about access rejection', {
         error,
@@ -320,7 +352,7 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
     });
   } catch (error) {
     logger.error('Failed to reject access request', { error, requestId, adminId });
-    await ctx.answerCallbackQuery(ctx.i18n('general_error'));
+    await ctx.answerCallbackQuery(ctx.i18n.t('messages.general_error', { namespace: 'access' }));
   }
 }
 
@@ -330,7 +362,9 @@ export async function handleAccessReject(ctx: BotContext, requestId: string) {
 export async function handleNextRequest(ctx: BotContext) {
   const adminId = ctx.from?.id;
   if (!adminId) {
-    await ctx.answerCallbackQuery(ctx.i18n('user_identification_error'));
+    await ctx.answerCallbackQuery(
+      ctx.i18n.t('messages.user_identification_error', { namespace: 'access' }),
+    );
     return;
   }
 
@@ -367,24 +401,29 @@ export async function handleNextRequest(ctx: BotContext) {
       }>();
 
     if (!request) {
-      await ctx.editMessageText(ctx.i18n('no_pending_requests'), { parse_mode: 'HTML' });
+      await ctx.editMessageText(ctx.i18n.t('request.no_pending', { namespace: 'access' }), {
+        parse_mode: 'HTML',
+      });
       return;
     }
 
     // Show request details
     const keyboard = new InlineKeyboard()
-      .text(ctx.i18n('approve'), `approve_${request.id}`)
-      .text(ctx.i18n('reject'), `reject_${request.id}`)
+      .text(ctx.i18n.t('buttons.approve', { namespace: 'access' }), `approve_${request.id}`)
+      .text(ctx.i18n.t('buttons.reject', { namespace: 'access' }), `reject_${request.id}`)
       .row()
-      .text(ctx.i18n('view_next_request'), 'request_next');
+      .text(ctx.i18n.t('buttons.view_next', { namespace: 'access' }), 'request_next');
 
     await ctx.editMessageText(
-      ctx.i18n('access_request_details', {
-        id: request.id,
-        userId: request.user_id,
-        username: request.username || ctx.i18n('no_username'),
-        firstName: request.first_name,
-        date: new Date(request.created_at).toLocaleString(),
+      ctx.i18n.t('request.details', {
+        params: {
+          id: request.id,
+          userId: request.user_id,
+          username: request.username || ctx.i18n.t('messages.no_username', { namespace: 'access' }),
+          firstName: request.first_name,
+          date: new Date(request.created_at).toLocaleString(),
+        },
+        namespace: 'access',
       }),
       {
         parse_mode: 'HTML',
@@ -393,7 +432,9 @@ export async function handleNextRequest(ctx: BotContext) {
     );
   } catch (error) {
     logger.error('Failed to get next request', { error, adminId });
-    await ctx.editMessageText(ctx.i18n('general_error'), { parse_mode: 'HTML' });
+    await ctx.editMessageText(ctx.i18n.t('messages.general_error', { namespace: 'access' }), {
+      parse_mode: 'HTML',
+    });
   }
 }
 
@@ -425,12 +466,18 @@ async function notifyAdmins(
       )
       .all<{ telegram_id: number }>();
 
-    const keyboard = new InlineKeyboard().text(ctx.i18n('review_request'), 'request_next');
+    const keyboard = new InlineKeyboard().text(
+      ctx.i18n.t('buttons.review_request', { namespace: 'access' }),
+      'request_next',
+    );
 
-    const message = ctx.i18n('new_access_request', {
-      userId,
-      username: username || ctx.i18n('no_username'),
-      firstName,
+    const message = ctx.i18n.t('notifications.new_access_request', {
+      params: {
+        userId,
+        username: username || ctx.i18n.t('messages.no_username', { namespace: 'access' }),
+        firstName,
+      },
+      namespace: 'access',
     });
 
     // Send notification to each admin

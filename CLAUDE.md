@@ -151,3 +151,27 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Added proper type guards for optional environment variables
 - Removed all non-null assertions in favor of type-safe checks
 - NO backward compatibility - clean architecture implementation
+
+## Contributing Back to Wireframe
+
+When user asks to "contribute" something to Wireframe:
+
+1. Run `npm run contribute` for interactive contribution
+2. Check `docs/EASY_CONTRIBUTE.md` for automated workflow
+3. Reference `CONTRIBUTING.md` for manual process
+
+### Quick Commands for Claude Code
+
+- `contribute this` - auto-detect and prepare contribution
+- `contribute pattern` - share a reusable pattern
+- `contribute optimization` - share performance improvement
+- `contribute fix` - share bug fix with context
+
+The automated tools will:
+
+- Analyze changes
+- Generate tests
+- Create PR template
+- Handle git operations
+
+This integrates with the Bot-Driven Development workflow described in CONTRIBUTING.md.

@@ -1,0 +1,94 @@
+{
+  "welcome": "Welcome! Up and running.",
+  "welcome_session": "Welcome! Your current step is: {{step}}",
+  "messages": {
+    "got_message": "Got another message!",
+    "got_message_session": "Got another message! I've saved it to your session.",
+    "no_session": "Got another message! (No session found)"
+  },
+  "commands": {
+    "help": {
+      "user": "📚 Available Commands:\n\n/start - Start the bot\n/help - Show this help\n/ask - Ask AI a question\n/batch - Batch processing demo",
+      "admin": "\n\n👮 Admin Commands:\n/requests - Review access requests",
+      "owner": "\n\n👑 Owner Commands:\n/info - Bot information\n/admin - Manage admins\n/debug - Toggle debug mode"
+    },
+    "info": {
+      "header": "📊 <b>Bot Technical Information</b>",
+      "system_status": "⏱ <b>System Status</b>",
+      "uptime": "Uptime: {{hours}}h {{minutes}}m",
+      "environment": "Environment: {{environment}}",
+      "tier": "Tier: {{tier}}",
+      "user_statistics": "👥 <b>User Statistics</b>",
+      "total_users": "Total Users: {{count}}",
+      "active_users": "Active Users: {{count}}",
+      "active_sessions": "Active Sessions: {{count}}",
+      "access_requests": "🔐 <b>Access Requests</b>",
+      "pending": "Pending: {{count}}",
+      "approved": "Approved: {{count}}",
+      "rejected": "Rejected: {{count}}",
+      "role_distribution": "👮 <b>Role Distribution</b>",
+      "no_roles": "No roles assigned yet",
+      "ai_provider": "🤖 <b>AI Provider</b>",
+      "ai_not_configured": "AI Service: Not configured",
+      "ai_status": "AI Service: {{provider}} ({{count}} providers available)",
+      "total_cost": "Total Cost: ${{cost}} USD",
+      "error": "❌ Failed to retrieve bot information. Check logs for details."
+    },
+    "admin": {
+      "added": "✅ User {{userId}} is now an admin",
+      "removed": "✅ User {{userId}} is no longer an admin",
+      "already": "User is already an admin",
+      "not_found": "User is not an admin",
+      "list": "Current admins:\n{{admins}}",
+      "list_empty": "No admins configured",
+      "usage": "Usage:\n/admin add <user_id>\n/admin remove <user_id>\n/admin list",
+      "add_error": "❌ Failed to add administrator. Please try again.",
+      "remove_error": "❌ Failed to remove administrator. Please try again.",
+      "list_error": "❌ Failed to retrieve admin list. Please try again.",
+      "granted_notification": "🎉 You have been granted administrator privileges in this bot!",
+      "revoked_notification": "ℹ️ Your administrator privileges have been revoked."
+    },
+    "debug": {
+      "enabled": "🐛 Debug mode enabled (Level {{level}})",
+      "disabled": "🐛 Debug mode disabled",
+      "status": "🐛 Debug mode: {{status}}",
+      "usage": "<b>🐛 Debug Mode Management</b>\n\nAvailable commands:\n/debug on [level] - Enable debug mode\n/debug off - Disable debug mode\n/debug status - Show current status\n\n<b>Debug levels:</b>\n1 - Only owners see debug messages\n2 - Owners and admins see debug messages\n3 - Everyone sees debug messages\n\n<i>Debug mode shows error messages and access attempts that are normally hidden.</i>",
+      "invalid_level": "❌ Invalid debug level. Please use 1, 2, or 3.",
+      "enable_error": "❌ Failed to enable debug mode. Please try again.",
+      "disable_error": "❌ Failed to disable debug mode. Please try again.",
+      "status_error": "❌ Failed to retrieve debug status. Please try again.",
+      "status_disabled": "<b>Disabled</b>\nDebug messages are hidden for all users.",
+      "status_enabled": "<b>Enabled</b> (Level {{level}})"
+    },
+    "requests": {
+      "no_pending": "No pending access requests",
+      "pending": "📋 Pending Access Requests:\n\n{{requests}}",
+      "info": "👤 {{name}} (@{{username}})\nID: {{userId}}\n📅 {{date}}",
+      "approve": "Approve",
+      "reject": "Reject",
+      "approved": "✅ Request approved for user {{userId}}",
+      "rejected": "❌ Request rejected for user {{userId}}",
+      "not_found": "Request not found",
+      "error": "❌ Failed to retrieve access requests. Please try again.",
+      "use_start": "Use /start to request access."
+    },
+    "batch": {
+      "info": "⚡ <b>Request batching is automatically enabled!</b>\n\nThe bot optimizes Telegram API calls by:\n• Batching multiple requests together\n• Reducing API overhead\n• Improving response times\n\nThis happens transparently in the background."
+    }
+  },
+  "ai": {
+    "gemini": {
+      "prompt_needed": "Please provide a prompt after the command, e.g., /askgemini What is the capital of France?",
+      "thinking": "Thinking...",
+      "error": "Sorry, I could not generate a response at this time.",
+      "not_available": "AI features are not available in free tier mode."
+    },
+    "general": {
+      "not_configured": "🚫 AI service is not configured.\n\nPlease contact the bot administrator.",
+      "not_available_free_tier": "🚫 AI features are not available in the free tier.\n\nUpgrade to the paid tier to access:\n• AI-powered responses\n• Advanced text generation\n• Smart assistance",
+      "prompt_needed": "💭 Please provide a question or prompt after the command.\n\nExample: /ask What is the weather like today?",
+      "powered_by": "Powered by {{provider}}",
+      "error": "❌ Sorry, I encountered an error while processing your request.\nPlease try again later."
+    }
+  }
+}

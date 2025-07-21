@@ -87,6 +87,10 @@ Thumbs.db
 *.temp
 .cache/
 
+# Contribution tracking (local only)
+.wireframe-contributions/
+contribution-insights.json
+
 # Databases
 *.sqlite
 *.sqlite3

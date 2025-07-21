@@ -10,10 +10,11 @@ import { SessionService } from '../../services/session-service';
 import { logger } from '../../lib/logger';
 
 import type { IKeyValueStore } from '@/core/interfaces/storage';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
 
 export interface SessionServiceConfig {
   sessionsKv: IKeyValueStore;
-  tier?: 'free' | 'paid';
+  constraints?: ResourceConstraints;
   cache?: MultiLayerCache;
 }
 
@@ -24,12 +25,26 @@ export class SessionServiceConnector {
     private eventBus: EventBus,
     config: SessionServiceConfig,
   ) {
-    this.sessionService = new SessionService(
-      config.sessionsKv,
-      config.tier || 'free',
-      config.cache,
-    );
+    // Map constraints to tier for backward compatibility with SessionService
+    // TODO: Refactor SessionService to use ResourceConstraints directly
+    const tier = this.constraintsToTier(config.constraints);
+    this.sessionService = new SessionService(config.sessionsKv, tier, config.cache);
     this.setupEventHandlers();
+  }
+
+  /**
+   * Convert ResourceConstraints to tier for backward compatibility
+   * This is a temporary solution until SessionService is refactored
+   */
+  private constraintsToTier(constraints?: ResourceConstraints): 'free' | 'paid' {
+    if (!constraints) return 'free';
+
+    // If sessions feature is available and has sufficient resources
+    if (constraints.features.has('sessions') && constraints.storage.maxKVWritesPerDay > 10000) {
+      return 'paid';
+    }
+
+    return 'free';
   }
 
   /**

@@ -7,6 +7,7 @@ export * from './messaging.js';
 export * from './storage.js';
 export * from './cloud-platform.js';
 export * from './monitoring.js';
+export * from './resource-constraints.js';
 export {
   type AIConnector,
   type CompletionRequest,

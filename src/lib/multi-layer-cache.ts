@@ -11,7 +11,7 @@ import type { KVNamespace } from '@cloudflare/workers-types';
 
 import { logger } from './logger';
 
-import { getTierConfig } from '@/config/tiers';
+import { getTierConfig } from '@/config/cloudflare-tiers';
 import type { Env } from '@/types';
 
 export interface CacheOptions {

@@ -33,7 +33,9 @@ export const adminCommand: CommandHandler = async (ctx) => {
  * Shows admin command help.
  */
 async function showAdminHelp(ctx: Parameters<CommandHandler>[0]) {
-  await ctx.reply(ctx.i18n('admin_usage'), { parse_mode: 'HTML' });
+  await ctx.reply(ctx.i18n.t('commands.admin.usage', { namespace: 'telegram' }), {
+    parse_mode: 'HTML',
+  });
 }
 
 /**
@@ -64,12 +66,12 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
     } else if (userId && /^\d+$/.test(userId)) {
       targetUserId = parseInt(userId);
     } else {
-      await ctx.reply(ctx.i18n('invalid_user_id'));
+      await ctx.reply(ctx.i18n.t('messages.invalid_user_id', { namespace: 'access' }));
       return;
     }
 
     if (!targetUserId) {
-      await ctx.reply(ctx.i18n('invalid_user_id'));
+      await ctx.reply(ctx.i18n.t('messages.invalid_user_id', { namespace: 'access' }));
       return;
     }
 
@@ -81,7 +83,7 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
       .first<{ telegram_id: number; first_name: string; username: string | null }>();
 
     if (!user) {
-      await ctx.reply(ctx.i18n('user_not_found'));
+      await ctx.reply(ctx.i18n.t('messages.user_not_found', { namespace: 'access' }));
       return;
     }
 
@@ -90,7 +92,7 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
       // Use universal role system
       const currentRole = await ctx.roleService.getUserRole(targetUserId.toString());
       if (currentRole === UserRole.ADMIN) {
-        await ctx.reply(ctx.i18n('admin_already'));
+        await ctx.reply(ctx.i18n.t('commands.admin.already', { namespace: 'telegram' }));
         return;
       }
 
@@ -108,7 +110,7 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
         .first<{ role: string }>();
 
       if (existingRole?.role === 'admin') {
-        await ctx.reply(ctx.i18n('admin_already'));
+        await ctx.reply(ctx.i18n.t('commands.admin.already', { namespace: 'telegram' }));
         return;
       }
 
@@ -134,7 +136,10 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
 
     const userInfo = user.username ? `@${user.username}` : user.first_name;
     const userIdStr = userInfo || targetUserId.toString();
-    await ctx.reply(ctx.i18n('admin_added', { userId: userIdStr }), { parse_mode: 'HTML' });
+    await ctx.reply(
+      ctx.i18n.t('commands.admin.added', { namespace: 'telegram', params: { userId: userIdStr } }),
+      { parse_mode: 'HTML' },
+    );
 
     logger.info('Admin added', {
       targetUserId,
@@ -144,14 +149,17 @@ async function handleAddAdmin(ctx: Parameters<CommandHandler>[0], userId?: strin
 
     // Notify the new admin
     try {
-      await ctx.api.sendMessage(targetUserId, ctx.i18n('admin_granted_notification'));
+      await ctx.api.sendMessage(
+        targetUserId,
+        ctx.i18n.t('commands.admin.granted_notification', { namespace: 'telegram' }),
+      );
     } catch (error) {
       // User might have blocked the bot
       logger.info('Could not notify new admin', { targetUserId, error });
     }
   } catch (error) {
     logger.error('Failed to add admin', { error });
-    await ctx.reply(ctx.i18n('admin_add_error'));
+    await ctx.reply(ctx.i18n.t('commands.admin.add_error', { namespace: 'telegram' }));
   }
 }
 
@@ -169,7 +177,7 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
     }
 
     if (!userId || !/^\d+$/.test(userId)) {
-      await ctx.reply(ctx.i18n('invalid_user_id'));
+      await ctx.reply(ctx.i18n.t('messages.invalid_user_id', { namespace: 'access' }));
       return;
     }
 
@@ -180,7 +188,7 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
       // Use universal role system
       const currentRole = await ctx.roleService.getUserRole(targetUserId.toString());
       if (currentRole !== UserRole.ADMIN) {
-        await ctx.reply(ctx.i18n('admin_not_found'));
+        await ctx.reply(ctx.i18n.t('commands.admin.not_found', { namespace: 'telegram' }));
         return;
       }
 
@@ -192,7 +200,7 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
         .first<{ role: string }>();
 
       if (!role || role.role !== 'admin') {
-        await ctx.reply(ctx.i18n('admin_not_found'));
+        await ctx.reply(ctx.i18n.t('commands.admin.not_found', { namespace: 'telegram' }));
         return;
       }
 
@@ -202,7 +210,13 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
         .run();
     }
 
-    await ctx.reply(ctx.i18n('admin_removed', { userId: targetUserId }), { parse_mode: 'HTML' });
+    await ctx.reply(
+      ctx.i18n.t('commands.admin.removed', {
+        namespace: 'telegram',
+        params: { userId: targetUserId },
+      }),
+      { parse_mode: 'HTML' },
+    );
 
     logger.info('Admin removed', {
       targetUserId,
@@ -211,14 +225,17 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
 
     // Notify the former admin
     try {
-      await ctx.api.sendMessage(targetUserId, ctx.i18n('admin_revoked_notification'));
+      await ctx.api.sendMessage(
+        targetUserId,
+        ctx.i18n.t('commands.admin.revoked_notification', { namespace: 'telegram' }),
+      );
     } catch (error) {
       // User might have blocked the bot
       logger.info('Could not notify former admin', { targetUserId, error });
     }
   } catch (error) {
     logger.error('Failed to remove admin', { error });
-    await ctx.reply(ctx.i18n('admin_remove_error'));
+    await ctx.reply(ctx.i18n.t('commands.admin.remove_error', { namespace: 'telegram' }));
   }
 }
 
@@ -243,7 +260,7 @@ async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
       const users = await ctx.roleService.getUsersByRole(UserRole.ADMIN);
 
       if (!users || users.length === 0) {
-        await ctx.reply(ctx.i18n('admin_list_empty'));
+        await ctx.reply(ctx.i18n.t('commands.admin.list_empty', { namespace: 'telegram' }));
         return;
       }
 
@@ -259,7 +276,7 @@ async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
           const userInfo = user.username ? `@${user.username}` : user.first_name;
           const grantedDate = new Date(roleUser.grantedAt).toLocaleDateString();
           adminsList += `• ${userInfo} (ID: ${user.telegram_id})\n`;
-          adminsList += `  ${ctx.i18n('added_date')}: ${grantedDate}\n\n`;
+          adminsList += `  ${ctx.i18n.t('messages.added_date', { namespace: 'access' })}: ${grantedDate}\n\n`;
         }
       }
     } else {
@@ -286,7 +303,7 @@ async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
       }>();
 
       if (!admins.results || admins.results.length === 0) {
-        await ctx.reply(ctx.i18n('admin_list_empty'));
+        await ctx.reply(ctx.i18n.t('commands.admin.list_empty', { namespace: 'telegram' }));
         return;
       }
 
@@ -294,13 +311,19 @@ async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
         const userInfo = admin.username ? `@${admin.username}` : admin.first_name;
         const grantedDate = new Date(admin.granted_at as string).toLocaleDateString();
         adminsList += `• ${userInfo} (ID: ${admin.telegram_id})\n`;
-        adminsList += `  ${ctx.i18n('added_date')}: ${grantedDate}\n\n`;
+        adminsList += `  ${ctx.i18n.t('messages.added_date', { namespace: 'access' })}: ${grantedDate}\n\n`;
       }
     }
 
-    await ctx.reply(ctx.i18n('admin_list', { admins: adminsList.trim() }), { parse_mode: 'HTML' });
+    await ctx.reply(
+      ctx.i18n.t('commands.admin.list', {
+        namespace: 'telegram',
+        params: { admins: adminsList.trim() },
+      }),
+      { parse_mode: 'HTML' },
+    );
   } catch (error) {
     logger.error('Failed to list admins', { error });
-    await ctx.reply(ctx.i18n('admin_list_error'));
+    await ctx.reply(ctx.i18n.t('commands.admin.list_error', { namespace: 'telegram' }));
   }
 }

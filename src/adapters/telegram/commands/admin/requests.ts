@@ -43,7 +43,7 @@ export const requestsCommand: CommandHandler = async (ctx) => {
     }>();
 
     if (!requests) {
-      await ctx.reply(ctx.i18n('no_pending_requests'));
+      await ctx.reply(ctx.i18n.t('commands.requests.no_pending', { namespace: 'telegram' }));
       return;
     }
 
@@ -59,23 +59,35 @@ export const requestsCommand: CommandHandler = async (ctx) => {
     // Build request info message
     const requestDate = new Date(requests.created_at).toLocaleString();
 
-    const requestInfo = ctx.i18n('request_info', {
-      name: requests.first_name,
-      username: requests.username || '',
-      userId: requests.user_id,
-      date: requestDate,
+    const requestInfo = ctx.i18n.t('request.details', {
+      namespace: 'access',
+      params: {
+        id: requests.id,
+        firstName: requests.first_name,
+        username: requests.username || ctx.i18n.t('messages.no_username', { namespace: 'access' }),
+        userId: requests.user_id,
+        date: requestDate,
+      },
     });
 
-    let message = `📋 <b>${ctx.i18n('access_request')} #${requests.id}</b>\n\n${requestInfo}`;
-    message += `\n\n📊 ${ctx.i18n('request_count')}: 1/${totalPending}`;
+    let message = requestInfo;
+    message += `\n\n📊 ${ctx.i18n.t('messages.request_count', { namespace: 'access' })}: 1/${totalPending}`;
 
     // Create inline keyboard
     const keyboard = new InlineKeyboard()
-      .text(ctx.i18n('approve'), `access:approve:${requests.id}`)
-      .text(ctx.i18n('reject'), `access:reject:${requests.id}`);
+      .text(
+        ctx.i18n.t('commands.requests.approve', { namespace: 'telegram' }),
+        `access:approve:${requests.id}`,
+      )
+      .text(
+        ctx.i18n.t('commands.requests.reject', { namespace: 'telegram' }),
+        `access:reject:${requests.id}`,
+      );
 
     if (totalPending > 1) {
-      keyboard.row().text(ctx.i18n('next'), `access:next:${requests.id}`);
+      keyboard
+        .row()
+        .text(ctx.i18n.t('messages.next', { namespace: 'access' }), `access:next:${requests.id}`);
     }
 
     await ctx.reply(message, {
@@ -90,6 +102,6 @@ export const requestsCommand: CommandHandler = async (ctx) => {
     });
   } catch (error) {
     logger.error('Failed to get access requests', { error });
-    await ctx.reply(ctx.i18n('requests_error'));
+    await ctx.reply(ctx.i18n.t('commands.requests.error', { namespace: 'telegram' }));
   }
 };

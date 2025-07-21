@@ -32,7 +32,9 @@ export const debugCommand: CommandHandler = async (ctx) => {
  * Shows debug command help.
  */
 async function showDebugHelp(ctx: Parameters<CommandHandler>[0]) {
-  await ctx.reply(ctx.i18n('debug_usage'), { parse_mode: 'HTML' });
+  await ctx.reply(ctx.i18n.t('commands.debug.usage', { namespace: 'telegram' }), {
+    parse_mode: 'HTML',
+  });
 }
 
 /**
@@ -51,7 +53,7 @@ async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: stri
     const level = levelStr ? parseInt(levelStr) : 1;
 
     if (isNaN(level) || level < 1 || level > 3) {
-      await ctx.reply(ctx.i18n('debug_invalid_level'));
+      await ctx.reply(ctx.i18n.t('commands.debug.invalid_level', { namespace: 'telegram' }));
       return;
     }
 
@@ -70,7 +72,10 @@ async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: stri
 
     // Level description is no longer needed here since we use i18n
 
-    await ctx.reply(ctx.i18n('debug_enabled', { level }), { parse_mode: 'HTML' });
+    await ctx.reply(
+      ctx.i18n.t('commands.debug.enabled', { namespace: 'telegram', params: { level } }),
+      { parse_mode: 'HTML' },
+    );
 
     logger.info('Debug mode enabled', {
       level,
@@ -78,7 +83,7 @@ async function handleDebugOn(ctx: Parameters<CommandHandler>[0], levelStr?: stri
     });
   } catch (error) {
     logger.error('Failed to enable debug mode', { error });
-    await ctx.reply(ctx.i18n('debug_enable_error'));
+    await ctx.reply(ctx.i18n.t('commands.debug.enable_error', { namespace: 'telegram' }));
   }
 }
 
@@ -106,14 +111,14 @@ async function handleDebugOff(ctx: Parameters<CommandHandler>[0]) {
     `,
     ).run();
 
-    await ctx.reply(ctx.i18n('debug_disabled'));
+    await ctx.reply(ctx.i18n.t('commands.debug.disabled', { namespace: 'telegram' }));
 
     logger.info('Debug mode disabled', {
       disabledBy: ctx.from?.id,
     });
   } catch (error) {
     logger.error('Failed to disable debug mode', { error });
-    await ctx.reply(ctx.i18n('debug_disable_error'));
+    await ctx.reply(ctx.i18n.t('commands.debug.disable_error', { namespace: 'telegram' }));
   }
 }
 
@@ -140,16 +145,22 @@ async function handleDebugStatus(ctx: Parameters<CommandHandler>[0]) {
 
     let statusText;
     if (level === 0) {
-      statusText = ctx.i18n('debug_status_disabled');
+      statusText = ctx.i18n.t('commands.debug.status_disabled', { namespace: 'telegram' });
     } else {
-      statusText = ctx.i18n('debug_status_enabled', { level });
+      statusText = ctx.i18n.t('commands.debug.status_enabled', {
+        namespace: 'telegram',
+        params: { level },
+      });
     }
 
-    const message = ctx.i18n('debug_status', { status: statusText });
+    const message = ctx.i18n.t('commands.debug.status', {
+      namespace: 'telegram',
+      params: { status: statusText },
+    });
 
     await ctx.reply(message, { parse_mode: 'HTML' });
   } catch (error) {
     logger.error('Failed to get debug status', { error });
-    await ctx.reply(ctx.i18n('debug_status_error'));
+    await ctx.reply(ctx.i18n.t('commands.debug.status_error', { namespace: 'telegram' }));
   }
 }

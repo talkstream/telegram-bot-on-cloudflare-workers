@@ -10,7 +10,7 @@ export const startCommand: CommandHandler = async (ctx): Promise<void> => {
   const userId = ctx.from?.id;
 
   if (!userId) {
-    await ctx.reply(ctx.i18n('user_identification_error'));
+    await ctx.reply(ctx.i18n.t('system.errors.user_identification', { namespace: 'core' }));
     return;
   }
 
@@ -69,11 +69,14 @@ export const startCommand: CommandHandler = async (ctx): Promise<void> => {
 
       if (pendingRequest) {
         // User has pending request
-        const message = ctx.i18n('access_pending');
+        const message = ctx.i18n.t('status.pending', { namespace: 'access' });
 
         const keyboard = new InlineKeyboard()
-          .text(ctx.i18n('access_pending'), 'access:status')
-          .text(ctx.i18n('cancel_request'), `access:cancel:${pendingRequest.id}`);
+          .text(ctx.i18n.t('status.pending', { namespace: 'access' }), 'access:status')
+          .text(
+            ctx.i18n.t('buttons.cancel_request', { namespace: 'access' }),
+            `access:cancel:${pendingRequest.id}`,
+          );
 
         await ctx.reply(message, {
           parse_mode: 'HTML',
@@ -81,9 +84,12 @@ export const startCommand: CommandHandler = async (ctx): Promise<void> => {
         });
       } else {
         // No access, no pending request
-        const message = ctx.i18n('access_denied');
+        const message = ctx.i18n.t('status.denied', { namespace: 'access' });
 
-        const keyboard = new InlineKeyboard().text(ctx.i18n('request_access'), 'access:request');
+        const keyboard = new InlineKeyboard().text(
+          ctx.i18n.t('buttons.request_access', { namespace: 'access' }),
+          'access:request',
+        );
 
         await ctx.reply(message, {
           parse_mode: 'HTML',
@@ -125,6 +131,6 @@ Let's get started\\! What would you like to do today?
     ctx.session.lastActivity = Date.now();
   } catch (error) {
     logger.error('Error in start command', { error, userId });
-    await ctx.reply(ctx.i18n('general_error'));
+    await ctx.reply(ctx.i18n.t('system.errors.general', { namespace: 'core' }));
   }
 };

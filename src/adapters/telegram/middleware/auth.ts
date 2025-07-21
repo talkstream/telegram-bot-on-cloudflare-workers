@@ -98,7 +98,7 @@ export function createAuthMiddleware(roleService: RoleService) {
       });
 
       if (await isDebugEnabled(ctx, 1)) {
-        await ctx.reply(ctx.i18n('owner_only'));
+        await ctx.reply(ctx.i18n.t('messages.owner_only', { namespace: 'access' }));
       }
       return;
     }
@@ -119,7 +119,7 @@ export function createAuthMiddleware(roleService: RoleService) {
       });
 
       if (await isDebugEnabled(ctx, 2)) {
-        await ctx.reply(ctx.i18n('admin_only'));
+        await ctx.reply(ctx.i18n.t('messages.admin_only', { namespace: 'access' }));
       }
       return;
     }
@@ -139,7 +139,11 @@ export function createAuthMiddleware(roleService: RoleService) {
       });
 
       if (await isDebugEnabled(ctx, 3)) {
-        await ctx.reply(ctx.i18n('access_denied') + ' ' + ctx.i18n('use_start_to_request'));
+        await ctx.reply(
+          ctx.i18n.t('messages.unauthorized', { namespace: 'access' }) +
+            ' ' +
+            ctx.i18n.t('messages.use_start_to_request', { namespace: 'access' }),
+        );
       }
       return;
     }

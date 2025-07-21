@@ -74,6 +74,10 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       });
     }
 
+    // Create cloud platform connector using factory
+    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+    const constraints = cloudConnector.getResourceConstraints();
+
     // Initialize AI service connector or mock
     if (env.AI_PROVIDER && env.AI_PROVIDER !== 'mock') {
       const { AIServiceConnector } = await import('./connectors/ai/ai-service-connector');
@@ -83,7 +87,7 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
           defaultProvider: 'google',
           fallbackProviders: ['openai'],
         },
-        (env.TIER as 'free' | 'paid') || 'free',
+        constraints,
       );
     } else {
       // Use mock AI connector in demo mode
@@ -92,16 +96,13 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       await mockAI.initialize({});
     }
 
-    // Create cloud platform connector using factory
-    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
-
     if (env.SESSIONS) {
       const { SessionServiceConnector } = await import(
         './connectors/session/session-service-connector'
       );
       new SessionServiceConnector(eventBus, {
         sessionsKv: cloudConnector.getKeyValueStore('SESSIONS'),
-        tier: (env.TIER as 'free' | 'paid') || 'free',
+        constraints,
       });
     }
 
@@ -111,7 +112,7 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       );
       new PaymentServiceConnector(eventBus, {
         db: cloudConnector.getDatabaseStore('DB'),
-        tier: (env.TIER as 'free' | 'paid') || 'free',
+        constraints,
       });
     }
 

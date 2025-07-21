@@ -9,6 +9,7 @@ import type {
   IDatabaseStore,
   IObjectStore,
   ICacheStore,
+  ResourceConstraints,
 } from '../../../core/interfaces';
 
 export interface GCPConfig {
@@ -69,6 +70,46 @@ export class GCPConnector implements ICloudPlatformConnector {
       hasQueues: true, // Cloud Tasks/Pub/Sub
       maxRequestDuration: 3600000, // 60 minutes for Cloud Run
       maxMemory: 32768, // 32 GB for Cloud Run
+    };
+  }
+
+  getResourceConstraints(): ResourceConstraints {
+    // Google Cloud Functions/Run don't have tiers like Cloudflare
+    // These are typical Cloud Run defaults
+    return {
+      maxExecutionTimeMs: 3600000, // 60 minutes for Cloud Run
+      maxMemoryMB: 8192, // Default 8GB
+      maxConcurrentRequests: 1000, // Default Cloud Run concurrency
+      storage: {
+        maxKVReadsPerDay: Number.MAX_SAFE_INTEGER, // Firestore generous limits
+        maxKVWritesPerDay: Number.MAX_SAFE_INTEGER,
+        maxDBReadsPerDay: Number.MAX_SAFE_INTEGER, // Cloud SQL
+        maxDBWritesPerDay: Number.MAX_SAFE_INTEGER,
+        maxKVStorageMB: Number.MAX_SAFE_INTEGER, // Cloud Storage unlimited
+      },
+      network: {
+        maxSubrequests: Number.MAX_SAFE_INTEGER,
+        maxRequestBodyMB: 32, // Cloud Run limit
+        maxResponseBodyMB: 32, // Cloud Run limit
+      },
+      features: new Set([
+        'ai',
+        'advanced-caching',
+        'websockets',
+        'queues',
+        'cron',
+        'edge-cache',
+        'streaming',
+        'long-running',
+      ]),
+      optimization: {
+        batchingEnabled: true,
+        maxBatchSize: 100,
+        batchIntervalMs: 50,
+        aggressiveCaching: false,
+        lazyLoading: false,
+        compressionEnabled: true,
+      },
     };
   }
 }

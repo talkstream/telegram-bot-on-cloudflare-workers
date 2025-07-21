@@ -138,7 +138,9 @@ describe('Admin Command', () => {
 
       await adminCommand(ctx);
 
-      expect(ctx.reply).toHaveBeenCalledWith('❌ User not found');
+      expect(ctx.reply).toHaveBeenCalledWith(
+        '❌ User not found. They must have used the bot at least once.',
+      );
     });
 
     it('should handle adding owner as admin gracefully', async () => {

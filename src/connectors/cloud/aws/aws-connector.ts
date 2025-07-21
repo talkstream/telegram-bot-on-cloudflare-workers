@@ -9,6 +9,7 @@ import type {
   IDatabaseStore,
   IObjectStore,
   ICacheStore,
+  ResourceConstraints,
 } from '../../../core/interfaces';
 
 import { AWSKeyValueStore } from './storage/aws-kv-store';
@@ -74,6 +75,46 @@ export class AWSConnector implements ICloudPlatformConnector {
       hasQueues: true, // SQS
       maxRequestDuration: 900000, // 15 minutes for Lambda
       maxMemory: 10240, // 10 GB for Lambda
+    };
+  }
+
+  getResourceConstraints(): ResourceConstraints {
+    // AWS Lambda doesn't have tiers, but has configurable resources
+    // These are typical Lambda defaults
+    return {
+      maxExecutionTimeMs: 900000, // 15 minutes max
+      maxMemoryMB: 3008, // Default Lambda memory
+      maxConcurrentRequests: 1000, // Default concurrent executions
+      storage: {
+        maxKVReadsPerDay: Number.MAX_SAFE_INTEGER, // DynamoDB has generous limits
+        maxKVWritesPerDay: Number.MAX_SAFE_INTEGER,
+        maxDBReadsPerDay: Number.MAX_SAFE_INTEGER, // RDS/Aurora
+        maxDBWritesPerDay: Number.MAX_SAFE_INTEGER,
+        maxKVStorageMB: Number.MAX_SAFE_INTEGER, // S3 unlimited
+      },
+      network: {
+        maxSubrequests: Number.MAX_SAFE_INTEGER,
+        maxRequestBodyMB: 6, // API Gateway limit
+        maxResponseBodyMB: 10, // API Gateway limit
+      },
+      features: new Set([
+        'ai',
+        'advanced-caching',
+        'websockets',
+        'queues',
+        'cron',
+        'edge-cache',
+        'streaming',
+        'long-running',
+      ]),
+      optimization: {
+        batchingEnabled: true,
+        maxBatchSize: 100,
+        batchIntervalMs: 50,
+        aggressiveCaching: false,
+        lazyLoading: false,
+        compressionEnabled: true,
+      },
     };
   }
 }

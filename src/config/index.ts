@@ -1,4 +1,4 @@
 export * from './cors';
 export * from './env';
 export * from './sentry';
-export * from './tiers';
+export * from './cloudflare-tiers';

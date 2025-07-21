@@ -11,7 +11,9 @@ import type {
   IDatabaseStore,
   IObjectStore,
   ICacheStore,
+  ResourceConstraints,
 } from '../../../core/interfaces';
+import { tierToResourceConstraints } from '../../../config/cloudflare-tiers';
 
 import { CloudflareKeyValueStore } from './stores/kv-store';
 import { CloudflareDatabaseStore } from './stores/database-store';
@@ -30,6 +32,9 @@ export interface CloudflareConfig {
 
     // Object Storage
     R2?: R2Bucket;
+
+    // Cloudflare-specific tier
+    TIER?: 'free' | 'paid';
 
     // Other env vars
     [key: string]: unknown;
@@ -80,13 +85,22 @@ export class CloudflareConnector implements ICloudPlatformConnector {
   }
 
   getFeatures() {
+    const tier = this.config.env.TIER || 'free';
     return {
       hasEdgeCache: true,
       hasWebSockets: false, // Workers don't support persistent WebSocket connections
       hasCron: true,
-      hasQueues: true, // With paid plan
-      maxRequestDuration: this.config.env.TIER === 'paid' ? 30000 : 10, // 30s paid, 10ms free
+      hasQueues: tier === 'paid', // Only with paid plan
+      maxRequestDuration: tier === 'paid' ? 30000 : 10, // 30s paid, 10ms free
       maxMemory: 128, // MB
     };
+  }
+
+  getResourceConstraints(): ResourceConstraints {
+    // Get tier from environment, default to 'free'
+    const tier = this.config.env.TIER || 'free';
+
+    // Use the Cloudflare-specific mapping function
+    return tierToResourceConstraints(tier);
   }
 }

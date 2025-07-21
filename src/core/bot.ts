@@ -4,13 +4,14 @@ import type { Env, BotContext } from '@/types';
 import { SessionService } from '@/services/session-service';
 import { AIService } from '@/services/ai-service';
 import { loadProvidersFromEnv } from '@/lib/ai/config/provider-loader';
-import { getMessage } from '@/lib/i18n';
 import { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import { PaymentRepository } from '@/domain/payments/repository';
 import { batcherMiddleware } from '@/lib/telegram-batcher';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
 import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
 import { MonitoringFactory } from '@/connectors/monitoring/monitoring-factory';
+import { I18nFactory } from '@/connectors/i18n/i18n-factory';
+import { EventBus } from '@/core/events/event-bus';
 // Register all cloud connectors
 import '@/connectors/cloud';
 
@@ -19,15 +20,28 @@ export async function createBot(env: Env) {
     throw new Error('TELEGRAM_BOT_TOKEN is required');
   }
   const bot = new Bot<BotContext>(env.TELEGRAM_BOT_TOKEN);
-  const tier = env.TIER || 'free';
+
+  // Create event bus for system-wide events
+  const eventBus = new EventBus({
+    async: true,
+    debug: env.ENVIRONMENT === 'development',
+  });
 
   // Create cloud platform connector using factory
   const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const constraints = cloudConnector.getResourceConstraints();
+
+  // Map constraints back to tier for components that still need it
+  // TODO: Remove this once all components use ResourceConstraints
+  const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
 
   // Create monitoring connector
   const monitoring = await MonitoringFactory.createFromEnv(
     env as unknown as Record<string, string | undefined>,
   );
+
+  // Create i18n connector
+  const i18nConnector = await I18nFactory.createFromEnv(env, eventBus);
 
   // Create multi-layer cache if cache namespace is available
   const multiLayerCache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
@@ -75,7 +89,12 @@ export async function createBot(env: Env) {
     };
     // Determine language from user or default to English
     const lang = ctx.from?.language_code === 'ru' ? 'ru' : 'en';
-    ctx.i18n = (key, ...args) => getMessage(lang, key, ...args);
+
+    // Set language in i18n connector
+    await i18nConnector.setLanguage(lang);
+
+    // Provide i18n connector to context
+    ctx.i18n = i18nConnector;
 
     if (ctx.from?.id) {
       ctx.session = (await sessionService.getSession(ctx.from.id)) || undefined;
@@ -105,9 +124,9 @@ export async function createBot(env: Env) {
   // Add request batching middleware for better performance
   bot.use(
     batcherMiddleware({
-      maxBatchSize: env.TIER === 'free' ? 10 : 30,
-      batchIntervalMs: env.TIER === 'free' ? 5 : 25,
-      timeoutMs: env.TIER === 'free' ? 2000 : 5000,
+      maxBatchSize: constraints.optimization.maxBatchSize,
+      batchIntervalMs: constraints.optimization.batchIntervalMs,
+      timeoutMs: tier === 'free' ? 2000 : 5000,
     }),
   );
 
@@ -120,29 +139,34 @@ export async function createBot(env: Env) {
         session = { userId, step: 'initial', data: {} };
         await ctx.services.session.saveSession(session);
       }
-      await ctx.reply(ctx.i18n('welcome_session', session.step));
+      await ctx.reply(
+        ctx.i18n.t('welcome_session', {
+          namespace: 'telegram',
+          params: { step: session.step },
+        }),
+      );
     } else {
-      await ctx.reply(ctx.i18n('welcome'));
+      await ctx.reply(ctx.i18n.t('welcome', { namespace: 'telegram' }));
     }
   });
 
   bot.command('askgemini', async (ctx) => {
     const prompt = ctx.match;
     if (!prompt) {
-      await ctx.reply(ctx.i18n('gemini_prompt_needed'));
+      await ctx.reply(ctx.i18n.t('ai.gemini.prompt_needed', { namespace: 'telegram' }));
       return;
     }
     if (!ctx.services.ai) {
-      await ctx.reply(ctx.i18n('gemini_not_available'));
+      await ctx.reply(ctx.i18n.t('ai.gemini.not_available', { namespace: 'telegram' }));
       return;
     }
 
     try {
-      await ctx.reply(ctx.i18n('gemini_thinking'));
+      await ctx.reply(ctx.i18n.t('ai.gemini.thinking', { namespace: 'telegram' }));
       const response = await ctx.services.ai.generateText(prompt);
       await ctx.reply(response);
     } catch (_error) {
-      await ctx.reply(ctx.i18n('gemini_error'));
+      await ctx.reply(ctx.i18n.t('ai.gemini.error', { namespace: 'telegram' }));
     }
   });
 
@@ -194,12 +218,12 @@ export async function createBot(env: Env) {
       if (session) {
         session.data.lastMessage = ctx.message?.text;
         await ctx.services.session.saveSession(session);
-        await ctx.reply(ctx.i18n('got_message_session'));
+        await ctx.reply(ctx.i18n.t('messages.got_message_session', { namespace: 'telegram' }));
       } else {
-        await ctx.reply(ctx.i18n('no_session'));
+        await ctx.reply(ctx.i18n.t('messages.no_session', { namespace: 'telegram' }));
       }
     } else {
-      await ctx.reply(ctx.i18n('got_message'));
+      await ctx.reply(ctx.i18n.t('messages.got_message', { namespace: 'telegram' }));
     }
   });
 

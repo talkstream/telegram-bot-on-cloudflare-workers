@@ -1,0 +1,45 @@
+{
+  "status": {
+    "denied": "⚠️ You do not have access to this bot.",
+    "pending": "Your access request is pending approval.",
+    "approved": "🎉 Your access request has been approved!",
+    "rejected": "❌ Your access request has been rejected."
+  },
+  "request": {
+    "sent": "✅ Your access request has been sent! An administrator will review it soon.",
+    "exists": "You already have a pending access request.",
+    "cancelled": "🚫 Your access request has been cancelled.",
+    "details": "📋 <b>Access Request #{{id}}</b>\n\nName: {{firstName}}\nUsername: @{{username}}\nUser ID: {{userId}}\nRequested: {{date}}",
+    "review": "Review Request",
+    "new": "🆕 <b>New Access Request</b>\n\nUser: {{firstName}} (@{{username}})\nID: {{userId}}\n\nUse /requests to review.",
+    "new_notification": "🆕 <b>New Access Request</b>\n\nUser: {{userInfo}}\nID: {{userId}}\n\nUse /requests to review.",
+    "approved": "✅ Access granted to user {{userId}} (@{{username}})",
+    "rejected": "❌ Access denied to user {{userId}} (@{{username}})",
+    "no_pending": "No pending access requests."
+  },
+  "notifications": {
+    "granted": "🎉 Your access request has been approved! You can now use the bot.",
+    "denied": "Your access request has been rejected.",
+    "approved": "✅ Access granted to user {{userId}} (@{{username}})",
+    "rejected": "❌ Access denied to user {{userId}} (@{{username}})"
+  },
+  "buttons": {
+    "request_access": "Request Access",
+    "cancel_request": "Cancel Request",
+    "view_next": "Next Request",
+    "view_requests": "👀 View Requests"
+  },
+  "messages": {
+    "no_username": "No username",
+    "owner_only": "⚠️ This command is only available to the bot owner.",
+    "admin_only": "⚠️ This command is only available to administrators.",
+    "unauthorized": "Unauthorized access attempt",
+    "invalid_user_id": "❌ Please provide a valid user ID or forward a message from the user.",
+    "user_not_found": "❌ User not found. They must have used the bot at least once.",
+    "added_date": "Added",
+    "request_count": "Request",
+    "next": "➡️ Next",
+    "use_requests_command": "📋 Use /requests command to view pending requests.",
+    "request_cancelled": "🚫 Your access request has been cancelled."
+  }
+}

@@ -1,26 +1,27 @@
 import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
-import { isFeatureEnabled } from '@/config/tiers';
+import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import { hasAICapabilities } from '@/core/interfaces/resource-constraints';
 
 export const askCommand: CommandHandler = async (ctx) => {
-  const tier = ctx.env.TIER || 'free';
-
   // Check if AI service is available
   if (!ctx.services?.ai) {
-    await ctx.reply(ctx.i18n('ai_not_configured'));
+    await ctx.reply(ctx.i18n.t('ai.general.not_configured', { namespace: 'telegram' }));
     return;
   }
 
-  // Check if AI is enabled for this tier
-  if (!isFeatureEnabled('aiEnabled', tier)) {
-    await ctx.reply(ctx.i18n('ai_not_available_free_tier'));
+  // Check if AI is enabled based on resource constraints
+  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(ctx.env);
+  const constraints = cloudConnector.getResourceConstraints();
+  if (!hasAICapabilities(constraints)) {
+    await ctx.reply(ctx.i18n.t('ai.general.not_available_free_tier', { namespace: 'telegram' }));
     return;
   }
 
   const prompt = ctx.match;
 
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-    await ctx.reply(ctx.i18n('ask_prompt_needed'));
+    await ctx.reply(ctx.i18n.t('ai.general.prompt_needed', { namespace: 'telegram' }));
     return;
   }
 
@@ -38,7 +39,10 @@ export const askCommand: CommandHandler = async (ctx) => {
     const formattedResponse =
       response.content +
       '\n\n<i>' +
-      ctx.i18n('powered_by', { provider: providerInfo || 'AI' }) +
+      ctx.i18n.t('ai.general.powered_by', {
+        namespace: 'telegram',
+        params: { provider: providerInfo || 'AI' },
+      }) +
       '</i>';
 
     // Send the AI response
@@ -52,11 +56,10 @@ export const askCommand: CommandHandler = async (ctx) => {
       provider: response.provider,
       usage: response.usage,
       cost: response.cost,
-      tier,
     });
   } catch (error) {
     logger.error('Error in ask command', { error, userId: ctx.from?.id });
 
-    await ctx.reply(ctx.i18n('ai_error'));
+    await ctx.reply(ctx.i18n.t('ai.general.error', { namespace: 'telegram' }));
   }
 };

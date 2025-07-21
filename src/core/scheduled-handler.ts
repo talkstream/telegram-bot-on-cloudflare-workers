@@ -2,12 +2,17 @@ import { logger } from '../lib/logger';
 
 import { SessionService } from '@/services/session-service';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
-import { getTierConfig } from '@/config/tiers';
+import { getTierConfig } from '@/config/cloudflare-tiers';
+import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
 import type { Env } from '@/types';
 
 export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
   const startTime = Date.now();
-  const tier = env.TIER || 'free';
+
+  // Get tier from resource constraints
+  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const constraints = cloudConnector.getResourceConstraints();
+  const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
   const config = getTierConfig(tier);
 
   logger.info(`Scheduled event received: ${event.cron}`, { tier });
@@ -49,7 +54,11 @@ export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: Exec
  * Clean up expired sessions
  */
 async function cleanupSessions(env: Env): Promise<void> {
-  const tier = env.TIER || 'free';
+  // Get tier from resource constraints
+  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const constraints = cloudConnector.getResourceConstraints();
+  const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
+
   const cache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
   if (!env.SESSIONS) {
     logger.warn('Sessions KV not configured, skipping session cleanup');
@@ -65,7 +74,10 @@ async function cleanupSessions(env: Env): Promise<void> {
  * Log cache statistics
  */
 async function logCacheStats(env: Env): Promise<void> {
-  const tier = env.TIER || 'free';
+  // Get tier from resource constraints
+  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const constraints = cloudConnector.getResourceConstraints();
+  const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
   if (!env.CACHE) {
     logger.warn('Cache KV not configured, skipping cache stats');
     return;
