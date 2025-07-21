@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-01-21
+
+### 🏗️ BREAKING CHANGES
+
+- Middleware imports have changed locations - update your imports accordingly
+- Auth middleware moved from `/src/middleware/` to `/src/adapters/telegram/middleware/`
+- No backward compatibility maintained - clean architecture implementation
+
+### Changed
+
+- **Complete middleware reorganization** following v1.2 connector pattern
+  - Separated HTTP middleware (Hono) from platform middleware (Grammy)
+  - Moved platform-specific middleware to adapter directories
+  - Created universal middleware interfaces for multi-platform support
+- **Platform-specific middleware** now in adapter directories
+  - Auth, rate limiting, and audit middleware moved to `/src/adapters/telegram/middleware/`
+  - Each platform adapter maintains its own middleware implementations
+  - All middleware implement universal interfaces from `/src/core/middleware/interfaces.ts`
+
+### Added
+
+- **Universal middleware interfaces** for platform abstraction
+  - `IAuthMiddleware` - Authentication and authorization contract
+  - `IRateLimiter` - Rate limiting contract
+  - `IAuditMiddleware` - Audit logging contract
+  - Common types: `MiddlewareContext`, `AuthResult`, `RateLimitResult`
+
+- **EventBus integration** for all middleware
+  - HTTP middleware emit lifecycle events
+  - Rate limiters emit violation events
+  - Error handlers emit error events
+  - Audit middleware listen to and emit audit events
+
+- **Grammy extension types** for proper TypeScript support
+  - Created `types/grammy-extensions.ts` with Grammy-specific types
+  - Eliminated all `any` type warnings
+  - Full TypeScript strict mode compliance
+
+### Fixed
+
+- All TypeScript warnings eliminated
+- Proper typing for Grammy context extensions (command, updateType, error)
+- Clean separation of concerns between HTTP and messaging layers
+
+### Architecture
+
+```
+/src/middleware/              - HTTP middleware (Hono)
+  ├── error-handler.ts       - HTTP error handling with EventBus
+  ├── event-middleware.ts    - Request lifecycle tracking
+  ├── rate-limiter.ts       - HTTP rate limiting
+  └── index.ts              - HTTP middleware exports
+
+/src/adapters/telegram/middleware/  - Telegram middleware (Grammy)
+  ├── auth.ts               - Role-based authorization
+  ├── rate-limiter.ts       - Telegram-specific rate limiting
+  ├── audit.ts              - Action auditing with KV storage
+  └── index.ts              - Telegram middleware exports
+
+/src/core/middleware/         - Universal interfaces
+  └── interfaces.ts         - Platform-agnostic contracts
+```
+
 ## [1.2.1] - 2025-01-21
 
 ### Added

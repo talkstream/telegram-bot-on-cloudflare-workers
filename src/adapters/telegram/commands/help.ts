@@ -1,27 +1,24 @@
 import type { CommandHandler } from '@/types';
-import { isOwner as legacyIsOwner, isAdmin as legacyIsAdmin } from '@/middleware/auth';
+// Using roleService from context
 import { UserRole } from '@/core/interfaces/role-system';
 
 export const helpCommand: CommandHandler = async (ctx) => {
   // Build help message based on user role
   let helpMessage = ctx.i18n('help_user');
 
-  // Determine user role - check if roleService is available in context
+  // Determine user role using roleService
   let isAdmin = false;
   let isOwner = false;
 
-  if (ctx.roleService) {
-    // Use new universal role system
-    const userId = ctx.from?.id?.toString();
-    if (userId) {
-      const userRole = await ctx.roleService.getUserRole(userId);
-      isAdmin = userRole === UserRole.ADMIN || userRole === UserRole.OWNER;
-      isOwner = userRole === UserRole.OWNER;
-    }
-  } else {
-    // Fallback to legacy system
-    isAdmin = await legacyIsAdmin(ctx);
-    isOwner = legacyIsOwner(ctx);
+  if (!ctx.roleService) {
+    throw new Error('RoleService is required');
+  }
+
+  const userId = ctx.from?.id?.toString();
+  if (userId) {
+    const userRole = await ctx.roleService.getUserRole(`telegram_${userId}`);
+    isAdmin = userRole === UserRole.ADMIN || userRole === UserRole.OWNER;
+    isOwner = userRole === UserRole.OWNER;
   }
 
   // Add admin commands if user is admin

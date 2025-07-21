@@ -192,7 +192,11 @@ export class LightweightAdapter {
       };
 
       // Add role service to context
-      ctx.roleService = roleService;
+      if (roleService) {
+        ctx.roleService = roleService;
+      } else {
+        throw new Error('RoleService is required but not initialized');
+      }
 
       // Full i18n support
       const lang = ctx.from?.language_code === 'ru' ? 'ru' : 'en';

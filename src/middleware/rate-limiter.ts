@@ -2,6 +2,7 @@ import type { MiddlewareHandler, Context } from 'hono';
 
 import type { Env } from '@/types';
 import { logger } from '@/lib/logger';
+import { EventBus } from '@/core/events/event-bus';
 
 interface RateLimitConfig {
   windowMs?: number;
@@ -10,6 +11,7 @@ interface RateLimitConfig {
   skipSuccessfulRequests?: boolean;
   skipFailedRequests?: boolean;
   message?: string;
+  eventBus?: EventBus;
 }
 
 export const rateLimiter = (config: RateLimitConfig = {}): MiddlewareHandler<{ Bindings: Env }> => {
@@ -21,6 +23,7 @@ export const rateLimiter = (config: RateLimitConfig = {}): MiddlewareHandler<{ B
     skipSuccessfulRequests = false,
     skipFailedRequests = false,
     message = 'Too many requests, please try again later.',
+    eventBus,
   } = config;
 
   return async (c, next) => {
@@ -62,6 +65,23 @@ export const rateLimiter = (config: RateLimitConfig = {}): MiddlewareHandler<{ B
           maxRequests,
           retryAfter,
         });
+
+        // Emit rate limit exceeded event
+        if (eventBus) {
+          eventBus.emit(
+            'rate-limit.exceeded',
+            {
+              key,
+              count,
+              maxRequests,
+              retryAfter,
+              ip: keyGenerator(c),
+              path: c.req.path,
+              method: c.req.method,
+            },
+            'rate-limiter',
+          );
+        }
 
         return c.text(message, 429, {
           'Retry-After': retryAfter.toString(),

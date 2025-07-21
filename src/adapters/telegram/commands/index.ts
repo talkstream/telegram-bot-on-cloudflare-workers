@@ -1,6 +1,8 @@
-import type { Bot } from 'grammy';
+import type { Bot, MiddlewareFn } from 'grammy';
 
 // Import all command handlers
+import { createAuthMiddleware } from '../middleware/auth';
+
 import { startCommand } from './start';
 import { helpCommand } from './help';
 import { payCommand } from './pay';
@@ -14,24 +16,21 @@ import { infoCommand, adminCommand, debugCommand } from './owner';
 import { requestsCommand } from './admin';
 
 // Import middleware
-import { createAuthMiddleware } from '@/middleware/auth-universal';
 import { logger } from '@/lib/logger';
 import type { BotContext } from '@/types';
 import { UniversalRoleService } from '@/core/services/role-service';
-import {
-  requireOwner as legacyRequireOwner,
-  requireAdmin as legacyRequireAdmin,
-} from '@/middleware/auth';
+// Legacy imports removed - using only universal auth
 
-// Default auth middleware for backward compatibility
+// Error when role service is not provided
 function createDefaultAuthMiddleware() {
+  const errorMiddleware: MiddlewareFn<BotContext> = async () => {
+    throw new Error('RoleService is required. Please configure UniversalRoleService.');
+  };
+
   return {
-    requireOwner: legacyRequireOwner,
-    requireAdmin: legacyRequireAdmin,
-    requireAccess: async (_ctx: BotContext, next: () => Promise<void>) => {
-      // Default behavior for access check
-      await next();
-    },
+    requireOwner: errorMiddleware,
+    requireAdmin: errorMiddleware,
+    requireAccess: errorMiddleware,
   };
 }
 

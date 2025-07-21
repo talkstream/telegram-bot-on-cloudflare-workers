@@ -4,7 +4,7 @@ import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
 import { getUserService } from '@/services/user-service';
 import { escapeMarkdown } from '@/lib/telegram-formatter';
-import { hasAccess } from '@/middleware/auth';
+// Auth check will use roleService from context
 
 export const startCommand: CommandHandler = async (ctx): Promise<void> => {
   const userId = ctx.from?.id;
@@ -41,8 +41,10 @@ export const startCommand: CommandHandler = async (ctx): Promise<void> => {
       username: user.username,
     });
 
-    // Check user access status
-    const userHasAccess = await hasAccess(ctx);
+    // Check user access status using roleService
+    const userHasAccess = ctx.roleService
+      ? await ctx.roleService.hasAccess(`telegram_${userId}`)
+      : true;
 
     if (!userHasAccess) {
       // Check if DB is available (demo mode check)

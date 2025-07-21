@@ -87,9 +87,50 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Use type guards for all optional values - avoid non-null assertions
 - Ensure CI/CD compatibility by supporting demo mode
 
-## Recent Changes (v1.2.1)
+## Recent Changes (v1.2.2 - January 21, 2025)
 
-### Universal Role System
+### Middleware Architecture Refactoring
+
+- **Reorganized middleware structure** following v1.2 connector pattern:
+  - Moved auth.ts from general middleware to `/src/adapters/telegram/middleware/`
+  - Created universal interfaces in `/src/core/middleware/interfaces.ts`
+  - Separated HTTP middleware (Hono) from platform middleware (Grammy)
+
+- **Created Telegram-specific middleware**:
+  - **auth.ts** - Authentication via Grammy using UniversalRoleService
+  - **rate-limiter.ts** - Request rate limiting with EventBus integration
+  - **audit.ts** - Action auditing with KV storage persistence
+
+- **Updated HTTP middleware for EventBus**:
+  - **event-middleware.ts** - HTTP request lifecycle tracking
+  - **error-handler.ts** - Error handling with event emission
+  - **rate-limiter.ts** - Added events for rate limit violations
+
+- **Fixed all TypeScript warnings**:
+  - Created `types/grammy-extensions.ts` with proper Grammy types
+  - Replaced all `any` types with strictly typed interfaces
+  - Full TypeScript strict mode compliance achieved
+
+### Current Middleware Architecture
+
+```
+/src/middleware/              - HTTP middleware (Hono)
+  ├── error-handler.ts       - HTTP error handling
+  ├── event-middleware.ts    - EventBus integration
+  ├── rate-limiter.ts       - HTTP rate limiting
+  └── index.ts              - HTTP middleware exports
+
+/src/adapters/telegram/middleware/  - Telegram middleware (Grammy)
+  ├── auth.ts               - Role-based authorization
+  ├── rate-limiter.ts       - Telegram rate limiting
+  ├── audit.ts              - Action auditing
+  └── index.ts              - Telegram middleware exports
+
+/src/core/middleware/         - Universal interfaces
+  └── interfaces.ts         - Platform-agnostic contracts
+```
+
+### v1.2.1 - Universal Role System
 
 - Created platform-agnostic role management in `/src/core/services/role-service.ts`
 - Added interfaces for roles, permissions, and hierarchy in `/src/core/interfaces/role-system.ts`
@@ -109,3 +150,4 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Resolved TypeScript strict mode issues
 - Added proper type guards for optional environment variables
 - Removed all non-null assertions in favor of type-safe checks
+- NO backward compatibility - clean architecture implementation

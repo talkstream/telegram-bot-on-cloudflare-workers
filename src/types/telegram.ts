@@ -38,7 +38,7 @@ export type BotContext = GrammyContext &
     };
     i18n: (key: Parameters<typeof getMessage>[1], ...args: unknown[]) => string;
     batcher?: TelegramRequestBatcher;
-    roleService?: RoleService;
+    roleService: RoleService;
   };
 
 // Command handler type
