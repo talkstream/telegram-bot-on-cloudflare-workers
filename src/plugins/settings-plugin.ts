@@ -98,7 +98,11 @@ export class SettingsPlugin implements Plugin {
 
     // Listen for settings events
     context.eventBus.on('settings:update', async (event) => {
-      const payload = event.payload as { userId: string; setting: keyof UserSettings; value: unknown };
+      const payload = event.payload as {
+        userId: string;
+        setting: keyof UserSettings;
+        value: unknown;
+      };
       await this.updateUserSetting(payload.userId, payload.setting, payload.value);
     });
 

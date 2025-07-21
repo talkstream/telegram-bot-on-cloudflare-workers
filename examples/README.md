@@ -7,14 +7,18 @@ This directory contains practical examples of building AI assistants with Wirefr
 ### Basic Examples
 
 #### 1. [Telegram Bot](./telegram-bot/)
+
 A complete working Telegram bot demonstrating:
+
 - Basic command handling
 - Event-driven architecture
 - Cloud platform abstraction
 - TypeScript strict mode
 
 #### 2. [Telegram Plugin System](./telegram-plugin/)
+
 Advanced plugin system example showing:
+
 - Creating custom plugins
 - Plugin lifecycle management
 - Event bus communication
@@ -23,11 +27,13 @@ Advanced plugin system example showing:
 ### Platform Examples (Coming Soon)
 
 #### 3. Discord Bot
+
 - Discord connector usage
 - Cross-platform message handling
 - Rich embeds and interactions
 
 #### 4. Multi-Platform Bot
+
 - Single bot on multiple platforms
 - Platform-specific features
 - Unified command handling
@@ -35,11 +41,13 @@ Advanced plugin system example showing:
 ### Cloud Platform Examples (Coming Soon)
 
 #### 5. AWS Deployment
+
 - Lambda functions
 - DynamoDB storage
 - S3 file handling
 
 #### 6. Google Cloud Deployment
+
 - Cloud Functions
 - Firestore database
 - Cloud Storage
@@ -47,18 +55,21 @@ Advanced plugin system example showing:
 ### Advanced Examples (Coming Soon)
 
 #### 7. E-commerce Bot
+
 - Product catalog
 - Payment integration
 - Order management
 - Multi-language support
 
 #### 8. Support Bot
+
 - Ticket system
 - AI-powered responses
 - Analytics dashboard
 - Team collaboration
 
 #### 9. Educational Bot
+
 - Course management
 - Progress tracking
 - Interactive quizzes
@@ -86,6 +97,7 @@ npm run dev
 ### Creating Your Own Example
 
 1. **Copy a base example**:
+
    ```bash
    cp -r telegram-bot my-example
    cd my-example
@@ -121,6 +133,7 @@ We welcome example contributions! Here's how:
 ### Structure
 
 Each example should include:
+
 ```
 example-name/
 ├── src/                 # Source code
@@ -142,16 +155,19 @@ example-name/
 ## 🎯 Learning Path
 
 ### Beginners
+
 1. Start with [telegram-bot](./telegram-bot/) - Basic bot setup
 2. Explore command handling and responses
 3. Understand the event-driven architecture
 
 ### Intermediate
+
 1. Study [telegram-plugin](./telegram-plugin/) - Plugin system
 2. Create custom plugins for your use case
 3. Learn event bus patterns
 
 ### Advanced
+
 1. Implement multi-platform support
 2. Create complex integrations
 3. Build production-ready bots
@@ -166,6 +182,7 @@ example-name/
 ## 💡 Ideas for Examples
 
 Have an idea for an example? We'd love to see:
+
 - **Game Bots**: Leaderboards, real-time gameplay
 - **Analytics Bots**: Data visualization, reporting
 - **Integration Bots**: Connect with external services

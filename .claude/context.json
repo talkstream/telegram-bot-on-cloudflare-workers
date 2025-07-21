@@ -11,7 +11,7 @@
     "communication": "event-driven",
     "components": [
       "messaging-connectors",
-      "cloud-connectors", 
+      "cloud-connectors",
       "ai-connectors",
       "plugin-system",
       "event-bus"
@@ -32,16 +32,8 @@
       "plugin-system",
       "multi-ai-support"
     ],
-    "inProgress": [
-      "aws-connector",
-      "gcp-connector",
-      "discord-connector"
-    ],
-    "planned": [
-      "slack-connector",
-      "whatsapp-connector",
-      "azure-connector"
-    ]
+    "inProgress": ["aws-connector", "gcp-connector", "discord-connector"],
+    "planned": ["slack-connector", "whatsapp-connector", "azure-connector"]
   },
   "development": {
     "typeScript": {

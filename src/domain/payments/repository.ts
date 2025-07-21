@@ -2,7 +2,6 @@ import { logger } from '../../lib/logger';
 
 import type { IDatabaseStore } from '@/core/interfaces/storage';
 
-
 export interface TelegramPayment {
   id?: number;
   player_id: number;

@@ -7,16 +7,19 @@ This guide describes the development workflow for contributing to Wireframe, wit
 ## 🎯 Core Development Philosophy
 
 ### 1. Bot-Driven Development
+
 - Build real bots using Wireframe to identify missing features
 - Each bot project validates and improves the framework
 - Practical experience drives architectural decisions
 
 ### 2. Platform Independence
+
 - Always consider: "Will this work on Discord/Slack/WhatsApp?"
 - Never use platform-specific APIs directly
 - Test abstractions even when implementing for one platform
 
 ### 3. Connector Pattern
+
 - All external services use connectors
 - Business logic never depends on specific implementations
 - Easy to swap providers without code changes
@@ -222,30 +225,36 @@ if (features.hasWebSockets) {
 ## 🚨 Common Pitfalls
 
 ### 1. Platform Coupling
+
 - Never import platform-specific types directly
 - Always use interfaces from `core/interfaces`
 
 ### 2. Synchronous Assumptions
+
 - Everything should be async-ready
 - Use events for long operations
 
 ### 3. Missing Abstractions
+
 - If you need platform-specific feature, create abstraction first
 - Think about how it would work on other platforms
 
 ## 🎯 Best Practices
 
 ### 1. Start with Use Case
+
 - Build real bot first
 - Extract patterns second
 - Generalize third
 
 ### 2. Test on Multiple Platforms
+
 - Even if implementing for Telegram
 - Ensure interfaces work universally
 - Document platform differences
 
 ### 3. Contribute Incrementally
+
 - Small, focused PRs
 - One feature at a time
 - Include tests and docs

@@ -5,6 +5,7 @@ Wireframe v1.2 introduces a revolutionary cloud-agnostic architecture that allow
 ## 🎯 Overview
 
 The platform abstraction layer provides:
+
 - **Zero code changes** when switching platforms
 - **Unified interfaces** for storage, databases, and caching
 - **Platform-specific optimizations** while maintaining compatibility
@@ -15,6 +16,7 @@ The platform abstraction layer provides:
 ### ✅ Currently Supported
 
 #### Cloudflare Workers
+
 - **Status**: ✅ Fully implemented
 - **Storage**: KV Namespaces
 - **Database**: D1 (SQLite)
@@ -23,6 +25,7 @@ The platform abstraction layer provides:
 - **Edge Computing**: Global network
 
 #### AWS
+
 - **Status**: 🚧 In development
 - **Storage**: DynamoDB
 - **Database**: RDS/Aurora
@@ -31,6 +34,7 @@ The platform abstraction layer provides:
 - **Compute**: Lambda
 
 #### Google Cloud Platform
+
 - **Status**: 🚧 In development
 - **Storage**: Firestore
 - **Database**: Cloud SQL/Spanner
@@ -75,7 +79,7 @@ interface ICloudPlatformConnector {
   getDatabaseStore(name: string): IDatabaseStore;
   getObjectStore(bucket: string): IObjectStore;
   getCacheStore(): ICacheStore;
-  
+
   // Platform info
   readonly platform: string;
   getEnv(): Record<string, string | undefined>;
@@ -86,6 +90,7 @@ interface ICloudPlatformConnector {
 ### Storage Interfaces
 
 #### Key-Value Store
+
 ```typescript
 interface IKeyValueStore {
   get<T>(key: string): Promise<T | null>;
@@ -96,6 +101,7 @@ interface IKeyValueStore {
 ```
 
 #### Database Store
+
 ```typescript
 interface IDatabaseStore {
   prepare(query: string): IPreparedStatement;
@@ -112,11 +118,11 @@ interface IDatabaseStore {
 // src/connectors/cloud/myplatform/myplatform-connector.ts
 export class MyPlatformConnector implements ICloudPlatformConnector {
   readonly platform = 'myplatform';
-  
+
   getKeyValueStore(namespace: string): IKeyValueStore {
     return new MyPlatformKVStore(/* ... */);
   }
-  
+
   // Implement other methods...
 }
 ```
@@ -144,6 +150,7 @@ MYPLATFORM_REGION=us-east-1
 ### From Direct Cloudflare Usage
 
 Before (v1.1):
+
 ```typescript
 import { KVNamespace, D1Database } from '@cloudflare/workers-types';
 
@@ -152,6 +159,7 @@ await sessions.put(key, value);
 ```
 
 After (v1.2):
+
 ```typescript
 // Works on ANY platform!
 const kv = ctx.cloudConnector.getKeyValueStore('SESSIONS');
@@ -174,21 +182,22 @@ if (features.maxRequestDuration > 30000) {
 
 ## 📊 Platform Comparison
 
-| Feature | Cloudflare | AWS | GCP | Azure |
-|---------|------------|-----|-----|--------|
-| Edge Computing | ✅ Global | ✅ CloudFront | ✅ Cloud CDN | ✅ Front Door |
-| KV Storage | ✅ KV | ✅ DynamoDB | ✅ Firestore | ✅ Cosmos DB |
-| SQL Database | ✅ D1 | ✅ RDS | ✅ Cloud SQL | ✅ SQL Database |
-| Object Storage | ✅ R2 | ✅ S3 | ✅ Cloud Storage | ✅ Blob Storage |
-| WebSockets | ❌ | ✅ API Gateway | ✅ Cloud Run | ✅ Web PubSub |
-| Max Duration | 30s/10ms | 15 min | 60 min | 10 min |
-| Cold Starts | Minimal | Variable | Variable | Variable |
+| Feature        | Cloudflare | AWS            | GCP              | Azure           |
+| -------------- | ---------- | -------------- | ---------------- | --------------- |
+| Edge Computing | ✅ Global  | ✅ CloudFront  | ✅ Cloud CDN     | ✅ Front Door   |
+| KV Storage     | ✅ KV      | ✅ DynamoDB    | ✅ Firestore     | ✅ Cosmos DB    |
+| SQL Database   | ✅ D1      | ✅ RDS         | ✅ Cloud SQL     | ✅ SQL Database |
+| Object Storage | ✅ R2      | ✅ S3          | ✅ Cloud Storage | ✅ Blob Storage |
+| WebSockets     | ❌         | ✅ API Gateway | ✅ Cloud Run     | ✅ Web PubSub   |
+| Max Duration   | 30s/10ms   | 15 min         | 60 min           | 10 min          |
+| Cold Starts    | Minimal    | Variable       | Variable         | Variable        |
 
 ## 🎯 Best Practices
 
 ### 1. Use Abstractions
 
 Always use the platform interfaces:
+
 ```typescript
 // ✅ Good
 const db = ctx.cloudConnector.getDatabaseStore('DB');
@@ -200,18 +209,20 @@ const db = env.DB as D1Database;
 ### 2. Check Features
 
 Adapt to platform capabilities:
+
 ```typescript
 const features = ctx.cloudConnector.getFeatures();
 
 const timeout = Math.min(
   30000, // Your desired timeout
-  features.maxRequestDuration
+  features.maxRequestDuration,
 );
 ```
 
 ### 3. Environment Variables
 
 Use platform-agnostic naming:
+
 ```typescript
 // Platform determines actual resource
 const db = cloudConnector.getDatabaseStore('MAIN_DB');
@@ -223,6 +234,7 @@ const cache = cloudConnector.getKeyValueStore('CACHE');
 ### Type Errors
 
 If you see type errors with platform-specific types:
+
 ```typescript
 // Add type assertion for platform types
 const env = context.env as CloudflareEnv;
@@ -231,6 +243,7 @@ const env = context.env as CloudflareEnv;
 ### Missing Bindings
 
 Ensure your platform configuration includes all required resources:
+
 ```toml
 # wrangler.toml for Cloudflare
 [[kv_namespaces]]

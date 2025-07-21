@@ -2,7 +2,6 @@
  * Payment service for handling Telegram payments
  */
 
-
 import { PaymentRepository } from '../domain/payments/repository';
 import type { TelegramPayment, PendingInvoice } from '../domain/payments/repository';
 import { logger } from '../lib/logger';
