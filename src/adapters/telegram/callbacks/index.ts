@@ -22,7 +22,7 @@ import {
   handleAccessCancel,
   handleAccessApprove,
   handleAccessReject,
-  handleAccessNext,
+  handleNextRequest,
 } from './access';
 
 import type { BotContext } from '@/types';
@@ -70,7 +70,7 @@ export function setupCallbacks(bot: Bot<BotContext>): void {
   bot.callbackQuery(/^access:next:(\d+)$/, async (ctx) => {
     const data = ctx.callbackQuery.data;
     const match = data?.match(/^access:next:(\d+)$/);
-    if (match?.[1]) await handleAccessNext(ctx, match[1]);
+    if (match?.[1]) await handleNextRequest(ctx);
   });
   bot.callbackQuery('view_requests', async (ctx) => {
     await ctx.answerCallbackQuery();

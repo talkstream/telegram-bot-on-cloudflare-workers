@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 import { escapeMarkdown } from '@/lib/telegram-formatter';
 import { getUserService } from '@/services/user-service';
 
-export const statsCommand: CommandHandler = async (ctx) => {
+export const statsCommand: CommandHandler = async (ctx): Promise<void> => {
   const userId = ctx.from?.id;
 
   if (!userId) {
@@ -13,6 +13,22 @@ export const statsCommand: CommandHandler = async (ctx) => {
 
   try {
     const userService = getUserService(ctx.env);
+    if (!userService) {
+      // If no database, show demo stats
+      const stats = [
+        '📊 <b>Demo Statistics</b>',
+        '',
+        '👤 User: Demo Mode',
+        '📅 Started: Just now',
+        '💬 Messages: 0',
+        '',
+        '<i>Configure database to track real statistics</i>',
+      ].join('\n');
+
+      await ctx.reply(stats, { parse_mode: 'HTML' });
+      return;
+    }
+
     const user = await userService.getByTelegramId(userId);
 
     if (!user) {

@@ -117,12 +117,13 @@ That's it! Your bot is running locally. 🎉
 │   ├── config/                  # Configuration and environment
 │   ├── core/                    # Core bot logic
 │   │   ├── bot.ts              # Bot initialization
-│   │   ├── telegram-adapter.ts  # Main adapter (full features)
-│   │   └── lightweight-adapter.ts # Lightweight adapter (free tier)
+│   │   └── telegram-adapter.ts  # Main adapter (full features)
 │   ├── adapters/telegram/       # Telegram-specific implementations
 │   │   ├── commands/           # Command handlers
 │   │   ├── callbacks/          # Callback query handlers
-│   │   └── handlers/           # Other handlers (payments, etc.)
+│   │   ├── handlers/           # Other handlers (payments, etc.)
+│   │   └── cloudflare-workers/ # Cloudflare Workers optimizations
+│   │       └── free-tier-adapter.ts # Optimized for 10ms CPU limit
 │   ├── middleware/             # Middleware stack
 │   ├── services/               # Business logic
 │   └── lib/                    # Shared utilities

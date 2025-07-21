@@ -148,7 +148,8 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
     const targetUserId = parseInt(userId);
 
     // Check if user is an admin
-    const role = await ctx.env.DB.prepare('SELECT role FROM user_roles WHERE user_id = ?')
+    const role = await ctx.env
+      .DB!.prepare('SELECT role FROM user_roles WHERE user_id = ?')
       .bind(targetUserId)
       .first<{ role: string }>();
 
@@ -158,7 +159,8 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
     }
 
     // Remove admin role
-    await ctx.env.DB.prepare('DELETE FROM user_roles WHERE user_id = ? AND role = ?')
+    await ctx.env
+      .DB!.prepare('DELETE FROM user_roles WHERE user_id = ? AND role = ?')
       .bind(targetUserId, 'admin')
       .run();
 
@@ -187,8 +189,9 @@ async function handleRemoveAdmin(ctx: Parameters<CommandHandler>[0], userId?: st
  */
 async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
   try {
-    const admins = await ctx.env.DB.prepare(
-      `
+    const admins = await ctx.env
+      .DB!.prepare(
+        `
       SELECT 
         u.telegram_id,
         u.first_name,
@@ -200,13 +203,14 @@ async function handleListAdmins(ctx: Parameters<CommandHandler>[0]) {
       WHERE r.role = 'admin'
       ORDER BY r.granted_at DESC
     `,
-    ).all<{
-      telegram_id: number;
-      first_name: string;
-      username: string | null;
-      granted_at: string;
-      granted_by: number;
-    }>();
+      )
+      .all<{
+        telegram_id: number;
+        first_name: string;
+        username: string | null;
+        granted_at: string;
+        granted_by: number;
+      }>();
 
     if (!admins.results || admins.results.length === 0) {
       await ctx.reply(ctx.i18n('admin_list_empty'));

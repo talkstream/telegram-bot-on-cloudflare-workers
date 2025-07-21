@@ -1,5 +1,6 @@
 import type { Env } from '@/types';
 import { logger } from '@/lib/logger';
+import { getBotToken, hasDatabase } from '@/lib/env-guards';
 
 export interface ScheduledTask {
   name: string;
@@ -131,9 +132,8 @@ export const healthCheck: ScheduledTask = {
   handler: async (env) => {
     try {
       // Check bot webhook status
-      const response = await fetch(
-        `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getWebhookInfo`,
-      );
+      const botToken = getBotToken(env);
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
 
       const webhookInfo = (await response.json()) as {
         ok: boolean;
@@ -168,6 +168,10 @@ async function collectDailyStats(env: Env): Promise<Record<string, number>> {
 
   try {
     // Example queries - adjust based on your schema
+    if (!hasDatabase(env)) {
+      return stats;
+    }
+
     const totalUsers = await env.DB.prepare('SELECT COUNT(*) as count FROM users').first<{
       count: number;
     }>();

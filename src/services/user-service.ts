@@ -161,6 +161,9 @@ export class UserService {
 }
 
 // Factory function to create UserService instance
-export function getUserService(env: Env): UserService {
+export function getUserService(env: Env): UserService | null {
+  if (!env.DB) {
+    return null;
+  }
   return new UserService(env.DB, env.TIER || 'free');
 }

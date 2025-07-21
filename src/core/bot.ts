@@ -15,22 +15,27 @@ import { MonitoringFactory } from '@/connectors/monitoring/monitoring-factory';
 import '@/connectors/cloud';
 
 export async function createBot(env: Env) {
+  if (!env.TELEGRAM_BOT_TOKEN) {
+    throw new Error('TELEGRAM_BOT_TOKEN is required');
+  }
   const bot = new Bot<BotContext>(env.TELEGRAM_BOT_TOKEN);
   const tier = env.TIER || 'free';
 
   // Create cloud platform connector using factory
   const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
-  
+
   // Create monitoring connector
-  const monitoring = await MonitoringFactory.createFromEnv(env as unknown as Record<string, string | undefined>);
+  const monitoring = await MonitoringFactory.createFromEnv(
+    env as unknown as Record<string, string | undefined>,
+  );
 
   // Create multi-layer cache if cache namespace is available
   const multiLayerCache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
 
   const sessionService = new SessionService(
-    cloudConnector.getKeyValueStore('SESSIONS'), 
-    tier, 
-    multiLayerCache
+    cloudConnector.getKeyValueStore('SESSIONS'),
+    tier,
+    multiLayerCache,
   );
 
   // Load AI providers and create AI service
@@ -74,14 +79,14 @@ export async function createBot(env: Env) {
 
     if (ctx.from?.id) {
       ctx.session = (await sessionService.getSession(ctx.from.id)) || undefined;
-      
+
       // Set user context for monitoring
       monitoring?.setUserContext(String(ctx.from.id), {
         username: ctx.from.username,
         languageCode: ctx.from.language_code,
       });
     }
-    
+
     try {
       await next();
     } catch (error) {

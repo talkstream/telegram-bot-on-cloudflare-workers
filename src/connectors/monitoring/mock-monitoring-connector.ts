@@ -5,15 +5,16 @@
  * It logs all monitoring events to console instead of sending to external services.
  */
 
-import { IMonitoringConnector } from '../../core/interfaces/monitoring-connector';
-import { MonitoringConfig } from '../../types/config';
+import type {
+  IMonitoringConnector,
+  MonitoringConfig,
+  Breadcrumb,
+} from '../../core/interfaces/monitoring';
 
 export class MockMonitoringConnector implements IMonitoringConnector {
-  private config?: MonitoringConfig;
   private breadcrumbs: Array<{ message: string; timestamp: Date }> = [];
 
   async initialize(config: MonitoringConfig): Promise<void> {
-    this.config = config;
     console.info('[MockMonitoring] Initialized in DEMO mode - no real monitoring service');
     console.info('[MockMonitoring] Environment:', config.environment || 'development');
   }
@@ -33,15 +34,11 @@ export class MockMonitoringConnector implements IMonitoringConnector {
     logFn(`[MockMonitoring] ${level.toUpperCase()}: ${message}`);
   }
 
-  addBreadcrumb(message: string, category?: string, data?: Record<string, unknown>): void {
-    const breadcrumb = {
-      message,
-      category,
-      data,
-      timestamp: new Date(),
-    };
-
-    this.breadcrumbs.push({ message, timestamp: new Date() });
+  addBreadcrumb(breadcrumb: Breadcrumb): void {
+    this.breadcrumbs.push({
+      message: breadcrumb.message,
+      timestamp: new Date(breadcrumb.timestamp || Date.now()),
+    });
 
     // Keep only last 100 breadcrumbs
     if (this.breadcrumbs.length > 100) {
@@ -118,5 +115,17 @@ export class MockMonitoringConnector implements IMonitoringConnector {
         );
         throw error;
       });
+  }
+
+  setUserContext(userId: string, data?: Record<string, unknown>): void {
+    console.info('[MockMonitoring] User context set:', { userId, data });
+  }
+
+  clearUserContext(): void {
+    console.info('[MockMonitoring] User context cleared');
+  }
+
+  isAvailable(): boolean {
+    return true;
   }
 }

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 
 import type { Env } from './config/env';
 import { validateEnv } from './config/env';
+import { isDemoMode, getBotToken, getWebhookSecret } from './lib/env-guards';
 import { loggerMiddleware } from './middleware/logger';
 import { rateLimiter } from './middleware/rate-limiter';
 import { wrapSentry } from './config/sentry';
@@ -15,7 +16,6 @@ import './connectors/cloud';
 // Import mock connectors for demo mode
 import { MockTelegramConnector } from './connectors/messaging/telegram/mock-telegram-connector';
 import { MockMonitoringConnector } from './connectors/monitoring/mock-monitoring-connector';
-import { MockAIConnector } from './connectors/ai/mock-ai-connector';
 
 // Initialize the app
 const app = new Hono<{ Bindings: Env }>();
@@ -32,34 +32,34 @@ app.get('/', (c) => c.text('🚀 Wireframe v1.2 - Universal AI Assistant Platfor
 // Enhanced health endpoint for demo mode
 app.get('/health', async (c) => {
   const env = c.env;
-  const isDemoMode = !env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN === 'demo';
+  const demoMode = isDemoMode(env);
 
   return c.json({
     status: 'ok',
     version: '1.2.0',
-    mode: isDemoMode ? 'demo' : 'production',
+    mode: demoMode ? 'demo' : 'production',
     timestamp: new Date().toISOString(),
     environment: env.ENVIRONMENT || 'development',
     platform: env.CLOUD_PLATFORM || 'cloudflare',
     features: {
-      telegram: isDemoMode ? 'mock' : 'enabled',
+      telegram: demoMode ? 'mock' : 'enabled',
       ai: env.AI_PROVIDER || 'mock',
       monitoring: env.SENTRY_DSN ? 'enabled' : 'mock',
       database: env.DB ? 'enabled' : 'disabled',
       sessions: env.SESSIONS ? 'enabled' : 'disabled',
     },
-    message: isDemoMode
+    message: demoMode
       ? '🎯 Running in DEMO mode - configure secrets to enable full functionality'
       : '✅ All systems operational',
   });
 });
 
 // Store connectors per environment
-const connectors = new Map<string, TelegramConnector | MockTelegramConnector | MockAIConnector>();
+const connectors = new Map<string, TelegramConnector | MockTelegramConnector>();
 
 async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockTelegramConnector> {
-  const isDemoMode = !env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN === 'demo';
-  const key = isDemoMode ? 'mock' : env.TELEGRAM_BOT_TOKEN;
+  const demoMode = isDemoMode(env);
+  const key = demoMode ? 'mock' : getBotToken(env);
 
   if (!connectors.has(key)) {
     // Initialize infrastructure
@@ -74,16 +74,8 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       });
     }
 
-    // Initialize AI service connector (use mock if no provider)
-    if (!env.AI_PROVIDER || env.AI_PROVIDER === 'mock') {
-      const mockAI = new MockAIConnector();
-      await mockAI.initialize({
-        provider: 'mock',
-        apiKey: 'demo',
-      });
-      // Store mock AI for use in connectors
-      connectors.set('ai', mockAI);
-    } else if (env.AI_PROVIDER) {
+    // Initialize AI service connector or mock
+    if (env.AI_PROVIDER && env.AI_PROVIDER !== 'mock') {
       const { AIServiceConnector } = await import('./connectors/ai/ai-service-connector');
       new AIServiceConnector(
         eventBus,
@@ -93,6 +85,11 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
         },
         (env.TIER as 'free' | 'paid') || 'free',
       );
+    } else {
+      // Use mock AI connector in demo mode
+      const { MockAIConnector } = await import('./connectors/ai/mock-ai-connector');
+      const mockAI = new MockAIConnector();
+      await mockAI.initialize({});
     }
 
     // Create cloud platform connector using factory
@@ -118,36 +115,12 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       });
     }
 
-    // Create appropriate connector based on mode
-    if (isDemoMode) {
-      const mockConnector = new MockTelegramConnector({
-        token: 'demo',
-        webhookSecret: env.TELEGRAM_WEBHOOK_SECRET || 'demo',
-      });
-      await mockConnector.initialize();
-
-      // Register demo commands
-      mockConnector.onCommand('start', async (ctx) => {
-        await ctx.reply(
-          '👋 Welcome to Wireframe v1.2 Demo!\n\n' +
-            'This is a mock Telegram bot running without real credentials.\n\n' +
-            'Features:\n' +
-            '• Multi-cloud deployment support\n' +
-            '• Platform-agnostic architecture\n' +
-            '• Event-driven plugin system\n' +
-            '• AI provider abstraction\n\n' +
-            'To enable real functionality, configure your environment variables.\n\n' +
-            'Visit /health for system status.',
-        );
-      });
-
-      connectors.set(key, mockConnector);
-    } else {
-      // Create and initialize real TelegramConnector
+    // Create appropriate connector
+    if (!demoMode) {
       const telegramConnector = new TelegramConnector();
       await telegramConnector.initialize({
-        token: env.TELEGRAM_BOT_TOKEN,
-        webhookSecret: env.TELEGRAM_WEBHOOK_SECRET,
+        token: getBotToken(env),
+        webhookSecret: getWebhookSecret(env),
         eventBus,
         // Additional config
         parseMode: 'HTML',
@@ -163,28 +136,33 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       // await pluginManager.loadPlugins();
 
       connectors.set(key, telegramConnector);
+    } else {
+      // In demo mode, use mock connector
+      const mockConnector = new MockTelegramConnector();
+      await mockConnector.initialize({});
+      connectors.set(key, mockConnector);
     }
   }
 
-  return connectors.get(key);
+  return connectors.get(key) as TelegramConnector | MockTelegramConnector;
 }
 
 // Telegram Webhook with new connector architecture
 app.post('/webhook/:token', rateLimiter(), async (c) => {
   const env = validateEnv(c.env);
   const token = c.req.param('token');
-  const isDemoMode = !env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN === 'demo';
+  const demoMode = isDemoMode(env);
 
   // In demo mode, accept any token
-  if (!isDemoMode) {
+  if (!demoMode) {
     // Validate webhook token
-    if (token !== env.TELEGRAM_WEBHOOK_SECRET) {
+    if (token !== getWebhookSecret(env)) {
       return c.text('Unauthorized', 401);
     }
 
     // Validate Telegram secret header (required for production security)
     const secretToken = c.req.header('X-Telegram-Bot-Api-Secret-Token');
-    if (!secretToken || secretToken !== env.TELEGRAM_WEBHOOK_SECRET) {
+    if (!secretToken || secretToken !== getWebhookSecret(env)) {
       return c.text('Unauthorized', 401);
     }
   }

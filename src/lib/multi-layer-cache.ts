@@ -318,6 +318,9 @@ export class MultiLayerCache {
 /**
  * Factory function to create multi-layer cache
  */
-export function createMultiLayerCache(env: Env): MultiLayerCache {
+export function createMultiLayerCache(env: Env): MultiLayerCache | null {
+  if (!env.CACHE) {
+    return null;
+  }
   return new MultiLayerCache(env.CACHE, env.TIER || 'free');
 }

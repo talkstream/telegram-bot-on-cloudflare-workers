@@ -4,6 +4,44 @@
  */
 
 /**
+ * Statement execution result
+ */
+export interface StatementResult<T = unknown> {
+  results: T[];
+  meta: {
+    duration?: number;
+    rows_affected?: number;
+    last_insert_rowid?: string | number;
+  };
+}
+
+/**
+ * Query execution options
+ */
+export interface QueryOptions {
+  timeout?: number;
+  consistency?: 'strong' | 'eventual';
+}
+
+/**
+ * KV storage options (for backward compatibility)
+ */
+export interface KVListOptions {
+  prefix?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+/**
+ * KV list result
+ */
+export interface KVListResult {
+  keys: Array<{ name: string; metadata?: Record<string, unknown> }>;
+  list_complete: boolean;
+  cursor?: string;
+}
+
+/**
  * Key-Value storage interface
  * Implementations: Cloudflare KV, Redis, DynamoDB, etc.
  */

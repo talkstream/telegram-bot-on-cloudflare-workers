@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 
 import type { Env, HealthStatus } from '@/types';
 import { logger } from '@/lib/logger';
+import { getBotToken } from '@/lib/env-guards';
 
 export async function healthHandler(c: Context<{ Bindings: Env }>) {
   const startTime = Date.now();
@@ -29,7 +30,7 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'database',
       check: async () => {
         try {
-          const result = await env.DB.prepare('SELECT 1 as health').first();
+          const result = await env.DB!.prepare('SELECT 1 as health').first();
           return result?.health === 1;
         } catch (error) {
           logger.error('D1 health check failed', { error });
@@ -46,10 +47,10 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       check: async () => {
         try {
           const testKey = `health_check_${Date.now()}`;
-          await env.CACHE.put(testKey, 'ok', { expirationTtl: 60 });
-          const value = await env.CACHE.get(testKey);
+          await env.CACHE!.put(testKey, 'ok', { expirationTtl: 60 });
+          const value = await env.CACHE!.get(testKey);
           const isHealthy = value === 'ok';
-          await env.CACHE.delete(testKey);
+          await env.CACHE!.delete(testKey);
           return isHealthy;
         } catch (error) {
           logger.error('KV cache health check failed', { error });
@@ -65,7 +66,8 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'telegram',
       check: async () => {
         try {
-          return /^\d+:[A-Za-z0-9_-]{35}$/.test(env.TELEGRAM_BOT_TOKEN);
+          const token = getBotToken(env);
+          return /^\d+:[A-Za-z0-9_-]{35}$/.test(token);
         } catch (error) {
           logger.error('Telegram token check failed', { error });
           return false;

@@ -5,10 +5,31 @@
  * It provides canned responses without requiring API keys.
  */
 
-import { IAIConnector } from '../../core/interfaces/ai-connector';
-import { AIConfig, AIResponse, AIOptions } from '../../types/ai';
+import type {
+  AIConnector,
+  CompletionRequest,
+  CompletionResponse,
+  Usage,
+  Cost,
+  Model,
+  ModelInfo,
+  AICapabilities,
+} from '../../core/interfaces/ai';
+import { MessageRole, FinishReason } from '../../core/interfaces/ai';
+import type {
+  ConnectorConfig,
+  ConnectorCapabilities,
+  ValidationResult,
+  HealthStatus,
+} from '../../core/interfaces/connector';
+import { ConnectorType } from '../../core/interfaces/connector';
 
-export class MockAIConnector implements IAIConnector {
+export class MockAIConnector implements AIConnector {
+  id = 'ai-mock';
+  name = 'Mock AI Connector';
+  version = '1.0.0';
+  type = ConnectorType.AI;
+  private _isReady = true;
   provider = 'mock' as const;
 
   private responses = [
@@ -21,94 +42,203 @@ export class MockAIConnector implements IAIConnector {
 
   private responseIndex = 0;
 
-  async initialize(config: AIConfig): Promise<void> {
+  async initialize(_config: ConnectorConfig): Promise<void> {
     console.info('[MockAI] Initialized in DEMO mode - no real AI service connected');
-    console.info('[MockAI] Provider:', config.provider || 'mock');
   }
 
-  async complete(prompt: string, _options?: AIOptions): Promise<AIResponse> {
+  async connect(): Promise<void> {
+    // No-op for mock
+  }
+
+  async disconnect(): Promise<void> {
+    // No-op for mock
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return true;
+  }
+
+  isReady(): boolean {
+    return this._isReady;
+  }
+
+  validateConfig(_config: ConnectorConfig): ValidationResult {
+    return { valid: true };
+  }
+
+  async getHealthStatus(): Promise<HealthStatus> {
+    return {
+      status: 'healthy',
+      message: 'Mock AI connector is running',
+      details: { mode: 'mock' },
+      timestamp: Date.now(),
+    };
+  }
+
+  async destroy(): Promise<void> {
+    console.info('[MockAI] Destroyed');
+  }
+
+  getCapabilities(): ConnectorCapabilities {
+    const aiCaps = this.getAICapabilities();
+    return {
+      features: [
+        'ai',
+        aiCaps.supportsStreaming ? 'streaming' : '',
+        aiCaps.supportsEmbeddings ? 'embeddings' : '',
+        aiCaps.supportsVision ? 'vision' : '',
+        aiCaps.supportsAudio ? 'audio' : '',
+        aiCaps.supportsFunctionCalling ? 'functions' : '',
+      ].filter(Boolean) as string[],
+      limits: {
+        maxContextWindow: aiCaps.maxContextWindow,
+        maxOutputTokens: aiCaps.maxOutputTokens,
+      },
+      metadata: {
+        models: aiCaps.models,
+        rateLimits: aiCaps.rateLimits,
+      },
+    };
+  }
+
+  async complete(request: CompletionRequest): Promise<CompletionResponse> {
+    const prompt = request.messages
+      .filter((m) => m.role === MessageRole.USER)
+      .map((m) => (typeof m.content === 'string' ? m.content : ''))
+      .join(' ');
+
     console.info('[MockAI] Prompt received:', prompt);
 
     // Simulate processing delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Get next response from the rotation
-    const content = this.responses[this.responseIndex % this.responses.length];
+    let content = this.responses[this.responseIndex % this.responses.length];
     this.responseIndex++;
 
     // Check for specific prompts
     if (prompt.toLowerCase().includes('weather')) {
-      return {
-        content:
-          "🌤️ Mock Weather Report: It's a beautiful day in the cloud! Perfect for deploying your AI assistants. (This is a demo response)",
-        usage: { promptTokens: 10, completionTokens: 20, totalTokens: 30 },
-      };
+      content =
+        "🌤️ Mock Weather Report: It's a beautiful day in the cloud! Perfect for deploying your AI assistants. (This is a demo response)";
     }
 
     if (prompt.toLowerCase().includes('help')) {
-      return {
-        content:
-          "📚 Mock Help: I'm running in demo mode! Available commands:\n/start - Welcome message\n/help - This help\n/echo <text> - Echo your message\n/about - Learn about Wireframe\n\nTo use real AI, configure your API keys in the environment variables.",
-        usage: { promptTokens: 10, completionTokens: 50, totalTokens: 60 },
-      };
+      content =
+        "📚 Mock Help: I'm running in demo mode! Available commands:\n/start - Welcome message\n/help - This help\n/echo <text> - Echo your message\n/about - Learn about Wireframe\n\nTo use real AI, configure your API keys in the environment variables.";
     }
 
     return {
-      content,
+      id: `mock-${Date.now()}`,
+      model: request.model || 'mock-model',
+      content: content || '',
+      role: MessageRole.ASSISTANT,
+      finish_reason: FinishReason.STOP,
       usage: {
-        promptTokens: prompt.length,
-        completionTokens: content.length,
-        totalTokens: prompt.length + content.length,
+        prompt_tokens: prompt.length,
+        completion_tokens: content?.length || 0,
+        total_tokens: prompt.length + (content?.length || 0),
       },
     };
   }
 
-  async *stream(
-    prompt: string,
-    options?: AIOptions,
-  ): AsyncGenerator<{ content: string; isComplete: boolean }> {
-    console.info('[MockAI] Stream prompt received:', prompt);
-
-    const response = await this.complete(prompt, options);
+  async *stream(request: CompletionRequest): AsyncIterator<{
+    id: string;
+    delta: { content?: string; role?: MessageRole };
+    finish_reason?: FinishReason;
+  }> {
+    const response = await this.complete(request);
     const words = response.content.split(' ');
 
     // Simulate streaming by yielding words one by one
     for (let i = 0; i < words.length; i++) {
       await new Promise((resolve) => setTimeout(resolve, 100));
       yield {
-        content: words.slice(0, i + 1).join(' '),
-        isComplete: i === words.length - 1,
+        id: response.id,
+        delta: {
+          content: words[i] + (i < words.length - 1 ? ' ' : ''),
+          role: i === 0 ? MessageRole.ASSISTANT : undefined,
+        },
+        finish_reason: i === words.length - 1 ? FinishReason.STOP : undefined,
       };
     }
   }
 
-  async embeddings(texts: string | string[]): Promise<number[][]> {
+  async embeddings(
+    texts: string | string[],
+  ): Promise<Array<{ embedding: number[]; index: number }>> {
     const textArray = Array.isArray(texts) ? texts : [texts];
     console.info('[MockAI] Generating mock embeddings for', textArray.length, 'texts');
 
     // Return mock embeddings (768-dimensional vectors)
-    return textArray.map(() =>
-      Array(768)
+    return textArray.map((_, index) => ({
+      embedding: Array(768)
         .fill(0)
         .map(() => Math.random() * 2 - 1),
-    );
+      index,
+    }));
   }
 
-  validateConfig(): boolean {
+  async validateCredentials(): Promise<boolean> {
     // Mock connector doesn't need validation
     return true;
   }
 
-  getModelInfo(): { name: string; contextWindow: number; maxOutput: number } {
+  async listModels(): Promise<Model[]> {
+    return [
+      {
+        id: 'mock-model-v1',
+        name: 'Mock Model v1',
+        description: 'A mock model for testing',
+        context_window: 8192,
+        max_output_tokens: 2048,
+      },
+    ];
+  }
+
+  async getModelInfo(modelId: string): Promise<ModelInfo> {
     return {
-      name: 'mock-model-v1',
-      contextWindow: 8192,
-      maxOutput: 2048,
+      id: modelId,
+      name: 'Mock Model v1',
+      vendor: 'Mock AI',
+      description: 'A mock model for testing',
+      context_window: 8192,
+      max_output_tokens: 2048,
+      capabilities: {
+        chat: true,
+        completion: true,
+        embeddings: true,
+        vision: false,
+        audio: false,
+        function_calling: false,
+        json_mode: false,
+        streaming: true,
+      },
     };
   }
 
-  estimateCost(_usage: { promptTokens: number; completionTokens: number }): number {
+  calculateCost(_usage: Usage): Cost {
     // Mock cost calculation (free in demo mode)
-    return 0;
+    return {
+      amount: 0,
+      currency: 'USD',
+      breakdown: {
+        prompt: 0,
+        completion: 0,
+      },
+    };
+  }
+
+  getAICapabilities(): AICapabilities {
+    return {
+      models: ['mock-model-v1'],
+      maxContextWindow: 8192,
+      maxOutputTokens: 2048,
+      supportsStreaming: true,
+      supportsEmbeddings: true,
+      supportsVision: false,
+      supportsAudio: false,
+      supportsFunctionCalling: false,
+      supportsJsonMode: false,
+    };
   }
 }

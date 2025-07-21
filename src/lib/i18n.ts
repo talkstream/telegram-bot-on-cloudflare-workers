@@ -26,6 +26,19 @@ const messages = {
     access_rejected: '❌ Your access request has been rejected.',
     request_access: 'Request Access',
     cancel_request: 'Cancel Request',
+    access_request_cancelled: '🚫 Your access request has been cancelled.',
+    view_next_request: 'Next Request',
+    access_request_approved: '✅ Access granted to user {userId} (@{username})',
+    no_username: 'No username',
+    access_granted_notification:
+      '🎉 Your access request has been approved! You can now use the bot.',
+    access_request_rejected: '❌ Access denied to user {userId} (@{username})',
+    access_denied_notification: 'Your access request has been rejected.',
+    access_request_details:
+      '📋 <b>Access Request #{id}</b>\n\nName: {firstName}\nUsername: @{username}\nUser ID: {userId}\nRequested: {date}',
+    review_request: 'Review Request',
+    new_access_request:
+      '🆕 <b>New Access Request</b>\n\nUser: {firstName} (@{username})\nID: {userId}\n\nUse /requests to review.',
     // Owner commands
     info_command_header: '📊 <b>Bot Technical Information</b>',
     info_system_status: '⏱ <b>System Status</b>',
@@ -163,6 +176,19 @@ const messages = {
     access_rejected: '❌ Ваша заявка на доступ отклонена.',
     request_access: 'Запросить доступ',
     cancel_request: 'Отменить заявку',
+    access_request_cancelled: '🚫 Ваша заявка на доступ была отменена.',
+    view_next_request: 'Следующая заявка',
+    access_request_approved: '✅ Доступ предоставлен пользователю {userId} (@{username})',
+    no_username: 'Без имени пользователя',
+    access_granted_notification:
+      '🎉 Ваша заявка на доступ одобрена! Теперь вы можете использовать бота.',
+    access_request_rejected: '❌ Доступ отклонён для пользователя {userId} (@{username})',
+    access_denied_notification: 'Ваша заявка на доступ была отклонена.',
+    access_request_details:
+      '📋 <b>Заявка на доступ #{id}</b>\n\nИмя: {firstName}\nИмя пользователя: @{username}\nID пользователя: {userId}\nЗапрошено: {date}',
+    review_request: 'Рассмотреть заявку',
+    new_access_request:
+      '🆕 <b>Новая заявка на доступ</b>\n\nПользователь: {firstName} (@{username})\nID: {userId}\n\nИспользуйте /requests для просмотра.',
     // Owner commands
     info_command_header: '📊 <b>Техническая информация о боте</b>',
     info_system_status: '⏱ <b>Статус системы</b>',

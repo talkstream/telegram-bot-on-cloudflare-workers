@@ -17,10 +17,24 @@ export class AWSKeyValueStore implements IKeyValueStore {
     return null;
   }
 
+  async getWithMetadata<T = string>(
+    key: string,
+  ): Promise<{
+    value: T | null;
+    metadata: Record<string, unknown> | null;
+  }> {
+    // Mock implementation
+    console.info(`[AWS KV] Getting key with metadata ${key} from table ${this.tableName}`);
+    return {
+      value: null,
+      metadata: null,
+    };
+  }
+
   async put(
     key: string,
-    value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
-    options?: { expirationTtl?: number; metadata?: Record<string, string> },
+    _value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
+    options?: { expirationTtl?: number; metadata?: Record<string, unknown> },
   ): Promise<void> {
     // Mock implementation
     console.info(`[AWS KV] Putting key ${key} to table ${this.tableName}`, options);

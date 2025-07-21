@@ -8,6 +8,7 @@
 import { Bot } from 'grammy';
 
 import type { BotContext, Env } from '@/types';
+import { getBotToken } from '@/lib/env-guards';
 import type { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import type { PaymentRepository } from '@/domain/payments/repository';
 import { getTierConfig } from '@/config/tiers';
@@ -26,7 +27,7 @@ export class LightweightAdapter {
   constructor(options: LightweightOptions) {
     this.tier = options.tier;
     this.config = getTierConfig(this.tier);
-    this.bot = new Bot<BotContext>(options.env.TELEGRAM_BOT_TOKEN);
+    this.bot = new Bot<BotContext>(getBotToken(options.env));
   }
 
   /**
@@ -119,7 +120,7 @@ export class LightweightAdapter {
     ]);
 
     // Initialize services
-    const sessionService = new SessionService(env.SESSIONS);
+    const sessionService = env.SESSIONS ? new SessionService(env.SESSIONS) : null;
 
     // Load AI service if enabled
     let aiService = null;
@@ -154,7 +155,7 @@ export class LightweightAdapter {
     this.bot.use(async (ctx, next) => {
       ctx.env = env;
       ctx.services = {
-        session: sessionService,
+        session: sessionService || ({} as any),
         ai: aiService,
         telegramStars: {} as TelegramStarsService, // Placeholder for lightweight mode
         paymentRepo: {} as PaymentRepository, // Placeholder for lightweight mode
@@ -165,7 +166,7 @@ export class LightweightAdapter {
       ctx.i18n = (key, ...args) => getMessage(lang, key, ...args);
 
       // Load user session
-      if (ctx.from?.id && this.config.features.sessionPersistence) {
+      if (ctx.from?.id && this.config.features.sessionPersistence && sessionService) {
         ctx.session = (await sessionService.getSession(ctx.from.id)) || undefined;
       }
 

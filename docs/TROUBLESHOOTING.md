@@ -60,12 +60,13 @@ Error: Worker exceeded CPU time limit
 
 **Solutions:**
 
-1. Use lightweight adapter:
+1. Use free tier adapter for Cloudflare Workers:
 
 ```typescript
-if (env.TIER === 'free') {
-  return new LightweightAdapter(bot, env);
-}
+import { createTierAwareBot } from '@/adapters/telegram/cloudflare-workers';
+
+// Automatically selects adapter based on TIER env variable
+const bot = await createTierAwareBot(env);
 ```
 
 2. Optimize heavy operations:

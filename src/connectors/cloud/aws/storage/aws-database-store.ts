@@ -28,7 +28,6 @@ class AWSPreparedStatement implements IPreparedStatement {
     console.info(`[AWS DB] Executing all: ${this.query}`, this.params, options);
     return {
       results: [],
-      success: true,
       meta: {},
     };
   }
@@ -37,10 +36,9 @@ class AWSPreparedStatement implements IPreparedStatement {
     console.info(`[AWS DB] Executing run: ${this.query}`, this.params);
     return {
       results: [],
-      success: true,
       meta: {
-        changes: 0,
-        last_row_id: 0,
+        rows_affected: 0,
+        last_insert_rowid: 0,
       },
     };
   }
@@ -52,7 +50,9 @@ class AWSPreparedStatement implements IPreparedStatement {
 }
 
 export class AWSDatabaseStore implements IDatabaseStore {
-  constructor(private dbName: string) {}
+  constructor(_dbName: string) {
+    // dbName parameter is for interface compatibility
+  }
 
   prepare(query: string): IPreparedStatement {
     return new AWSPreparedStatement(query);

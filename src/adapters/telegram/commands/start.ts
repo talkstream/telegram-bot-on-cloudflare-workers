@@ -6,7 +6,7 @@ import { getUserService } from '@/services/user-service';
 import { escapeMarkdown } from '@/lib/telegram-formatter';
 import { hasAccess } from '@/middleware/auth';
 
-export const startCommand: CommandHandler = async (ctx) => {
+export const startCommand: CommandHandler = async (ctx): Promise<void> => {
   const userId = ctx.from?.id;
 
   if (!userId) {
@@ -16,6 +16,16 @@ export const startCommand: CommandHandler = async (ctx) => {
 
   try {
     const userService = getUserService(ctx.env);
+    if (!userService) {
+      // If no database, just send welcome message
+      const message =
+        '👋 Welcome to Demo Mode!\n\nThis bot is running without a database.\nConfigure DB to enable full features.';
+      await ctx.reply(message, {
+        parse_mode: 'HTML',
+      });
+      return;
+    }
+
     const user = await userService.createOrUpdateUser({
       telegramId: userId,
       username: ctx.from.username || undefined,

@@ -51,6 +51,10 @@ export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: Exec
 async function cleanupSessions(env: Env): Promise<void> {
   const tier = env.TIER || 'free';
   const cache = env.CACHE ? new MultiLayerCache(env.CACHE, tier) : undefined;
+  if (!env.SESSIONS) {
+    logger.warn('Sessions KV not configured, skipping session cleanup');
+    return;
+  }
   const sessionService = new SessionService(env.SESSIONS, tier, cache);
 
   const cleaned = await sessionService.cleanupExpiredSessions(100);
@@ -62,6 +66,10 @@ async function cleanupSessions(env: Env): Promise<void> {
  */
 async function logCacheStats(env: Env): Promise<void> {
   const tier = env.TIER || 'free';
+  if (!env.CACHE) {
+    logger.warn('Cache KV not configured, skipping cache stats');
+    return;
+  }
   const cache = new MultiLayerCache(env.CACHE, tier);
 
   const stats = cache.getStats();

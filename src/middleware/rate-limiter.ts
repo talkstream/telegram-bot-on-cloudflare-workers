@@ -29,6 +29,13 @@ export const rateLimiter = (config: RateLimitConfig = {}): MiddlewareHandler<{ B
 
     try {
       // Use KV storage for distributed rate limiting
+      // Check if RATE_LIMIT is available
+      if (!env.RATE_LIMIT) {
+        // If no rate limit storage, allow request
+        await next();
+        return;
+      }
+
       const rateLimitData = (await env.RATE_LIMIT.get(key, 'json')) as {
         count: number;
         resetAt: number;
