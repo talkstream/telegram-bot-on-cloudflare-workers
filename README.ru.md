@@ -1,4 +1,4 @@
-# 🚀 Telegram Bot Cloudflare Workers Wireframe
+# 🚀 Universal Bot Platform Wireframe
 
 <p align="center">
   <a href="README.md">English</a> | <b>Русский</b>
@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <strong>Production-ready шаблон для создания высокопроизводительных Telegram ботов на Cloudflare Workers с TypeScript</strong>
+  <strong>Production-ready шаблон для создания любых ботов (Telegram, Discord, Slack) на любой облачной платформе (Cloudflare Workers, AWS Lambda, Google Cloud) с TypeScript 100% strict mode</strong>
 </p>
 
 <p align="center">

@@ -1,4 +1,4 @@
-# 🚀 Telegram Bot Cloudflare Workers Wireframe
+# 🚀 Universal Bot Platform Wireframe
 
 <p align="center">
   <b>English</b> | <a href="README.ru.md">Русский</a>
@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <strong>A production-ready wireframe for building high-performance Telegram bots on Cloudflare Workers with TypeScript</strong>
+  <strong>Production-ready wireframe for creating any bots (Telegram, Discord, Slack) on any cloud platform (Cloudflare Workers, AWS Lambda, Google Cloud) with TypeScript 100% strict mode</strong>
 </p>
 
 <p align="center">
@@ -27,17 +27,31 @@
 
 ---
 
-## 🆕 What's New in v1.2
+## 🆕 What's New in v1.3
 
-### Universal Platform Architecture
+### 🤖 Automated Contribution System
+
+- **Interactive CLI tool** - `npm run contribute` for streamlined contributions
+- **Auto-detection** - Identifies valuable patterns from your changes
+- **Git worktree support** - Perfect for parallel development
+- **Test generation** - Automatically creates appropriate tests
+
+### 🌐 Namespace-based i18n Architecture
+
+- **Organized translations** - Migrated from flat keys to namespaces
+- **Platform formatters** - Telegram, Discord, Slack specific formatting
+- **Multiple providers** - Static JSON and dynamic KV storage
+- **Performance optimized** - Works within Cloudflare free tier limits
+
+### 🎯 Universal Platform Architecture
 
 - **Multi-cloud support** - Deploy on Cloudflare, AWS, GCP, or any cloud
+- **Multi-messenger support** - Telegram, Discord, Slack, WhatsApp ready
+- **ResourceConstraints** - Platform-agnostic resource management
 - **Platform abstraction** - Zero code changes when switching providers
 - **Event-driven architecture** with EventBus for decoupled communication
 - **Service connectors** for AI, Session, and Payment services
 - **Plugin system** for extensible functionality
-- **Request batching** for optimized API calls
-- **Duplicate message protection** to prevent processing the same update twice
 
 ### Breaking Changes
 
