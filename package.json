@@ -37,8 +37,8 @@
     "contribute:feature": "tsx scripts/contribute.ts --type=feature"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.53",
-    "@cloudflare/workers-types": "^4.20250111.0",
+    "@cloudflare/vitest-pool-workers": "^0.8.55",
+    "@cloudflare/workers-types": "^4.20250719.0",
     "@eslint/js": "^9.18.0",
     "@types/node": "^22.10.7",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
@@ -48,10 +48,10 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-promise": "^7.2.1",
     "chalk": "^5.3.0",
-    "commander": "^11.1.0",
+    "commander": "^14.0.0",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
-    "inquirer": "^10.1.8",
+    "inquirer": "^12.8.1",
     "lint-staged": "^16.1.0",
     "ora": "^8.0.1",
     "miniflare": "^4.20250709.0",
