@@ -1,4 +1,6 @@
-## Project Context: Wireframe v1.2
+## Current Version: v1.3.0
+
+## Project Context: Wireframe v1.3
 
 ### What is Wireframe?
 
@@ -50,6 +52,13 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - Test multi-platform scenarios even if implementing for one
 - Document decisions that affect platform independence
 
+### Important Directory Notes
+
+- **`/website/`** - Separate documentation website project (do not modify)
+- **`/examples/`** - User examples and templates (do not modify)
+- **`/docs/patterns/*.js`** - Documentation patterns with code examples (not actual code)
+- **`/backup/`** - Legacy files for reference (will be removed)
+
 ### TypeScript Best Practices
 
 1. **Type Guards over Assertions**: Use type guards instead of non-null assertions (!)
@@ -75,6 +84,14 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - ✅ Type guards pattern established for safe env access
 - ✅ i18n optimized with LightweightAdapter for free tier
 - ✅ Support for demo mode deployment without credentials
+- ✅ Multi-provider AI system with Gemini 2.0 Flash support
+
+### AI Provider System
+
+For information on using AI providers and adding custom models (like gemini-2.0-flash-exp):
+
+- See `/docs/AI_PROVIDERS.md` for comprehensive guide
+- `gemini-service.ts` is actively used (not legacy)
 
 ## Project Workflow Guidelines
 

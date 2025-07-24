@@ -1,6 +1,6 @@
 # 📊 Wireframe Project State
 
-## Current Version: v1.2.1
+## Current Version: v1.3.0
 
 ### 🎯 Project Status
 

@@ -42,6 +42,7 @@ Thumbs.db
 
 # Backup files
 backup/
+*.backup
 
 # Logs
 logs/

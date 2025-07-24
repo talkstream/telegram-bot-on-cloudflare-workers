@@ -14,6 +14,7 @@ Welcome to the comprehensive documentation for Wireframe - the universal AI assi
 - [Architecture Decisions](./ARCHITECTURE_DECISIONS.md) - Key design choices and rationale
 - [Cloud Platforms](./CLOUD_PLATFORMS.md) - Multi-cloud deployment guide
 - [API Reference](./API_REFERENCE.md) - Complete API documentation
+- [AI Providers](./AI_PROVIDERS.md) - Multi-provider AI system and custom models
 
 ### Deployment & Operations
 
