@@ -277,14 +277,7 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
       supportedPlatforms: [Platform.DISCORD],
       requiresWebhook: true,
       supportsBulkOperations: true,
-      features: {
-        hasWebhook: true,
-        hasCommands: true,
-        hasInlineButtons: true,
-        hasFiles: true,
-        hasVoice: true,
-        hasThreads: true,
-      },
+      features: ['webhook', 'commands', 'inline-buttons', 'files', 'voice', 'threads'],
     };
   }
 

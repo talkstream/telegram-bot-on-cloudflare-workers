@@ -9,7 +9,7 @@ export class AWSCacheStore implements ICacheStore {
 
   constructor(
     private cacheName: string,
-    private _useElastiCache: boolean = false,
+    _useElastiCache: boolean = false,
   ) {}
 
   /**

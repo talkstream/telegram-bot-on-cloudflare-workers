@@ -2,7 +2,6 @@
 
 import path from 'path';
 import fs from 'fs/promises';
-import { fileURLToPath } from 'url';
 
 import { Command } from 'commander';
 import chalk from 'chalk';
@@ -12,9 +11,6 @@ import ora from 'ora';
 import { createProject } from './create-project.js';
 import { validateProjectName } from './utils.js';
 import type { ProjectOptions } from './types.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const program = new Command();
 
