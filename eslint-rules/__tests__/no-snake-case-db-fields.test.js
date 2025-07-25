@@ -1,5 +1,5 @@
-const { RuleTester } = require('eslint');
-const rule = require('../no-snake-case-db-fields');
+import { RuleTester } from 'eslint';
+import rule from '../no-snake-case-db-fields.js';
 
 const ruleTester = new RuleTester({
   parserOptions: {

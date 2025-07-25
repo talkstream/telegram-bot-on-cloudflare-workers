@@ -1,5 +1,5 @@
-const { RuleTester } = require('eslint');
-const rule = require('../require-boolean-conversion');
+import { RuleTester } from 'eslint';
+import rule from '../require-boolean-conversion.js';
 
 const ruleTester = new RuleTester({
   parserOptions: {

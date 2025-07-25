@@ -8,6 +8,7 @@ export default defineWorkersConfig({
   test: {
     globals: true,
     setupFiles: ['./src/__tests__/setup/grammy-mock.ts'],
+    exclude: ['eslint-rules/**', 'node_modules/**', 'website/**', '**/node_modules/**'],
     poolOptions: {
       workers: {
         isolatedStorage: true,
@@ -43,6 +44,7 @@ export default defineWorkersConfig({
         '**/*.config.*',
         '**/mockData.ts',
         '**/*.type.ts',
+        'eslint-rules/**',
       ],
     },
   },
