@@ -14,6 +14,9 @@ jobs:
       name: production
       url: https://telegram-bot-wireframe.mommyslittlehelper.workers.dev
     steps:
+      - name: Configure git
+        run: git config --global init.defaultBranch main
+
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -52,7 +55,7 @@ jobs:
         run: |
           echo "📋 Demo Deployment Record Created"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🚀 Wireframe v1.2.0 - Universal AI Assistant Platform"
+          echo "🚀 Wireframe v1.3.0 - Universal AI Assistant Platform"
           echo ""
           echo "✅ Build successful"
           echo "✅ Tests passed"
@@ -74,7 +77,7 @@ jobs:
           if [ "${{ steps.check-secrets.outputs.has-secrets }}" == "true" ]; then
             if [ "${{ job.status }}" == "success" ]; then
               echo "✅ Deployment successful!"
-              echo "🚀 Your Wireframe v1.2 is now live at: https://telegram-bot-wireframe.mommyslittlehelper.workers.dev"
+              echo "🚀 Your Wireframe v1.3 is now live at: https://telegram-bot-wireframe.mommyslittlehelper.workers.dev"
               echo "📊 Check /health endpoint for system status"
             else
               echo "❌ Deployment failed"
