@@ -16,7 +16,7 @@ import { getTierConfig } from '@/config/cloudflare-tiers';
 import { logger } from '@/lib/logger';
 import { UniversalRoleService } from '@/core/services/role-service';
 import { EventBus } from '@/core/events/event-bus';
-import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import type { I18nConnector } from '@/core/interfaces/i18n';
 
 interface LightweightOptions {
@@ -294,7 +294,7 @@ export class LightweightAdapter {
  */
 export async function createTierAwareBot(env: Env): Promise<Bot<BotContext>> {
   // Get tier from resource constraints
-  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const cloudConnector = getCloudPlatformConnector(env);
   const constraints = cloudConnector.getResourceConstraints();
   const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
 

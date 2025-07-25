@@ -1,6 +1,6 @@
 import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
-import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import { hasAICapabilities } from '@/core/interfaces/resource-constraints';
 
 export const askCommand: CommandHandler = async (ctx) => {
@@ -11,7 +11,7 @@ export const askCommand: CommandHandler = async (ctx) => {
   }
 
   // Check if AI is enabled based on resource constraints
-  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(ctx.env);
+  const cloudConnector = getCloudPlatformConnector(ctx.env);
   const constraints = cloudConnector.getResourceConstraints();
   if (!hasAICapabilities(constraints)) {
     await ctx.reply(ctx.i18n.t('ai.general.not_available_free_tier', { namespace: 'telegram' }));

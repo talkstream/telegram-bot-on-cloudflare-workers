@@ -8,7 +8,7 @@ import { TelegramStarsService } from '@/domain/services/telegram-stars.service';
 import { PaymentRepository } from '@/domain/payments/repository';
 import { batcherMiddleware } from '@/lib/telegram-batcher';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
-import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import { MonitoringFactory } from '@/connectors/monitoring/monitoring-factory';
 import { I18nFactory } from '@/connectors/i18n/i18n-factory';
 import { EventBus } from '@/core/events/event-bus';
@@ -27,8 +27,8 @@ export async function createBot(env: Env) {
     debug: env.ENVIRONMENT === 'development',
   });
 
-  // Create cloud platform connector using factory
-  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  // Create cloud platform connector using cache (singleton pattern)
+  const cloudConnector = getCloudPlatformConnector(env);
   const constraints = cloudConnector.getResourceConstraints();
 
   // Map constraints back to tier for components that still need it

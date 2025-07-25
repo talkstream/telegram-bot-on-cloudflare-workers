@@ -85,6 +85,10 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - ✅ i18n optimized with LightweightAdapter for free tier
 - ✅ Support for demo mode deployment without credentials
 - ✅ Multi-provider AI system with Gemini 2.0 Flash support
+- ✅ Production insights from Kogotochki bot integrated (PR #14)
+- ✅ Updated to zod v4 and date-fns v4 for better performance
+- ✅ Development dependencies updated: commander v14, inquirer v12
+- ✅ All dependencies current as of January 25, 2025
 
 ### AI Provider System
 
@@ -192,3 +196,37 @@ The automated tools will:
 - Handle git operations
 
 This integrates with the Bot-Driven Development workflow described in CONTRIBUTING.md.
+
+## Production Patterns from Kogotochki Bot
+
+Battle-tested patterns from real production deployment with 100+ daily active users:
+
+### KV Cache Layer Pattern
+
+- **Impact**: 70% reduction in database queries
+- **Use cases**: AI provider configs, i18n translations, user preferences
+- **Location**: `/contrib/patterns/001-kv-cache-layer.md`
+- **Key benefits**: Reduced latency, lower costs, better UX
+
+### CloudPlatform Singleton Pattern
+
+- **Impact**: 80%+ improvement in response time (3-5s → ~500ms)
+- **Problem solved**: Repeated platform initialization on each request
+- **Location**: `/contrib/performance/001-cloudplatform-singleton.md`
+- **Critical for**: Cloudflare Workers free tier (10ms CPU limit)
+
+### Lazy Service Initialization
+
+- **Impact**: 30% faster cold starts, 40% less memory usage
+- **Problem solved**: Services initialized even when not needed
+- **Location**: `/contrib/performance/002-lazy-service-initialization.md`
+- **Especially important for**: AI services, heavy middleware
+
+### Type-Safe Database Field Mapping
+
+- **Impact**: Prevents silent data loss in production
+- **Problem solved**: snake_case (DB) ↔ camelCase (TS) mismatches
+- **Location**: `/contrib/patterns/002-database-field-mapping.md`
+- **Critical for**: Any database operations
+
+These patterns are designed to work within Cloudflare Workers' constraints while maintaining the universal architecture of Wireframe.

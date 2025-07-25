@@ -10,7 +10,7 @@ import { handleScheduled } from './core/scheduled-handler';
 import { errorHandler } from './middleware/error-handler';
 import { EventBus } from './core/events/event-bus';
 import { TelegramConnector } from './connectors/messaging/telegram';
-import { CloudPlatformFactory } from './core/cloud/platform-factory';
+import { getCloudPlatformConnector } from './core/cloud/cloud-platform-cache';
 // Register all cloud connectors
 import './connectors/cloud';
 // Import mock connectors for demo mode
@@ -74,8 +74,8 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
       });
     }
 
-    // Create cloud platform connector using factory
-    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+    // Create cloud platform connector using cache (singleton pattern)
+    const cloudConnector = getCloudPlatformConnector(env);
     const constraints = cloudConnector.getResourceConstraints();
 
     // Initialize AI service connector or mock

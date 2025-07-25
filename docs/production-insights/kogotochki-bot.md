@@ -9,6 +9,29 @@
 - **Cache**: Cloudflare KV
 - **Development Period**: January 2025
 
+## Recent Production Fixes
+
+### 5. Critical Bug: Database Field Name Mismatch
+
+**Problem**: "My Services" button stopped working after providers added services. Investigation revealed that database queries returned snake_case fields (e.g., `provider_id`) but TypeScript code expected camelCase (`providerId`), causing undefined values.
+
+**Solution**: Implemented comprehensive field mapping (see contrib/patterns/003-database-field-mapping.md):
+
+```typescript
+// Before: Silent failure
+const services = await db.query<Service>(`SELECT * FROM services`);
+console.log(services[0].providerId); // undefined!
+
+// After: Type-safe mapping
+const services = await db.query<ServiceDatabaseRow>(`SELECT * FROM services`);
+return services.map((row) => ({
+  providerId: row.provider_id,
+  // ... explicit mapping
+}));
+```
+
+**Impact**: Fixed critical user-facing bug and prevented entire class of runtime errors.
+
 ## Key Challenges & Solutions
 
 ### 1. Performance: CloudPlatformFactory Singleton Pattern

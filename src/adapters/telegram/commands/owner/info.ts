@@ -2,7 +2,7 @@ import type { CommandHandler } from '@/types';
 import type { Env } from '@/types';
 import { logger } from '@/lib/logger';
 import { hasDatabase } from '@/lib/env-guards';
-import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 
 /**
  * Technical information command for bot owners.
@@ -90,7 +90,7 @@ export const infoCommand: CommandHandler = async (ctx) => {
         params: { environment: env.ENVIRONMENT || 'production' },
       }) + '\n';
     // Get tier from resource constraints
-    const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+    const cloudConnector = getCloudPlatformConnector(env);
     const constraints = cloudConnector.getResourceConstraints();
     const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
     message +=

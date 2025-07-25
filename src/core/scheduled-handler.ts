@@ -3,14 +3,14 @@ import { logger } from '../lib/logger';
 import { SessionService } from '@/services/session-service';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
 import { getTierConfig } from '@/config/cloudflare-tiers';
-import { CloudPlatformFactory } from '@/core/cloud/platform-factory';
+import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import type { Env } from '@/types';
 
 export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
   const startTime = Date.now();
 
   // Get tier from resource constraints
-  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const cloudConnector = getCloudPlatformConnector(env);
   const constraints = cloudConnector.getResourceConstraints();
   const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
   const config = getTierConfig(tier);
@@ -55,7 +55,7 @@ export async function handleScheduled(event: ScheduledEvent, env: Env, ctx: Exec
  */
 async function cleanupSessions(env: Env): Promise<void> {
   // Get tier from resource constraints
-  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const cloudConnector = getCloudPlatformConnector(env);
   const constraints = cloudConnector.getResourceConstraints();
   const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
 
@@ -75,7 +75,7 @@ async function cleanupSessions(env: Env): Promise<void> {
  */
 async function logCacheStats(env: Env): Promise<void> {
   // Get tier from resource constraints
-  const cloudConnector = CloudPlatformFactory.createFromTypedEnv(env);
+  const cloudConnector = getCloudPlatformConnector(env);
   const constraints = cloudConnector.getResourceConstraints();
   const tier = constraints.maxExecutionTimeMs >= 5000 ? 'paid' : 'free';
   if (!env.CACHE) {
