@@ -32,6 +32,10 @@ export class MockAIConnector implements AIConnector {
   private _isReady = true;
   provider = 'mock' as const;
 
+  constructor(_env?: unknown) {
+    // Accept optional env parameter for compatibility
+  }
+
   private responses = [
     "Hello! I'm a mock AI assistant running in demo mode. This is Wireframe v1.2 - a universal AI assistant platform.",
     'I can simulate various AI responses for testing purposes. In production, you can connect real AI providers like OpenAI, Google Gemini, or others.',

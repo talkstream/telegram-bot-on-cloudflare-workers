@@ -53,6 +53,19 @@ describe('Service Container', () => {
     vi.mocked(getCloudPlatformConnector).mockImplementation(
       () =>
         ({
+          env: {
+            DB: {
+              prepare: vi.fn(() => ({
+                bind: vi.fn(() => ({
+                  run: vi.fn(),
+                  first: vi.fn(),
+                  all: vi.fn(),
+                })),
+              })),
+              exec: vi.fn(),
+              batch: vi.fn(),
+            },
+          },
           getDatabaseStore: vi.fn(() => ({
             prepare: vi.fn(),
             exec: vi.fn(),
@@ -71,6 +84,7 @@ describe('Service Container', () => {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'test',
       BOT_TOKEN: 'test-token',
+      BOT_OWNER_IDS: '123456789,987654321',
     } as Env;
   });
 

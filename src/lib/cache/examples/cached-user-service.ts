@@ -16,6 +16,7 @@ interface User {
   created_at?: Date;
 }
 import { KVCache, getMediumTTL } from '../kv-cache';
+import type { IRepository } from '../cached-service';
 import { CachedRepository } from '../cached-service';
 
 /**
@@ -113,11 +114,36 @@ export class CachedUserService extends UserService {
 }
 
 /**
+ * Alternative: Repository adapter for UserService
+ */
+class UserServiceRepositoryAdapter implements IRepository<User, number> {
+  constructor(private userService: UserService) {}
+
+  async getById(id: number): Promise<User | null> {
+    return this.userService.getUserByTelegramId(id);
+  }
+
+  async update(id: number, data: Partial<User>): Promise<void> {
+    await this.userService.updateUser(id, data);
+  }
+
+  async delete(_id: number): Promise<void> {
+    // Implement delete if needed
+    throw new Error('Delete not implemented');
+  }
+
+  async create(data: Omit<User, 'id'>): Promise<User> {
+    return this.userService.createUser(data as User);
+  }
+}
+
+/**
  * Alternative: Using CachedRepository base class
  */
 export class CachedUserRepository extends CachedRepository<User, number> {
   constructor(userService: UserService, cache: KVCache) {
-    super(userService, cache, {
+    const adapter = new UserServiceRepositoryAdapter(userService);
+    super(adapter, cache, {
       namespace: 'users',
       ttl: getMediumTTL(30),
       keyPrefix: 'user:telegram',

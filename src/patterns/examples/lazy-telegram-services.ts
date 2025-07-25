@@ -5,7 +5,6 @@
  * Telegram bot services to optimize memory usage
  */
 
-import type { Env } from '@/config/env';
 import type { IDatabaseStore } from '@/core/interfaces/storage';
 
 import { LazyServiceContainer } from '@/patterns/lazy-services';
@@ -32,7 +31,7 @@ interface AnalyticsService {
 /**
  * Telegram bot services
  */
-interface TelegramBotServices {
+interface TelegramBotServices extends Record<string, unknown> {
   userService: UserService;
   locationService: LocationService;
   notificationService: NotificationService;

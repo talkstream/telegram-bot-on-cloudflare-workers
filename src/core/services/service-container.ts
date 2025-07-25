@@ -7,11 +7,13 @@
 
 import type { Env } from '@/config/env';
 import type { IDatabaseStore, IKeyValueStore } from '@/core/interfaces/storage';
-import type { IAIConnector } from '@/core/interfaces/ai-connector';
-import type { IMessagingConnector } from '@/core/interfaces/messaging-connector';
+import type { AIConnector } from '@/core/interfaces/ai';
+import type { MessagingConnector } from '@/core/interfaces/messaging';
+import { ConnectorType } from '@/core/interfaces/connector';
 import { LazyServiceContainer, ConditionalServiceContainer } from '@/patterns/lazy-services';
 import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import { UniversalRoleService } from '@/core/services/role-service';
+import { EventBus } from '@/core/events/event-bus';
 import { KVCache } from '@/lib/cache/kv-cache';
 import { getBotToken, isDemoMode } from '@/lib/env-guards';
 import { MockAIConnector } from '@/connectors/ai/mock-ai-connector';
@@ -21,10 +23,10 @@ import { TelegramConnector } from '@/connectors/messaging/telegram/telegram-conn
 /**
  * Wireframe core services
  */
-export interface WireframeServices {
+export interface WireframeServices extends Record<string, unknown> {
   roleService: UniversalRoleService;
-  aiConnector: IAIConnector;
-  messagingConnector: IMessagingConnector;
+  aiConnector: AIConnector;
+  messagingConnector: MessagingConnector;
   kvCache: KVCache;
 }
 
@@ -75,11 +77,18 @@ export function initializeServiceContainer(env: Env): void {
 function registerCoreServices(): void {
   // Role Service
   coreServices.register('roleService', () => {
-    const db = getDatabaseStore();
-    if (!db) {
-      throw new Error('Database required for RoleService');
+    if (!serviceConfig.env) {
+      throw new Error('Environment not configured');
     }
-    return new UniversalRoleService(db);
+    // UniversalRoleService requires D1Database directly, not IDatabaseStore wrapper
+    const platform = getCloudPlatformConnector(serviceConfig.env);
+    const db = (platform as unknown as { env?: { DB?: unknown } }).env?.DB;
+    if (!db) {
+      throw new Error('D1 Database required for RoleService');
+    }
+    const ownerIds = serviceConfig.env.BOT_OWNER_IDS?.split(',').filter(Boolean) || [];
+    const eventBus = new EventBus();
+    return new UniversalRoleService(db, ownerIds, eventBus);
   });
 
   // AI Connector
@@ -88,13 +97,13 @@ function registerCoreServices(): void {
       throw new Error('Environment not configured');
     }
 
-    if (isDemoMode()) {
-      return new MockAIConnector();
+    const connector = new MockAIConnector(serviceConfig.env);
+
+    if (isDemoMode(serviceConfig.env)) {
+      console.info('[ServiceContainer] Using Mock AI Connector (demo mode)');
     }
 
-    // In real implementation, use AI connector factory
-    // For now, return mock
-    return new MockAIConnector();
+    return connector;
   });
 
   // Messaging Connector (Telegram)
@@ -103,16 +112,21 @@ function registerCoreServices(): void {
       throw new Error('Environment not configured');
     }
 
-    if (isDemoMode()) {
-      return new MockTelegramConnector();
+    if (isDemoMode(serviceConfig.env)) {
+      console.info('[ServiceContainer] Using Mock Telegram Connector (demo mode)');
+      return new MockTelegramConnector({
+        type: ConnectorType.MESSAGING,
+        id: 'mock-telegram',
+        name: 'Mock Telegram',
+      });
     }
 
-    const token = getBotToken();
+    const token = getBotToken(serviceConfig.env);
     if (!token) {
       throw new Error('Bot token required for TelegramConnector');
     }
 
-    return new TelegramConnector(token);
+    return new TelegramConnector();
   });
 
   // KV Cache

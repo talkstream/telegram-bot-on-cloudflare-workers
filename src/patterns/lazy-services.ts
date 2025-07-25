@@ -42,7 +42,7 @@ export class LazyServiceContainer<T extends Record<string, unknown>> {
       }
 
       const startTime = Date.now();
-      this.services[name] = factory();
+      this.services[name] = factory() as T[K];
       this.creationTimes.set(name, Date.now() - startTime);
 
       console.info(`[LazyService] Created ${String(name)} in ${this.creationTimes.get(name)}ms`);

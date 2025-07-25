@@ -38,11 +38,21 @@ export abstract class CachedService<T> {
 }
 
 /**
+ * Repository interface for cached repositories
+ */
+export interface IRepository<TEntity, TKey> {
+  getById(id: TKey): Promise<TEntity | null>;
+  update(id: TKey, data: Partial<TEntity>): Promise<void>;
+  delete(id: TKey): Promise<void>;
+  create(data: Omit<TEntity, 'id'>): Promise<TEntity>;
+}
+
+/**
  * Example implementation for a cached repository pattern
  */
 export abstract class CachedRepository<TEntity, TKey> {
   constructor(
-    protected repository: unknown,
+    protected repository: IRepository<TEntity, TKey>,
     protected cache: KVCache,
     protected config: {
       namespace: string;
