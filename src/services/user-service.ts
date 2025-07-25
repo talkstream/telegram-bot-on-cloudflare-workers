@@ -1,6 +1,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 
 import type { Env } from '@/types';
+import type { D1RunMeta } from '@/core/interfaces/storage';
 import { logger } from '@/lib/logger';
 import { withTimeout, getTimeoutConfig } from '@/lib/timeout-wrapper';
 
@@ -85,8 +86,12 @@ export class UserService {
       logger.info('Created new user', { telegramId: data.telegramId });
 
       // Return the created user
+      const meta = result.meta as D1RunMeta;
+      if (!meta.last_row_id) {
+        throw new Error('Failed to get last_row_id from database');
+      }
       return {
-        id: result.meta.last_row_id as number,
+        id: meta.last_row_id,
         telegramId: data.telegramId,
         username: data.username || undefined,
         firstName: data.firstName,

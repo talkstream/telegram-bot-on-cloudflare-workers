@@ -4,6 +4,28 @@
  */
 
 /**
+ * Cloudflare D1 specific metadata for run() operations
+ * Provides type safety for database operations
+ */
+export interface D1RunMeta {
+  last_row_id?: number;
+  changes?: number;
+  duration?: number;
+  rows_affected?: number;
+  rows_read?: number;
+  rows_written?: number;
+}
+
+/**
+ * Cloudflare D1 specific metadata for all() operations
+ */
+export interface D1AllMeta {
+  duration?: number;
+  rows_read?: number;
+  rows_written?: number;
+}
+
+/**
  * Statement execution result
  */
 export interface StatementResult<T = unknown> {
@@ -125,13 +147,15 @@ export interface IPreparedStatement {
 
   /**
    * Execute and return all results
+   * For D1, cast meta to D1AllMeta for type-safe access
    */
-  all<T = unknown>(): Promise<{ results: T[]; meta: unknown }>;
+  all<T = unknown>(): Promise<{ results: T[]; meta: D1AllMeta | unknown }>;
 
   /**
    * Execute without returning results
+   * For D1, cast meta to D1RunMeta for type-safe access
    */
-  run(): Promise<{ meta: unknown }>;
+  run(): Promise<{ meta: D1RunMeta | unknown; success?: boolean }>;
 }
 
 /**
