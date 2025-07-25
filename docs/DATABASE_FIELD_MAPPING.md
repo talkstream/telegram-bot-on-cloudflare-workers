@@ -2,6 +2,8 @@
 
 This guide explains how to use the Wireframe Field Mapper system for safe and efficient database field mapping between snake_case database columns and camelCase JavaScript/TypeScript properties.
 
+> **Note**: Types and mappers can be automatically generated from SQL schema using the [Database Type Generator CLI](./CLI_DB_TYPES.md).
+
 ## Overview
 
 The Field Mapper provides a type-safe, declarative way to handle the common problem of converting between database naming conventions (snake_case) and JavaScript/TypeScript naming conventions (camelCase).

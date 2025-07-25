@@ -24,6 +24,8 @@
     "db:generate": "wrangler d1 migrations create",
     "db:apply:local": "wrangler d1 migrations apply DB --local",
     "db:apply:remote": "wrangler d1 migrations apply DB --env production",
+    "db:types": "tsx src/cli/generate-db-types-standalone.ts",
+    "db:types:watch": "tsx src/cli/generate-db-types.ts --watch",
     "secrets:list": "wrangler secret list --env production",
     "tail": "wrangler tail --env production",
     "tail:staging": "wrangler tail --env staging",
