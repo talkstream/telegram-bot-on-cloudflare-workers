@@ -86,6 +86,7 @@ Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot fra
 - ✅ Support for demo mode deployment without credentials
 - ✅ Multi-provider AI system with Gemini 2.0 Flash support
 - ✅ Production insights from Kogotochki bot integrated (PR #14)
+- ✅ ESLint database mapping rules activated from Kogotochki experience (July 2025)
 - ✅ Updated to zod v4 and date-fns v4 for better performance
 - ✅ Development dependencies updated: commander v14, inquirer v12
 - ✅ All dependencies current as of January 25, 2025
@@ -108,7 +109,22 @@ For information on using AI providers and adding custom models (like gemini-2.0-
 - Use type guards for all optional values - avoid non-null assertions
 - Ensure CI/CD compatibility by supporting demo mode
 
-## Recent Changes (v1.2.2 - January 21, 2025)
+## Recent Changes
+
+### v1.3.0 - ESLint Database Mapping Rules (July 25, 2025)
+
+- **Activated custom ESLint rules** from Kogotochki production experience:
+  - **`db-mapping/no-snake-case-db-fields`** - Prevents direct access to snake_case fields
+  - **`db-mapping/require-boolean-conversion`** - Ensures SQLite 0/1 to boolean conversion
+  - **`db-mapping/require-date-conversion`** - Requires date string to Date object conversion
+  - **`db-mapping/use-field-mapper`** - Suggests FieldMapper for 3+ field transformations
+- **Fixed ESLint rule implementation**:
+  - Removed unused variables (5 errors fixed)
+  - Fixed recursive traversal issue in use-field-mapper
+  - Applied proper formatting to all rule files
+- **Production impact**: Prevents silent data loss bugs discovered in Kogotochki bot
+
+### v1.2.2 - Middleware Architecture (January 21, 2025)
 
 ### Middleware Architecture Refactoring
 
