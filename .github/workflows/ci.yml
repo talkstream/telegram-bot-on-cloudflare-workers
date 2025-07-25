@@ -62,13 +62,15 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        if: false # Disabled to avoid warnings without token
+        uses: codecov/codecov-action@v5
+        # v5 supports tokenless uploads for public repos
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         with:
-          file: ./coverage/lcov.info
+          files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
+          verbose: false
 
   security:
     name: Security Scan

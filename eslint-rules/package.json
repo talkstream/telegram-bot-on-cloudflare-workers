@@ -1,0 +1,20 @@
+{
+  "name": "eslint-plugin-db-mapping",
+  "version": "1.0.0",
+  "description": "ESLint rules for database field mapping",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test ./__tests__/*.test.js"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "database",
+    "mapping",
+    "field-mapping"
+  ],
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  }
+}
