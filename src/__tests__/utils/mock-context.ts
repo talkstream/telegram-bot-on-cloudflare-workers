@@ -61,6 +61,11 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
           'notifications.denied': 'Your access request has been rejected.',
           'messages.request_count': 'Pending requests',
           'messages.next': 'Next',
+          'messages.owner_only': 'This command is only available to bot owners.',
+          'messages.admin_only': 'This command is only available to administrators.',
+          'messages.access_only': 'You do not have access to this bot.',
+          'messages.unauthorized': 'You do not have access to this bot.',
+          'messages.use_start_to_request': 'Use /start to request access.',
         };
         if (key in accessMessages) {
           let message = accessMessages[key];

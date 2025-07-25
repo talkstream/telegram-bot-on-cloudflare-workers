@@ -73,6 +73,9 @@ export function createAuthMiddleware(roleService: RoleService) {
     const debugLevel = await getDebugLevel(ctx);
     if (debugLevel === 0) return false;
 
+    // If debug level is 3 (show to all users), always return true
+    if (debugLevel === 3) return true;
+
     switch (requiredLevel) {
       case 1: // Owner level
         return debugLevel >= 1 && (await isOwner(ctx));

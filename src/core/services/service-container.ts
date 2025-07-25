@@ -88,7 +88,7 @@ function registerCoreServices(): void {
     }
     const ownerIds = serviceConfig.env.BOT_OWNER_IDS?.split(',').filter(Boolean) || [];
     const eventBus = new EventBus();
-    return new UniversalRoleService(db, ownerIds, eventBus);
+    return new UniversalRoleService(db as D1Database, ownerIds, eventBus);
   });
 
   // AI Connector
