@@ -5,6 +5,26 @@
 import type { R2Bucket } from '@cloudflare/workers-types';
 
 import type { IObjectStore } from '../../../../core/interfaces/storage';
+import { FieldMapper } from '../../../../core/database/field-mapper';
+
+// Field mapper for R2 object metadata
+interface R2ObjectInfo {
+  key: string;
+  size: number;
+  uploaded: Date;
+}
+
+interface CloudflareR2Object {
+  key: string;
+  size: number;
+  uploaded: Date;
+}
+
+const r2ObjectMapper = new FieldMapper<CloudflareR2Object, R2ObjectInfo>([
+  { dbField: 'key', domainField: 'key' },
+  { dbField: 'size', domainField: 'size' },
+  { dbField: 'uploaded', domainField: 'uploaded' },
+]);
 
 export class CloudflareObjectStore implements IObjectStore {
   constructor(private r2: R2Bucket) {}
@@ -71,11 +91,13 @@ export class CloudflareObjectStore implements IObjectStore {
     });
 
     return {
-      objects: result.objects.map((obj) => ({
-        key: obj.key,
-        size: obj.size,
-        uploaded: new Date(obj.uploaded),
-      })),
+      objects: result.objects.map((obj) =>
+        r2ObjectMapper.toDomain({
+          key: obj.key,
+          size: obj.size,
+          uploaded: new Date(obj.uploaded),
+        }),
+      ),
       truncated: result.truncated,
       cursor: 'cursor' in result ? result.cursor : undefined,
     };

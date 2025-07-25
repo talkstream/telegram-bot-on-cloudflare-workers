@@ -7,6 +7,7 @@ import type {
 } from '../../core/interfaces/connector.js';
 import { ConnectorType } from '../../core/interfaces/connector.js';
 import { EventBus, CommonEventType } from '../../core/events/event-bus.js';
+// Metadata is not used for database mapping - reverting to original implementation
 
 /**
  * Base implementation of Connector interface

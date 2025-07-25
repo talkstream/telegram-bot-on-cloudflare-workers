@@ -75,12 +75,14 @@ class SQLParser {
     while ((match = createTableRegex.exec(cleanedSql)) !== null) {
       const tableName = match[1];
       const tableBody = match[2];
-      const columns = this.parseColumns(tableBody);
+      if (tableName && tableBody) {
+        const columns = this.parseColumns(tableBody);
 
-      tables.push({
-        name: tableName,
-        columns,
-      });
+        tables.push({
+          name: tableName,
+          columns,
+        });
+      }
     }
 
     return tables;
@@ -146,13 +148,15 @@ class SQLParser {
     if (!match) return null;
 
     const [, name, type, constraintsStr] = match;
-    const constraints = constraintsStr.toUpperCase();
+    if (!name || !type) return null;
+
+    const constraints = (constraintsStr || '').toUpperCase();
 
     return {
       name,
       type: type.toUpperCase(),
       nullable: !constraints.includes('NOT NULL'),
-      defaultValue: this.extractDefault(constraintsStr),
+      defaultValue: this.extractDefault(constraintsStr || ''),
       isPrimaryKey: constraints.includes('PRIMARY KEY'),
       isUnique: constraints.includes('UNIQUE'),
       isAutoIncrement: constraints.includes('AUTOINCREMENT'),
@@ -161,7 +165,7 @@ class SQLParser {
 
   private extractDefault(constraints: string): string | undefined {
     const match = constraints.match(/DEFAULT\s+([^,\s]+)/i);
-    if (match) {
+    if (match && match[1]) {
       let value = match[1];
       if (
         (value.startsWith("'") && value.endsWith("'")) ||
@@ -389,11 +393,16 @@ function parseArgs(): CLIOptions {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--input' && args[i + 1]) {
-      options.input = args[++i];
+      const inputArg = args[++i];
+      if (inputArg) options.input = inputArg;
     } else if (arg === '--output' && args[i + 1]) {
-      options.output = args[++i];
+      const outputArg = args[++i];
+      if (outputArg) options.output = outputArg;
     } else if (arg === '--tables' && args[i + 1]) {
-      options.tables = args[++i].split(',');
+      const tableArg = args[++i];
+      if (tableArg) {
+        options.tables = tableArg.split(',');
+      }
     } else if (arg === '--watch') {
       options.watch = true;
     } else if (arg === '--dry-run') {

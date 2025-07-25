@@ -10,6 +10,27 @@ import type {
 import { UserRole as Role } from '@/core/interfaces/role-system';
 import { logger } from '@/lib/logger';
 import { EventBus } from '@/core/events/event-bus';
+import { FieldMapper, CommonTransformers } from '@/core/database/field-mapper';
+
+// Database row type for role users
+interface RoleUserDatabaseRow {
+  user_id: string;
+  platform_id: string;
+  platform: string;
+  role: string;
+  granted_by: string;
+  granted_at: string;
+}
+
+// Field mapper for role users
+const roleUserMapper = new FieldMapper<RoleUserDatabaseRow, RoleUser>([
+  { dbField: 'user_id', domainField: 'id' },
+  { dbField: 'platform_id', domainField: 'platformId' },
+  { dbField: 'platform', domainField: 'platform' },
+  { dbField: 'role', domainField: 'role', toDomain: (v) => v as UserRole },
+  { dbField: 'granted_by', domainField: 'grantedBy' },
+  { dbField: 'granted_at', domainField: 'grantedAt', ...CommonTransformers.isoDate },
+]);
 
 export class UniversalRoleService implements RoleService {
   private db: D1Database;
@@ -132,15 +153,7 @@ export class UniversalRoleService implements RoleService {
           granted_at: string;
         }>();
 
-      const users: RoleUser[] =
-        results.results?.map((r) => ({
-          id: r.user_id,
-          platformId: r.platform_id,
-          platform: r.platform,
-          role: r.role as UserRole,
-          grantedBy: r.granted_by,
-          grantedAt: new Date(r.granted_at),
-        })) || [];
+      const users: RoleUser[] = results.results?.map((r) => roleUserMapper.toDomain(r)) || [];
 
       // Add hardcoded owners if requested
       if (role === Role.OWNER) {
@@ -183,15 +196,7 @@ export class UniversalRoleService implements RoleService {
           granted_at: string;
         }>();
 
-      const users: RoleUser[] =
-        results.results?.map((r) => ({
-          id: r.user_id,
-          platformId: r.platform_id,
-          platform: r.platform,
-          role: r.role as UserRole,
-          grantedBy: r.granted_by,
-          grantedAt: new Date(r.granted_at),
-        })) || [];
+      const users: RoleUser[] = results.results?.map((r) => roleUserMapper.toDomain(r)) || [];
 
       // Add hardcoded owners
       for (const ownerId of this.ownerIds) {
@@ -294,16 +299,7 @@ export class UniversalRoleService implements RoleService {
           granted_at: string;
         }>();
 
-      return (
-        results.results?.map((r) => ({
-          id: r.user_id,
-          platformId: r.platform_id,
-          platform: r.platform,
-          role: r.role as UserRole,
-          grantedBy: r.granted_by,
-          grantedAt: new Date(r.granted_at),
-        })) || []
-      );
+      return results.results?.map((r) => roleUserMapper.toDomain(r)) || [];
     } catch (error) {
       logger.error('Failed to get users by platform', { error, platform });
       return [];

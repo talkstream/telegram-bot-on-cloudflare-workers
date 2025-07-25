@@ -1,5 +1,6 @@
 import { EventBus, CommonEventType } from '../events/event-bus.js';
 import type { Connector } from '../interfaces/connector.js';
+import { FieldMapper } from '../database/field-mapper.js';
 
 import { PluginState } from './plugin.js';
 import type {
@@ -12,6 +13,32 @@ import type {
   Logger,
   PluginStorage,
 } from './plugin.js';
+
+// Helper type for plugin metadata source
+interface PluginMetadataSource {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  author?: string;
+  homepage?: string;
+  state: PluginState;
+  installedAt: Date;
+  config?: Record<string, unknown>;
+}
+
+// Field mapper for plugin metadata
+const _pluginMetadataMapper = new FieldMapper<PluginMetadataSource, PluginMetadata>([
+  { dbField: 'id', domainField: 'id' },
+  { dbField: 'name', domainField: 'name' },
+  { dbField: 'version', domainField: 'version' },
+  { dbField: 'description', domainField: 'description' },
+  { dbField: 'author', domainField: 'author' },
+  { dbField: 'homepage', domainField: 'homepage' },
+  { dbField: 'state', domainField: 'state' },
+  { dbField: 'installedAt', domainField: 'installedAt' },
+  { dbField: 'config', domainField: 'config' },
+]);
 
 export class PluginManager implements IPluginManager {
   private plugins: Map<string, Plugin> = new Map();
@@ -336,16 +363,18 @@ export class PluginManager implements IPluginManager {
   }
 
   private getPluginMetadata(plugin: Plugin): PluginMetadata {
-    return {
+    const source: PluginMetadataSource = {
       id: plugin.id,
       name: plugin.name,
       version: plugin.version,
       description: plugin.description,
-      ...(plugin.author && { author: plugin.author }),
-      ...(plugin.homepage && { homepage: plugin.homepage }),
+      author: plugin.author,
+      homepage: plugin.homepage,
       state: this.pluginStates.get(plugin.id) || PluginState.INSTALLED,
       installedAt: new Date(), // TODO: Track actual install time
       config: this.pluginConfigs.get(plugin.id),
     };
+
+    return _pluginMetadataMapper.toDomain(source);
   }
 }
