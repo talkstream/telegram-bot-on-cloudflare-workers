@@ -1,6 +1,6 @@
 import { logger } from '../../lib/logger';
 
-import type { IDatabaseStore } from '@/core/interfaces/storage';
+import type { IDatabaseStore, D1RunMeta } from '@/core/interfaces/storage';
 
 export interface TelegramPayment {
   id?: number;
@@ -53,9 +53,11 @@ export class PaymentRepository {
           payment.status,
         )
         .run();
-      // TODO: Remove 'any' when IDatabaseStore provides proper meta types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (result.meta as any).last_row_id as number;
+      const meta = result.meta as D1RunMeta;
+      if (!meta.last_row_id) {
+        throw new Error('Failed to get last_row_id from database');
+      }
+      return meta.last_row_id;
     } catch (error) {
       logger.error('Failed to record payment', { error, payment });
       throw new Error('Failed to record payment');
@@ -81,9 +83,11 @@ export class PaymentRepository {
           invoice.expires_at,
         )
         .run();
-      // TODO: Remove 'any' when IDatabaseStore provides proper meta types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (result.meta as any).last_row_id as number;
+      const meta = result.meta as D1RunMeta;
+      if (!meta.last_row_id) {
+        throw new Error('Failed to get last_row_id from database');
+      }
+      return meta.last_row_id;
     } catch (error) {
       logger.error('Failed to save pending invoice', { error, invoice });
       throw new Error('Failed to save pending invoice');
