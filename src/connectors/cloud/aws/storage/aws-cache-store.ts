@@ -26,7 +26,7 @@ export class AWSCacheStore implements ICacheStore {
       return undefined;
     }
 
-    console.log(`[Mock] Cache MATCH: ${this.cacheName}/${key}`);
+    console.info(`[Mock] Cache MATCH: ${this.cacheName}/${key}`);
     return item.response.clone();
   }
 
@@ -41,7 +41,7 @@ export class AWSCacheStore implements ICacheStore {
     const expires = Date.now() + ttl * 1000;
 
     this.cache.set(key, { response: response.clone(), expires });
-    console.log(`[Mock] Cache PUT: ${this.cacheName}/${key}, TTL: ${ttl}s`);
+    console.info(`[Mock] Cache PUT: ${this.cacheName}/${key}, TTL: ${ttl}s`);
   }
 
   /**
@@ -50,7 +50,7 @@ export class AWSCacheStore implements ICacheStore {
   async delete(request: Request | string): Promise<boolean> {
     const key = typeof request === 'string' ? request : request.url;
     const deleted = this.cache.delete(key);
-    console.log(`[Mock] Cache DELETE: ${this.cacheName}/${key}`);
+    console.info(`[Mock] Cache DELETE: ${this.cacheName}/${key}`);
     return deleted;
   }
 
@@ -77,7 +77,7 @@ export class AWSCacheStore implements ICacheStore {
     // await client.flush();
 
     this.cache.clear();
-    console.log(`[Mock] Cache CLEAR: ${this.cacheName}`);
+    console.info(`[Mock] Cache CLEAR: ${this.cacheName}`);
   }
 
   async keys(pattern?: string): Promise<string[]> {
@@ -157,7 +157,7 @@ export class AWSCacheStore implements ICacheStore {
     //   }));
     // }
 
-    console.log(`[Mock] Persisting ${this.cache.size} items to DynamoDB`);
+    console.info(`[Mock] Persisting ${this.cache.size} items to DynamoDB`);
   }
 
   /**
@@ -177,6 +177,6 @@ export class AWSCacheStore implements ICacheStore {
     //   });
     // }
 
-    console.log(`[Mock] Loading cache from DynamoDB`);
+    console.info(`[Mock] Loading cache from DynamoDB`);
   }
 }

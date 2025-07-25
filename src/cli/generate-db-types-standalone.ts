@@ -417,7 +417,7 @@ function parseArgs(): CLIOptions {
 }
 
 function printHelp() {
-  console.log(`
+  console.info(`
 ${chalk.bold('Database Type Generator')}
 
 Generate TypeScript types from SQL schema files.
@@ -456,20 +456,20 @@ async function writeFile(path: string, content: string, dryRun: boolean) {
   const fullPath = join(rootDir, path);
 
   if (dryRun) {
-    console.log(chalk.yellow(`[DRY RUN] Would write to: ${path}`));
-    console.log(chalk.gray('Content preview:'));
-    console.log(content.split('\n').slice(0, 10).join('\n'));
-    console.log(chalk.gray('...'));
+    console.info(chalk.yellow(`[DRY RUN] Would write to: ${path}`));
+    console.info(chalk.gray('Content preview:'));
+    console.info(content.split('\n').slice(0, 10).join('\n'));
+    console.info(chalk.gray('...'));
     return;
   }
 
   await mkdir(dirname(fullPath), { recursive: true });
   await fsWriteFile(fullPath, content, 'utf-8');
-  console.log(chalk.green(`✓ Generated: ${path}`));
+  console.info(chalk.green(`✓ Generated: ${path}`));
 }
 
 async function generate(options: CLIOptions) {
-  console.log(chalk.bold('\n🔧 Generating TypeScript types from SQL schema...\n'));
+  console.info(chalk.bold('\n🔧 Generating TypeScript types from SQL schema...\n'));
 
   try {
     // Find SQL files
@@ -479,19 +479,19 @@ async function generate(options: CLIOptions) {
       process.exit(1);
     }
 
-    console.log(chalk.blue(`Found ${sqlFiles.length} SQL files:`));
+    console.info(chalk.blue(`Found ${sqlFiles.length} SQL files:`));
     sqlFiles.forEach((file) => {
-      console.log(chalk.gray(`  - ${file.replace(rootDir, '.')}`));
+      console.info(chalk.gray(`  - ${file.replace(rootDir, '.')}`));
     });
 
     // Parse SQL files
-    console.log(chalk.blue('\nParsing SQL files...'));
+    console.info(chalk.blue('\nParsing SQL files...'));
     let tables = await parseSQLFiles(sqlFiles);
 
     // Filter tables if specified
     if (options.tables) {
-      tables = tables.filter((table) => options.tables!.includes(table.name));
-      console.log(chalk.blue(`Filtering to tables: ${options.tables.join(', ')}`));
+      tables = tables.filter((table) => options.tables?.includes(table.name) ?? false);
+      console.info(chalk.blue(`Filtering to tables: ${options.tables.join(', ')}`));
     }
 
     if (tables.length === 0) {
@@ -499,13 +499,13 @@ async function generate(options: CLIOptions) {
       process.exit(1);
     }
 
-    console.log(chalk.green(`✓ Found ${tables.length} tables:`));
+    console.info(chalk.green(`✓ Found ${tables.length} tables:`));
     tables.forEach((table) => {
-      console.log(chalk.gray(`  - ${table.name} (${table.columns.length} columns)`));
+      console.info(chalk.gray(`  - ${table.name} (${table.columns.length} columns)`));
     });
 
     // Generate types
-    console.log(chalk.blue('\nGenerating types...'));
+    console.info(chalk.blue('\nGenerating types...'));
 
     const dbTypes = generateDatabaseTypes(tables);
     await writeFile(join(options.output, 'database.ts'), dbTypes, options.dryRun);
@@ -521,11 +521,11 @@ async function generate(options: CLIOptions) {
     );
 
     if (!options.dryRun) {
-      console.log(chalk.bold.green('\n✅ Type generation completed successfully!\n'));
-      console.log(chalk.gray('Generated files:'));
-      console.log(chalk.gray(`  - ${options.output}/database.ts`));
-      console.log(chalk.gray(`  - ${options.output}/models.ts`));
-      console.log(chalk.gray(`  - src/database/mappers/generated/index.ts`));
+      console.info(chalk.bold.green('\n✅ Type generation completed successfully!\n'));
+      console.info(chalk.gray('Generated files:'));
+      console.info(chalk.gray(`  - ${options.output}/database.ts`));
+      console.info(chalk.gray(`  - ${options.output}/models.ts`));
+      console.info(chalk.gray(`  - src/database/mappers/generated/index.ts`));
     }
   } catch (error) {
     console.error(chalk.red('\n❌ Error generating types:'), error);
@@ -537,7 +537,7 @@ async function main() {
   const options = parseArgs();
 
   if (options.watch) {
-    console.log(chalk.yellow('\n👀 Watch mode not implemented yet\n'));
+    console.info(chalk.yellow('\n👀 Watch mode not implemented yet\n'));
     await generate(options);
   } else {
     await generate(options);

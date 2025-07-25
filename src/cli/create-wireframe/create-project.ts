@@ -43,7 +43,7 @@ export async function createProject(projectPath: string, options: ProjectOptions
 
   // Install dependencies
   if (options.install) {
-    console.log(chalk.cyan('\nInstalling dependencies...'));
+    console.info(chalk.cyan('\nInstalling dependencies...'));
     await installDependencies(projectPath);
   }
 }

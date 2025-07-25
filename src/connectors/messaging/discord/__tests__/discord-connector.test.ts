@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { DiscordConnector } from '../discord-connector.js';
-import { Platform } from '../../../../core/interfaces/messaging.js';
+import { Platform, MessageType, type UnifiedMessage } from '../../../../core/interfaces/messaging.js';
 import { ConnectorType } from '../../../../core/interfaces/connector.js';
 import { EventBus } from '../../../../core/events/event-bus.js';
 
@@ -109,7 +109,7 @@ describe('Discord Connector', () => {
 
     it('should convert Discord interaction to unified message', async () => {
       const validateSpy = vi.spyOn(connector, 'validateWebhook').mockResolvedValue(true);
-      let emittedMessage: any;
+      let emittedMessage: UnifiedMessage | undefined;
 
       eventBus.on('message.received', (data) => {
         emittedMessage = data.payload.message;
@@ -165,7 +165,7 @@ describe('Discord Connector', () => {
       const message = {
         content: {
           text: 'Test message',
-          type: 'text' as any,
+          type: MessageType.TEXT,
         },
       };
 
@@ -180,7 +180,7 @@ describe('Discord Connector', () => {
       const message = {
         content: {
           text: 'Bulk message',
-          type: 'text' as any,
+          type: MessageType.TEXT,
         },
       };
 
@@ -234,7 +234,7 @@ describe('Discord Connector', () => {
         eventBus,
       });
 
-      let webhookEvent: any;
+      let webhookEvent: { connector: string; url: string } | undefined;
       eventBus.on('webhook.set', (data) => {
         webhookEvent = data.payload;
       });

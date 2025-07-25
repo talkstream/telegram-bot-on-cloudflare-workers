@@ -2,16 +2,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { AnthropicProvider } from '../anthropic.js';
 import type { CompletionRequest } from '../../types.js';
+import type { AIProviderError } from '../../types.js';
+
+function isAIProviderError(error: unknown): error is AIProviderError {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'retryable' in error &&
+    'provider' in error
+  );
+}
 
 describe('AnthropicProvider', () => {
   let provider: AnthropicProvider;
   const mockApiKey = 'test-api-key';
   const originalFetch = global.fetch;
+  const mockFetch = () => global.fetch as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock fetch globally
-    global.fetch = vi.fn();
+    global.fetch = vi.fn() as unknown as typeof fetch;
     provider = new AnthropicProvider({ apiKey: mockApiKey }, 'free'); // Use free tier to avoid retries
   });
 
@@ -57,7 +69,7 @@ describe('AnthropicProvider', () => {
         },
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
@@ -103,7 +115,7 @@ describe('AnthropicProvider', () => {
         usage: { input_tokens: 15, output_tokens: 10 },
       };
 
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse,
       });
@@ -118,7 +130,7 @@ describe('AnthropicProvider', () => {
       await provider.complete(request);
 
       // Verify the request body
-      const callArgs = (global.fetch as any).mock.calls[0];
+      const callArgs = mockFetch().mock.calls[0];
       const requestBody = JSON.parse(callArgs[1].body);
 
       expect(requestBody.system).toBe('You are a helpful assistant.');
@@ -127,7 +139,7 @@ describe('AnthropicProvider', () => {
 
     it('should handle API errors', async () => {
       vi.clearAllMocks();
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: false,
         status: 429,
         text: async () => 'Rate limit exceeded',
@@ -164,7 +176,7 @@ describe('AnthropicProvider', () => {
         },
       });
 
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: true,
         body: stream,
       });
@@ -173,7 +185,10 @@ describe('AnthropicProvider', () => {
         messages: [{ role: 'user', content: 'Hello' }],
       };
 
-      const streamIterator = provider.stream!(request);
+      if (!provider.stream) {
+        throw new Error('Stream method not available');
+      }
+      const streamIterator = provider.stream(request);
       const collectedChunks: string[] = [];
 
       for await (const chunk of streamIterator) {
@@ -213,7 +228,7 @@ describe('AnthropicProvider', () => {
     });
 
     it('should validate valid configuration', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           id: 'msg_test',
@@ -254,7 +269,7 @@ describe('AnthropicProvider', () => {
     });
 
     it('should normalize rate limit errors', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: false,
         status: 429,
         text: async () => 'rate limit exceeded',
@@ -267,15 +282,18 @@ describe('AnthropicProvider', () => {
       try {
         await provider.complete(request);
         expect.fail('Should have thrown');
-      } catch (error: any) {
-        expect(error.code).toBe('RATE_LIMIT');
-        expect(error.retryable).toBe(true);
-        expect(error.provider).toBe('anthropic');
+      } catch (error) {
+        expect(isAIProviderError(error)).toBe(true);
+        if (isAIProviderError(error)) {
+          expect(error.code).toBe('RATE_LIMIT');
+          expect(error.retryable).toBe(true);
+          expect(error.provider).toBe('anthropic');
+        }
       }
     });
 
     it('should normalize authentication errors', async () => {
-      (global.fetch as any).mockResolvedValueOnce({
+      mockFetch().mockResolvedValueOnce({
         ok: false,
         status: 401,
         text: async () => 'Invalid API key',
@@ -288,7 +306,7 @@ describe('AnthropicProvider', () => {
       try {
         await provider.complete(request);
         expect.fail('Should have thrown');
-      } catch (error: any) {
+      } catch (error) {
         expect(error.code).toBe('AUTHENTICATION_ERROR');
         expect(error.retryable).toBe(false);
       }

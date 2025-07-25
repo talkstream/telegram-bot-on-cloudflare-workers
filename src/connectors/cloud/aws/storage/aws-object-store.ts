@@ -60,7 +60,7 @@ export class AWSS3ObjectStore implements IObjectStore {
     // }));
 
     // For now, mock the operation
-    console.log(`[Mock] S3 PUT: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 PUT: ${this.bucketName}/${key}`);
     // Body would be used in real implementation above
     void body;
   }
@@ -77,7 +77,7 @@ export class AWSS3ObjectStore implements IObjectStore {
     // }));
 
     // Mock response
-    console.log(`[Mock] S3 GET: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 GET: ${this.bucketName}/${key}`);
 
     // Return mock stream
     const mockData = new TextEncoder().encode(`Mock content for ${key}`);
@@ -110,7 +110,7 @@ export class AWSS3ObjectStore implements IObjectStore {
     //   Key: key,
     // }));
 
-    console.log(`[Mock] S3 HEAD: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 HEAD: ${this.bucketName}/${key}`);
 
     return {
       httpMetadata: {
@@ -131,7 +131,7 @@ export class AWSS3ObjectStore implements IObjectStore {
     //   Key: key,
     // }));
 
-    console.log(`[Mock] S3 DELETE: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 DELETE: ${this.bucketName}/${key}`);
   }
 
   async list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{
@@ -151,7 +151,7 @@ export class AWSS3ObjectStore implements IObjectStore {
     //   ContinuationToken: options?.cursor,
     // }));
 
-    console.log(`[Mock] S3 LIST: ${this.bucketName}`, options);
+    console.info(`[Mock] S3 LIST: ${this.bucketName}`, options);
 
     // Mock response
     const mockObjects = [

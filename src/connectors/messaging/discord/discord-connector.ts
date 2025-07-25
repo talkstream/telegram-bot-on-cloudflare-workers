@@ -409,7 +409,7 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
   /**
    * Helper methods would go here
    */
-  private async sendDiscordMessage(_channelId: string, _message: DiscordMessage): Promise<any> {
+  private async sendDiscordMessage(_channelId: string, _message: DiscordMessage): Promise<DiscordMessageResponse> {
     // Implementation would use Discord REST API or webhook
     throw new Error('Not implemented');
   }
@@ -434,17 +434,17 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
     return true;
   }
 
-  private async registerDiscordCommands(_commands: any[]): Promise<void> {
+  private async registerDiscordCommands(_commands: DiscordCommand[]): Promise<void> {
     // Implementation would use Discord REST API
     throw new Error('Not implemented');
   }
 
-  private convertMarkupToComponents(_markup: any): any[] {
+  private convertMarkupToComponents(_markup: unknown): DiscordComponent[] {
     // Convert unified markup to Discord components
     return [];
   }
 
-  private convertAttachmentsToEmbeds(_attachments: any[]): any[] {
+  private convertAttachmentsToEmbeds(_attachments: unknown[]): DiscordEmbed[] {
     // Convert unified attachments to Discord embeds
     return [];
   }
@@ -461,7 +461,7 @@ interface DiscordInteraction {
     name?: string;
     options?: Array<{
       name: string;
-      value: any;
+      value: string | number | boolean;
       type: number;
     }>;
   };
@@ -481,9 +481,44 @@ interface DiscordInteraction {
 
 interface DiscordMessage {
   content: string;
-  embeds?: any[];
-  components?: any[];
+  embeds?: DiscordEmbed[];
+  components?: DiscordComponent[];
   allowed_mentions?: {
     parse?: string[];
   };
+}
+
+interface DiscordMessageResponse {
+  id: string;
+  content: string;
+  author: {
+    id: string;
+    username: string;
+  };
+}
+
+interface DiscordCommand {
+  name: string;
+  description: string;
+  type: number;
+}
+
+interface DiscordComponent {
+  type: number;
+  components?: DiscordComponent[];
+  custom_id?: string;
+  label?: string;
+  style?: number;
+}
+
+interface DiscordEmbed {
+  title?: string;
+  description?: string;
+  url?: string;
+  color?: number;
+  fields?: Array<{
+    name: string;
+    value: string;
+    inline?: boolean;
+  }>;
 }

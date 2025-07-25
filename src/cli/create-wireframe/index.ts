@@ -27,7 +27,7 @@ program
   .option('--no-install', 'Skip dependency installation')
   .option('-y, --yes', 'Skip interactive prompts')
   .action(async (projectName, options) => {
-    console.log(chalk.bold.cyan('\n🚀 Wireframe Bot Creator\n'));
+    console.info(chalk.bold.cyan('\n🚀 Wireframe Bot Creator\n'));
 
     let config: ProjectOptions;
 
@@ -148,7 +148,7 @@ program
 
       spinner.succeed('Project created successfully!');
 
-      console.log(`
+      console.info(`
 ${chalk.bold.green('✨ Success!')} Created ${chalk.cyan(config.name)} at ${chalk.gray(projectPath)}
 
 ${chalk.bold('Next steps:')}
