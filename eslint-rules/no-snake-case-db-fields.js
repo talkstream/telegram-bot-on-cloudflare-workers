@@ -1,12 +1,12 @@
 /**
  * ESLint rule to prevent direct usage of snake_case database fields
  * Enforces usage of field mappers or camelCase properties
- * 
+ *
  * @example
  * // BAD
  * const userId = row.user_id;
  * const isActive = row.is_active;
- * 
+ *
  * // GOOD
  * const user = userMapper.toDomain(row);
  * const userId = user.userId;
@@ -42,8 +42,9 @@ export default {
       },
     ],
     messages: {
-      snakeCaseAccess: "Avoid direct access to snake_case field '{{field}}'. Use a field mapper or camelCase property instead.",
-      suggestMapper: "Consider using a FieldMapper to transform database rows to domain models.",
+      snakeCaseAccess:
+        "Avoid direct access to snake_case field '{{field}}'. Use a field mapper or camelCase property instead.",
+      suggestMapper: 'Consider using a FieldMapper to transform database rows to domain models.',
     },
   },
 
@@ -93,7 +94,7 @@ export default {
     function isDatabaseRowType(typeAnnotation) {
       if (typeAnnotation.type === 'TSTypeAnnotation' && typeAnnotation.typeAnnotation) {
         const typeName = getTypeName(typeAnnotation.typeAnnotation);
-        return databaseRowTypes.some(dbType => typeName.includes(dbType));
+        return databaseRowTypes.some((dbType) => typeName.includes(dbType));
       }
       return false;
     }
@@ -115,8 +116,8 @@ export default {
     function isAllowedPattern(node) {
       const sourceCode = context.getSourceCode();
       const text = sourceCode.getText(node);
-      
-      return allowedPatterns.some(pattern => {
+
+      return allowedPatterns.some((pattern) => {
         const regex = new RegExp(pattern);
         return regex.test(text);
       });
@@ -126,11 +127,8 @@ export default {
       MemberExpression(node) {
         if (node.property && node.property.type === 'Identifier') {
           const propertyName = node.property.name;
-          
-          if (isSnakeCase(propertyName) && 
-              isInDatabaseContext(node) && 
-              !isAllowedPattern(node)) {
-            
+
+          if (isSnakeCase(propertyName) && isInDatabaseContext(node) && !isAllowedPattern(node)) {
             context.report({
               node: node.property,
               messageId: 'snakeCaseAccess',
@@ -144,12 +142,13 @@ export default {
 
       // Also check destructuring patterns
       ObjectPattern(node) {
-        node.properties.forEach(prop => {
-          if (prop.type === 'Property' && 
-              prop.key.type === 'Identifier' &&
-              isSnakeCase(prop.key.name) &&
-              isInDatabaseContext(node)) {
-            
+        node.properties.forEach((prop) => {
+          if (
+            prop.type === 'Property' &&
+            prop.key.type === 'Identifier' &&
+            isSnakeCase(prop.key.name) &&
+            isInDatabaseContext(node)
+          ) {
             context.report({
               node: prop.key,
               messageId: 'snakeCaseAccess',

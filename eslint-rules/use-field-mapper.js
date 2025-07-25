@@ -1,7 +1,7 @@
 /**
  * ESLint rule to encourage using FieldMapper for database transformations
  * Detects manual field mapping and suggests using the FieldMapper utility
- * 
+ *
  * @example
  * // BAD - Manual mapping
  * function mapUser(row) {
@@ -12,7 +12,7 @@
  *     createdAt: new Date(row.created_at)
  *   };
  * }
- * 
+ *
  * // GOOD - Using FieldMapper
  * const userMapper = new FieldMapper([...]);
  * const user = userMapper.toDomain(row);
@@ -52,25 +52,24 @@ export default {
       },
     ],
     messages: {
-      useFieldMapper: 'Consider using FieldMapper instead of manual field mapping. Found {{count}} field transformations.',
-      duplicateMapping: 'This mapping logic appears to be duplicated. Consider creating a shared FieldMapper.',
+      useFieldMapper:
+        'Consider using FieldMapper instead of manual field mapping. Found {{count}} field transformations.',
+      duplicateMapping:
+        'This mapping logic appears to be duplicated. Consider creating a shared FieldMapper.',
     },
   },
 
   create(context) {
     const options = context.options[0] || {};
     const minimumFields = options.minimumFields || 3;
-    const _mapperImportPath = options.mapperImportPath || '@/core/database/field-mapper';
     const ignorePatterns = options.ignorePatterns || ['test', 'mock', 'stub'];
-
-    const _mappingFunctions = new Map();
     const fieldMappingPatterns = [];
 
     // Check if function name should be ignored
     function shouldIgnoreFunction(name) {
       if (!name) return false;
       const lowerName = name.toLowerCase();
-      return ignorePatterns.some(pattern => lowerName.includes(pattern));
+      return ignorePatterns.some((pattern) => lowerName.includes(pattern));
     }
 
     // Detect if a property is a field mapping
@@ -91,25 +90,28 @@ export default {
       }
 
       // Check for boolean conversion (row.is_active === 1)
-      if (value.type === 'BinaryExpression' && 
-          value.operator === '===' &&
-          value.right.type === 'Literal' && 
-          [0, 1].includes(value.right.value) &&
-          value.left.type === 'MemberExpression') {
+      if (
+        value.type === 'BinaryExpression' &&
+        value.operator === '===' &&
+        value.right.type === 'Literal' &&
+        [0, 1].includes(value.right.value) &&
+        value.left.type === 'MemberExpression'
+      ) {
         return { type: 'boolean', source: value.left.property.name, target: key };
       }
 
       // Check for date conversion (new Date(row.created_at))
-      if (value.type === 'NewExpression' && 
-          value.callee.name === 'Date' &&
-          value.arguments[0] &&
-          value.arguments[0].type === 'MemberExpression') {
+      if (
+        value.type === 'NewExpression' &&
+        value.callee.name === 'Date' &&
+        value.arguments[0] &&
+        value.arguments[0].type === 'MemberExpression'
+      ) {
         return { type: 'date', source: value.arguments[0].property.name, target: key };
       }
 
       // Check for conditional mapping (row.field ? transform(row.field) : null)
-      if (value.type === 'ConditionalExpression' &&
-          value.test.type === 'MemberExpression') {
+      if (value.type === 'ConditionalExpression' && value.test.type === 'MemberExpression') {
         return { type: 'conditional', source: value.test.property.name, target: key };
       }
 
@@ -125,7 +127,7 @@ export default {
     // Analyze function for mapping patterns
     function analyzeMappingFunction(node) {
       const functionName = node.id ? node.id.name : '<anonymous>';
-      
+
       if (shouldIgnoreFunction(functionName)) {
         return;
       }
@@ -134,13 +136,10 @@ export default {
       const returnStatements = [];
       findReturnStatements(node.body, returnStatements);
 
-      returnStatements.forEach(returnStmt => {
+      returnStatements.forEach((returnStmt) => {
         if (returnStmt.argument && returnStmt.argument.type === 'ObjectExpression') {
           const mappings = [];
-          let _totalFields = 0;
-
-          returnStmt.argument.properties.forEach(prop => {
-            _totalFields++;
+          returnStmt.argument.properties.forEach((prop) => {
             const mapping = isFieldMapping(prop);
             if (mapping) {
               mappings.push(mapping);
@@ -149,16 +148,16 @@ export default {
 
           if (mappings.length >= minimumFields) {
             const signature = createMappingSignature(mappings);
-            
+
             // Check for duplicate mapping patterns
-            if (fieldMappingPatterns.some(pattern => pattern.signature === signature)) {
+            if (fieldMappingPatterns.some((pattern) => pattern.signature === signature)) {
               context.report({
                 node: returnStmt.argument,
                 messageId: 'duplicateMapping',
               });
             } else {
               fieldMappingPatterns.push({ signature, node: returnStmt.argument });
-              
+
               context.report({
                 node: returnStmt.argument,
                 messageId: 'useFieldMapper',
@@ -173,8 +172,9 @@ export default {
     }
 
     // Find all return statements in a function
-    function findReturnStatements(node, returns) {
-      if (!node) return;
+    function findReturnStatements(node, returns, visited = new Set()) {
+      if (!node || visited.has(node)) return;
+      visited.add(node);
 
       if (node.type === 'ReturnStatement') {
         returns.push(node);
@@ -182,19 +182,47 @@ export default {
       }
 
       // Don't traverse into nested functions
-      if (node.type === 'FunctionDeclaration' || 
-          node.type === 'FunctionExpression' ||
-          node.type === 'ArrowFunctionExpression') {
+      if (
+        node.type === 'FunctionDeclaration' ||
+        node.type === 'FunctionExpression' ||
+        node.type === 'ArrowFunctionExpression'
+      ) {
         return;
       }
 
-      // Traverse child nodes
-      for (const key in node) {
+      // Traverse child nodes - only standard AST properties
+      const astKeys = [
+        'body',
+        'consequent',
+        'alternate',
+        'init',
+        'test',
+        'update',
+        'argument',
+        'arguments',
+        'callee',
+        'expression',
+        'expressions',
+        'left',
+        'right',
+        'object',
+        'property',
+        'properties',
+        'elements',
+        'value',
+        'cases',
+        'discriminant',
+        'block',
+        'handler',
+        'finalizer',
+      ];
+
+      for (const key of astKeys) {
         if (node[key] && typeof node[key] === 'object') {
           if (Array.isArray(node[key])) {
-            node[key].forEach(child => findReturnStatements(child, returns));
+            node[key].forEach((child) => findReturnStatements(child, returns, visited));
           } else {
-            findReturnStatements(node[key], returns);
+            findReturnStatements(node[key], returns, visited);
           }
         }
       }
@@ -203,24 +231,9 @@ export default {
     // Create a signature for mapping pattern comparison
     function createMappingSignature(mappings) {
       return mappings
-        .map(m => `${m.type}:${m.source}→${m.target}`)
+        .map((m) => `${m.type}:${m.source}→${m.target}`)
         .sort()
         .join('|');
-    }
-
-    // Check if FieldMapper is imported
-    function _isFieldMapperImported() {
-      const program = context.getASTNode();
-      let imported = false;
-
-      program.body.forEach(node => {
-        if (node.type === 'ImportDeclaration' && 
-            node.source.value.includes('field-mapper')) {
-          imported = true;
-        }
-      });
-
-      return imported;
     }
 
     return {
@@ -238,17 +251,18 @@ export default {
       // Check inline object transformations
       CallExpression(node) {
         // Detect patterns like: rows.map(row => ({ ... }))
-        if (node.callee.type === 'MemberExpression' &&
-            node.callee.property.name === 'map' &&
-            node.arguments[0] &&
-            (node.arguments[0].type === 'ArrowFunctionExpression' ||
-             node.arguments[0].type === 'FunctionExpression')) {
-          
+        if (
+          node.callee.type === 'MemberExpression' &&
+          node.callee.property.name === 'map' &&
+          node.arguments[0] &&
+          (node.arguments[0].type === 'ArrowFunctionExpression' ||
+            node.arguments[0].type === 'FunctionExpression')
+        ) {
           const mapFunction = node.arguments[0];
           if (mapFunction.body.type === 'ObjectExpression') {
             const mappings = [];
-            
-            mapFunction.body.properties.forEach(prop => {
+
+            mapFunction.body.properties.forEach((prop) => {
               const mapping = isFieldMapping(prop);
               if (mapping) {
                 mappings.push(mapping);

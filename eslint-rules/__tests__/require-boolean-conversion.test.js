@@ -42,37 +42,45 @@ ruleTester.run('require-boolean-conversion', rule, {
     // Missing boolean conversion
     {
       code: 'const isActive = row.is_active;',
-      errors: [{
-        messageId: 'missingBooleanConversion',
-        data: { field: 'is_active' },
-      }],
+      errors: [
+        {
+          messageId: 'missingBooleanConversion',
+          data: { field: 'is_active' },
+        },
+      ],
       output: 'const isActive = row.is_active === 1;',
     },
     // Boolean field in condition without conversion
     {
       code: 'if (row.has_access) { }',
-      errors: [{
-        messageId: 'missingBooleanConversion',
-        data: { field: 'has_access' },
-      }],
+      errors: [
+        {
+          messageId: 'missingBooleanConversion',
+          data: { field: 'has_access' },
+        },
+      ],
       output: 'if (row.has_access === 1) { }',
     },
     // Using loose equality
     {
       code: 'const isActive = row.is_active == 1;',
-      errors: [{
-        messageId: 'useStrictEquality',
-        data: { operator: '==' },
-      }],
+      errors: [
+        {
+          messageId: 'useStrictEquality',
+          data: { operator: '==' },
+        },
+      ],
       output: 'const isActive = row.is_active === 1;',
     },
     // Assignment without conversion
     {
       code: 'user.isBlocked = dbRow.is_blocked;',
-      errors: [{
-        messageId: 'missingBooleanConversion',
-        data: { field: 'is_blocked' },
-      }],
+      errors: [
+        {
+          messageId: 'missingBooleanConversion',
+          data: { field: 'is_blocked' },
+        },
+      ],
       output: 'user.isBlocked = dbRow.is_blocked === 1;',
     },
     // Multiple boolean fields

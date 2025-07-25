@@ -29,9 +29,11 @@ ruleTester.run('no-snake-case-db-fields', rule, {
     // Allowed patterns
     {
       code: 'db.prepare("SELECT user_id FROM users").bind(row.user_id)',
-      options: [{
-        allowedPatterns: ['\\.bind\\(.*\\)'],
-      }],
+      options: [
+        {
+          allowedPatterns: ['\\.bind\\(.*\\)'],
+        },
+      ],
     },
   ],
 
@@ -39,10 +41,12 @@ ruleTester.run('no-snake-case-db-fields', rule, {
     // Direct access to snake_case fields
     {
       code: 'const userId = row.user_id;',
-      errors: [{
-        messageId: 'snakeCaseAccess',
-        data: { field: 'user_id' },
-      }],
+      errors: [
+        {
+          messageId: 'snakeCaseAccess',
+          data: { field: 'user_id' },
+        },
+      ],
     },
     // Destructuring snake_case fields
     {
@@ -61,18 +65,22 @@ ruleTester.run('no-snake-case-db-fields', rule, {
     // Accessing nested snake_case
     {
       code: 'const name = result.first_name;',
-      errors: [{
-        messageId: 'snakeCaseAccess',
-        data: { field: 'first_name' },
-      }],
+      errors: [
+        {
+          messageId: 'snakeCaseAccess',
+          data: { field: 'first_name' },
+        },
+      ],
     },
     // Database record patterns
     {
       code: 'const active = dbRow.is_active;',
-      errors: [{
-        messageId: 'snakeCaseAccess',
-        data: { field: 'is_active' },
-      }],
+      errors: [
+        {
+          messageId: 'snakeCaseAccess',
+          data: { field: 'is_active' },
+        },
+      ],
     },
   ],
 });

@@ -4,7 +4,7 @@ import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
 import promisePlugin from 'eslint-plugin-promise';
 import globals from 'globals';
-// import dbMappingPlugin from './eslint-rules/index.js';
+import dbMappingPlugin from './eslint-rules/index.js';
 
 export default [
   // Ignore patterns
@@ -47,7 +47,7 @@ export default [
       '@typescript-eslint': tsPlugin,
       import: importPlugin,
       promise: promisePlugin,
-      // 'db-mapping': dbMappingPlugin,
+      'db-mapping': dbMappingPlugin,
     },
     rules: {
       // TypeScript specific rules
@@ -95,18 +95,27 @@ export default [
       'promise/no-return-in-finally': 'warn',
       'promise/valid-params': 'warn',
 
-      // Database mapping rules (disabled temporarily for commit)
-      // 'db-mapping/no-snake-case-db-fields': ['error', {
-      //   allowedPatterns: ['\\.bind\\(', '\\.all\\(', '\\.first\\(', '\\.run\\('],
-      //   databaseRowTypes: ['DatabaseRow', 'DBRow', 'Row', 'DynamoDBRow'],
-      // }],
-      // 'db-mapping/require-boolean-conversion': 'error',
-      // 'db-mapping/require-date-conversion': ['error', {
-      //   allowNullChecks: true,
-      // }],
-      // 'db-mapping/use-field-mapper': ['warn', {
-      //   minimumFields: 3,
-      // }],
+      // Database mapping rules
+      'db-mapping/no-snake-case-db-fields': [
+        'error',
+        {
+          allowedPatterns: ['\\.bind\\(', '\\.all\\(', '\\.first\\(', '\\.run\\('],
+          databaseRowTypes: ['DatabaseRow', 'DBRow', 'Row', 'DynamoDBRow'],
+        },
+      ],
+      'db-mapping/require-boolean-conversion': 'error',
+      'db-mapping/require-date-conversion': [
+        'error',
+        {
+          allowNullChecks: true,
+        },
+      ],
+      'db-mapping/use-field-mapper': [
+        'warn',
+        {
+          minimumFields: 3,
+        },
+      ],
     },
   },
 
