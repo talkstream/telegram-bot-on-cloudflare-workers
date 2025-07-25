@@ -122,13 +122,8 @@ export abstract class BaseConnector implements Connector {
    * Get connector metadata
    */
   protected getMetadata(): Record<string, unknown> {
-    return {
-      id: this.id,
-      name: this.name,
-      version: this.version,
-      type: this.type,
-      initialized: this.initialized,
-    };
+    const { id, name, version, type, initialized } = this;
+    return { id, name, version, type, initialized };
   }
 
   /**
