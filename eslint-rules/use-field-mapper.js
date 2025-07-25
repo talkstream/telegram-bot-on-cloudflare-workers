@@ -60,10 +60,10 @@ export default {
   create(context) {
     const options = context.options[0] || {};
     const minimumFields = options.minimumFields || 3;
-    const mapperImportPath = options.mapperImportPath || '@/core/database/field-mapper';
+    const _mapperImportPath = options.mapperImportPath || '@/core/database/field-mapper';
     const ignorePatterns = options.ignorePatterns || ['test', 'mock', 'stub'];
 
-    const mappingFunctions = new Map();
+    const _mappingFunctions = new Map();
     const fieldMappingPatterns = [];
 
     // Check if function name should be ignored
@@ -137,10 +137,10 @@ export default {
       returnStatements.forEach(returnStmt => {
         if (returnStmt.argument && returnStmt.argument.type === 'ObjectExpression') {
           const mappings = [];
-          let totalFields = 0;
+          let _totalFields = 0;
 
           returnStmt.argument.properties.forEach(prop => {
-            totalFields++;
+            _totalFields++;
             const mapping = isFieldMapping(prop);
             if (mapping) {
               mappings.push(mapping);
@@ -209,7 +209,7 @@ export default {
     }
 
     // Check if FieldMapper is imported
-    function isFieldMapperImported() {
+    function _isFieldMapperImported() {
       const program = context.getASTNode();
       let imported = false;
 

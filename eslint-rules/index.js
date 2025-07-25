@@ -9,7 +9,7 @@
  */
 
 // Import rules using dynamic imports for ES modules compatibility
-const rules = {};
+const _rules = {};
 
 // Load rules synchronously for now
 import noSnakeCaseDbFields from './no-snake-case-db-fields.js';
