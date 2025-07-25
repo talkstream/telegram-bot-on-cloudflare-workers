@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Anthropic Claude AI Provider** - Full support for Claude 4 models
+  - Claude Sonnet 4 (default) - Balanced performance model
+  - Claude Opus 4 - Most powerful model with extended thinking
+  - Extended thinking capability for complex reasoning
+  - Support for up to 64K output tokens (128K with beta header)
+  - Streaming support for real-time responses
+  - System prompts for consistent behavior
+  - Comprehensive error handling and retries
+- **Discord Connector** - Complete Discord bot integration
+  - Webhook validation and handling
+  - Slash command support
+  - Interactive components (buttons, select menus)
+  - Message editing and deletion
+  - Thread support
+  - Full TypeScript types
+- **AWS Connector Enhancements**
+  - S3 object store with multipart upload support
+  - DynamoDB and ElastiCache cache stores
+  - Pre-signed URL generation
+  - Comprehensive mock implementations
+- **CLI Tool `create-wireframe`** - Project scaffolding
+  - Interactive project setup
+  - Multiple platform templates
+  - Feature selection
+  - Ready-to-deploy configurations
+
+### Documentation
+
+- Added comprehensive Anthropic provider guide
+- Created CLI tool documentation
+- Updated AI providers documentation
+
 ## [1.2.2] - 2025-01-21
 
 ### 🏗️ BREAKING CHANGES

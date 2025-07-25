@@ -23,6 +23,7 @@ declare global {
     OPENAI_API_KEY?: string;
     XAI_API_KEY?: string;
     DEEPSEEK_API_KEY?: string;
+    ANTHROPIC_API_KEY?: string;
     CLOUDFLARE_AI_ACCOUNT_ID?: string;
     CLOUDFLARE_AI_API_TOKEN?: string;
 

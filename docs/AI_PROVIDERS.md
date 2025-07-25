@@ -23,6 +23,7 @@ src/
 │   │   ├── base.ts        # Base provider class
 │   │   ├── google-ai.ts   # Google Gemini (uses gemini-service.ts)
 │   │   ├── openai.ts      # OpenAI GPT models
+│   │   ├── anthropic.ts   # Anthropic Claude models
 │   │   ├── xai.ts         # xAI Grok
 │   │   ├── deepseek.ts    # DeepSeek
 │   │   ├── cloudflare.ts  # Cloudflare Workers AI
@@ -44,13 +45,14 @@ src/
 
 ## Supported Providers
 
-| Provider      | Models                                     | Default              | Notes                   |
-| ------------- | ------------------------------------------ | -------------------- | ----------------------- |
-| Google Gemini | gemini-2.0-flash-exp, gemini-1.5-pro, etc. | gemini-2.0-flash-exp | Free tier available     |
-| OpenAI        | gpt-4o, gpt-4, gpt-3.5-turbo               | gpt-4o               | Requires API key        |
-| xAI           | grok-1, grok-2                             | grok-2               | Requires API key        |
-| DeepSeek      | deepseek-v2                                | deepseek-v2          | Cost-effective option   |
-| Cloudflare AI | Various models                             | @cf/meta/llama-2     | Integrated with Workers |
+| Provider      | Models                                     | Default              | Notes                                |
+| ------------- | ------------------------------------------ | -------------------- | ------------------------------------ |
+| Google Gemini | gemini-2.0-flash-exp, gemini-1.5-pro, etc. | gemini-2.0-flash-exp | Free tier available                  |
+| OpenAI        | gpt-4o, gpt-4, gpt-3.5-turbo               | gpt-4o               | Requires API key                     |
+| Anthropic     | claude-opus-4, claude-sonnet-4             | claude-sonnet-4      | Best coding model, extended thinking |
+| xAI           | grok-1, grok-2                             | grok-2               | Requires API key                     |
+| DeepSeek      | deepseek-v2                                | deepseek-v2          | Cost-effective option                |
+| Cloudflare AI | Various models                             | @cf/meta/llama-2     | Integrated with Workers              |
 
 ## Configuration
 
@@ -65,6 +67,7 @@ AI_PROVIDER=google-ai
 # Provider API keys
 GEMINI_API_KEY=your-key-here
 OPENAI_API_KEY=your-key-here
+ANTHROPIC_API_KEY=your-key-here
 XAI_API_KEY=your-key-here
 DEEPSEEK_API_KEY=your-key-here
 ```

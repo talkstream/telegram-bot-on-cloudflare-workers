@@ -7,6 +7,7 @@ import {
   createDeepSeekProvider,
 } from '../adapters/openai-compatible';
 import { CloudflareAIProvider, CloudflareAIBindingProvider } from '../adapters/cloudflare-ai';
+import { AnthropicProvider } from '../adapters/anthropic';
 import { MockAIProvider } from '../adapters/mock';
 import { ConfigBasedCostCalculator, RemoteCostCalculator } from '../cost-tracking';
 import { logger } from '../../logger';
@@ -95,6 +96,12 @@ export async function loadProvidersFromEnv(
     if (env.DEEPSEEK_API_KEY) {
       providers.push(createDeepSeekProvider(env.DEEPSEEK_API_KEY, undefined, tier));
       if (!defaultProvider) defaultProvider = 'deepseek';
+    }
+
+    // Anthropic Claude
+    if (env.ANTHROPIC_API_KEY) {
+      providers.push(new AnthropicProvider({ apiKey: env.ANTHROPIC_API_KEY }, tier));
+      if (!defaultProvider) defaultProvider = 'anthropic';
     }
 
     // Cloudflare AI
@@ -215,6 +222,16 @@ async function createProviderFromConfig(
         }
         return null;
       }
+
+      case 'anthropic':
+        return new AnthropicProvider(
+          {
+            apiKey: (config.config?.apiKey as string) || env.ANTHROPIC_API_KEY || '',
+            model: config.config?.model as string,
+            baseURL: config.config?.baseURL as string,
+          },
+          tier,
+        );
 
       case 'mock':
         return new MockAIProvider(config.config as MockProviderConfig);

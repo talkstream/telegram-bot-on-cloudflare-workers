@@ -403,21 +403,17 @@ describe('Multi-Platform Integration', () => {
         );
       }
 
-      // Simulate AWS error
-      try {
-        const aws = new AWSConnector({ env: {} });
-        aws.getObjectStore('non-existent-bucket');
-      } catch (error) {
-        eventBus.emit(
-          CommonEventType.CONNECTOR_ERROR,
-          {
-            platform: 'aws',
-            error,
-            operation: 'getObjectStore',
-          },
-          'AWSConnector',
-        );
-      }
+      // Simulate AWS error - AWS connector doesn't throw on getObjectStore,
+      // so we'll simulate a runtime error
+      eventBus.emit(
+        CommonEventType.CONNECTOR_ERROR,
+        {
+          platform: 'aws',
+          error: new Error('S3 bucket not found: non-existent-bucket'),
+          operation: 'getObjectStore',
+        },
+        'AWSConnector',
+      );
 
       // Wait for events
       await new Promise((resolve) => setTimeout(resolve, 10));

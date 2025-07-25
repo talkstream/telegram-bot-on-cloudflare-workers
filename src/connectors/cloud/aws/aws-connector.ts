@@ -14,6 +14,8 @@ import type {
 
 import { AWSKeyValueStore } from './storage/aws-kv-store';
 import { AWSDatabaseStore } from './storage/aws-database-store';
+import { AWSS3ObjectStore } from './storage/aws-object-store';
+import { AWSCacheStore } from './storage/aws-cache-store';
 
 export interface AWSConfig {
   env: {
@@ -47,14 +49,16 @@ export class AWSConnector implements ICloudPlatformConnector {
     return new AWSDatabaseStore(name);
   }
 
-  getObjectStore(_bucket: string): IObjectStore {
-    // TODO: Return S3-based object store
-    throw new Error('AWS object store not implemented yet');
+  getObjectStore(bucket: string): IObjectStore {
+    // Return S3-based object store
+    const actualBucket = this.config.env.S3_BUCKETS?.[bucket] || bucket;
+    return new AWSS3ObjectStore(actualBucket, this.config.env.AWS_REGION);
   }
 
   getCacheStore(): ICacheStore {
-    // TODO: Return ElastiCache/CloudFront-based cache store
-    throw new Error('AWS cache store not implemented yet');
+    // Return ElastiCache/DynamoDB-based cache store
+    const useElastiCache = this.config.env.USE_ELASTICACHE === 'true';
+    return new AWSCacheStore('wireframe-cache', useElastiCache);
   }
 
   getEnv(): Record<string, string | undefined> {

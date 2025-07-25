@@ -4,6 +4,9 @@
   "description": "Production-ready wireframe for creating any bots (Telegram, etc.) on Clouds (Cloudflare Worker, Google Cloud, etc.) with TypeScript 100% strict.",
   "type": "module",
   "main": "./src/index.ts",
+  "bin": {
+    "create-wireframe": "./src/cli/create-wireframe/index.ts"
+  },
   "scripts": {
     "dev": "wrangler dev --env development --var ENVIRONMENT:development",
     "dev:remote": "wrangler dev --env development --var ENVIRONMENT:development --remote",
@@ -28,25 +31,21 @@
     "db:types:watch": "tsx src/cli/generate-db-types.ts --watch",
     "secrets:list": "wrangler secret list --env production",
     "tail": "wrangler tail --env production",
-    "tail:staging": "wrangler tail --env staging",
-    "docs:generate": "node scripts/generate-claude-setup.js",
-    "docs:check": "node scripts/generate-claude-setup.js --check",
-    "contribute": "tsx scripts/contribute.ts",
-    "contribute:auto": "tsx scripts/contribute.ts --auto",
-    "contribute:perf": "tsx scripts/contribute.ts --type=performance",
-    "contribute:pattern": "tsx scripts/contribute.ts --type=pattern",
-    "contribute:fix": "tsx scripts/contribute.ts --type=bugfix",
-    "contribute:feature": "tsx scripts/contribute.ts --type=feature"
+    "contribute": "tsx src/cli/contribute.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/talkstream/typescript-wireframe-platform.git"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.8.57",
-    "@cloudflare/workers-types": "^4.20250724.0",
-    "@eslint/js": "^9.18.0",
-    "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.20.0",
-    "@vitest/coverage-istanbul": "^3.2.4",
+    "@cloudflare/vitest-pool-workers": "^0.8.2",
+    "@cloudflare/workers-types": "^4.20250709.0",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-promise": "^7.2.1",
     "chalk": "^5.3.0",
@@ -94,12 +93,10 @@
     "typescript",
     "grammy",
     "wireframe",
-    "template"
+    "template",
+    "cli",
+    "create-app"
   ],
   "author": "Arseniy Kamyshev",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/talkstream/typescript-wireframe-platform"
-  }
+  "license": "MIT"
 }
