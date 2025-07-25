@@ -48,6 +48,7 @@ export class AIProviderRegistry implements ProviderRegistry {
   }
 
   list(): ProviderInfo[] {
+    // eslint-disable-next-line db-mapping/use-field-mapper -- Not a database mapping, just in-memory object transformation
     return Array.from(this.providers.values()).map((provider) => ({
       id: provider.id,
       displayName: provider.displayName,
