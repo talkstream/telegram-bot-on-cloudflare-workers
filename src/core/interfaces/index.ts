@@ -8,6 +8,7 @@ export * from './storage.js';
 export * from './cloud-platform.js';
 export * from './monitoring.js';
 export * from './resource-constraints.js';
+export * from './cache.js';
 export {
   type AIConnector,
   type CompletionRequest,
