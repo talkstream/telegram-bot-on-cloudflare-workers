@@ -806,6 +806,77 @@ The framework is designed for multiple platforms:
 
 These MCP servers significantly accelerate development by enabling natural language interactions with your tools, reducing context switching, and automating repetitive tasks.
 
+## 📬 Queue Service
+
+Asynchronous task processing with support for Cloudflare Queues:
+
+```typescript
+import { QueueFactory } from '@/core/services/queue';
+
+// Send messages to queue
+const queue = QueueFactory.createAutoDetect();
+await queue.send('process-images', {
+  userId: 'user123',
+  images: ['image1.jpg', 'image2.jpg'],
+  operation: 'resize',
+});
+
+// Process messages from queue
+queue.consume('process-images', async (message) => {
+  const { userId, images, operation } = message.body;
+  // Process images asynchronously
+  await processImages(images, operation);
+});
+```
+
+Features:
+
+- **Multiple Providers**: Cloudflare Queues and in-memory implementation
+- **Priority Messages**: Process important tasks first
+- **Dead Letter Queues**: Handle failed messages gracefully
+- **Scheduled Delivery**: Send messages in the future
+- **Batch Operations**: Process multiple messages efficiently
+
+## 📊 Analytics Engine
+
+Comprehensive metrics collection and analysis with Cloudflare Analytics Engine:
+
+```typescript
+import { AnalyticsFactory } from '@/core/services/analytics';
+import { createAnalyticsTracker } from '@/middleware/analytics-tracker';
+
+// Track API metrics automatically
+app.use(
+  createAnalyticsTracker({
+    analyticsService: 'cloudflare',
+    env: env,
+    datasetName: 'API_METRICS',
+    dimensions: {
+      region: (c) => c.req.header('cf-ipcountry'),
+      tier: (c) => c.get('userTier'),
+    },
+  }),
+);
+
+// Query metrics
+const analytics = AnalyticsFactory.createAutoDetect();
+const result = await analytics.query({
+  startTime: new Date(Date.now() - 3600000), // 1 hour ago
+  endTime: new Date(),
+  metrics: ['api.request_count', 'api.response_time'],
+  granularity: 'minute',
+  aggregation: 'avg',
+});
+```
+
+Features:
+
+- **Real-time Metrics**: Track requests, errors, and custom events
+- **Flexible Queries**: Time-based aggregations and dimension filtering
+- **Export Capabilities**: Export data as JSON or CSV
+- **Middleware Integration**: Automatic request tracking
+- **Performance Tracking**: Monitor operation latencies
+
 ## ⚡ Performance & Cloudflare Plans
 
 ### Understanding Cloudflare Workers Limits
