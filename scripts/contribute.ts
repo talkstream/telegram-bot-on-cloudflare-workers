@@ -45,11 +45,52 @@ async function detectWorktree(): Promise<boolean> {
   }
 }
 
+async function checkForExistingPRs(): Promise<string[]> {
+  try {
+    const openPRs = execSync('gh pr list --state open --json files,number,title', {
+      encoding: 'utf-8',
+    });
+    const prs = JSON.parse(openPRs || '[]');
+
+    // Get current branch changes
+    const currentFiles = execSync('git diff --name-only main...HEAD', {
+      encoding: 'utf-8',
+    })
+      .split('\n')
+      .filter(Boolean);
+
+    const conflicts: string[] = [];
+
+    for (const pr of prs) {
+      const prFiles = pr.files || [];
+      const conflictingFiles = currentFiles.filter((file) =>
+        prFiles.some((prFile: any) => prFile.path === file),
+      );
+
+      if (conflictingFiles.length > 0) {
+        conflicts.push(`PR #${pr.number} "${pr.title}" modifies: ${conflictingFiles.join(', ')}`);
+      }
+    }
+
+    return conflicts;
+  } catch {
+    return [];
+  }
+}
+
 async function analyzeRecentChanges(): Promise<ContributionType[]> {
   const spinner = ora('Analyzing recent changes...').start();
   const contributions: ContributionType[] = [];
 
   try {
+    // Check for conflicts with existing PRs
+    const conflicts = await checkForExistingPRs();
+    if (conflicts.length > 0) {
+      spinner.warn('Potential conflicts detected with existing PRs:');
+      conflicts.forEach((conflict) => console.log(chalk.yellow(`  - ${conflict}`)));
+      console.log(chalk.blue('\nConsider rebasing after those PRs are merged.\n'));
+    }
+
     // Get recent changes
     const diffStat = execSync('git diff --stat HEAD~5..HEAD', { encoding: 'utf-8' });
     const recentCommits = execSync('git log --oneline -10', { encoding: 'utf-8' });
@@ -96,6 +137,25 @@ async function analyzeRecentChanges(): Promise<ContributionType[]> {
 
 async function createContributionBranch(contribution: ContributionType): Promise<string> {
   const branchName = `contrib/${contribution.type}-${contribution.title.toLowerCase().replace(/\s+/g, '-')}`;
+
+  // Check for conflicts before creating branch
+  const conflicts = await checkForExistingPRs();
+  if (conflicts.length > 0) {
+    console.log(chalk.yellow('\n⚠️  Warning: Your contribution may conflict with existing PRs'));
+    const { proceed } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'proceed',
+        message: 'Do you want to continue anyway?',
+        default: true,
+      },
+    ]);
+
+    if (!proceed) {
+      console.log(chalk.blue('Consider waiting for existing PRs to be merged first.'));
+      process.exit(0);
+    }
+  }
 
   // Check if we're in a worktree
   const inWorktree = await detectWorktree();

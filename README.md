@@ -806,6 +806,28 @@ The framework is designed for multiple platforms:
 
 These MCP servers significantly accelerate development by enabling natural language interactions with your tools, reducing context switching, and automating repetitive tasks.
 
+## 🔄 Durable Objects
+
+Real-time state management at the edge with strong consistency:
+
+- **WebSocket Rooms** - Build chat, collaboration, and real-time features
+- **Distributed Counters** - Atomic counting across the globe
+- **Rate Limiters** - Accurate rate limiting with multiple algorithms
+- **Custom Objects** - Build your own stateful services
+
+```typescript
+// Real-time chat room
+const roomId = env.ROOMS.idFromName('my-room');
+const room = env.ROOMS.get(roomId);
+const response = await room.fetch(request);
+
+// Global counter
+const counter = env.COUNTERS.get(env.COUNTERS.idFromName('visits'));
+await counter.fetch(new Request('http://internal/increment', { method: 'POST' }));
+```
+
+[Learn more about Durable Objects →](docs/DURABLE_OBJECTS.md)
+
 ## ⚡ Performance & Cloudflare Plans
 
 ### Understanding Cloudflare Workers Limits
