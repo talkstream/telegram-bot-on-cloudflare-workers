@@ -3,19 +3,19 @@
  * Platform-agnostic implementation for sending notifications
  */
 
-import type { 
+import type {
   INotificationConnector,
   NotificationMessage,
-  NotificationCategory,
   BatchNotificationOptions,
 } from '../interfaces/notification';
+import { NotificationCategory, NotificationPriority } from '../interfaces/notification';
 import type { IUserPreferenceService } from '../interfaces/user-preference';
 import type { ILogger } from '../interfaces/logger';
 import type { IEventBus } from '../interfaces/event-bus';
 
 export interface NotificationContext {
   type: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   locale?: string;
 }
 
@@ -34,19 +34,15 @@ export interface INotificationService {
     context: NotificationContext,
     category?: NotificationCategory,
   ): Promise<void>;
-  
+
   sendBatch(
     recipientIds: string[],
     template: string,
     context: NotificationContext,
     options?: BatchNotificationOptions,
   ): Promise<void>;
-  
-  sendBulk(
-    recipientIds: string[],
-    message: string,
-    category?: NotificationCategory,
-  ): Promise<void>;
+
+  sendBulk(recipientIds: string[], message: string, category?: NotificationCategory): Promise<void>;
 }
 
 export class NotificationService implements INotificationService {
@@ -68,12 +64,13 @@ export class NotificationService implements INotificationService {
     recipientId: string,
     template: string,
     context: NotificationContext,
-    category: NotificationCategory = 'system',
+    category: NotificationCategory = NotificationCategory.SYSTEM,
   ): Promise<void> {
     try {
       // Check user preferences if service is available
       if (this.userPreferenceService) {
-        const preferences = await this.userPreferenceService.getNotificationPreferences(recipientId);
+        const preferences =
+          await this.userPreferenceService.getNotificationPreferences(recipientId);
         if (!preferences.categories[category]) {
           this.logger.debug('Notification blocked by user preference', {
             recipientId,
@@ -114,7 +111,7 @@ export class NotificationService implements INotificationService {
         template,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       // Re-throw to let caller handle
       throw error;
     }
@@ -127,7 +124,7 @@ export class NotificationService implements INotificationService {
     options: BatchNotificationOptions = { batchSize: 50, delayBetweenBatches: 1000 },
   ): Promise<void> {
     const messages: NotificationMessage[] = [];
-    const category = context.data.category as NotificationCategory || 'system';
+    const category = (context.data.category as NotificationCategory) || NotificationCategory.SYSTEM;
 
     // Filter recipients based on preferences
     const allowedRecipients = await this.filterRecipientsByPreferences(recipientIds, category);
@@ -164,7 +161,7 @@ export class NotificationService implements INotificationService {
   async sendBulk(
     recipientIds: string[],
     message: string,
-    category: NotificationCategory = 'system',
+    category: NotificationCategory = NotificationCategory.SYSTEM,
   ): Promise<void> {
     await this.sendBatch(
       recipientIds,
@@ -189,7 +186,8 @@ export class NotificationService implements INotificationService {
 
     for (const recipientId of recipientIds) {
       try {
-        const preferences = await this.userPreferenceService.getNotificationPreferences(recipientId);
+        const preferences =
+          await this.userPreferenceService.getNotificationPreferences(recipientId);
         if (preferences.categories[category]) {
           allowed.push(recipientId);
         }
@@ -206,16 +204,16 @@ export class NotificationService implements INotificationService {
     return allowed;
   }
 
-  private getPriorityForCategory(category: NotificationCategory): 'high' | 'normal' | 'low' {
+  private getPriorityForCategory(category: NotificationCategory): NotificationPriority {
     switch (category) {
-      case 'critical':
-      case 'security':
-        return 'high';
-      case 'transaction':
-      case 'balance':
-        return 'normal';
+      case NotificationCategory.SYSTEM:
+        return NotificationPriority.HIGH;
+      case NotificationCategory.BALANCE:
+        return NotificationPriority.MEDIUM;
+      case NotificationCategory.SERVICE:
+        return NotificationPriority.MEDIUM;
       default:
-        return 'low';
+        return NotificationPriority.LOW;
     }
   }
 }

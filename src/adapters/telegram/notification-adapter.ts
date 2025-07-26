@@ -8,10 +8,32 @@ import type { InlineKeyboardButton } from 'grammy/types';
 
 import type {
   INotificationAdapter,
-  UserInfo,
   NotificationTemplate,
-  FormattedMessage,
 } from '../../core/interfaces/notification';
+
+// Telegram-specific types
+interface TelegramError extends Error {
+  error_code?: number;
+  description?: string;
+}
+
+interface TelegramButton {
+  text: string;
+  callbackData?: string;
+  url?: string;
+}
+
+interface TelegramFormattedMessage {
+  text: string;
+  parseMode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+  inlineKeyboard?: TelegramButton[][];
+}
+
+interface TelegramTemplateContent {
+  body: string;
+  parseMode?: 'HTML' | 'Markdown' | 'MarkdownV2';
+  buttons?: TelegramButton[][];
+}
 
 export interface TelegramNotificationAdapterDeps {
   bot: Bot;
@@ -27,28 +49,30 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
     this.defaultLocale = deps.defaultLocale || 'en';
   }
 
-  async deliver(recipientId: string, message: FormattedMessage): Promise<void> {
+  async deliver(recipientId: string, message: unknown): Promise<void> {
+    const formattedMessage = message as TelegramFormattedMessage;
     const telegramId = parseInt(recipientId);
     if (isNaN(telegramId)) {
       throw new Error(`Invalid Telegram ID: ${recipientId}`);
     }
 
     try {
-      const options: any = {
-        parse_mode: message.parseMode || 'HTML',
+      const options: Parameters<typeof this.bot.api.sendMessage>[2] = {
+        parse_mode: formattedMessage.parseMode || 'HTML',
       };
 
       // Add inline keyboard if provided
-      if (message.inlineKeyboard) {
+      if (formattedMessage.inlineKeyboard) {
         options.reply_markup = {
-          inline_keyboard: this.convertToTelegramKeyboard(message.inlineKeyboard),
+          inline_keyboard: this.convertToTelegramKeyboard(formattedMessage.inlineKeyboard),
         };
       }
 
-      await this.bot.api.sendMessage(telegramId, message.text, options);
-    } catch (error: any) {
+      await this.bot.api.sendMessage(telegramId, formattedMessage.text, options);
+    } catch (error) {
       // Check for specific Telegram errors
-      if (error.error_code === 403) {
+      const telegramError = error as TelegramError;
+      if (telegramError.error_code === 403) {
         throw new Error('USER_BLOCKED');
       }
       throw error;
@@ -65,10 +89,11 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
       // Try to get chat info
       await this.bot.api.getChat(telegramId);
       return true;
-    } catch (error: any) {
+    } catch (error) {
+      const telegramError = error as TelegramError;
       // 400 Bad Request: chat not found
       // 403 Forbidden: bot was blocked by user
-      if (error.error_code === 400 || error.error_code === 403) {
+      if (telegramError.error_code === 400 || telegramError.error_code === 403) {
         return false;
       }
       // For other errors, assume user might be reachable
@@ -76,7 +101,11 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
     }
   }
 
-  async getUserInfo(recipientId: string): Promise<UserInfo> {
+  async getUserInfo(recipientId: string): Promise<{
+    locale?: string;
+    timezone?: string;
+    blocked?: boolean;
+  }> {
     const telegramId = parseInt(recipientId);
     if (isNaN(telegramId)) {
       throw new Error(`Invalid Telegram ID: ${recipientId}`);
@@ -84,20 +113,27 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
 
     try {
       const chat = await this.bot.api.getChat(telegramId);
-      
+
+      // Type guard for private chat
+      if (chat.type === 'private') {
+        const privateChat = chat as {
+          type: 'private';
+          language_code?: string;
+          first_name?: string;
+          last_name?: string;
+          username?: string;
+        };
+        return {
+          locale: privateChat.language_code || this.defaultLocale,
+        };
+      }
+
       return {
-        id: recipientId,
-        locale: chat.type === 'private' && 'language_code' in chat 
-          ? (chat as any).language_code || this.defaultLocale
-          : this.defaultLocale,
-        firstName: 'first_name' in chat ? chat.first_name : undefined,
-        lastName: 'last_name' in chat ? (chat as any).last_name : undefined,
-        username: 'username' in chat ? (chat as any).username : undefined,
+        locale: this.defaultLocale,
       };
-    } catch (error) {
+    } catch (_error) {
       // Return minimal info if we can't get chat details
       return {
-        id: recipientId,
         locale: this.defaultLocale,
       };
     }
@@ -105,9 +141,9 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
 
   async formatMessage(
     template: NotificationTemplate,
-    params: Record<string, any>,
+    params: Record<string, unknown>,
     locale: string,
-  ): Promise<FormattedMessage> {
+  ): Promise<unknown> {
     // Get localized content
     const content = template.content[locale] || template.content[this.defaultLocale];
     if (!content) {
@@ -120,22 +156,23 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
       text = text.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
     }
 
-    const formatted: FormattedMessage = {
+    // Type guard for telegram content
+    const telegramContent = content as TelegramTemplateContent;
+
+    const formatted: TelegramFormattedMessage = {
       text,
-      parseMode: content.parseMode || 'HTML',
+      parseMode: telegramContent.parseMode || 'HTML',
     };
 
     // Add buttons if provided
-    if (content.buttons) {
-      formatted.inlineKeyboard = content.buttons.map((row) =>
+    if (telegramContent.buttons) {
+      formatted.inlineKeyboard = telegramContent.buttons.map((row) =>
         row.map((button) => ({
           text: this.replaceParams(button.text, params),
-          callbackData: button.callbackData 
+          callbackData: button.callbackData
             ? this.replaceParams(button.callbackData, params)
             : undefined,
-          url: button.url 
-            ? this.replaceParams(button.url, params)
-            : undefined,
+          url: button.url ? this.replaceParams(button.url, params) : undefined,
         })),
       );
     }
@@ -144,12 +181,13 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
   }
 
   isRetryableError(error: unknown): boolean {
-    if (!(error instanceof Error) || !(error as any).error_code) {
+    const telegramError = error as TelegramError;
+    if (!telegramError.error_code) {
       return true; // Retry on unknown errors
     }
 
-    const errorCode = (error as any).error_code;
-    
+    const errorCode = telegramError.error_code;
+
     // Don't retry on these errors
     const nonRetryableErrors = [
       400, // Bad Request
@@ -160,29 +198,31 @@ export class TelegramNotificationAdapter implements INotificationAdapter {
     return !nonRetryableErrors.includes(errorCode);
   }
 
-  private convertToTelegramKeyboard(
-    keyboard: FormattedMessage['inlineKeyboard'],
-  ): InlineKeyboardButton[][] {
-    if (!keyboard) return [];
-
+  private convertToTelegramKeyboard(keyboard: TelegramButton[][]): InlineKeyboardButton[][] {
     return keyboard.map((row) =>
       row.map((button) => {
-        const telegramButton: InlineKeyboardButton = {
-          text: button.text,
-        };
-
-        if (button.callbackData) {
-          telegramButton.callback_data = button.callbackData;
-        } else if (button.url) {
-          telegramButton.url = button.url;
+        if (button.url) {
+          return {
+            text: button.text,
+            url: button.url,
+          };
+        } else if (button.callbackData) {
+          return {
+            text: button.text,
+            callback_data: button.callbackData,
+          };
+        } else {
+          // Default to callback button with text as data
+          return {
+            text: button.text,
+            callback_data: button.text,
+          };
         }
-
-        return telegramButton;
       }),
     );
   }
 
-  private replaceParams(text: string, params: Record<string, any>): string {
+  private replaceParams(text: string, params: Record<string, unknown>): string {
     let result = text;
     for (const [key, value] of Object.entries(params)) {
       result = result.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
