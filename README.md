@@ -29,6 +29,22 @@
 
 ## 🆕 What's New in v1.3
 
+### ⚡ Edge Cache Service (NEW!)
+
+- **Sub-10ms cache access** - Leverage Cloudflare's global edge network
+- **Automatic caching middleware** - Zero-config caching for your routes
+- **Tag-based invalidation** - Intelligently purge related content
+- **Response caching** - Cache entire HTTP responses for maximum performance
+- **Production-tested** - Battle-tested in high-load Telegram bots
+
+### 📊 Performance Monitoring System (NEW!)
+
+- **Comprehensive metrics** - Track latency, errors, and custom metrics
+- **Multiple providers** - Cloudflare Analytics, StatsD, or custom backends
+- **Zero overhead** - Designed for Cloudflare Workers' constraints
+- **Business metrics** - Track what matters to your application
+- **Real-time insights** - Monitor performance as it happens
+
 ### 🤖 Automated Contribution System
 
 - **Interactive CLI tool** - `npm run contribute` for streamlined contributions
@@ -113,6 +129,8 @@ _Your support is invested thoughtfully into making this project even better. Tha
 - **🗄️ SQL Database** - Platform-agnostic database interface (D1, RDS, Cloud SQL)
 - **💾 KV Storage** - Universal key-value storage abstraction
 - **🧠 Multi-Provider AI** - Support for Google Gemini, OpenAI, xAI Grok, DeepSeek, Cloudflare AI
+- **⚡ Edge Cache** - Ultra-fast caching with Cloudflare Cache API (sub-10ms access)
+- **📊 Performance Monitoring** - Real-time metrics with multiple backend support
 - **🔍 Sentry** - Error tracking and performance monitoring
 - **🔌 Plugin System** - Extend with custom functionality
 

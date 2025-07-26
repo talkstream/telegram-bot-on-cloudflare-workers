@@ -1,0 +1,89 @@
+# Configuration for auto-labeling PRs based on changed files
+
+# Core changes
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/core/**/*'
+          - 'src/interfaces/**/*'
+
+# Connector changes
+connectors:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/connectors/**/*'
+          - 'src/adapters/**/*'
+
+# Documentation
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**/*'
+          - 'examples/**/*'
+
+# Tests
+testing:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/__tests__/**/*'
+          - '**/*.test.ts'
+          - '**/*.spec.ts'
+          - 'vitest.config.ts'
+
+# CI/CD
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+          - '.gitignore'
+          - '.npmrc'
+
+# Dependencies
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'package.json'
+          - 'package-lock.json'
+          - 'tsconfig.json'
+
+# Platform specific
+platform/telegram:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/adapters/telegram/**/*'
+          - 'src/connectors/messaging/telegram/**/*'
+
+platform/discord:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/connectors/messaging/discord/**/*'
+
+platform/cloudflare:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'wrangler.toml'
+          - 'src/core/cloud/cloudflare/**/*'
+
+# Contributions
+contribution:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'contrib/**/*'
+          - 'src/contrib/**/*'
+
+# Performance
+performance:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/patterns/**/*'
+          - 'src/lib/cache/**/*'
+          - '**/performance/**/*'
+
+# Security
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/middleware/auth*.ts'
+          - 'src/core/security/**/*'
+          - '**/auth/**/*'

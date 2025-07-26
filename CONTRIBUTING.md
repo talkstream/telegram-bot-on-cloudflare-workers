@@ -167,10 +167,22 @@ See [Easy Contribute Guide](docs/EASY_CONTRIBUTE.md) for detailed instructions.
 
 ## 📚 Resources
 
+### Contribution Guides
+
+- [Easy Contribute Guide](docs/EASY_CONTRIBUTE.md) - Automated contribution tools
+- [Contribution Review Checklist](docs/CONTRIBUTION_REVIEW_CHECKLIST.md) - For maintainers
+- [Successful Contributions](docs/SUCCESSFUL_CONTRIBUTIONS.md) - Examples and hall of fame
 - [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) - Detailed development guide
+
+### Technical Documentation
+
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
 - [grammY Documentation](https://grammy.dev/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
+
+## 🏆 Recent Successful Contributions
+
+Check out our [Successful Contributions Gallery](docs/SUCCESSFUL_CONTRIBUTIONS.md) to see real examples of community contributions that made Wireframe better!
 
 Thank you for contributing to make Wireframe the best universal AI assistant platform!
