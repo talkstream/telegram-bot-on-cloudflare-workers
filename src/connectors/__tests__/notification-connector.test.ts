@@ -238,7 +238,7 @@ describe('NotificationConnector', () => {
       const storedResult = {
         messageId: 'msg_123',
         status: NotificationStatus.SENT,
-        deliveredAt: new Date(),
+        deliveredAt: new Date().toISOString(),
       };
       vi.mocked(mockStorage.get).mockResolvedValueOnce(JSON.stringify(storedResult));
 
