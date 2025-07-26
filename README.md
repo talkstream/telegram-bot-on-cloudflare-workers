@@ -875,6 +875,35 @@ Reusable patterns for common tasks:
 - **[Command Router](docs/patterns/command-router.js)** - Flexible command routing
 - **[Access Control](docs/patterns/access-control.js)** - Role-based permissions
 
+## 🎯 Tier-based Optimizations
+
+Automatic performance optimization based on your Cloudflare plan:
+
+```typescript
+import { createTierOptimizer } from '@/middleware/tier-optimizer';
+
+// Auto-detect tier and apply optimizations
+app.use(
+  '*',
+  createTierOptimizer({
+    cacheService: edgeCache,
+    debug: true,
+  }),
+);
+
+// Use optimization helpers
+const data = await optimizedCache(ctx, 'key', fetchData);
+const results = await optimizedBatch(ctx, items, processItems);
+```
+
+Features:
+
+- **Automatic Tier Detection**: Identifies Free/Paid/Enterprise plans
+- **Resource Tracking**: Monitors CPU, memory, and API usage
+- **Dynamic Strategies**: Applies optimizations based on usage
+- **Smart Recommendations**: Provides upgrade and optimization tips
+- **Graceful Degradation**: Maintains functionality within limits
+
 ## 🚀 Roadmap
 
 ### Phase 1: Core Enhancements (Days or Hours)
