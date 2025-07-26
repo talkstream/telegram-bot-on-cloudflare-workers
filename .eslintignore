@@ -1,0 +1,27 @@
+# Build output
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Examples (optional linting)
+examples/
+
+# Generated files
+*.generated.ts
+*.generated.js
+
+# Environment
+.env
+.env.*
+.dev.vars
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp

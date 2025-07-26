@@ -6,6 +6,13 @@
 export { errorHandler } from './error-handler';
 export { rateLimiter, strictRateLimit, relaxedRateLimit, apiRateLimit } from './rate-limiter';
 export { eventMiddleware, eventListenerMiddleware } from './event-middleware';
+export {
+  edgeCache,
+  cacheInvalidator,
+  warmupCache,
+  DEFAULT_CACHE_CONFIG,
+  type EdgeCacheMiddlewareConfig,
+} from './edge-cache';
 
 // Platform-specific middleware should be imported from their respective adapters
 // e.g., import { createAuthMiddleware } from '@/adapters/telegram/middleware';
