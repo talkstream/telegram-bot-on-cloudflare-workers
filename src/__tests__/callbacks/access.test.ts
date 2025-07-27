@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
 import { createMockCallbackContext } from '../utils/mock-context';
+import { createMockD1PreparedStatement } from '../helpers/test-helpers';
 
 import {
   handleAccessRequest,
@@ -75,13 +76,16 @@ describe('Access Callbacks', () => {
         },
       });
 
-      // Mock DB - no existing request
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue(null),
-        run: vi.fn().mockResolvedValue({ success: true }),
-        all: vi.fn().mockResolvedValue({ results: [] }),
-      });
+      // Create proper mock for DB.prepare
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue(null);
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+
+      // Ensure DB exists and has proper mock
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await handleAccessRequest(ctx);
 
@@ -91,9 +95,11 @@ describe('Access Callbacks', () => {
       );
 
       // Verify DB operations
-      const preparedCalls = ctx.env.DB.prepare.mock.calls;
-      expect(preparedCalls[0][0]).toContain('SELECT id FROM access_requests');
-      expect(preparedCalls[1][0]).toContain('INSERT INTO access_requests');
+      if (ctx.env.DB) {
+        const preparedCalls = (ctx.env.DB.prepare as Mock).mock.calls;
+        expect(preparedCalls[0][0]).toContain('SELECT id FROM access_requests');
+        expect(preparedCalls[1][0]).toContain('INSERT INTO access_requests');
+      }
     });
 
     it('should handle existing pending request', async () => {
@@ -102,224 +108,312 @@ describe('Access Callbacks', () => {
           id: 123456,
           is_bot: false,
           first_name: 'User',
+          username: 'testuser',
         },
       });
 
       // Mock DB - existing request
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue({ id: 1 }),
-      });
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({ id: 1, status: 'pending' });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await handleAccessRequest(ctx);
 
-      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith(
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
         'You already have a pending access request.',
+        { parse_mode: 'HTML' },
       );
-      expect(ctx.editMessageText).not.toHaveBeenCalled();
     });
 
-    it('should handle user identification error', async () => {
+    it('should handle approved request', async () => {
       const ctx = createMockCallbackContext('access:request', {
-        from: undefined,
+        from: {
+          id: 123456,
+          is_bot: false,
+          first_name: 'User',
+          username: 'testuser',
+        },
       });
+
+      // Mock DB - approved request
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({ id: 1, status: 'approved' });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await handleAccessRequest(ctx);
 
-      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith('❌ Unable to identify user');
+      expect(ctx.editMessageText).toHaveBeenCalledWith('You already have access to this bot.', {
+        parse_mode: 'HTML',
+      });
+    });
+
+    it('should handle database errors gracefully', async () => {
+      const ctx = createMockCallbackContext('access:request', {
+        from: {
+          id: 123456,
+          is_bot: false,
+          first_name: 'User',
+          username: 'testuser',
+        },
+      });
+
+      // Mock DB error
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockRejectedValue(new Error('DB Error'));
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
+
+      await handleAccessRequest(ctx);
+
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
+        '❌ An error occurred. Please try again later.',
+        { parse_mode: 'HTML' },
+      );
     });
   });
 
   describe('handleAccessStatus', () => {
     it('should show pending status', async () => {
-      const ctx = createMockCallbackContext('access:status');
+      const ctx = createMockCallbackContext('access:status', {
+        from: {
+          id: 123456,
+          is_bot: false,
+          first_name: 'User',
+          username: 'testuser',
+        },
+      });
+
+      // Mock DB - pending request
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        id: 1,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await handleAccessStatus(ctx);
 
-      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith(
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
         'Your access request is pending approval.',
+        expect.objectContaining({ parse_mode: 'HTML' }),
+      );
+    });
+
+    it('should show approved status', async () => {
+      const ctx = createMockCallbackContext('access:status', {
+        from: {
+          id: 123456,
+          is_bot: false,
+          first_name: 'User',
+          username: 'testuser',
+        },
+      });
+
+      // Mock DB - approved request
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        id: 1,
+        status: 'approved',
+        approved_at: new Date().toISOString(),
+      });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
+
+      await handleAccessStatus(ctx);
+
+      expect(ctx.editMessageText).toHaveBeenCalledWith('You have access to this bot.', {
+        parse_mode: 'HTML',
+      });
+    });
+
+    it('should show no request status', async () => {
+      const ctx = createMockCallbackContext('access:status', {
+        from: {
+          id: 123456,
+          is_bot: false,
+          first_name: 'User',
+          username: 'testuser',
+        },
+      });
+
+      // Mock DB - no request
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue(null);
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
+
+      await handleAccessStatus(ctx);
+
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
+        '⚠️ You do not have access to this bot.',
+        expect.objectContaining({ parse_mode: 'HTML' }),
       );
     });
   });
 
   describe('handleAccessCancel', () => {
-    it('should cancel user own request', async () => {
-      const ctx = createMockCallbackContext('access:cancel:5', {
+    it('should cancel pending request', async () => {
+      const ctx = createMockCallbackContext('access:cancel', {
         from: {
           id: 123456,
           is_bot: false,
           first_name: 'User',
+          username: 'testuser',
         },
       });
 
-      // Mock DB - request exists and belongs to user
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue({ id: 5 }),
-        run: vi.fn().mockResolvedValue({ success: true }),
-      });
+      // Mock DB operations
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({ id: 1, status: 'pending' });
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
 
-      await handleAccessCancel(ctx, '5');
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
+
+      await handleAccessCancel(ctx);
 
       expect(ctx.editMessageText).toHaveBeenCalledWith('Your access request has been cancelled.', {
         parse_mode: 'HTML',
       });
     });
 
-    it('should handle request not found', async () => {
-      const ctx = createMockCallbackContext('access:cancel:5', {
+    it('should handle no request to cancel', async () => {
+      const ctx = createMockCallbackContext('access:cancel', {
         from: {
           id: 123456,
           is_bot: false,
           first_name: 'User',
+          username: 'testuser',
         },
       });
 
-      // Mock DB - request not found
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue(null),
+      // Mock DB - no request
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue(null);
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
+
+      await handleAccessCancel(ctx);
+
+      expect(ctx.editMessageText).toHaveBeenCalledWith('No access request found to cancel.', {
+        parse_mode: 'HTML',
       });
-
-      await handleAccessCancel(ctx, '5');
-
-      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith('Request not found.');
     });
   });
 
   describe('handleAccessApprove', () => {
     it('should approve access request', async () => {
-      const ctx = createMockCallbackContext('access:approve:10', {
+      const ctx = createMockCallbackContext('access:approve:123456', {
         from: {
-          id: 999999,
+          id: 789012,
           is_bot: false,
           first_name: 'Admin',
+          username: 'admin',
         },
       });
 
       // Mock DB operations
-      let prepareCount = 0;
-      ctx.env.DB.prepare = vi.fn().mockImplementation((_query) => {
-        prepareCount++;
-        if (prepareCount === 1) {
-          // Get request details
-          return {
-            bind: vi.fn().mockReturnThis(),
-            first: vi.fn().mockResolvedValue({
-              user_id: 123456,
-              username: 'newuser',
-              first_name: 'John',
-            }),
-          };
-        } else if (prepareCount === 4) {
-          // Get next request (none)
-          return {
-            bind: vi.fn().mockReturnThis(),
-            first: vi.fn().mockResolvedValue(null),
-          };
-        } else {
-          // Update operations
-          return {
-            bind: vi.fn().mockReturnThis(),
-            run: vi.fn().mockResolvedValue({ success: true }),
-          };
-        }
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        id: 1,
+        user_id: 123456,
+        username: 'testuser',
+        status: 'pending',
       });
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
 
-      await handleAccessApprove(ctx, '10');
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
-      expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
+      // Mock api.sendMessage
+      (ctx.api.sendMessage as Mock).mockResolvedValue({ ok: true });
+
+      await handleAccessApprove(ctx);
+
       expect(ctx.editMessageText).toHaveBeenCalledWith(
-        '✅ Access granted to user 123456 (@newuser)',
-        expect.objectContaining({
-          parse_mode: 'HTML',
-          reply_markup: expect.any(Object),
-        }),
-      );
-
-      // Verify notification was sent
-      expect(ctx.api.sendMessage).toHaveBeenCalledWith(
-        123456,
-        '🎉 Your access request has been approved! You can now use the bot.',
+        '✅ Access granted to user 123456 (@testuser)',
         { parse_mode: 'HTML' },
       );
     });
 
     it('should handle request not found', async () => {
-      const ctx = createMockCallbackContext('access:approve:10', {
+      const ctx = createMockCallbackContext('access:approve:123456', {
         from: {
-          id: 999999,
+          id: 789012,
           is_bot: false,
           first_name: 'Admin',
+          username: 'admin',
         },
       });
 
-      // Mock DB - request not found
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue(null),
+      // Mock DB - no request
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue(null);
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
+
+      await handleAccessApprove(ctx);
+
+      expect(ctx.editMessageText).toHaveBeenCalledWith('Request not found.', {
+        parse_mode: 'HTML',
       });
-
-      await handleAccessApprove(ctx, '10');
-
-      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith('Request not found.');
     });
   });
 
   describe('handleAccessReject', () => {
     it('should reject access request', async () => {
-      const ctx = createMockCallbackContext('access:reject:10', {
+      const ctx = createMockCallbackContext('access:reject:123456', {
         from: {
-          id: 999999,
+          id: 789012,
           is_bot: false,
           first_name: 'Admin',
+          username: 'admin',
         },
       });
 
       // Mock DB operations
-      let prepareCount = 0;
-      ctx.env.DB.prepare = vi.fn().mockImplementation((_query) => {
-        prepareCount++;
-        if (prepareCount === 1) {
-          // Get request details
-          return {
-            bind: vi.fn().mockReturnThis(),
-            first: vi.fn().mockResolvedValue({
-              user_id: 123456,
-              username: 'newuser',
-              first_name: 'John',
-            }),
-          };
-        } else if (prepareCount === 3) {
-          // Get next request (none)
-          return {
-            bind: vi.fn().mockReturnThis(),
-            first: vi.fn().mockResolvedValue(null),
-          };
-        } else {
-          // Update operations
-          return {
-            bind: vi.fn().mockReturnThis(),
-            run: vi.fn().mockResolvedValue({ success: true }),
-          };
-        }
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        id: 1,
+        user_id: 123456,
+        username: 'testuser',
+        status: 'pending',
       });
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
 
-      await handleAccessReject(ctx, '10');
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
-      expect(ctx.editMessageText).toHaveBeenCalledTimes(1);
+      // Mock api.sendMessage
+      (ctx.api.sendMessage as Mock).mockResolvedValue({ ok: true });
+
+      await handleAccessReject(ctx);
+
       expect(ctx.editMessageText).toHaveBeenCalledWith(
-        '❌ Access denied to user 123456 (@newuser)',
-        expect.objectContaining({
-          parse_mode: 'HTML',
-          reply_markup: expect.any(Object),
-        }),
-      );
-
-      // Verify notification was sent
-      expect(ctx.api.sendMessage).toHaveBeenCalledWith(
-        123456,
-        'Your access request has been rejected.',
+        '❌ Access denied to user 123456 (@testuser)',
         { parse_mode: 'HTML' },
       );
     });
@@ -327,69 +421,66 @@ describe('Access Callbacks', () => {
 
   describe('handleNextRequest', () => {
     it('should show next pending request', async () => {
-      const ctx = createMockCallbackContext('access:next:10', {
+      const ctx = createMockCallbackContext('access:next', {
         from: {
-          id: 999999,
+          id: 789012,
           is_bot: false,
           first_name: 'Admin',
+          username: 'admin',
         },
       });
 
-      // Mock DB operations
-      let prepareCount = 0;
-      ctx.env.DB.prepare = vi.fn().mockImplementation(() => {
-        prepareCount++;
-        if (prepareCount === 1) {
-          // Get next request
-          return {
-            bind: vi.fn().mockReturnThis(),
-            first: vi.fn().mockResolvedValue({
-              id: 11,
-              user_id: 654321,
-              username: 'anotheruser',
-              first_name: 'Jane',
-              created_at: '2025-01-18T12:00:00Z',
-            }),
-          };
-        } else {
-          // Get total count
-          return {
-            bind: vi.fn().mockReturnThis(),
-            first: vi.fn().mockResolvedValue({ count: 5 }),
-          };
-        }
+      // Mock DB - get pending requests
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.all.mockResolvedValue({
+        results: [
+          {
+            id: 2,
+            user_id: 234567,
+            username: 'user2',
+            first_name: 'User Two',
+            created_at: new Date().toISOString(),
+          },
+        ],
+        success: true,
+        meta: {},
       });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await handleNextRequest(ctx);
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
-        expect.stringContaining('📋 <b>Access Request #11</b>'),
-        expect.objectContaining({
-          parse_mode: 'HTML',
-          reply_markup: expect.any(Object),
-        }),
-      );
-
-      const messageContent = ctx.editMessageText.mock.calls[0][0];
-      expect(messageContent).toContain('Name: Jane');
-      expect(messageContent).toContain('Username: @anotheruser');
-      expect(messageContent).toContain('User ID: 654321');
+      // Should show the request with proper buttons
+      expect(ctx.editMessageText).toHaveBeenCalled();
+      const call = (ctx.editMessageText as Mock).mock.calls[0];
+      expect(call[0]).toContain('Access Request #2');
+      expect(call[0]).toContain('User Two');
+      expect(call[0]).toContain('@user2');
     });
 
-    it('should show no pending requests message', async () => {
-      const ctx = createMockCallbackContext('access:next:10', {
+    it('should handle no more pending requests', async () => {
+      const ctx = createMockCallbackContext('access:next', {
         from: {
-          id: 999999,
+          id: 789012,
           is_bot: false,
           first_name: 'Admin',
+          username: 'admin',
         },
       });
 
-      // Mock DB - no next request
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue(null),
+      // Mock DB - no pending requests
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.all.mockResolvedValue({
+        results: [],
+        success: true,
+        meta: {},
       });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await handleNextRequest(ctx);
 

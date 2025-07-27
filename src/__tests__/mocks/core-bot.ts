@@ -19,7 +19,9 @@ export const mockBot = {
   catch: vi.fn(),
 };
 
-export const createBot = vi.fn(() => mockBot);
+import type { Env } from '../../types/env.js';
+
+export const createBot = vi.fn((_env?: Env) => mockBot);
 
 // Mock the module
 vi.mock('@/core/bot', () => ({

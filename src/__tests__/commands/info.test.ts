@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 
 import { createMockContext } from '../utils/mock-context';
+import { createMockD1PreparedStatement } from '../helpers/test-helpers';
 
 import { infoCommand } from '@/adapters/telegram/commands/owner/info';
 
 // Mock the auth module
 vi.mock('@/middleware/auth', () => ({
-  requireOwner: vi.fn((ctx, next) => next()),
+  requireOwner: vi.fn((_ctx, next) => next()),
   isOwner: vi.fn().mockReturnValue(true),
 }));
 
@@ -41,60 +42,75 @@ describe('Info Command', () => {
 
     // Mock DB queries
     let callCount = 0;
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockImplementation(() => {
-        callCount++;
-        // Mock different queries based on call order
-        switch (callCount) {
-          case 1: // User statistics
-            return Promise.resolve({ total_users: 100, active_users: 50 });
-          case 2: // Access requests stats
-            return Promise.resolve({
-              pending_requests: 5,
-              approved_requests: 80,
-              rejected_requests: 10,
-            });
-          default:
-            return Promise.resolve(null);
-        }
-      }),
-      all: vi.fn().mockResolvedValue({
-        results: [
-          { role: 'owner', count: 1 },
-          { role: 'admin', count: 3 },
-          { role: 'user', count: 96 },
-        ],
-      }),
+    const mockPreparedStatement = createMockD1PreparedStatement();
+    mockPreparedStatement.first.mockImplementation(() => {
+      callCount++;
+      // Mock different queries based on call order
+      switch (callCount) {
+        case 1: // User statistics
+          return Promise.resolve({ total_users: 100, active_users: 50 });
+        case 2: // Access requests stats
+          return Promise.resolve({
+            pending_requests: 5,
+            approved_requests: 80,
+            rejected_requests: 10,
+          });
+        default:
+          return Promise.resolve(null);
+      }
     });
+    mockPreparedStatement.all.mockResolvedValue({
+      results: [
+        { role: 'owner', count: 1 },
+        { role: 'admin', count: 3 },
+        { role: 'user', count: 96 },
+      ],
+      success: true,
+      meta: {},
+    });
+
+    if (ctx.env.DB) {
+      (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+    }
 
     // Mock KV sessions
-    ctx.env.SESSIONS.list = vi.fn().mockResolvedValue({
-      keys: [
-        { name: 'session1', metadata: {} },
-        { name: 'session2', metadata: {} },
-        { name: 'session3', metadata: {} },
-      ],
-      list_complete: true,
-      cursor: null,
-    });
+    if (ctx.env.SESSIONS) {
+      (ctx.env.SESSIONS.list as Mock).mockResolvedValue({
+        keys: [
+          { name: 'session1', metadata: {} },
+          { name: 'session2', metadata: {} },
+          { name: 'session3', metadata: {} },
+        ],
+        list_complete: true,
+        cursor: null,
+      });
+    }
 
     // Mock active sessions
-    ctx.env.SESSIONS.get = vi.fn().mockImplementation((key) => {
-      const sessions: Record<string, { lastActivity: number }> = {
-        session1: { lastActivity: Date.now() - 10 * 60 * 1000 }, // 10 minutes ago
-        session2: { lastActivity: Date.now() - 45 * 60 * 1000 }, // 45 minutes ago (inactive)
-        session3: { lastActivity: Date.now() - 5 * 60 * 1000 }, // 5 minutes ago
-      };
-      return Promise.resolve(sessions[key]);
-    });
+    if (ctx.env.SESSIONS) {
+      (ctx.env.SESSIONS.get as Mock).mockImplementation((key) => {
+        const sessions: Record<string, { lastActivity: number }> = {
+          session1: { lastActivity: Date.now() - 10 * 60 * 1000 }, // 10 minutes ago
+          session2: { lastActivity: Date.now() - 45 * 60 * 1000 }, // 45 minutes ago (inactive)
+          session3: { lastActivity: Date.now() - 5 * 60 * 1000 }, // 5 minutes ago
+        };
+        return Promise.resolve(sessions[key]);
+      });
+    }
 
     // Mock AI service
     ctx.services.ai = {
       getActiveProvider: () => 'gemini',
-      listProviders: () => ['gemini', 'openai'],
-      getCostInfo: () => ({ total: 1.2345 }),
-    };
+      listProviders: () => [
+        { id: 'gemini', displayName: 'Google Gemini', type: 'gemini' },
+        { id: 'openai', displayName: 'OpenAI', type: 'openai' },
+      ],
+      getCostInfo: () => ({
+        usage: new Map(),
+        costs: null,
+        total: 1.2345,
+      }),
+    } as unknown as typeof ctx.services.ai;
 
     await infoCommand(ctx);
 
@@ -102,7 +118,7 @@ describe('Info Command', () => {
       parse_mode: 'HTML',
     });
 
-    const replyContent = ctx.reply.mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
     expect(replyContent).toContain('Environment: production');
     expect(replyContent).toContain('Tier: paid');
     expect(replyContent).toContain('Uptime: 2h 30m');
@@ -126,33 +142,37 @@ describe('Info Command', () => {
 
     // Mock DB queries with specific access request stats
     let callCount = 0;
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockImplementation(() => {
-        callCount++;
-        if (callCount === 2) {
-          // Access requests stats
-          return Promise.resolve({
-            pending_requests: 10,
-            approved_requests: 200,
-            rejected_requests: 50,
-          });
-        }
-        return Promise.resolve({ total_users: 0, active_users: 0 });
-      }),
-      all: vi.fn().mockResolvedValue({ results: [] }),
+    const mockPreparedStatement = createMockD1PreparedStatement();
+    mockPreparedStatement.first.mockImplementation(() => {
+      callCount++;
+      if (callCount === 2) {
+        // Access requests stats
+        return Promise.resolve({
+          pending_requests: 10,
+          approved_requests: 200,
+          rejected_requests: 50,
+        });
+      }
+      return Promise.resolve({ total_users: 0, active_users: 0 });
     });
+    mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+
+    if (ctx.env.DB) {
+      (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+    }
 
     // Mock empty sessions
-    ctx.env.SESSIONS.list = vi.fn().mockResolvedValue({
-      keys: [],
-      list_complete: true,
-      cursor: null,
-    });
+    if (ctx.env.SESSIONS) {
+      (ctx.env.SESSIONS.list as Mock).mockResolvedValue({
+        keys: [],
+        list_complete: true,
+        cursor: null,
+      });
+    }
 
     await infoCommand(ctx);
 
-    const replyContent = ctx.reply.mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
     expect(replyContent).toContain('Access Requests:');
     expect(replyContent).toContain('• Pending: 10');
     expect(replyContent).toContain('• Approved: 200');
@@ -171,28 +191,34 @@ describe('Info Command', () => {
     ctx.env.BOT_OWNER_IDS = '123456';
 
     // Mock DB queries with specific role distribution
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue({ total_users: 0, active_users: 0 }),
-      all: vi.fn().mockResolvedValue({
-        results: [
-          { role: 'owner', count: 2 },
-          { role: 'admin', count: 5 },
-          { role: 'user', count: 93 },
-        ],
-      }),
+    const mockPreparedStatement = createMockD1PreparedStatement();
+    mockPreparedStatement.first.mockResolvedValue({ total_users: 0, active_users: 0 });
+    mockPreparedStatement.all.mockResolvedValue({
+      results: [
+        { role: 'owner', count: 2 },
+        { role: 'admin', count: 5 },
+        { role: 'user', count: 93 },
+      ],
+      success: true,
+      meta: {},
     });
 
+    if (ctx.env.DB) {
+      (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+    }
+
     // Mock empty sessions
-    ctx.env.SESSIONS.list = vi.fn().mockResolvedValue({
-      keys: [],
-      list_complete: true,
-      cursor: null,
-    });
+    if (ctx.env.SESSIONS) {
+      (ctx.env.SESSIONS.list as Mock).mockResolvedValue({
+        keys: [],
+        list_complete: true,
+        cursor: null,
+      });
+    }
 
     await infoCommand(ctx);
 
-    const replyContent = ctx.reply.mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
     expect(replyContent).toContain('Role Distribution:');
     expect(replyContent).toContain('owner: 2');
     expect(replyContent).toContain('admin: 5');
@@ -215,22 +241,26 @@ describe('Info Command', () => {
     ctx.services.ai = null;
 
     // Mock DB queries
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue({ total_users: 0, active_users: 0 }),
-      all: vi.fn().mockResolvedValue({ results: [] }),
-    });
+    const mockPreparedStatement = createMockD1PreparedStatement();
+    mockPreparedStatement.first.mockResolvedValue({ total_users: 0, active_users: 0 });
+    mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+
+    if (ctx.env.DB) {
+      (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+    }
 
     // Mock empty sessions
-    ctx.env.SESSIONS.list = vi.fn().mockResolvedValue({
-      keys: [],
-      list_complete: true,
-      cursor: null,
-    });
+    if (ctx.env.SESSIONS) {
+      (ctx.env.SESSIONS.list as Mock).mockResolvedValue({
+        keys: [],
+        list_complete: true,
+        cursor: null,
+      });
+    }
 
     await infoCommand(ctx);
 
-    const replyContent = ctx.reply.mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
     expect(replyContent).toContain('AI Provider:');
     expect(replyContent).toContain('• Not configured');
   });
@@ -247,10 +277,12 @@ describe('Info Command', () => {
     ctx.env.BOT_OWNER_IDS = '123456';
 
     // Mock DB to throw error
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockRejectedValue(new Error('Database error')),
-    });
+    const mockPreparedStatement = createMockD1PreparedStatement();
+    mockPreparedStatement.first.mockRejectedValue(new Error('Database error'));
+
+    if (ctx.env.DB) {
+      (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+    }
 
     await infoCommand(ctx);
 
@@ -273,22 +305,26 @@ describe('Info Command', () => {
     vi.setSystemTime(new Date('2025-01-18T12:00:00Z'));
 
     // Mock DB queries
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue({ total_users: 0, active_users: 0 }),
-      all: vi.fn().mockResolvedValue({ results: [] }),
-    });
+    const mockPreparedStatement = createMockD1PreparedStatement();
+    mockPreparedStatement.first.mockResolvedValue({ total_users: 0, active_users: 0 });
+    mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+
+    if (ctx.env.DB) {
+      (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+    }
 
     // Mock empty sessions
-    ctx.env.SESSIONS.list = vi.fn().mockResolvedValue({
-      keys: [],
-      list_complete: true,
-      cursor: null,
-    });
+    if (ctx.env.SESSIONS) {
+      (ctx.env.SESSIONS.list as Mock).mockResolvedValue({
+        keys: [],
+        list_complete: true,
+        cursor: null,
+      });
+    }
 
     await infoCommand(ctx);
 
-    const replyContent = ctx.reply.mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
     expect(replyContent).toContain('Uptime: 2h 30m');
   });
 });

@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
 import { createMockContext } from '../utils/mock-context';
+import { createMockD1PreparedStatement } from '../helpers/test-helpers';
 
 import { debugCommand } from '@/adapters/telegram/commands/owner/debug';
 
 // Mock the auth module
 vi.mock('@/middleware/auth', () => ({
-  requireOwner: vi.fn((ctx, next) => next()),
+  requireOwner: vi.fn((_ctx, next) => next()),
   isOwner: vi.fn().mockReturnValue(true),
   getDebugLevel: vi.fn().mockResolvedValue(0),
 }));
@@ -27,8 +28,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug on',
         },
       });
@@ -37,10 +38,12 @@ describe('Debug Command', () => {
       ctx.match = 'on';
 
       // Mock DB
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        run: vi.fn().mockResolvedValue({ success: true }),
-      });
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -59,8 +62,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug on 2',
         },
       });
@@ -69,10 +72,12 @@ describe('Debug Command', () => {
       ctx.match = 'on 2';
 
       // Mock DB
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        run: vi.fn().mockResolvedValue({ success: true }),
-      });
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -91,8 +96,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug on 3',
         },
       });
@@ -101,10 +106,12 @@ describe('Debug Command', () => {
       ctx.match = 'on 3';
 
       // Mock DB
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        run: vi.fn().mockResolvedValue({ success: true }),
-      });
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -123,8 +130,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug on 5',
         },
       });
@@ -151,8 +158,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug off',
         },
       });
@@ -161,10 +168,12 @@ describe('Debug Command', () => {
       ctx.match = 'off';
 
       // Mock DB
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        run: vi.fn().mockResolvedValue({ success: true }),
-      });
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -183,8 +192,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug status',
         },
       });
@@ -193,10 +202,15 @@ describe('Debug Command', () => {
       ctx.match = 'status';
 
       // Mock DB to return debug level 2
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue({ value: '2', updated_at: '2025-01-18T10:00:00Z' }),
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        value: '2',
+        updated_at: '2025-01-18T10:00:00Z',
       });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -215,8 +229,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug status',
         },
       });
@@ -225,10 +239,15 @@ describe('Debug Command', () => {
       ctx.match = 'status';
 
       // Mock DB to return debug level 0 (disabled)
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue({ value: '0', updated_at: '2025-01-18T10:00:00Z' }),
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        value: '0',
+        updated_at: '2025-01-18T10:00:00Z',
       });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -249,8 +268,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug invalid',
         },
       });
@@ -278,8 +297,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug',
         },
       });
@@ -306,8 +325,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug on',
         },
       });
@@ -338,8 +357,8 @@ describe('Debug Command', () => {
         message: {
           message_id: 1,
           date: Date.now(),
-          chat: { id: 123456, type: 'private' },
-          from: { id: 123456, is_bot: false },
+          chat: { id: 123456, type: 'private', first_name: 'Owner' },
+          from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/debug status',
         },
       });
