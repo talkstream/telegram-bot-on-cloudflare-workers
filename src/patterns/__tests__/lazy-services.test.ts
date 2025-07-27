@@ -31,7 +31,7 @@ interface TestServices extends Record<string, unknown> {
 
 describe('LazyServiceContainer', () => {
   let container: LazyServiceContainer<TestServices>;
-  let factoryCalls: Record<string, number>;
+  let factoryCalls: { service1: number; service2: number; service3: number };
 
   beforeEach(() => {
     container = new LazyServiceContainer();
@@ -176,13 +176,13 @@ describe('ConditionalServiceContainer', () => {
     container.registerConditional(
       'service1',
       () => new TestService1(),
-      () => conditions.service1,
+      () => conditions.service1 ?? false,
     );
 
     container.registerConditional(
       'service2',
       () => new TestService2(),
-      () => conditions.service2,
+      () => conditions.service2 ?? false,
     );
 
     container.registerConditional(
@@ -191,7 +191,7 @@ describe('ConditionalServiceContainer', () => {
       async () => {
         // Simulate async condition check
         await new Promise((resolve) => setTimeout(resolve, 10));
-        return conditions.service3;
+        return conditions.service3 ?? false;
       },
     );
   });
@@ -223,9 +223,23 @@ describe('ConditionalServiceContainer', () => {
   });
 
   it('should use regular get for non-conditional services', () => {
-    container.register('regular' as keyof TestServices, () => ({ name: 'regular' }));
+    // Create a new container with the extended type
+    interface ExtendedServices extends TestServices {
+      regular: { name: string };
+    }
+    const extContainer = new ConditionalServiceContainer<ExtendedServices>();
 
-    const service = container.get('regular' as keyof TestServices);
+    // Copy over the existing conditional registrations
+    extContainer.registerConditional(
+      'service1',
+      () => new TestService1(),
+      () => conditions.service1 ?? false,
+    );
+
+    // Register the new service
+    extContainer.register('regular', () => ({ name: 'regular' }));
+
+    const service = extContainer.get('regular');
     expect(service.name).toBe('regular');
   });
 

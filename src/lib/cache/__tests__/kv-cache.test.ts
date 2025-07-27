@@ -9,8 +9,20 @@ class MockKVStore implements IKeyValueStore {
   private store = new Map<string, unknown>();
   private metadata = new Map<string, { metadata: unknown; options?: unknown }>();
 
-  async get(key: string): Promise<unknown> {
-    return this.store.get(key) || null;
+  async get<T = string>(key: string): Promise<T | null> {
+    const value = this.store.get(key);
+    return (value !== undefined ? value : null) as T | null;
+  }
+
+  async getWithMetadata<T = string>(
+    key: string,
+  ): Promise<{ value: T | null; metadata: Record<string, unknown> | null }> {
+    const value = await this.get<T>(key);
+    const meta = this.metadata.get(key);
+    return {
+      value,
+      metadata: (meta?.metadata as Record<string, unknown> | null) ?? null,
+    };
   }
 
   async put(key: string, value: unknown): Promise<void> {
@@ -22,9 +34,25 @@ class MockKVStore implements IKeyValueStore {
     this.metadata.delete(key);
   }
 
-  async list(): Promise<{ keys: { name: string }[] }> {
+  async list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{
+    keys: Array<{ name: string; metadata?: Record<string, unknown> }>;
+    list_complete: boolean;
+    cursor?: string;
+  }> {
+    let keys = Array.from(this.store.keys());
+
+    if (options?.prefix) {
+      keys = keys.filter((key) => key.startsWith(options.prefix!));
+    }
+
+    if (options?.limit) {
+      keys = keys.slice(0, options.limit);
+    }
+
     return {
-      keys: Array.from(this.store.keys()).map((name) => ({ name })),
+      keys: keys.map((name) => ({ name })),
+      list_complete: true,
+      cursor: undefined,
     };
   }
 
@@ -52,7 +80,7 @@ describe('KVCache', () => {
 
   beforeEach(() => {
     mockKV = new MockKVStore();
-    cache = new KVCache(mockKV as IKeyValueStore);
+    cache = new KVCache(mockKV);
   });
 
   describe('Basic Operations', () => {
@@ -126,29 +154,41 @@ describe('KVCache', () => {
 
   describe('Error Handling', () => {
     it('should not throw on get errors', async () => {
-      const errorKV = {
+      const errorKV: IKeyValueStore = {
         get: vi.fn().mockRejectedValue(new Error('KV Error')),
+        getWithMetadata: vi.fn().mockRejectedValue(new Error('KV Error')),
+        put: vi.fn().mockRejectedValue(new Error('KV Error')),
+        delete: vi.fn().mockRejectedValue(new Error('KV Error')),
+        list: vi.fn().mockRejectedValue(new Error('KV Error')),
       };
-      const errorCache = new KVCache(errorKV as IKeyValueStore);
+      const errorCache = new KVCache(errorKV);
 
       const result = await errorCache.get('key');
       expect(result).toBeNull();
     });
 
     it('should not throw on set errors', async () => {
-      const errorKV = {
+      const errorKV: IKeyValueStore = {
+        get: vi.fn().mockResolvedValue(null),
+        getWithMetadata: vi.fn().mockResolvedValue({ value: null, metadata: null }),
         put: vi.fn().mockRejectedValue(new Error('KV Error')),
+        delete: vi.fn().mockResolvedValue(undefined),
+        list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
       };
-      const errorCache = new KVCache(errorKV as IKeyValueStore);
+      const errorCache = new KVCache(errorKV);
 
       await expect(errorCache.set('key', 'value')).resolves.not.toThrow();
     });
 
     it('should not throw on delete errors', async () => {
-      const errorKV = {
+      const errorKV: IKeyValueStore = {
+        get: vi.fn().mockResolvedValue(null),
+        getWithMetadata: vi.fn().mockResolvedValue({ value: null, metadata: null }),
+        put: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockRejectedValue(new Error('KV Error')),
+        list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
       };
-      const errorCache = new KVCache(errorKV as IKeyValueStore);
+      const errorCache = new KVCache(errorKV);
 
       await expect(errorCache.delete('key')).resolves.not.toThrow();
     });
