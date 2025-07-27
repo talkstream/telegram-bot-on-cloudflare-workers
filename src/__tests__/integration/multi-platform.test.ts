@@ -64,7 +64,7 @@ describe('Multi-Platform Integration', () => {
       const events: PlatformEvent[] = [];
 
       eventBus.on(CommonEventType.CONNECTOR_REGISTERED, (event) => {
-        events.push(event);
+        events.push(event as PlatformEvent);
       });
 
       // Create connector
@@ -90,8 +90,8 @@ describe('Multi-Platform Integration', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(events).toHaveLength(1);
-      expect(events[0].payload.platform).toBe('cloudflare');
-      expect(events[0].source).toBe('CloudPlatformFactory');
+      expect(events[0]?.payload.platform).toBe('cloudflare');
+      expect(events[0]?.source).toBe('CloudPlatformFactory');
     });
   });
 
@@ -100,8 +100,6 @@ describe('Multi-Platform Integration', () => {
       const platforms: ICloudPlatformConnector[] = [
         new CloudflareConnector({
           env: { AI_BINDING: 'AI' },
-          ctx: {} as ExecutionContext,
-          request: new Request('https://example.com'),
         }),
         new AWSConnector({
           env: { AWS_REGION: 'us-east-1' },
@@ -126,7 +124,6 @@ describe('Multi-Platform Integration', () => {
     it('should provide consistent interfaces across platforms', () => {
       const cloudflare = new CloudflareConnector({
         env: { MY_KV: {} },
-        ctx: {} as ExecutionContext,
         request: new Request('https://example.com'),
       });
 
@@ -213,17 +210,16 @@ describe('Multi-Platform Integration', () => {
 
       // Subscribe to connector events
       eventBus.on(CommonEventType.CONNECTOR_INITIALIZED, (event) => {
-        events.push({ type: event.type, ...event });
+        events.push({ ...event });
       });
 
       eventBus.on(CommonEventType.CONNECTOR_ERROR, (event) => {
-        events.push({ type: event.type, ...event });
+        events.push({ ...event });
       });
 
       // Simulate platform initialization
       const connector = new CloudflareConnector({
         env: {},
-        ctx: {} as ExecutionContext,
         request: new Request('https://example.com'),
       });
 
@@ -311,7 +307,6 @@ describe('Multi-Platform Integration', () => {
       const platforms = [
         new CloudflareConnector({
           env: { 'test-namespace': mockKVStore },
-          ctx: {} as ExecutionContext,
           request: new Request('https://example.com'),
         }),
         new AWSConnector({
@@ -347,7 +342,6 @@ describe('Multi-Platform Integration', () => {
 
       const cloudflare = new CloudflareConnector({
         env: { test: mockKVStore },
-        ctx: {} as ExecutionContext,
         request: new Request('https://example.com'),
       });
 
@@ -387,7 +381,6 @@ describe('Multi-Platform Integration', () => {
       try {
         const cf = new CloudflareConnector({
           env: {},
-          ctx: {} as ExecutionContext,
           request: new Request('https://example.com'),
         });
         cf.getObjectStore('non-existent-bucket');

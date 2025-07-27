@@ -18,7 +18,6 @@ describe('D1 Type Safety Pattern', () => {
         prepare: mockPrepare,
         exec: vi.fn(),
         batch: vi.fn(),
-        dump: vi.fn(),
       };
 
       const result = await mockDb.prepare('INSERT INTO test VALUES (?)').bind('value').run();
@@ -139,10 +138,10 @@ describe('D1 Type Safety Pattern', () => {
       const { results } = await mockDb.prepare('SELECT ...').all<UserWithPostsRow>();
 
       // TypeScript knows about all fields
-      expect(results[0].id).toBe(1);
-      expect(results[0].name).toBe('John');
-      expect(results[0].post_count).toBe(5);
-      expect(results[0].last_post_date).toBe('2025-07-25');
+      expect(results[0]?.id).toBe(1);
+      expect(results[0]?.name).toBe('John');
+      expect(results[0]?.post_count).toBe(5);
+      expect(results[0]?.last_post_date).toBe('2025-07-25');
     });
   });
 });
@@ -166,6 +165,5 @@ function createMockDb(
     prepare: vi.fn().mockReturnValue(preparedStatement),
     exec: vi.fn(),
     batch: vi.fn(),
-    dump: vi.fn(),
   };
 }
