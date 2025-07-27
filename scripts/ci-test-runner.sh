@@ -15,21 +15,29 @@ export NODE_ENV="test"
 # Clear any previous coverage data
 rm -rf coverage/
 
+# Detect if we're in CI environment
+if [ -n "$CI" ]; then
+  echo "🔧 CI environment detected - using Node pool configuration..."
+  CONFIG_FILE="vitest.config.ci-node.ts"
+else
+  CONFIG_FILE="vitest.config.ci.ts"
+fi
+
 # Run tests in smaller batches to reduce memory pressure
 echo "📦 Running unit tests (batch 1: core)..."
-npx vitest run --config vitest.config.ci.ts \
+npx vitest run --config $CONFIG_FILE \
   'src/__tests__/core/**' \
   'src/__tests__/events/**' \
   'src/__tests__/services/**' \
   --coverage || exit 1
 
 echo "📦 Running unit tests (batch 2: connectors)..."
-npx vitest run --config vitest.config.ci.ts \
+npx vitest run --config $CONFIG_FILE \
   'src/__tests__/connectors/**' \
   --coverage || exit 1
 
 echo "📦 Running unit tests (batch 3: remaining)..."
-npx vitest run --config vitest.config.ci.ts \
+npx vitest run --config $CONFIG_FILE \
   --exclude='src/__tests__/core/**' \
   --exclude='src/__tests__/events/**' \
   --exclude='src/__tests__/services/**' \
@@ -39,7 +47,7 @@ npx vitest run --config vitest.config.ci.ts \
 
 # Run integration tests separately with increased timeout
 echo "🔗 Running integration tests..."
-npx vitest run --config vitest.config.ci.ts \
+npx vitest run --config $CONFIG_FILE \
   'src/__tests__/integration/**' \
   --testTimeout=60000 \
   --coverage || exit 1

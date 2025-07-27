@@ -10,13 +10,13 @@ export default defineWorkersConfig({
     globals: true,
     setupFiles: ['./src/__tests__/setup/grammy-mock.ts'],
     exclude: ['eslint-rules/**', 'node_modules/**', 'website/**', '**/node_modules/**'],
-    // Optimize for memory efficiency
-    pool: 'threads',
-    maxConcurrency: 2,
-    isolate: false, // Disable isolation for better memory usage
+    // Run tests sequentially to reduce memory pressure
+    sequence: {
+      shuffle: false,
+    },
     poolOptions: {
       workers: {
-        isolatedStorage: true,
+        isolatedStorage: false, // Disable isolated storage to save memory
         singleWorker: true, // Use single worker to reduce memory overhead
         wrangler: {
           configPath: './wrangler.toml',

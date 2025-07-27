@@ -60,7 +60,8 @@
     "src/**/*.json",
     "tests/**/*.ts",
     "vitest.config.ts",
-    "vitest.config.ci.ts"
+    "vitest.config.ci.ts",
+    "vitest.config.ci-node.ts"
   ],
   "exclude": ["node_modules", "dist", ".wrangler"]
 }
