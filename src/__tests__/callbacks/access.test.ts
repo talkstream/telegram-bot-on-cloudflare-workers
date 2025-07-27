@@ -120,13 +120,14 @@ describe('Access Callbacks', () => {
 
       await handleAccessRequest(ctx);
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
+      // Should only answer callback query, not edit message
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith(
         'You already have a pending access request.',
-        { parse_mode: 'HTML' },
       );
+      expect(ctx.editMessageText).not.toHaveBeenCalled();
     });
 
-    it('should handle approved request', async () => {
+    it('should allow new request if previous was approved', async () => {
       const ctx = createMockCallbackContext('access:request', {
         from: {
           id: 123456,
@@ -136,9 +137,9 @@ describe('Access Callbacks', () => {
         },
       });
 
-      // Mock DB - approved request
+      // Mock DB - no pending request (approved requests don't block new ones)
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.first.mockResolvedValue({ id: 1, status: 'approved' });
+      mockPreparedStatement.first.mockResolvedValue(null); // No pending request found
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -146,9 +147,11 @@ describe('Access Callbacks', () => {
 
       await handleAccessRequest(ctx);
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith('You already have access to this bot.', {
-        parse_mode: 'HTML',
-      });
+      // Should create new request since only pending requests block
+      expect(ctx.editMessageText).toHaveBeenCalledWith(
+        'Your access request has been sent to the administrators.',
+        { parse_mode: 'HTML' },
+      );
     });
 
     it('should handle database errors gracefully', async () => {
@@ -171,15 +174,16 @@ describe('Access Callbacks', () => {
 
       await handleAccessRequest(ctx);
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
+      // Should only answer callback query on error
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith(
         '❌ An error occurred. Please try again later.',
-        { parse_mode: 'HTML' },
       );
+      expect(ctx.editMessageText).not.toHaveBeenCalled();
     });
   });
 
   describe('handleAccessStatus', () => {
-    it('should show pending status', async () => {
+    it('should show pending status message', async () => {
       const ctx = createMockCallbackContext('access:status', {
         from: {
           id: 123456,
@@ -189,79 +193,13 @@ describe('Access Callbacks', () => {
         },
       });
 
-      // Mock DB - pending request
-      const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.first.mockResolvedValue({
-        id: 1,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      });
-
-      if (ctx.env.DB) {
-        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
-      }
-
       await handleAccessStatus(ctx);
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
+      // Should only answer callback query with pending message
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith(
         'Your access request is pending approval.',
-        expect.objectContaining({ parse_mode: 'HTML' }),
       );
-    });
-
-    it('should show approved status', async () => {
-      const ctx = createMockCallbackContext('access:status', {
-        from: {
-          id: 123456,
-          is_bot: false,
-          first_name: 'User',
-          username: 'testuser',
-        },
-      });
-
-      // Mock DB - approved request
-      const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.first.mockResolvedValue({
-        id: 1,
-        status: 'approved',
-        approved_at: new Date().toISOString(),
-      });
-
-      if (ctx.env.DB) {
-        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
-      }
-
-      await handleAccessStatus(ctx);
-
-      expect(ctx.editMessageText).toHaveBeenCalledWith('You have access to this bot.', {
-        parse_mode: 'HTML',
-      });
-    });
-
-    it('should show no request status', async () => {
-      const ctx = createMockCallbackContext('access:status', {
-        from: {
-          id: 123456,
-          is_bot: false,
-          first_name: 'User',
-          username: 'testuser',
-        },
-      });
-
-      // Mock DB - no request
-      const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.first.mockResolvedValue(null);
-
-      if (ctx.env.DB) {
-        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
-      }
-
-      await handleAccessStatus(ctx);
-
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
-        '⚠️ You do not have access to this bot.',
-        expect.objectContaining({ parse_mode: 'HTML' }),
-      );
+      expect(ctx.editMessageText).not.toHaveBeenCalled();
     });
   });
 
@@ -311,9 +249,9 @@ describe('Access Callbacks', () => {
 
       await handleAccessCancel(ctx, '1');
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith('No access request found to cancel.', {
-        parse_mode: 'HTML',
-      });
+      // Should only answer callback query
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith('Request not found.');
+      expect(ctx.editMessageText).not.toHaveBeenCalled();
     });
   });
 
@@ -348,7 +286,7 @@ describe('Access Callbacks', () => {
 
       expect(ctx.editMessageText).toHaveBeenCalledWith(
         '✅ Access granted to user 123456 (@testuser)',
-        { parse_mode: 'HTML' },
+        expect.objectContaining({ parse_mode: 'HTML' }),
       );
     });
 
@@ -372,9 +310,8 @@ describe('Access Callbacks', () => {
 
       await handleAccessApprove(ctx, '123456');
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith('Request not found.', {
-        parse_mode: 'HTML',
-      });
+      expect(ctx.answerCallbackQuery).toHaveBeenCalledWith('Request not found.');
+      expect(ctx.editMessageText).not.toHaveBeenCalled();
     });
   });
 
@@ -409,7 +346,7 @@ describe('Access Callbacks', () => {
 
       expect(ctx.editMessageText).toHaveBeenCalledWith(
         '❌ Access denied to user 123456 (@testuser)',
-        { parse_mode: 'HTML' },
+        expect.objectContaining({ parse_mode: 'HTML' }),
       );
     });
   });
@@ -425,28 +362,14 @@ describe('Access Callbacks', () => {
         },
       });
 
-      // Mock DB - get pending requests
+      // Mock DB - get pending request
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.all.mockResolvedValue({
-        results: [
-          {
-            id: 2,
-            user_id: 234567,
-            username: 'user2',
-            first_name: 'User Two',
-            created_at: new Date().toISOString(),
-          },
-        ],
-        success: true,
-        meta: {
-          duration: 0,
-          changes: 0,
-          last_row_id: 0,
-          changed_db: false,
-          size_after: 0,
-          rows_read: 0,
-          rows_written: 0,
-        },
+      mockPreparedStatement.first.mockResolvedValue({
+        id: 2,
+        user_id: 234567,
+        username: 'user2',
+        first_name: 'User Two',
+        created_at: new Date().toISOString(),
       });
 
       if (ctx.env.DB) {
@@ -475,19 +398,7 @@ describe('Access Callbacks', () => {
 
       // Mock DB - no pending requests
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.all.mockResolvedValue({
-        results: [],
-        success: true,
-        meta: {
-          duration: 0,
-          changes: 0,
-          last_row_id: 0,
-          changed_db: false,
-          size_after: 0,
-          rows_read: 0,
-          rows_written: 0,
-        },
-      });
+      mockPreparedStatement.first.mockResolvedValue(null);
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);

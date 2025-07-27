@@ -16,14 +16,10 @@ describe('Rate Limiter Middleware', () => {
     mockEnv = createMockEnv();
     mockNext = vi.fn().mockResolvedValue(undefined);
 
-    const mockRes = { _status: 200 };
-    const statusFn = vi.fn((value?: number) => {
-      if (value !== undefined) {
-        mockRes._status = value;
-        return mockContext; // Return context for chaining
-      }
-      return mockRes._status;
-    });
+    const mockRes = {
+      status: 200,
+      headers: new Map<string, string>(),
+    };
 
     mockContext = {
       env: mockEnv,
@@ -32,11 +28,29 @@ describe('Rate Limiter Middleware', () => {
           if (name === 'cf-connecting-ip') return '192.168.1.1';
           return null;
         }),
+        path: '/test',
+        method: 'GET',
       },
       res: mockRes,
-      text: vi.fn(),
-      header: vi.fn(),
-      status: statusFn,
+      text: vi.fn().mockImplementation((text, status, headers) => {
+        mockRes.status = status;
+        if (headers) {
+          Object.entries(headers).forEach(([key, value]) => {
+            mockRes.headers.set(key, value);
+          });
+        }
+        return { text, status, headers };
+      }),
+      header: vi.fn().mockImplementation((key: string, value: string) => {
+        mockRes.headers.set(key, value);
+      }),
+      status: vi.fn().mockImplementation((code?: number) => {
+        if (code !== undefined) {
+          mockRes.status = code;
+          return mockContext;
+        }
+        return mockRes.status;
+      }),
     } as unknown as Context<{ Bindings: Env }>;
   });
 

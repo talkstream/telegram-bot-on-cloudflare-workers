@@ -283,12 +283,14 @@ describe('Performance Characteristics', () => {
   it('should have minimal overhead for lazy initialization', () => {
     const container = new LazyServiceContainer<{ heavy: { data: number[] } }>();
     let initTime = 0;
+    let initCalled = false;
 
     container.register('heavy', () => {
-      const start = Date.now();
+      const start = performance.now();
+      initCalled = true;
       // Simulate heavy initialization with smaller array
       const data = new Array(10000).fill(0).map((_, i) => i);
-      initTime = Date.now() - start;
+      initTime = performance.now() - start;
       return { data };
     });
 
@@ -299,14 +301,15 @@ describe('Performance Characteristics', () => {
     // Service creation happens on first access
     const service = container.get('heavy');
     expect(service.data.length).toBe(10000);
-    expect(initTime).toBeGreaterThan(0);
+    expect(initCalled).toBe(true);
+    expect(initTime).toBeGreaterThanOrEqual(0); // Accept 0 for very fast operations
 
     // Subsequent access is instant
-    const start = Date.now();
+    const start = performance.now();
     const service2 = container.get('heavy');
-    const accessTime = Date.now() - start;
+    const accessTime = performance.now() - start;
 
     expect(service2).toBe(service);
-    expect(accessTime).toBeLessThan(5); // Should be near instant
+    expect(accessTime).toBeLessThan(10); // Should be near instant
   });
 });

@@ -73,9 +73,9 @@ export function edgeCache(config: EdgeCacheMiddlewareConfig = {}) {
     }
 
     // Generate cache key (for future use with custom key generators)
-    // const cacheKey = config.keyGenerator
-    //   ? config.keyGenerator(c)
-    //   : c.req.url;
+    if (config.keyGenerator) {
+      config.keyGenerator(c); // Call it for now to ensure it's invoked
+    }
 
     // Try to get from cache
     const cachedResponse = await cacheService.getCachedResponse(c.req.raw);

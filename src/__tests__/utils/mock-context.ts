@@ -169,10 +169,8 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
         'request.sent': 'Your access request has been sent to the administrators.',
         'request.not_found': 'Request not found.',
         'request.cancelled': 'Your access request has been cancelled.',
-        'request.approved': '✅ Access granted to user {userId}',
-        'request.approved_full': '✅ Access granted to user {userId} (@{username})',
-        'request.rejected': '❌ Access denied to user {userId}',
-        'request.rejected_full': '❌ Access denied to user {userId} (@{username})',
+        'request.approved': '✅ Access granted to user {userId} (@{username})',
+        'request.rejected': '❌ Access denied to user {userId} (@{username})',
         'request.details':
           '📋 <b>Access Request #{id}</b>\n\nName: {firstName}\nUsername: @{username}\nUser ID: {userId}\nRequested: {date}',
 
