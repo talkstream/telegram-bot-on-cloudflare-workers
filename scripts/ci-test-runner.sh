@@ -23,35 +23,9 @@ else
   CONFIG_FILE="vitest.config.ci.ts"
 fi
 
-# Run tests in smaller batches to reduce memory pressure
-echo "📦 Running unit tests (batch 1: core)..."
-npx vitest run --config $CONFIG_FILE \
-  'src/__tests__/core/**/*.test.ts' \
-  'src/__tests__/events/**/*.test.ts' \
-  'src/__tests__/services/**/*.test.ts' \
-  --coverage || exit 1
-
-echo "📦 Running unit tests (batch 2: connectors)..."
-npx vitest run --config $CONFIG_FILE \
-  'src/__tests__/connectors/**/*.test.ts' \
-  --coverage || exit 1
-
-echo "📦 Running unit tests (batch 3: remaining)..."
-npx vitest run --config $CONFIG_FILE \
-  'src/__tests__/**/*.test.ts' \
-  --exclude='src/__tests__/core/**/*.test.ts' \
-  --exclude='src/__tests__/events/**/*.test.ts' \
-  --exclude='src/__tests__/services/**/*.test.ts' \
-  --exclude='src/__tests__/connectors/**/*.test.ts' \
-  --exclude='src/__tests__/integration/**/*.test.ts' \
-  --coverage || exit 1
-
-# Run integration tests separately with increased timeout
-echo "🔗 Running integration tests..."
-npx vitest run --config $CONFIG_FILE \
-  'src/__tests__/integration/**/*.test.ts' \
-  --testTimeout=60000 \
-  --coverage || exit 1
+# For CI with Node pool, run all tests together since we're using single thread
+echo "📦 Running all tests with Node.js configuration..."
+npx vitest run --config $CONFIG_FILE --coverage || exit 1
 
 # Merge coverage reports
 echo "📊 Merging coverage reports..."
