@@ -52,7 +52,7 @@ describe('Admin Command', () => {
         }
         return Promise.resolve(null);
       });
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -103,7 +103,7 @@ describe('Admin Command', () => {
         username: 'fwduser',
         first_name: 'Forwarded User',
       });
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -236,7 +236,15 @@ describe('Admin Command', () => {
       });
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        meta: { changes: 1 },
+        meta: {
+          duration: 0,
+          changes: 1,
+          last_row_id: 0,
+          changed_db: true,
+          size_after: 0,
+          rows_read: 0,
+          rows_written: 1,
+        },
       });
 
       if (ctx.env.DB) {
@@ -499,7 +507,7 @@ describe('Admin Command', () => {
         username: 'newadmin',
         first_name: 'New Admin',
       });
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);

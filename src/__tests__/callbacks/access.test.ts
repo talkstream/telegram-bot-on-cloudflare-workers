@@ -79,8 +79,6 @@ describe('Access Callbacks', () => {
       // Create proper mock for DB.prepare
       const mockPreparedStatement = createMockD1PreparedStatement();
       mockPreparedStatement.first.mockResolvedValue(null);
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
-      mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
 
       // Ensure DB exists and has proper mock
       if (ctx.env.DB) {
@@ -281,7 +279,6 @@ describe('Access Callbacks', () => {
       // Mock DB operations
       const mockPreparedStatement = createMockD1PreparedStatement();
       mockPreparedStatement.first.mockResolvedValue({ id: 1, status: 'pending' });
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -339,7 +336,6 @@ describe('Access Callbacks', () => {
         username: 'testuser',
         status: 'pending',
       });
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -401,7 +397,6 @@ describe('Access Callbacks', () => {
         username: 'testuser',
         status: 'pending',
       });
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -443,7 +438,15 @@ describe('Access Callbacks', () => {
           },
         ],
         success: true,
-        meta: {},
+        meta: {
+          duration: 0,
+          changes: 0,
+          last_row_id: 0,
+          changed_db: false,
+          size_after: 0,
+          rows_read: 0,
+          rows_written: 0,
+        },
       });
 
       if (ctx.env.DB) {
@@ -455,9 +458,9 @@ describe('Access Callbacks', () => {
       // Should show the request with proper buttons
       expect(ctx.editMessageText).toHaveBeenCalled();
       const call = (ctx.editMessageText as Mock).mock.calls[0];
-      expect(call[0]).toContain('Access Request #2');
-      expect(call[0]).toContain('User Two');
-      expect(call[0]).toContain('@user2');
+      expect(call?.[0]).toContain('Access Request #2');
+      expect(call?.[0]).toContain('User Two');
+      expect(call?.[0]).toContain('@user2');
     });
 
     it('should handle no more pending requests', async () => {
@@ -475,7 +478,15 @@ describe('Access Callbacks', () => {
       mockPreparedStatement.all.mockResolvedValue({
         results: [],
         success: true,
-        meta: {},
+        meta: {
+          duration: 0,
+          changes: 0,
+          last_row_id: 0,
+          changed_db: false,
+          size_after: 0,
+          rows_read: 0,
+          rows_written: 0,
+        },
       });
 
       if (ctx.env.DB) {
