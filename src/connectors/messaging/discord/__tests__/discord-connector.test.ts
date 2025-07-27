@@ -51,8 +51,12 @@ describe('Discord Connector', () => {
       const result = connector.validateConfig(invalidConfig);
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(2);
-      expect(result.errors?.[0]?.field).toBe('applicationId');
-      expect(result.errors?.[1]?.field).toBe('publicKey');
+
+      const firstError = result.errors?.[0];
+      const secondError = result.errors?.[1];
+
+      expect(firstError?.field).toBe('applicationId');
+      expect(secondError?.field).toBe('publicKey');
     });
   });
 
@@ -116,7 +120,8 @@ describe('Discord Connector', () => {
       let emittedMessage: UnifiedMessage | undefined;
 
       eventBus.on('message.received', (data) => {
-        emittedMessage = (data.payload as { message: UnifiedMessage }).message;
+        const payload = data.payload as { message: UnifiedMessage };
+        emittedMessage = payload.message;
       });
 
       const interaction = {
@@ -145,9 +150,14 @@ describe('Discord Connector', () => {
 
       expect(response.status).toBe(200);
       expect(emittedMessage).toBeDefined();
-      expect(emittedMessage?.platform).toBe(Platform.DISCORD);
-      expect(emittedMessage?.sender?.id).toBe('user-123');
-      expect(emittedMessage?.content.text).toBe('Hello Discord!');
+
+      if (!emittedMessage) {
+        throw new Error('Expected message to be emitted');
+      }
+
+      expect(emittedMessage.platform).toBe(Platform.DISCORD);
+      expect(emittedMessage.sender?.id).toBe('user-123');
+      expect(emittedMessage.content.text).toBe('Hello Discord!');
 
       validateSpy.mockRestore();
     });
@@ -240,14 +250,22 @@ describe('Discord Connector', () => {
 
       let webhookEvent: { connector: string; url: string } | undefined;
       eventBus.on('webhook.set', (data) => {
-        webhookEvent = data.payload as { connector: string; url: string };
+        const payload = data.payload;
+        if (payload && typeof payload === 'object' && 'connector' in payload && 'url' in payload) {
+          webhookEvent = payload as { connector: string; url: string };
+        }
       });
 
       await connector.setWebhook('https://new-webhook.com/discord');
 
       expect(webhookEvent).toBeDefined();
-      expect(webhookEvent?.connector).toBe('discord-connector');
-      expect(webhookEvent?.url).toBe('https://new-webhook.com/discord');
+
+      if (!webhookEvent) {
+        throw new Error('Expected webhook event to be emitted');
+      }
+
+      expect(webhookEvent.connector).toBe('discord-connector');
+      expect(webhookEvent.url).toBe('https://new-webhook.com/discord');
     });
   });
 });

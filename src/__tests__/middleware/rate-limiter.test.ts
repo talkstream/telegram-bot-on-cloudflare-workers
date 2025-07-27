@@ -17,6 +17,14 @@ describe('Rate Limiter Middleware', () => {
     mockNext = vi.fn().mockResolvedValue(undefined);
 
     const mockRes = { _status: 200 };
+    const statusFn = vi.fn((value?: number) => {
+      if (value !== undefined) {
+        mockRes._status = value;
+        return mockContext; // Return context for chaining
+      }
+      return mockRes._status;
+    });
+
     mockContext = {
       env: mockEnv,
       req: {
@@ -28,12 +36,7 @@ describe('Rate Limiter Middleware', () => {
       res: mockRes,
       text: vi.fn(),
       header: vi.fn(),
-      status: (value?: number) => {
-        if (value !== undefined) {
-          mockRes._status = value;
-        }
-        return mockRes._status;
-      },
+      status: statusFn,
     } as unknown as Context<{ Bindings: Env }>;
   });
 
@@ -91,7 +94,8 @@ describe('Rate Limiter Middleware', () => {
       skipSuccessfulRequests: true,
     });
 
-    mockContext.status(200);
+    // Set status to 200 for successful requests
+    (mockContext.status as ReturnType<typeof vi.fn>)(200);
 
     // Make multiple successful requests
     await middleware(mockContext, mockNext);
@@ -109,7 +113,8 @@ describe('Rate Limiter Middleware', () => {
       skipFailedRequests: true,
     });
 
-    mockContext.status(500);
+    // Set status to 500 for failed requests
+    (mockContext.status as ReturnType<typeof vi.fn>)(500);
 
     // Make multiple failed requests
     await middleware(mockContext, mockNext);
@@ -134,8 +139,11 @@ describe('Rate Limiter Middleware', () => {
   });
 
   it('should handle KV storage errors gracefully', async () => {
-    if (mockEnv.RATE_LIMIT && 'get' in mockEnv.RATE_LIMIT) {
-      (mockEnv.RATE_LIMIT.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('KV error'));
+    // Ensure RATE_LIMIT exists and mock the error
+    const rateLimitKV = mockEnv.RATE_LIMIT;
+    if (rateLimitKV && 'get' in rateLimitKV) {
+      const getMock = rateLimitKV.get as ReturnType<typeof vi.fn>;
+      getMock.mockRejectedValue(new Error('KV error'));
     }
 
     const middleware = rateLimiter({ maxRequests: 5, windowMs: 60000 });

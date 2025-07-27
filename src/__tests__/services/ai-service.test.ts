@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { AIService } from '@/services/ai-service';
-import type { AIProvider, AIResponse, CompletionRequest } from '@/lib/ai/types';
+import type {
+  AIProvider,
+  AIResponse,
+  CompletionRequest,
+  StreamChunk,
+  CostCalculator,
+} from '@/lib/ai/types';
 
 // Mock registry
 const mockRegistry = {
@@ -35,8 +41,11 @@ const createMockProvider = (id: string, supportStreaming = true): AIProvider => 
 
   async complete(request: CompletionRequest): Promise<AIResponse> {
     const firstMessage = request.messages[0];
+    if (!firstMessage) {
+      throw new Error('No messages provided');
+    }
     return {
-      content: `Response from ${id}: ${firstMessage?.content || ''}`,
+      content: `Response from ${id}: ${firstMessage.content || ''}`,
       provider: id,
       usage: {
         inputUnits: 10,
@@ -47,10 +56,13 @@ const createMockProvider = (id: string, supportStreaming = true): AIProvider => 
   },
 
   stream: supportStreaming
-    ? async function* (request: CompletionRequest) {
+    ? async function* (request: CompletionRequest): AsyncIterator<StreamChunk> {
         const firstMessage = request.messages[0];
+        if (!firstMessage) {
+          throw new Error('No messages provided');
+        }
         yield { content: `Streaming from ${id}: `, done: false };
-        yield { content: (firstMessage?.content as string) || '', done: true };
+        yield { content: String(firstMessage.content) || '', done: true };
       }
     : undefined,
 
@@ -281,10 +293,15 @@ describe('AIService', () => {
       mockRegistry.getDefault.mockReturnValue('gemini');
       mockRegistry.get.mockReturnValue(mockProvider);
 
-      const mockCalculator = {
-        calculateCost: vi
-          .fn()
-          .mockReturnValue({ inputCost: 0.01, outputCost: 0.02, totalCost: 0.03 }),
+      const mockCalculator: CostCalculator = {
+        calculateCost: vi.fn().mockResolvedValue({
+          amount: 0.03,
+          currency: 'USD',
+          breakdown: {
+            input: 0.01,
+            output: 0.02,
+          },
+        }),
         getCostFactors: vi.fn().mockResolvedValue(null),
         updateCostFactors: vi.fn().mockResolvedValue(undefined),
       };
@@ -299,15 +316,18 @@ describe('AIService', () => {
       const response = await service.complete('Hello');
 
       expect(response.cost).toEqual({
-        inputCost: 0.01,
-        outputCost: 0.02,
-        totalCost: 0.03,
+        amount: 0.03,
+        currency: 'USD',
+        breakdown: {
+          input: 0.01,
+          output: 0.02,
+        },
       });
     });
 
     it('should get cost info', () => {
-      const mockCalculator = {
-        calculateCost: vi.fn(),
+      const mockCalculator: CostCalculator = {
+        calculateCost: vi.fn().mockResolvedValue(null),
         getCostFactors: vi.fn().mockResolvedValue(null),
         updateCostFactors: vi.fn().mockResolvedValue(undefined),
       };

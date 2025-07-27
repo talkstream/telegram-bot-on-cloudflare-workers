@@ -30,7 +30,8 @@ describe('KVCache', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      (mockKV.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('KV error'));
+      const getMock = mockKV.get as ReturnType<typeof vi.fn>;
+      getMock.mockRejectedValue(new Error('KV error'));
 
       const result = await cache.get('test-key');
       expect(result).toBeNull();
@@ -42,16 +43,16 @@ describe('KVCache', () => {
       const testData = { foo: 'bar' };
       await cache.set('test-key', testData);
 
-      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
-      const stored = mockWithStorage._storage.get('test-key');
-      expect(JSON.parse(stored)).toEqual(testData);
+      // Verify by retrieving through KV instead of accessing internal storage
+      const stored = await mockKV.get('test-key');
+      expect(JSON.parse(stored as string)).toEqual(testData);
     });
 
     it('should store string values directly', async () => {
       await cache.set('test-key', 'hello world');
 
-      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
-      const stored = mockWithStorage._storage.get('test-key');
+      // Verify by retrieving through KV instead of accessing internal storage
+      const stored = await mockKV.get('test-key');
       expect(stored).toBe('hello world');
     });
 
@@ -69,8 +70,9 @@ describe('KVCache', () => {
       await mockKV.put('test-key', 'value');
       await cache.delete('test-key');
 
-      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
-      expect(mockWithStorage._storage.has('test-key')).toBe(false);
+      // Verify deletion by trying to retrieve the key
+      const result = await mockKV.get('test-key');
+      expect(result).toBeNull();
     });
   });
 
@@ -145,10 +147,14 @@ describe('KVCache', () => {
 
       await cache.clear('prefix');
 
-      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
-      expect(mockWithStorage._storage.has('prefix:1')).toBe(false);
-      expect(mockWithStorage._storage.has('prefix:2')).toBe(false);
-      expect(mockWithStorage._storage.has('other:3')).toBe(true);
+      // Verify deletions by trying to retrieve the keys
+      const result1 = await mockKV.get('prefix:1');
+      const result2 = await mockKV.get('prefix:2');
+      const result3 = await mockKV.get('other:3');
+
+      expect(result1).toBeNull();
+      expect(result2).toBeNull();
+      expect(result3).toBe('value3');
     });
   });
 });

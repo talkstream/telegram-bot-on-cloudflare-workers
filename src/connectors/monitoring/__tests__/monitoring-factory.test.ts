@@ -4,17 +4,20 @@ import { MonitoringFactory } from '../monitoring-factory';
 import { SentryConnector } from '../sentry/sentry-connector';
 
 // Mock Sentry module
-vi.mock('@sentry/cloudflare', () => ({
-  init: vi.fn(),
-  getCurrentHub: vi.fn(() => ({
-    getClient: vi.fn(() => ({
-      captureException: vi.fn(),
-      captureMessage: vi.fn(),
-      setUser: vi.fn(),
-      addBreadcrumb: vi.fn(),
-      flush: vi.fn(() => Promise.resolve(true)),
-    })),
+const mockSentryInit = vi.fn();
+const mockGetCurrentHub = vi.fn(() => ({
+  getClient: vi.fn(() => ({
+    captureException: vi.fn(),
+    captureMessage: vi.fn(),
+    setUser: vi.fn(),
+    addBreadcrumb: vi.fn(),
+    flush: vi.fn(() => Promise.resolve(true)),
   })),
+}));
+
+vi.mock('@sentry/cloudflare', () => ({
+  init: mockSentryInit,
+  getCurrentHub: mockGetCurrentHub,
 }));
 
 describe('MonitoringFactory', () => {
@@ -77,9 +80,7 @@ describe('MonitoringFactory', () => {
       await MonitoringFactory.createFromEnv(env);
 
       // Get the beforeSend function from the config
-      const sentryModule = await import('@sentry/cloudflare');
-      const initMock = (sentryModule as { init: ReturnType<typeof vi.fn> }).init;
-      const initCall = initMock.mock.calls[0];
+      const initCall = mockSentryInit.mock.calls[0];
       const sentryConfig = initCall?.[0];
       const beforeSend = sentryConfig?.beforeSend;
 
@@ -110,9 +111,7 @@ describe('MonitoringFactory', () => {
 
       await MonitoringFactory.createFromEnv(env);
 
-      const sentryModule = await import('@sentry/cloudflare');
-      const initMock = (sentryModule as { init: ReturnType<typeof vi.fn> }).init;
-      const initCall = initMock.mock.calls[0];
+      const initCall = mockSentryInit.mock.calls[0];
       const sentryConfig = initCall?.[0];
       const beforeSend = sentryConfig?.beforeSend;
 
@@ -132,9 +131,7 @@ describe('MonitoringFactory', () => {
 
       await MonitoringFactory.createFromEnv(env);
 
-      const sentryModule = await import('@sentry/cloudflare');
-      const initMock = (sentryModule as { init: ReturnType<typeof vi.fn> }).init;
-      const initCall = initMock.mock.calls[0];
+      const initCall = mockSentryInit.mock.calls[0];
       const sentryConfig = initCall?.[0];
 
       // Should use Cloudflare module
