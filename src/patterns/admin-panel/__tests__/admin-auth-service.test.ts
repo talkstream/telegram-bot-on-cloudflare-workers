@@ -5,11 +5,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AdminAuthService } from '../../../core/services/admin-auth-service.js';
-import type {
-  AdminUser,
-  AdminPanelConfig,
-  AdminPanelEvent,
-} from '../../../core/interfaces/admin-panel.js';
+import type { AdminUser, AdminPanelConfig } from '../../../core/interfaces/admin-panel.js';
+import { AdminPanelEvent } from '../../../core/interfaces/admin-panel.js';
 import type { IKeyValueStore } from '../../../core/interfaces/storage.js';
 import type { IEventBus } from '../../../core/interfaces/event-bus.js';
 import type { ILogger } from '../../../core/interfaces/logger.js';

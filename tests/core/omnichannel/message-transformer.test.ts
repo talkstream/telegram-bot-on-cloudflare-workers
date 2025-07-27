@@ -46,12 +46,14 @@ describe('MessageTransformer', () => {
           text: 'Choose an option',
           markup: {
             type: 'inline',
-            inline_keyboard: [[
-              { text: 'Option 1', callback_data: 'opt1' },
-              { text: 'Option 2', callback_data: 'opt2' },
-              { text: 'Option 3', callback_data: 'opt3' },
-              { text: 'Option 4', callback_data: 'opt4' }, // Should be ignored (max 3)
-            ]],
+            inline_keyboard: [
+              [
+                { text: 'Option 1', callback_data: 'opt1' },
+                { text: 'Option 2', callback_data: 'opt2' },
+                { text: 'Option 3', callback_data: 'opt3' },
+                { text: 'Option 4', callback_data: 'opt4' }, // Should be ignored (max 3)
+              ],
+            ],
           },
         },
         timestamp: Date.now(),
@@ -60,10 +62,14 @@ describe('MessageTransformer', () => {
       const result = transformer.toPlatform(telegramMessage, Platform.WHATSAPP);
 
       expect(result.data.type).toBe('interactive');
-      const interactive = (result.data as { interactive: { type: string; action: { buttons: Array<unknown> } } }).interactive;
+      const interactive = (
+        result.data as { interactive: { type: string; action: { buttons: Array<unknown> } } }
+      ).interactive;
       expect(interactive.type).toBe('button');
       expect(interactive.action.buttons).toHaveLength(3); // Max 3 buttons
-      expect(interactive.action.buttons[0].reply.title).toBe('Option 1');
+      expect((interactive.action.buttons[0] as { reply: { title: string } }).reply.title).toBe(
+        'Option 1',
+      );
     });
   });
 
@@ -94,10 +100,14 @@ describe('MessageTransformer', () => {
       const result = transformer.toPlatform(whatsappMessage, Platform.TELEGRAM);
 
       expect(result.platform).toBe(Platform.TELEGRAM);
-      const replyMarkup = (result.data as { reply_markup: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> } }).reply_markup;
+      const replyMarkup = (
+        result.data as {
+          reply_markup: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> };
+        }
+      ).reply_markup;
       expect(replyMarkup.inline_keyboard).toBeDefined();
-      expect(replyMarkup.inline_keyboard[0][0].text).toBe('Button 1');
-      expect(replyMarkup.inline_keyboard[0][0].callback_data).toBe('btn1');
+      expect(replyMarkup.inline_keyboard[0]?.[0]?.text).toBe('Button 1');
+      expect(replyMarkup.inline_keyboard[0]?.[0]?.callback_data).toBe('btn1');
     });
   });
 
@@ -112,10 +122,12 @@ describe('MessageTransformer', () => {
           text: 'Click a button',
           markup: {
             type: 'inline',
-            inline_keyboard: [[
-              { text: 'Click me', callback_data: 'click' },
-              { text: 'Visit', url: 'https://example.com' },
-            ]],
+            inline_keyboard: [
+              [
+                { text: 'Click me', callback_data: 'click' },
+                { text: 'Visit', url: 'https://example.com' },
+              ],
+            ],
           },
         },
         timestamp: Date.now(),
@@ -124,11 +136,15 @@ describe('MessageTransformer', () => {
       const result = transformer.toPlatform(telegramMessage, Platform.DISCORD);
 
       expect(result.platform).toBe(Platform.DISCORD);
-      const components = (result.data as { components: Array<{ type: number; components: Array<{ label: string; style: number }> }> }).components;
+      const components = (
+        result.data as {
+          components: Array<{ type: number; components: Array<{ label: string; style: number }> }>;
+        }
+      ).components;
       expect(components).toHaveLength(1);
-      expect(components[0].type).toBe(1); // Action row
-      expect(components[0].components[0].label).toBe('Click me');
-      expect(components[0].components[1].style).toBe(5); // Link style
+      expect(components[0]?.type).toBe(1); // Action row
+      expect(components[0]?.components[0]?.label).toBe('Click me');
+      expect(components[0]?.components[1]?.style).toBe(5); // Link style
     });
   });
 
@@ -207,17 +223,19 @@ describe('MessageTransformer', () => {
   describe('Custom transformation rules', () => {
     it('should use custom rule when provided', () => {
       const customTransformer = new MessageTransformer({
-        customRules: [{
-          from: 'telegram',
-          to: 'slack',
-          transform: (message) => ({
-            platform: Platform.SLACK,
-            data: {
-              text: `Custom: ${message.content.text}`,
-              custom: true,
-            },
-          }),
-        }],
+        customRules: [
+          {
+            from: Platform.TELEGRAM,
+            to: Platform.SLACK,
+            transform: (message) => ({
+              platform: Platform.SLACK,
+              data: {
+                text: `Custom: ${message.content.text}`,
+                custom: true,
+              },
+            }),
+          },
+        ],
       });
 
       const message: UnifiedMessage = {

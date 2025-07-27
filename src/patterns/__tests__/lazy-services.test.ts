@@ -23,7 +23,7 @@ class TestService3 {
   value = Math.random();
 }
 
-interface TestServices {
+interface TestServices extends Record<string, unknown> {
   service1: TestService1;
   service2: TestService2;
   service3: TestService3;

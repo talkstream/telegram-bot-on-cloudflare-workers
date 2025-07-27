@@ -251,10 +251,10 @@ describe('warmupCache', () => {
 
 describe('DEFAULT_CACHE_CONFIG', () => {
   it('should have appropriate default configurations', () => {
-    expect(DEFAULT_CACHE_CONFIG['/webhook'].ttl).toBe(0);
-    expect(DEFAULT_CACHE_CONFIG['/admin'].ttl).toBe(0);
-    expect(DEFAULT_CACHE_CONFIG['/api/static'].ttl).toBe(86400);
-    expect(DEFAULT_CACHE_CONFIG['/api'].ttl).toBe(300);
-    expect(DEFAULT_CACHE_CONFIG['/health'].ttl).toBe(60);
+    expect(DEFAULT_CACHE_CONFIG['/webhook']?.ttl).toBe(0);
+    expect(DEFAULT_CACHE_CONFIG['/admin']?.ttl).toBe(0);
+    expect(DEFAULT_CACHE_CONFIG['/api/static']?.ttl).toBe(86400);
+    expect(DEFAULT_CACHE_CONFIG['/api']?.ttl).toBe(300);
+    expect(DEFAULT_CACHE_CONFIG['/health']?.ttl).toBe(60);
   });
 });
