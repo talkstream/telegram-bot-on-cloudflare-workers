@@ -7,6 +7,7 @@ import type {
 } from '../../core/interfaces/connector.js';
 import { ConnectorType } from '../../core/interfaces/connector.js';
 import { EventBus, CommonEventType } from '../../core/events/event-bus.js';
+import type { ILogger } from '../../core/interfaces/logger.js';
 // Metadata is not used for database mapping - reverting to original implementation
 
 /**
@@ -21,6 +22,7 @@ export abstract class BaseConnector implements Connector {
   protected config?: ConnectorConfig;
   protected initialized = false;
   protected eventBus?: EventBus;
+  protected logger?: ILogger;
 
   /**
    * Initialize the connector
@@ -38,6 +40,11 @@ export abstract class BaseConnector implements Connector {
     // Initialize event bus if provided
     if (config.eventBus) {
       this.eventBus = config.eventBus as EventBus;
+    }
+    
+    // Initialize logger if provided
+    if (config.logger) {
+      this.logger = config.logger as ILogger;
     }
 
     try {

@@ -11,7 +11,7 @@ import type {
 } from '../core/interfaces/admin-panel.js';
 import type { IEventBus } from '../core/interfaces/event-bus.js';
 import type { ILogger } from '../core/interfaces/logger.js';
-import type { ConnectorContext, ConnectorConfig } from '../core/interfaces/connector.js';
+import type { ConnectorConfig } from '../core/interfaces/connector.js';
 import { ConnectorType } from '../core/interfaces/connector.js';
 
 interface AdminPanelConnectorDeps {
@@ -40,7 +40,7 @@ export class AdminPanelConnector implements IAdminPanelConnector {
     this.config = deps.config;
   }
 
-  async initialize(_context: ConnectorContext): Promise<void> {
+  async initialize(_config: ConnectorConfig): Promise<void> {
     this.logger.info('Initializing Admin Panel Connector', {
       baseUrl: this.config.baseUrl,
       features: this.config.features,

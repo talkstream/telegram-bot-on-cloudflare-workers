@@ -225,6 +225,8 @@ export enum ChatType {
   CHANNEL = 'channel',
   DM = 'dm',
   GUILD = 'guild',
+  THREAD = 'thread',
+  FORUM = 'forum',
 }
 
 export interface Attachment {

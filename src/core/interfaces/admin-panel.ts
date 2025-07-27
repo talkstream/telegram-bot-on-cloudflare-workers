@@ -3,7 +3,7 @@
  * Platform-agnostic admin panel system for bots
  */
 
-import type { IConnector } from './connector.js';
+import type { Connector } from './connector.js';
 import type { IKeyValueStore } from './storage.js';
 
 /**
@@ -152,7 +152,7 @@ export interface IAdminPanelService {
 /**
  * Admin panel connector for EventBus integration
  */
-export interface IAdminPanelConnector extends IConnector {
+export interface IAdminPanelConnector extends Connector {
   /**
    * Start admin panel server
    */

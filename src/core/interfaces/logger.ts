@@ -2,6 +2,8 @@
  * Logger interface for application logging
  */
 
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
 export interface ILogger {
   /**
    * Log debug message

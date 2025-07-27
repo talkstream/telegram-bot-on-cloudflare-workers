@@ -425,3 +425,10 @@ export enum CommonEventType {
   PLUGIN_DEACTIVATED = 'plugin:deactivated',
   PLUGIN_ERROR = 'plugin:error',
 }
+
+/**
+ * Factory function to create an EventBus instance
+ */
+export function createEventBus(options?: EventBusOptions): EventBus {
+  return new EventBus(options);
+}

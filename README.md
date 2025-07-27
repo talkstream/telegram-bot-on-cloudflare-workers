@@ -1,4 +1,4 @@
-# 🚀 Universal Bot Platform Wireframe
+# 🚀 Universal Bot Platform Wireframe v2.0
 
 <p align="center">
   <b>English</b> | <a href="README.ru.md">Русский</a>
@@ -27,9 +27,56 @@
 
 ---
 
-## 🆕 What's New in v1.3
+## 🆕 What's New in v2.0 - Omnichannel Revolution
 
-### ⚡ Edge Cache Service (NEW!)
+### 🌍 One Bot, All Channels
+
+Write your bot logic once, deploy everywhere:
+
+- **Omnichannel Message Router** - Seamless message routing between platforms
+- **Message Transformer** - Automatic format conversion (Telegram ↔ WhatsApp ↔ Discord ↔ Slack)
+- **Channel Factory** - Dynamic channel loading and hot-swapping
+- **Unified Message Format** - Single interface for all platform features
+- **Cross-platform forwarding** - Send messages between different platforms
+
+### 🎯 WhatsApp Business API Support
+
+Full WhatsApp Business integration:
+
+- **Interactive messages** - Buttons, lists, and quick replies
+- **Template messages** - Pre-approved business templates
+- **Catalog integration** - Product showcase and ordering
+- **Media handling** - Images, videos, documents, audio
+- **Business features** - Read receipts, typing indicators, labels
+
+### 🚀 Developer Experience
+
+- **WireframeBot class** - High-level API for bot creation
+- **Unified handlers** - Write once, works on all platforms
+- **Platform capabilities** - Automatic feature detection
+- **Message context** - Rich context for every message
+- **Hot channel management** - Add/remove channels at runtime
+
+### 🔧 Platform Features
+
+- **Event-driven architecture** - All communication through EventBus
+- **Plugin system** - Extensible functionality
+- **Type-safe transformations** - No more `any` types
+- **Production-ready examples** - Working bots for all platforms
+- **Comprehensive testing** - Unit tests for all components
+
+### 📱 Supported Platforms
+
+- ✅ **Telegram** - Full support with all features
+- ✅ **WhatsApp** - Business API with catalogs and templates
+- 🚧 **Discord** - Basic support (expandable)
+- 🚧 **Slack** - Basic support (expandable)
+- 🔜 **Viber** - Coming soon
+- 🔜 **LINE** - Coming soon
+
+### 🎨 What's New in v1.3
+
+#### ⚡ Edge Cache Service
 
 - **Sub-10ms cache access** - Leverage Cloudflare's global edge network
 - **Automatic caching middleware** - Zero-config caching for your routes
@@ -37,34 +84,24 @@
 - **Response caching** - Cache entire HTTP responses for maximum performance
 - **Production-tested** - Battle-tested in high-load Telegram bots
 
-### 🤖 Automated Contribution System
+#### 🤖 Automated Contribution System
 
 - **Interactive CLI tool** - `npm run contribute` for streamlined contributions
 - **Auto-detection** - Identifies valuable patterns from your changes
 - **Git worktree support** - Perfect for parallel development
 - **Test generation** - Automatically creates appropriate tests
 
-### 🌐 Namespace-based i18n Architecture
+#### 🌐 Namespace-based i18n Architecture
 
 - **Organized translations** - Migrated from flat keys to namespaces
 - **Platform formatters** - Telegram, Discord, Slack specific formatting
 - **Multiple providers** - Static JSON and dynamic KV storage
 - **Performance optimized** - Works within Cloudflare free tier limits
 
-### 🎯 Universal Platform Architecture
-
-- **Multi-cloud support** - Deploy on Cloudflare, AWS, GCP, or any cloud
-- **Multi-messenger support** - Telegram, Discord, Slack, WhatsApp ready
-- **ResourceConstraints** - Platform-agnostic resource management
-- **Platform abstraction** - Zero code changes when switching providers
-- **Event-driven architecture** with EventBus for decoupled communication
-- **Service connectors** for AI, Session, and Payment services
-- **Plugin system** for extensible functionality
-
 ### Breaking Changes
 
 - No backward compatibility with v1.x
-- TelegramAdapter replaced with TelegramConnector
+- TelegramAdapter replaced with MessagingConnector pattern
 - All services now communicate through EventBus
 - Direct Cloudflare dependencies replaced with platform interfaces
 
@@ -300,14 +337,22 @@ Wireframe v1.2 introduces a revolutionary connector-based architecture that deco
 src/
 ├── connectors/         # Platform & Service Connectors
 │   ├── messaging/      # Messaging platform connectors
-│   │   └── telegram/   # Telegram implementation
+│   │   ├── telegram/   # Telegram implementation
+│   │   ├── whatsapp/   # WhatsApp Business API
+│   │   ├── discord/    # Discord implementation
+│   │   └── slack/      # Slack implementation
 │   ├── ai/             # AI service connector
 │   ├── session/        # Session management connector
 │   └── payment/        # Payment service connector
 ├── core/               # Core framework components
 │   ├── events/         # Event bus for decoupled communication
 │   ├── plugins/        # Plugin system
-│   └── interfaces/     # Core interfaces
+│   ├── interfaces/     # Core interfaces
+│   └── omnichannel/    # v2.0 Omnichannel components
+│       ├── message-router.ts      # Routes messages between platforms
+│       ├── message-transformer.ts # Converts between formats
+│       ├── channel-factory.ts     # Dynamic channel loading
+│       └── wireframe-bot.ts       # High-level bot API
 ├── services/           # Business logic services
 │   ├── ai-service.ts   # AI processing logic
 │   ├── session-service.ts # Session management
@@ -323,9 +368,11 @@ examples/
 │   ├── bot.ts          # Complete working bot
 │   ├── wrangler.toml   # Deployment configuration
 │   └── README.md       # Quick start guide
-└── telegram-plugin/    # Plugin system example
-    ├── reminder-plugin.ts    # Example reminder plugin
-    └── bot-with-plugins.ts   # Bot with plugin integration
+├── telegram-plugin/    # Plugin system example
+│   ├── reminder-plugin.ts    # Example reminder plugin
+│   └── bot-with-plugins.ts   # Bot with plugin integration
+└── omnichannel-bot/    # v2.0 Omnichannel example
+    └── omnichannel-echo-bot.ts  # Multi-platform echo bot
 ```
 
 ### Key Design Patterns
@@ -340,6 +387,45 @@ examples/
 - **TypeScript Strict Mode** - 100% type safety
 
 ## 📦 Examples
+
+### Omnichannel Bot (v2.0) - One Bot, All Channels
+
+```typescript
+// Write once, deploy everywhere!
+import { createBot } from './core/omnichannel/wireframe-bot';
+
+const bot = createBot({
+  channels: ['telegram', 'whatsapp', 'discord'],
+  plugins: [new StartPlugin(), new AIPlugin()],
+});
+
+// Single handler for ALL platforms
+bot.command('start', async (ctx) => {
+  await ctx.reply(`Welcome to ${ctx.channel}! 🎉`);
+});
+
+// Platform capabilities auto-detected
+bot.command('menu', async (ctx) => {
+  await ctx.reply('Choose an option:', {
+    keyboard: [
+      [{ text: '📊 Status' }, { text: '⚙️ Settings' }],
+      [{ text: '💬 Support' }],
+    ],
+  });
+});
+
+// Cross-platform messaging
+bot.command('broadcast', async (ctx, args) => {
+  const message = args.join(' ');
+  
+  // Send to all channels
+  await ctx.sendTo('telegram', '@channel', message);
+  await ctx.sendTo('whatsapp', '1234567890', message);
+  await ctx.sendTo('discord', '#general', message);
+});
+
+await bot.start();
+```
 
 ### Event-Driven Command
 
@@ -356,7 +442,7 @@ export class MyPlugin implements Plugin {
       name: 'hello',
       description: 'Greet the user',
       handler: async (args, ctx) => {
-        await ctx.reply('👋 Hello from Wireframe v1.2!');
+        await ctx.reply('👋 Hello from Wireframe v2.0!');
 
         // Emit custom event
         context.eventBus.emit('greeting:sent', {

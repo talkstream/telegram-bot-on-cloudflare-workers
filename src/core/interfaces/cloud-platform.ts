@@ -71,3 +71,8 @@ export interface ICloudPlatformFactory {
     config: unknown,
   ): ICloudPlatformConnector;
 }
+
+/**
+ * Type alias for CloudPlatform
+ */
+export type CloudPlatform = ICloudPlatformConnector;

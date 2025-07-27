@@ -63,6 +63,7 @@ export enum ConnectorType {
   SECURITY = 'security',
   SESSION = 'session',
   I18N = 'i18n',
+  ADMIN = 'admin',
 }
 
 export interface ConnectorConfig {
