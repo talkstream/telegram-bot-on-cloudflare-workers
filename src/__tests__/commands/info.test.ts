@@ -66,7 +66,15 @@ describe('Info Command', () => {
         { role: 'user', count: 96 },
       ],
       success: true,
-      meta: {},
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
     });
 
     if (ctx.env.DB) {
@@ -99,18 +107,20 @@ describe('Info Command', () => {
     }
 
     // Mock AI service
-    ctx.services.ai = {
-      getActiveProvider: () => 'gemini',
-      listProviders: () => [
-        { id: 'gemini', displayName: 'Google Gemini', type: 'gemini' },
-        { id: 'openai', displayName: 'OpenAI', type: 'openai' },
-      ],
-      getCostInfo: () => ({
-        usage: new Map(),
-        costs: null,
-        total: 1.2345,
-      }),
-    } as unknown as typeof ctx.services.ai;
+    if (ctx.services) {
+      ctx.services.ai = {
+        getActiveProvider: () => 'gemini',
+        listProviders: () => [
+          { id: 'gemini', displayName: 'Google Gemini', type: 'gemini' },
+          { id: 'openai', displayName: 'OpenAI', type: 'openai' },
+        ],
+        getCostInfo: () => ({
+          usage: new Map(),
+          costs: null,
+          total: 1.2345,
+        }),
+      } as unknown as typeof ctx.services.ai;
+    }
 
     await infoCommand(ctx);
 
@@ -118,7 +128,7 @@ describe('Info Command', () => {
       parse_mode: 'HTML',
     });
 
-    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
     expect(replyContent).toContain('Environment: production');
     expect(replyContent).toContain('Tier: paid');
     expect(replyContent).toContain('Uptime: 2h 30m');
@@ -155,7 +165,19 @@ describe('Info Command', () => {
       }
       return Promise.resolve({ total_users: 0, active_users: 0 });
     });
-    mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+    mockPreparedStatement.all.mockResolvedValue({
+      results: [],
+      success: true,
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
+    });
 
     if (ctx.env.DB) {
       (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -172,7 +194,7 @@ describe('Info Command', () => {
 
     await infoCommand(ctx);
 
-    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
     expect(replyContent).toContain('Access Requests:');
     expect(replyContent).toContain('• Pending: 10');
     expect(replyContent).toContain('• Approved: 200');
@@ -200,7 +222,15 @@ describe('Info Command', () => {
         { role: 'user', count: 93 },
       ],
       success: true,
-      meta: {},
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
     });
 
     if (ctx.env.DB) {
@@ -218,7 +248,7 @@ describe('Info Command', () => {
 
     await infoCommand(ctx);
 
-    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
     expect(replyContent).toContain('Role Distribution:');
     expect(replyContent).toContain('owner: 2');
     expect(replyContent).toContain('admin: 5');
@@ -238,12 +268,26 @@ describe('Info Command', () => {
     ctx.env.TIER = 'free';
 
     // AI service is null by default in mock context
-    ctx.services.ai = null;
+    if (ctx.services) {
+      ctx.services.ai = null;
+    }
 
     // Mock DB queries
     const mockPreparedStatement = createMockD1PreparedStatement();
     mockPreparedStatement.first.mockResolvedValue({ total_users: 0, active_users: 0 });
-    mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+    mockPreparedStatement.all.mockResolvedValue({
+      results: [],
+      success: true,
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
+    });
 
     if (ctx.env.DB) {
       (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -260,7 +304,7 @@ describe('Info Command', () => {
 
     await infoCommand(ctx);
 
-    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
     expect(replyContent).toContain('AI Provider:');
     expect(replyContent).toContain('• Not configured');
   });
@@ -307,7 +351,19 @@ describe('Info Command', () => {
     // Mock DB queries
     const mockPreparedStatement = createMockD1PreparedStatement();
     mockPreparedStatement.first.mockResolvedValue({ total_users: 0, active_users: 0 });
-    mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+    mockPreparedStatement.all.mockResolvedValue({
+      results: [],
+      success: true,
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
+    });
 
     if (ctx.env.DB) {
       (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -324,7 +380,7 @@ describe('Info Command', () => {
 
     await infoCommand(ctx);
 
-    const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+    const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
     expect(replyContent).toContain('Uptime: 2h 30m');
   });
 });

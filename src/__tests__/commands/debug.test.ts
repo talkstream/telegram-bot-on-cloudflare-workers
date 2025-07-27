@@ -279,7 +279,7 @@ describe('Debug Command', () => {
 
       await debugCommand(ctx);
 
-      const replyContent = ctx.reply.mock.calls[0]?.[0];
+      const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
       expect(replyContent).toContain('🐛 Debug Mode Control');
       expect(replyContent).toContain('Usage:');
       expect(replyContent).toContain('/debug on');
@@ -382,7 +382,7 @@ describe('Debug Command', () => {
 
       await debugCommand(ctx);
 
-      const replyContent = ctx.reply.mock.calls[0]?.[0];
+      const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
       expect(replyContent).toContain('🐛 Debug mode:');
       expect(replyContent).toContain('Level: 1');
     });
