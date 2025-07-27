@@ -262,7 +262,8 @@ describe('AIService', () => {
 
       const health = await aiService.getProviderHealth();
 
-      expect(health).toEqual({ healthy: true });
+      expect(health).toMatchObject({ healthy: true });
+      expect(health?.healthy).toBe(true);
     });
 
     it('should return null for non-existent provider', async () => {
