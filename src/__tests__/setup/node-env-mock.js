@@ -81,19 +81,37 @@ global.caches = {
   }),
 };
 
-// Mock crypto.subtle
+// Mock crypto.subtle - Node.js 20+ has crypto.subtle as read-only
 if (!global.crypto) {
   global.crypto = {};
 }
-global.crypto.subtle = {
-  digest: vi.fn().mockImplementation(async (_algorithm, _data) => {
+
+// Check if crypto.subtle already exists (Node.js 20+)
+if (!global.crypto.subtle) {
+  // Only set if it doesn't exist
+  Object.defineProperty(global.crypto, 'subtle', {
+    value: {
+      digest: vi.fn().mockImplementation(async (_algorithm, _data) => {
+        // Simple mock hash
+        return new ArrayBuffer(32);
+      }),
+      generateKey: vi.fn(),
+      encrypt: vi.fn(),
+      decrypt: vi.fn(),
+    },
+    writable: true,
+    configurable: true,
+  });
+} else {
+  // If it exists, mock the methods instead
+  global.crypto.subtle.digest = vi.fn().mockImplementation(async (_algorithm, _data) => {
     // Simple mock hash
     return new ArrayBuffer(32);
-  }),
-  generateKey: vi.fn(),
-  encrypt: vi.fn(),
-  decrypt: vi.fn(),
-};
+  });
+  global.crypto.subtle.generateKey = vi.fn();
+  global.crypto.subtle.encrypt = vi.fn();
+  global.crypto.subtle.decrypt = vi.fn();
+}
 
 // Mock fetch if not available
 if (!global.fetch) {
