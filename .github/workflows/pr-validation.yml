@@ -1,0 +1,189 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-contribution:
+    name: Validate Contribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Check
+        run: npm run typecheck
+
+      - name: ESLint Check
+        run: npm run lint
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Check for Conflicts
+        run: |
+          # Check if PR has conflicts with other open PRs
+          gh pr list --state open --json number,files -q '.[] | select(.number != ${{ github.event.pull_request.number }})' > other_prs.json
+
+          # Get files changed in this PR
+          gh pr view ${{ github.event.pull_request.number }} --json files -q '.files[].path' > this_pr_files.txt
+
+          # Check for overlapping files
+          node -e "
+          const fs = require('fs');
+          const otherPRs = JSON.parse(fs.readFileSync('other_prs.json', 'utf8') || '[]');
+          const thisPRFiles = fs.readFileSync('this_pr_files.txt', 'utf8').split('\n').filter(Boolean);
+
+          const conflicts = [];
+          for (const pr of otherPRs) {
+            const prFiles = (pr.files || []).map(f => f.path);
+            const overlapping = thisPRFiles.filter(f => prFiles.includes(f));
+            if (overlapping.length > 0) {
+              conflicts.push({ pr: pr.number, files: overlapping });
+            }
+          }
+
+          if (conflicts.length > 0) {
+            console.log('⚠️  Potential conflicts detected:');
+            conflicts.forEach(c => {
+              console.log(\`  PR #\${c.pr}: \${c.files.join(', ')}\`);
+            });
+            process.exit(1);
+          }
+          "
+        env:
+          GH_TOKEN: ${{ github.token }}
+        continue-on-error: true
+
+      - name: Check Architecture Compliance
+        run: |
+          # Check for platform-specific imports in core modules
+          echo "Checking for platform-specific imports..."
+
+          # Look for direct platform imports in src/core
+          if grep -r "from 'grammy'" src/core/ 2>/dev/null || \
+             grep -r "from 'discord.js'" src/core/ 2>/dev/null || \
+             grep -r "from '@slack/'" src/core/ 2>/dev/null; then
+            echo "❌ Found platform-specific imports in core modules!"
+            echo "Please use connector pattern instead."
+            exit 1
+          fi
+
+          echo "✅ No platform-specific imports in core modules"
+
+      - name: Check for Any Types
+        run: |
+          # Check for 'any' types in TypeScript files
+          echo "Checking for 'any' types..."
+
+          # Exclude test files and node_modules
+          if grep -r ": any" src/ --include="*.ts" --include="*.tsx" \
+             --exclude-dir="__tests__" --exclude-dir="node_modules" | \
+             grep -v "eslint-disable" | \
+             grep -v "@typescript-eslint/no-explicit-any"; then
+            echo "❌ Found 'any' types without proper justification!"
+            echo "Please use proper types or add eslint-disable with explanation."
+            exit 1
+          fi
+
+          echo "✅ No unjustified 'any' types found"
+
+      - name: Generate Contribution Report
+        if: always()
+        run: |
+          echo "## 📊 Contribution Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count changes
+          ADDED=$(git diff --numstat origin/main..HEAD | awk '{sum+=$1} END {print sum}')
+          DELETED=$(git diff --numstat origin/main..HEAD | awk '{sum+=$2} END {print sum}')
+          FILES_CHANGED=$(git diff --name-only origin/main..HEAD | wc -l)
+
+          echo "### Changes Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Files changed: $FILES_CHANGED" >> $GITHUB_STEP_SUMMARY
+          echo "- Lines added: $ADDED" >> $GITHUB_STEP_SUMMARY
+          echo "- Lines deleted: $DELETED" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Detect contribution type
+          if git log --oneline origin/main..HEAD | grep -i "perf:"; then
+            echo "🚀 **Type**: Performance Optimization" >> $GITHUB_STEP_SUMMARY
+          elif git log --oneline origin/main..HEAD | grep -i "fix:"; then
+            echo "🐛 **Type**: Bug Fix" >> $GITHUB_STEP_SUMMARY
+          elif git log --oneline origin/main..HEAD | grep -i "feat:"; then
+            echo "✨ **Type**: New Feature" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "📝 **Type**: Other" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `## ❌ Validation Failed
+
+            Please check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+
+            Common issues:
+            - TypeScript errors or warnings
+            - ESLint violations
+            - Failing tests
+            - Platform-specific imports in core modules
+            - Unjustified \`any\` types
+
+            Need help? Check our [Contributing Guide](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md).`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+  label-pr:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Label based on files
+        uses: actions/labeler@v5
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          configuration-path: .github/labeler.yml
+
+      - name: Label based on title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title.toLowerCase();
+            const labels = [];
+
+            if (title.includes('perf:')) labels.push('performance');
+            if (title.includes('fix:')) labels.push('bug');
+            if (title.includes('feat:')) labels.push('enhancement');
+            if (title.includes('docs:')) labels.push('documentation');
+            if (title.includes('test:')) labels.push('testing');
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: labels
+              });
+            }
