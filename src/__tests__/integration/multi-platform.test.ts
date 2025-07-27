@@ -124,7 +124,6 @@ describe('Multi-Platform Integration', () => {
     it('should provide consistent interfaces across platforms', () => {
       const cloudflare = new CloudflareConnector({
         env: { MY_KV: {} },
-        request: new Request('https://example.com'),
       });
 
       const aws = new AWSConnector({
@@ -220,7 +219,6 @@ describe('Multi-Platform Integration', () => {
       // Simulate platform initialization
       const connector = new CloudflareConnector({
         env: {},
-        request: new Request('https://example.com'),
       });
 
       // Emit initialization event
@@ -268,11 +266,11 @@ describe('Multi-Platform Integration', () => {
 
       // Subscribe to scoped events
       cfEventBus.on('cache:hit', (event) => {
-        cloudflareEvents.push(event);
+        cloudflareEvents.push(event as PlatformSpecificEvent);
       });
 
       awsEventBus.on('lambda:invoked', (event) => {
-        awsEvents.push(event);
+        awsEvents.push(event as PlatformSpecificEvent);
       });
 
       // Emit platform-specific events
@@ -341,7 +339,6 @@ describe('Multi-Platform Integration', () => {
 
       const cloudflare = new CloudflareConnector({
         env: { test: mockKVStore },
-        request: new Request('https://example.com'),
       });
 
       const kvStore = cloudflare.getKeyValueStore('test');
@@ -380,7 +377,6 @@ describe('Multi-Platform Integration', () => {
       try {
         const cf = new CloudflareConnector({
           env: {},
-          request: new Request('https://example.com'),
         });
         cf.getObjectStore('non-existent-bucket');
       } catch (error) {
