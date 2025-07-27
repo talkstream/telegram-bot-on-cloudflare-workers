@@ -7,24 +7,6 @@
 
 import { vi } from 'vitest';
 
-declare global {
-  var D1Database: any;
-
-  var KVNamespace: any;
-
-  var R2Bucket: any;
-
-  var DurableObjectNamespace: any;
-
-  var DurableObjectState: any;
-
-  var Queue: any;
-
-  var AnalyticsEngineDataset: any;
-
-  var caches: any;
-}
-
 // Mock D1Database
 global.D1Database = class D1Database {
   prepare() {
@@ -38,7 +20,7 @@ global.D1Database = class D1Database {
   dump = vi.fn().mockResolvedValue(new ArrayBuffer(0));
   exec = vi.fn().mockResolvedValue({ results: [] });
   batch = vi.fn().mockResolvedValue([]);
-} as any;
+};
 
 // Mock KV namespace
 global.KVNamespace = class KVNamespace {
@@ -47,7 +29,7 @@ global.KVNamespace = class KVNamespace {
   delete = vi.fn().mockResolvedValue(undefined);
   list = vi.fn().mockResolvedValue({ keys: [] });
   getWithMetadata = vi.fn().mockResolvedValue({ value: null, metadata: null });
-} as any;
+};
 
 // Mock R2Bucket
 global.R2Bucket = class R2Bucket {
@@ -56,13 +38,13 @@ global.R2Bucket = class R2Bucket {
   delete = vi.fn().mockResolvedValue(undefined);
   list = vi.fn().mockResolvedValue({ objects: [] });
   head = vi.fn().mockResolvedValue(null);
-} as any;
+};
 
 // Mock DurableObjectNamespace
 global.DurableObjectNamespace = class DurableObjectNamespace {
   idFromName = vi.fn();
   get = vi.fn();
-} as any;
+};
 
 // Mock DurableObjectState
 global.DurableObjectState = class DurableObjectState {
@@ -72,18 +54,18 @@ global.DurableObjectState = class DurableObjectState {
     delete: vi.fn().mockResolvedValue(undefined),
     list: vi.fn().mockResolvedValue(new Map()),
   };
-} as any;
+};
 
 // Mock Queue
 global.Queue = class Queue {
   send = vi.fn().mockResolvedValue(undefined);
   sendBatch = vi.fn().mockResolvedValue(undefined);
-} as any;
+};
 
 // Mock AnalyticsEngineDataset
 global.AnalyticsEngineDataset = class AnalyticsEngineDataset {
   writeDataPoint = vi.fn().mockResolvedValue(undefined);
-} as any;
+};
 
 // Mock Cache API
 global.caches = {
@@ -97,22 +79,21 @@ global.caches = {
     put: vi.fn().mockResolvedValue(undefined),
     delete: vi.fn().mockResolvedValue(true),
   }),
-} as any;
+};
 
 // Mock crypto.subtle
-const globalAny = global as any;
-if (!globalAny.crypto) {
-  globalAny.crypto = {};
+if (!global.crypto) {
+  global.crypto = {};
 }
-globalAny.crypto.subtle = {
-  digest: vi.fn().mockImplementation(async (_algorithm: string, _data: ArrayBuffer) => {
+global.crypto.subtle = {
+  digest: vi.fn().mockImplementation(async (_algorithm, _data) => {
     // Simple mock hash
     return new ArrayBuffer(32);
   }),
   generateKey: vi.fn(),
   encrypt: vi.fn(),
   decrypt: vi.fn(),
-} as any;
+};
 
 // Mock fetch if not available
 if (!global.fetch) {
@@ -122,32 +103,32 @@ if (!global.fetch) {
     json: vi.fn().mockResolvedValue({}),
     text: vi.fn().mockResolvedValue(''),
     headers: new Map(),
-  }) as any;
+  });
 }
 
 // Mock Request/Response if not available
 if (!global.Request) {
   global.Request = class Request {
-    constructor(
-      public url: string,
-      public init?: RequestInit,
-    ) {}
+    constructor(url, init) {
+      this.url = url;
+      this.init = init;
+    }
     clone() {
       return this;
     }
-  } as any;
+  };
 }
 
 if (!global.Response) {
   global.Response = class Response {
-    constructor(
-      public body: any,
-      public init?: ResponseInit,
-    ) {}
+    constructor(body, init) {
+      this.body = body;
+      this.init = init;
+    }
     clone() {
       return this;
     }
-  } as any;
+  };
 }
 
 // Export for use in tests
