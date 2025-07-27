@@ -192,10 +192,12 @@ describe('Requests Command', () => {
     ctx.env.BOT_ADMIN_IDS = '123456';
 
     // Mock DB to return no requests
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue(null),
-    });
+    if (ctx.env.DB) {
+      ctx.env.DB.prepare = vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue(null),
+      });
+    }
 
     await requestsCommand(ctx);
 
@@ -257,10 +259,12 @@ describe('Requests Command', () => {
     ctx.env.BOT_ADMIN_IDS = '123456';
 
     // Mock DB to throw error
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockRejectedValue(new Error('Database error')),
-    });
+    if (ctx.env.DB) {
+      ctx.env.DB.prepare = vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockRejectedValue(new Error('Database error')),
+      });
+    }
 
     await requestsCommand(ctx);
 

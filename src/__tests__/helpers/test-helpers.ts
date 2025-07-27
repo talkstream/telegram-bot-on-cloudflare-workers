@@ -4,14 +4,13 @@
  * Provides type-safe factories and utilities for creating test data
  */
 
-import type { User, Chat, PrivateChat, GroupChat, SupergroupChat } from '@grammyjs/types';
+import type { User, Chat } from '@grammyjs/types';
 import type { MockedFunction } from 'vitest';
 import { vi } from 'vitest';
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
 
 import type { Env } from '../../types/env.js';
-import type { WireframeContext } from '../../types/context.js';
-import type { CloudPlatform } from '../../core/platform/types.js';
+import type { CloudPlatform } from '../../core/interfaces/platform.js';
 
 /**
  * Create a test user with all required properties
@@ -24,8 +23,8 @@ export function createTestUser(overrides: Partial<User> = {}): User {
     last_name: 'User',
     username: 'testuser',
     language_code: 'en',
-    is_premium: false,
-    added_to_attachment_menu: false,
+    is_premium: false as true | undefined,
+    added_to_attachment_menu: false as true | undefined,
     ...overrides,
   };
 }
@@ -33,7 +32,7 @@ export function createTestUser(overrides: Partial<User> = {}): User {
 /**
  * Create a test private chat with all required properties
  */
-export function createTestPrivateChat(overrides: Partial<PrivateChat> = {}): PrivateChat {
+export function createTestPrivateChat(overrides: Partial<Chat.PrivateChat> = {}): Chat.PrivateChat {
   return {
     id: 123456789,
     type: 'private',
@@ -47,7 +46,7 @@ export function createTestPrivateChat(overrides: Partial<PrivateChat> = {}): Pri
 /**
  * Create a test group chat with all required properties
  */
-export function createTestGroupChat(overrides: Partial<GroupChat> = {}): GroupChat {
+export function createTestGroupChat(overrides: Partial<Chat.GroupChat> = {}): Chat.GroupChat {
   return {
     id: -1001234567890,
     type: 'group',
@@ -59,7 +58,9 @@ export function createTestGroupChat(overrides: Partial<GroupChat> = {}): GroupCh
 /**
  * Create a test supergroup chat with all required properties
  */
-export function createTestSupergroupChat(overrides: Partial<SupergroupChat> = {}): SupergroupChat {
+export function createTestSupergroupChat(
+  overrides: Partial<Chat.SupergroupChat> = {},
+): Chat.SupergroupChat {
   return {
     id: -1001234567890,
     type: 'supergroup',
@@ -150,7 +151,7 @@ export function createTestEnv(overrides: Partial<Env> = {}): Env {
     BOT_OWNER_IDS: '123456789',
     AI_PROVIDER: 'mock',
     TIER: 'free',
-    ENVIRONMENT: 'test',
+    ENVIRONMENT: 'development' as 'development' | 'production' | 'staging',
 
     // Cloudflare bindings
     DB: createMockD1Database(),
