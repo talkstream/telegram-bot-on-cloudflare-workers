@@ -12,14 +12,17 @@ describe('EventBus Performance', () => {
   let eventBus: EventBus;
 
   beforeEach(() => {
-    eventBus = new EventBus({ async: false, debug: false });
+    // Create EventBus with history disabled for tests
+    eventBus = new EventBus({
+      async: false,
+      enableHistory: false,
+      debug: false,
+    });
   });
 
   afterEach(() => {
-    // Clean up event bus to free memory
-    eventBus.clearHistory();
-    // Create new instance for next test to ensure clean state
-    eventBus = new EventBus({ async: false, debug: false });
+    // Clean up the EventBus instance
+    eventBus.destroy();
   });
 
   it('should handle high-frequency events efficiently', async () => {
@@ -82,13 +85,15 @@ describe('EventBus Performance', () => {
   });
 
   it('should maintain performance with event history', () => {
+    // Create a new EventBus with history enabled for this test
+    const historyBus = new EventBus({ async: false, enableHistory: true, debug: false });
     const eventCount = 500; // Reduced from 5000 to prevent memory buildup
 
     const startTime = performance.now();
 
     // Emit many events (history will be maintained)
     for (let i = 0; i < eventCount; i++) {
-      eventBus.emit('test:history', { index: i }, 'history-test', { timestamp: Date.now() });
+      historyBus.emit('test:history', { index: i }, 'history-test', { timestamp: Date.now() });
     }
 
     const endTime = performance.now();
@@ -96,7 +101,7 @@ describe('EventBus Performance', () => {
 
     // Test history retrieval performance
     const historyStartTime = performance.now();
-    const history = eventBus.getHistory({ type: 'test:history', limit: 100 });
+    const history = historyBus.getHistory({ type: 'test:history', limit: 100 });
     const historyEndTime = performance.now();
     const historyDuration = historyEndTime - historyStartTime;
 
@@ -106,6 +111,9 @@ describe('EventBus Performance', () => {
 
     console.log(`Emit duration: ${emitDuration.toFixed(2)}ms`);
     console.log(`History retrieval: ${historyDuration.toFixed(2)}ms`);
+
+    // Clean up
+    historyBus.destroy();
   });
 
   it('should handle wildcard listeners efficiently', () => {
@@ -177,7 +185,7 @@ describe('EventBus Performance', () => {
     const eventCount = 500; // Reduced from 1000
 
     // Test sync performance
-    const syncBus = new EventBus({ async: false });
+    const syncBus = new EventBus({ async: false, enableHistory: false });
     let syncCounter = 0;
 
     syncBus.on('test', () => {
@@ -192,7 +200,7 @@ describe('EventBus Performance', () => {
     const syncDuration = syncEndTime - syncStartTime;
 
     // Test async performance
-    const asyncBus = new EventBus({ async: true });
+    const asyncBus = new EventBus({ async: true, enableHistory: false });
     let asyncCounter = 0;
 
     asyncBus.on('test', () => {
@@ -215,5 +223,9 @@ describe('EventBus Performance', () => {
     console.log(
       `Sync is ${(asyncDuration / syncDuration).toFixed(2)}x faster for immediate processing`,
     );
+
+    // Clean up
+    syncBus.destroy();
+    asyncBus.destroy();
   });
 });

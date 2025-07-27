@@ -87,7 +87,9 @@ function registerCoreServices(): void {
       throw new Error('D1 Database required for RoleService');
     }
     const ownerIds = serviceConfig.env.BOT_OWNER_IDS?.split(',').filter(Boolean) || [];
-    const eventBus = new EventBus();
+    const eventBus = new EventBus({
+      enableHistory: serviceConfig.env.NODE_ENV !== 'test',
+    });
     return new UniversalRoleService(db as D1Database, ownerIds, eventBus);
   });
 

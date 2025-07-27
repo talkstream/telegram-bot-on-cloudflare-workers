@@ -58,6 +58,11 @@ export interface EventBusOptions {
    * Error handler for async events
    */
   errorHandler?: (error: Error, event: Event) => void;
+
+  /**
+   * Enable event history (disable in tests to save memory)
+   */
+  enableHistory?: boolean;
 }
 
 export class EventBus {
@@ -77,6 +82,7 @@ export class EventBus {
       maxListeners: options.maxListeners ?? 100,
       debug: options.debug ?? false,
       errorHandler: options.errorHandler ?? this.defaultErrorHandler,
+      enableHistory: options.enableHistory ?? true,
     };
   }
 
@@ -93,7 +99,9 @@ export class EventBus {
       ...(metadata && { metadata }),
     };
 
-    this.addToHistory(event);
+    if (this.options.enableHistory) {
+      this.addToHistory(event);
+    }
 
     if (this.options.debug) {
       console.info('[EventBus] Emitting event:', event);
@@ -250,6 +258,25 @@ export class EventBus {
   }
 
   /**
+   * Destroy the event bus and clean up all resources
+   */
+  destroy(): void {
+    // Clear all listeners
+    this.listeners.clear();
+    this.wildcardListeners.clear();
+
+    // Clear event history
+    this.eventHistory = [];
+
+    // Reset options to prevent any async operations
+    this.options.async = false;
+
+    if (this.options.debug) {
+      console.info('[EventBus] Destroyed - all listeners and history cleared');
+    }
+  }
+
+  /**
    * Get listener count
    */
   listenerCount(type?: string): number {
@@ -387,6 +414,7 @@ export class ScopedEventBus {
 export const globalEventBus = new EventBus({
   async: true,
   debug: process.env.NODE_ENV === 'development',
+  enableHistory: process.env.NODE_ENV !== 'test',
 });
 
 /**

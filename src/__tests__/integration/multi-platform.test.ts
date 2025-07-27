@@ -23,7 +23,7 @@ describe('Multi-Platform Integration', () => {
   let eventBus: EventBus;
 
   beforeEach(() => {
-    eventBus = new EventBus({ debug: false });
+    eventBus = new EventBus({ enableHistory: false });
   });
 
   describe('Platform Registration and Creation', () => {

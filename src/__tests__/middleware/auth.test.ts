@@ -52,7 +52,7 @@ describe('Auth Middleware', () => {
     } as unknown as D1Database;
 
     // Create EventBus
-    eventBus = new EventBus();
+    eventBus = new EventBus({ enableHistory: false });
 
     // Create role service with proper parameters
     // Owner IDs should be in telegram_<id> format

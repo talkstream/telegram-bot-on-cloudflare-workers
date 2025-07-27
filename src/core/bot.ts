@@ -25,6 +25,7 @@ export async function createBot(env: Env) {
   const eventBus = new EventBus({
     async: true,
     debug: env.ENVIRONMENT === 'development',
+    enableHistory: env.NODE_ENV !== 'test',
   });
 
   // Create cloud platform connector using cache (singleton pattern)

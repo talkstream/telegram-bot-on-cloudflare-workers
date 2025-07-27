@@ -1,6 +1,11 @@
 import { vi } from 'vitest';
+
 import '../mocks/logger';
 import '../mocks/telegram-formatter';
+import { setupGlobalTestCleanup } from './test-cleanup';
+
+// Setup global test cleanup hooks
+setupGlobalTestCleanup();
 
 // Mock grammy module
 vi.mock('grammy', () => ({

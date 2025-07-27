@@ -10,10 +10,14 @@ export default defineWorkersConfig({
     globals: true,
     setupFiles: ['./src/__tests__/setup/grammy-mock.ts'],
     exclude: ['eslint-rules/**', 'node_modules/**', 'website/**', '**/node_modules/**'],
-    // Limit concurrent tests to reduce memory pressure
+    // Optimize for memory efficiency
+    pool: 'threads',
+    maxConcurrency: 2,
+    isolate: false, // Disable isolation for better memory usage
     poolOptions: {
       workers: {
         isolatedStorage: true,
+        singleWorker: true, // Use single worker to reduce memory overhead
         wrangler: {
           configPath: './wrangler.toml',
         },
@@ -28,6 +32,7 @@ export default defineWorkersConfig({
             ADMIN_KEY: 'test-admin-key',
             ENVIRONMENT: 'test',
             SENTRY_DSN: '',
+            NODE_ENV: 'test',
           },
           // Mock D1 database
           d1Databases: ['DB'],
