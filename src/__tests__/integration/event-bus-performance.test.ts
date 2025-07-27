@@ -17,8 +17,9 @@ describe('EventBus Performance', () => {
 
   afterEach(() => {
     // Clean up event bus to free memory
-    eventBus.removeAllListeners();
     eventBus.clearHistory();
+    // Create new instance for next test to ensure clean state
+    eventBus = new EventBus({ async: false, debug: false });
   });
 
   it('should handle high-frequency events efficiently', async () => {
