@@ -36,7 +36,7 @@ describe('Rate Limiter Middleware', () => {
         mockRes.status = status;
         if (headers) {
           Object.entries(headers).forEach(([key, value]) => {
-            mockRes.headers.set(key, value);
+            mockRes.headers.set(key, String(value));
           });
         }
         return { text, status, headers };
