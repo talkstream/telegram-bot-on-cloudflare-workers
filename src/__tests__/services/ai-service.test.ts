@@ -172,8 +172,12 @@ describe('AIService', () => {
       mockRegistry.get.mockReturnValue(mockProvider);
 
       const chunks: string[] = [];
-      for await (const chunk of aiService.stream('Hello')) {
-        chunks.push(chunk);
+      const streamIterator = aiService.stream('Hello');
+      // Since stream returns an AsyncIterator, we iterate manually
+      let result = await streamIterator.next();
+      while (!result.done) {
+        chunks.push(result.value);
+        result = await streamIterator.next();
       }
 
       expect(chunks).toEqual(['Streaming from gemini: ', 'Hello']);

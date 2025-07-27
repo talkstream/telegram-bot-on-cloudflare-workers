@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { DiscordConnector } from '../discord-connector.js';
-import { Platform, MessageType, type UnifiedMessage } from '../../../../core/interfaces/messaging.js';
+import {
+  Platform,
+  MessageType,
+  type UnifiedMessage,
+} from '../../../../core/interfaces/messaging.js';
 import { ConnectorType } from '../../../../core/interfaces/connector.js';
 import { EventBus } from '../../../../core/events/event-bus.js';
 
@@ -47,8 +51,8 @@ describe('Discord Connector', () => {
       const result = connector.validateConfig(invalidConfig);
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(2);
-      expect(result.errors?.[0].field).toBe('applicationId');
-      expect(result.errors?.[1].field).toBe('publicKey');
+      expect(result.errors?.[0]?.field).toBe('applicationId');
+      expect(result.errors?.[1]?.field).toBe('publicKey');
     });
   });
 
@@ -112,7 +116,7 @@ describe('Discord Connector', () => {
       let emittedMessage: UnifiedMessage | undefined;
 
       eventBus.on('message.received', (data) => {
-        emittedMessage = data.payload.message;
+        emittedMessage = (data.payload as { message: UnifiedMessage }).message;
       });
 
       const interaction = {
@@ -141,9 +145,9 @@ describe('Discord Connector', () => {
 
       expect(response.status).toBe(200);
       expect(emittedMessage).toBeDefined();
-      expect(emittedMessage.platform).toBe(Platform.DISCORD);
-      expect(emittedMessage.sender.id).toBe('user-123');
-      expect(emittedMessage.content.text).toBe('Hello Discord!');
+      expect(emittedMessage?.platform).toBe(Platform.DISCORD);
+      expect(emittedMessage?.sender?.id).toBe('user-123');
+      expect(emittedMessage?.content.text).toBe('Hello Discord!');
 
       validateSpy.mockRestore();
     });
@@ -236,14 +240,14 @@ describe('Discord Connector', () => {
 
       let webhookEvent: { connector: string; url: string } | undefined;
       eventBus.on('webhook.set', (data) => {
-        webhookEvent = data.payload;
+        webhookEvent = data.payload as { connector: string; url: string };
       });
 
       await connector.setWebhook('https://new-webhook.com/discord');
 
       expect(webhookEvent).toBeDefined();
-      expect(webhookEvent.connector).toBe('discord-connector');
-      expect(webhookEvent.url).toBe('https://new-webhook.com/discord');
+      expect(webhookEvent?.connector).toBe('discord-connector');
+      expect(webhookEvent?.url).toBe('https://new-webhook.com/discord');
     });
   });
 });

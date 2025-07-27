@@ -42,7 +42,8 @@ class MockKVStore implements IKeyValueStore {
     let keys = Array.from(this.store.keys());
 
     if (options?.prefix) {
-      keys = keys.filter((key) => key.startsWith(options.prefix));
+      const prefix = options.prefix;
+      keys = keys.filter((key) => key.startsWith(prefix));
     }
 
     if (options?.limit) {

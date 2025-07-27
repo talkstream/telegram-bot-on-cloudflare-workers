@@ -42,14 +42,16 @@ describe('KVCache', () => {
       const testData = { foo: 'bar' };
       await cache.set('test-key', testData);
 
-      const stored = (mockKV as any)._storage.get('test-key');
+      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
+      const stored = mockWithStorage._storage.get('test-key');
       expect(JSON.parse(stored)).toEqual(testData);
     });
 
     it('should store string values directly', async () => {
       await cache.set('test-key', 'hello world');
 
-      const stored = (mockKV as any)._storage.get('test-key');
+      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
+      const stored = mockWithStorage._storage.get('test-key');
       expect(stored).toBe('hello world');
     });
 
@@ -67,7 +69,8 @@ describe('KVCache', () => {
       await mockKV.put('test-key', 'value');
       await cache.delete('test-key');
 
-      expect((mockKV as any)._storage.has('test-key')).toBe(false);
+      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
+      expect(mockWithStorage._storage.has('test-key')).toBe(false);
     });
   });
 
@@ -142,9 +145,10 @@ describe('KVCache', () => {
 
       await cache.clear('prefix');
 
-      expect((mockKV as any)._storage.has('prefix:1')).toBe(false);
-      expect((mockKV as any)._storage.has('prefix:2')).toBe(false);
-      expect((mockKV as any)._storage.has('other:3')).toBe(true);
+      const mockWithStorage = mockKV as typeof mockKV & { _storage: Map<string, string> };
+      expect(mockWithStorage._storage.has('prefix:1')).toBe(false);
+      expect(mockWithStorage._storage.has('prefix:2')).toBe(false);
+      expect(mockWithStorage._storage.has('other:3')).toBe(true);
     });
   });
 });

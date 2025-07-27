@@ -26,6 +26,7 @@ describe('EdgeCacheService', () => {
       info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
+      child: vi.fn().mockReturnThis(),
     };
     service = new EdgeCacheService({ logger: mockLogger });
   });
@@ -96,6 +97,7 @@ describe('EdgeCacheService', () => {
 
       // Verify response headers
       const putCall = mockCache.put.mock.calls[0];
+      if (!putCall) throw new Error('Expected put to be called');
       const response = putCall[1] as Response;
       expect(response.headers.get('Content-Type')).toBe('application/json');
       expect(response.headers.get('Cache-Control')).toBe('public, max-age=300, s-maxage=300');
@@ -113,6 +115,7 @@ describe('EdgeCacheService', () => {
       await service.set('test-key', testData, options);
 
       const putCall = mockCache.put.mock.calls[0];
+      if (!putCall) throw new Error('Expected put to be called');
       const response = putCall[1] as Response;
       expect(response.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=1800');
       expect(response.headers.get('X-Cache-Tags')).toBe('tag1,tag2');
@@ -195,7 +198,9 @@ describe('EdgeCacheService', () => {
 
       expect(mockCache.put).toHaveBeenCalledWith(request, expect.any(Response));
 
-      const cachedResponse = mockCache.put.mock.calls[0][1] as Response;
+      const putCall = mockCache.put.mock.calls[0];
+      if (!putCall) throw new Error('Expected put to be called');
+      const cachedResponse = putCall[1] as Response;
       expect(cachedResponse.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600');
       expect(cachedResponse.headers.get('X-Cache-Tags')).toBe('api');
     });
@@ -247,8 +252,8 @@ describe('EdgeCacheService', () => {
 
       await service.warmUp(entries);
 
-      expect(entries[0].factory).toHaveBeenCalled();
-      expect(entries[1].factory).toHaveBeenCalled();
+      expect(entries[0]?.factory).toHaveBeenCalled();
+      expect(entries[1]?.factory).toHaveBeenCalled();
       expect(mockCache.put).toHaveBeenCalledTimes(2);
       expect(mockLogger.info).toHaveBeenCalledWith('Edge cache warmup completed', {
         total: 2,

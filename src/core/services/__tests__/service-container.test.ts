@@ -19,6 +19,8 @@ import { MockTelegramConnector } from '@/connectors/messaging/telegram/mock-tele
 import { KVCache } from '@/lib/cache/kv-cache';
 import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import type { Env } from '@/config/env';
+import type { CloudflareEnv } from '@/types/env';
+import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
 
 // Mock dependencies
 vi.mock('@/core/cloud/cloud-platform-cache', () => ({
@@ -77,7 +79,7 @@ describe('Service Container', () => {
             delete: vi.fn(),
             list: vi.fn(),
           })),
-        }) as ReturnType<typeof getCloudPlatformConnector>,
+        }) as unknown as ICloudPlatformConnector,
     );
 
     testEnv = {
@@ -85,7 +87,7 @@ describe('Service Container', () => {
       ENVIRONMENT: 'test',
       BOT_TOKEN: 'test-token',
       BOT_OWNER_IDS: '123456789,987654321',
-    } as Env;
+    } as unknown as CloudflareEnv;
   });
 
   describe('Initialization', () => {
@@ -254,7 +256,7 @@ describe('Service Container', () => {
 
       // Mock the getCloudPlatformConnector to return error platform
       vi.mocked(getCloudPlatformConnector).mockReturnValue(
-        mockErrorPlatform as ReturnType<typeof getCloudPlatformConnector>,
+        mockErrorPlatform as unknown as ICloudPlatformConnector,
       );
 
       initializeServiceContainer(testEnv);

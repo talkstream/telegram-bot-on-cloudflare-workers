@@ -131,6 +131,7 @@ describe('AnthropicProvider', () => {
 
       // Verify the request body
       const callArgs = mockFetch().mock.calls[0];
+      if (!callArgs) throw new Error('Expected fetch to be called');
       const requestBody = JSON.parse(callArgs[1].body);
 
       expect(requestBody.system).toBe('You are a helpful assistant.');
@@ -191,10 +192,13 @@ describe('AnthropicProvider', () => {
       const streamIterator = provider.stream(request);
       const collectedChunks: string[] = [];
 
-      for await (const chunk of streamIterator) {
-        if (chunk.content) {
-          collectedChunks.push(chunk.content);
+      // Manually iterate the stream since for-await has type issues
+      let result = await streamIterator.next();
+      while (!result.done) {
+        if (result.value.content) {
+          collectedChunks.push(result.value.content);
         }
+        result = await streamIterator.next();
       }
 
       expect(collectedChunks).toEqual(['Hello', ' there!']);
@@ -307,8 +311,11 @@ describe('AnthropicProvider', () => {
         await provider.complete(request);
         expect.fail('Should have thrown');
       } catch (error) {
-        expect(error.code).toBe('AUTHENTICATION_ERROR');
-        expect(error.retryable).toBe(false);
+        expect(isAIProviderError(error)).toBe(true);
+        if (isAIProviderError(error)) {
+          expect(error.code).toBe('AUTHENTICATION_ERROR');
+          expect(error.retryable).toBe(false);
+        }
       }
     });
   });
