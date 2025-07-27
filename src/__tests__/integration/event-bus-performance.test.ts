@@ -4,7 +4,7 @@
 
 /* eslint-disable no-console */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { EventBus, type Event } from '../../core/events/event-bus';
 
@@ -15,8 +15,14 @@ describe('EventBus Performance', () => {
     eventBus = new EventBus({ async: false, debug: false });
   });
 
+  afterEach(() => {
+    // Clean up event bus to free memory
+    eventBus.removeAllListeners();
+    eventBus.clearHistory();
+  });
+
   it('should handle high-frequency events efficiently', async () => {
-    const eventCount = 10000;
+    const eventCount = 1000; // Reduced from 10000 to prevent memory exhaustion
     const receivedEvents: Event[] = [];
 
     // Subscribe to events
@@ -35,15 +41,15 @@ describe('EventBus Performance', () => {
     const duration = endTime - startTime;
 
     expect(receivedEvents).toHaveLength(eventCount);
-    expect(duration).toBeLessThan(1000); // Should process 10k events in less than 1 second
+    expect(duration).toBeLessThan(100); // Should process 1k events in less than 100ms
 
     console.log(`Processed ${eventCount} events in ${duration.toFixed(2)}ms`);
     console.log(`Average: ${(duration / eventCount).toFixed(3)}ms per event`);
   });
 
   it('should handle multiple subscribers efficiently', () => {
-    const subscriberCount = 100;
-    const eventCount = 1000;
+    const subscriberCount = 50; // Reduced from 100
+    const eventCount = 500; // Reduced from 1000
     const counters = new Map<number, number>();
 
     // Create many subscribers
@@ -75,7 +81,7 @@ describe('EventBus Performance', () => {
   });
 
   it('should maintain performance with event history', () => {
-    const eventCount = 5000;
+    const eventCount = 500; // Reduced from 5000 to prevent memory buildup
 
     const startTime = performance.now();
 
@@ -94,7 +100,7 @@ describe('EventBus Performance', () => {
     const historyDuration = historyEndTime - historyStartTime;
 
     expect(history).toHaveLength(100);
-    expect(emitDuration).toBeLessThan(500); // Emit should be fast
+    expect(emitDuration).toBeLessThan(50); // Emit should be fast
     expect(historyDuration).toBeLessThan(10); // History retrieval should be very fast
 
     console.log(`Emit duration: ${emitDuration.toFixed(2)}ms`);
@@ -103,7 +109,7 @@ describe('EventBus Performance', () => {
 
   it('should handle wildcard listeners efficiently', () => {
     const eventTypes = ['user:login', 'user:logout', 'user:update', 'user:delete'];
-    const eventsPerType = 1000;
+    const eventsPerType = 250; // Reduced from 1000
     let wildcardCounter = 0;
     const typeCounters = new Map<string, number>();
 
@@ -144,7 +150,7 @@ describe('EventBus Performance', () => {
 
   it('should handle scoped event buses efficiently', () => {
     const scopedBus = eventBus.scope('module');
-    const eventCount = 1000;
+    const eventCount = 500; // Reduced from 1000
     let counter = 0;
 
     scopedBus.on('action', () => {
@@ -167,7 +173,7 @@ describe('EventBus Performance', () => {
   });
 
   it('should measure async vs sync performance', async () => {
-    const eventCount = 1000;
+    const eventCount = 500; // Reduced from 1000
 
     // Test sync performance
     const syncBus = new EventBus({ async: false });

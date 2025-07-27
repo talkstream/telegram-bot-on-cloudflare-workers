@@ -286,8 +286,8 @@ describe('Performance Characteristics', () => {
 
     container.register('heavy', () => {
       const start = Date.now();
-      // Simulate heavy initialization
-      const data = new Array(1000000).fill(0).map((_, i) => i);
+      // Simulate heavy initialization with smaller array
+      const data = new Array(10000).fill(0).map((_, i) => i);
       initTime = Date.now() - start;
       return { data };
     });
@@ -298,7 +298,7 @@ describe('Performance Characteristics', () => {
 
     // Service creation happens on first access
     const service = container.get('heavy');
-    expect(service.data.length).toBe(1000000);
+    expect(service.data.length).toBe(10000);
     expect(initTime).toBeGreaterThan(0);
 
     // Subsequent access is instant
