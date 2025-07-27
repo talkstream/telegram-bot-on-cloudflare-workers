@@ -80,7 +80,7 @@ function extractSessionId(cookieHeader: string | null): string | null {
   for (const cookie of cookies) {
     const [name, value] = cookie.split('=');
     if (name === 'admin_session') {
-      return value;
+      return value || null;
     }
   }
 

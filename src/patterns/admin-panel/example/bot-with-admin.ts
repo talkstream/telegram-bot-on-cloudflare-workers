@@ -35,11 +35,16 @@ export default {
 
     // Handle Telegram webhook
     if (url.pathname === `/webhook/${env.TELEGRAM_WEBHOOK_SECRET}`) {
-      const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
+      const bot = new Bot(String(env.TELEGRAM_BOT_TOKEN));
 
       // Admin command - generates login code
       bot.command('admin', async (ctx) => {
-        if (!ctx.from || !isAdmin(ctx.from.id, env.BOT_ADMIN_IDS)) {
+        const adminIds = Array.isArray(env.BOT_ADMIN_IDS)
+          ? env.BOT_ADMIN_IDS
+          : String(env.BOT_ADMIN_IDS)
+              .split(',')
+              .map((id) => parseInt(id.trim(), 10));
+        if (!ctx.from || !isAdmin(ctx.from.id, adminIds)) {
           await ctx.reply('Access denied.');
           return;
         }

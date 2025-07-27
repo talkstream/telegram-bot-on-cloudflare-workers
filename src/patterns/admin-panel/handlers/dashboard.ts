@@ -96,7 +96,7 @@ async function getDashboardStats(env: AdminEnv): Promise<DashboardStats> {
         total: number;
       }>();
 
-      if (userCount) {
+      if (userCount && stats.totalUsers) {
         stats.totalUsers.value = userCount.total;
       }
 
