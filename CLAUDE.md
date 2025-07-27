@@ -248,3 +248,40 @@ Battle-tested patterns from real production deployment with 100+ daily active us
 - **Critical for**: Any database operations
 
 These patterns are designed to work within Cloudflare Workers' constraints while maintaining the universal architecture of Wireframe.
+
+## Performance Optimization Contributions (July 2025)
+
+Successfully contributed 6 major performance optimization patterns from Kogotochki to wireframe:
+
+1. **PR #19**: Edge Cache Service + Middleware
+   - Status: ⏳ Waiting for review
+   - Edge caching with TTL, SWR, and tag-based invalidation
+   - Both Cloudflare Cache API and in-memory implementations
+
+2. **PR #20**: Performance Monitoring System
+   - Status: ⏳ Waiting for review
+   - Real-time performance tracking with budget alerts
+   - Resource usage monitoring and reporting
+
+3. **PR #21**: Durable Objects Pattern
+   - Status: ⏳ Waiting for review
+   - Type-safe Durable Objects abstraction
+   - Rate limiting and session management examples
+
+4. **PR #22**: Queue Service Abstraction
+   - Status: ⏳ Waiting for review
+   - Universal queue interface with priorities and DLQ
+   - Cloudflare Queues and memory implementations
+
+5. **PR #23**: Analytics Engine Integration
+   - Status: ⏳ Waiting for review
+   - Analytics data collection and querying
+   - Real-time streaming and data export
+
+6. **PR #24**: Tier-based Optimizations
+   - Status: ⏳ Waiting for review
+   - Automatic resource management by tier (free/paid/enterprise)
+   - 10 built-in optimization strategies
+   - Middleware with helper functions
+
+These contributions bring production-tested performance optimizations from Kogotochki bot to the wireframe platform, helping developers build high-performance applications on Cloudflare Workers.
