@@ -30,30 +30,45 @@ vi.mock('@/lib/logger', () => ({
 // Create mock provider
 const createMockProvider = (id: string, supportStreaming = true): AIProvider => ({
   id,
-  name: `Mock ${id} Provider`,
-  description: 'Mock provider for testing',
+  displayName: `Mock ${id} Provider`,
+  type: 'mock',
 
   async complete(request: CompletionRequest): Promise<AIResponse> {
+    const firstMessage = request.messages[0];
     return {
-      content: `Response from ${id}: ${request.messages[0].content}`,
+      content: `Response from ${id}: ${firstMessage?.content || ''}`,
       provider: id,
       usage: {
-        inputTokens: 10,
-        outputTokens: 20,
-        totalTokens: 30,
+        inputUnits: 10,
+        outputUnits: 20,
+        totalUnits: 30,
       },
     };
   },
 
   stream: supportStreaming
     ? async function* (request: CompletionRequest) {
-        yield { content: `Streaming from ${id}: ` };
-        yield { content: request.messages[0].content as string };
+        const firstMessage = request.messages[0];
+        yield { content: `Streaming from ${id}: `, done: false };
+        yield { content: (firstMessage?.content as string) || '', done: true };
       }
     : undefined,
 
   async getHealthStatus() {
-    return { healthy: true };
+    return { healthy: true, lastChecked: new Date() };
+  },
+
+  async validateConfig() {
+    return true;
+  },
+
+  getCapabilities() {
+    return {
+      streaming: supportStreaming,
+      maxTokens: 2048,
+      maxContextLength: 8192,
+      supportedOptions: ['temperature', 'maxTokens'],
+    };
   },
 });
 
@@ -169,7 +184,7 @@ describe('AIService', () => {
       mockRegistry.getDefault.mockReturnValue('basic');
       mockRegistry.get.mockReturnValue(mockProvider);
 
-      const streamIterator = aiService.stream('Hello');
+      const streamIterator = aiService.stream('Hello') as AsyncIterator<string>;
 
       await expect(streamIterator.next()).rejects.toThrow(
         'Provider basic does not support streaming',
@@ -265,6 +280,8 @@ describe('AIService', () => {
         calculateCost: vi
           .fn()
           .mockReturnValue({ inputCost: 0.01, outputCost: 0.02, totalCost: 0.03 }),
+        getCostFactors: vi.fn().mockResolvedValue(null),
+        updateCostFactors: vi.fn().mockResolvedValue(undefined),
       };
 
       const service = new AIService({
@@ -286,6 +303,8 @@ describe('AIService', () => {
     it('should get cost info', () => {
       const mockCalculator = {
         calculateCost: vi.fn(),
+        getCostFactors: vi.fn().mockResolvedValue(null),
+        updateCostFactors: vi.fn().mockResolvedValue(undefined),
       };
 
       const service = new AIService({

@@ -30,7 +30,7 @@ describe('KVCache', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockKV.get.mockRejectedValue(new Error('KV error'));
+      (mockKV.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('KV error'));
 
       const result = await cache.get('test-key');
       expect(result).toBeNull();
@@ -42,14 +42,14 @@ describe('KVCache', () => {
       const testData = { foo: 'bar' };
       await cache.set('test-key', testData);
 
-      const stored = mockKV._storage.get('test-key');
+      const stored = (mockKV as any)._storage.get('test-key');
       expect(JSON.parse(stored)).toEqual(testData);
     });
 
     it('should store string values directly', async () => {
       await cache.set('test-key', 'hello world');
 
-      const stored = mockKV._storage.get('test-key');
+      const stored = (mockKV as any)._storage.get('test-key');
       expect(stored).toBe('hello world');
     });
 
@@ -67,7 +67,7 @@ describe('KVCache', () => {
       await mockKV.put('test-key', 'value');
       await cache.delete('test-key');
 
-      expect(mockKV._storage.has('test-key')).toBe(false);
+      expect((mockKV as any)._storage.has('test-key')).toBe(false);
     });
   });
 
@@ -142,9 +142,9 @@ describe('KVCache', () => {
 
       await cache.clear('prefix');
 
-      expect(mockKV._storage.has('prefix:1')).toBe(false);
-      expect(mockKV._storage.has('prefix:2')).toBe(false);
-      expect(mockKV._storage.has('other:3')).toBe(true);
+      expect((mockKV as any)._storage.has('prefix:1')).toBe(false);
+      expect((mockKV as any)._storage.has('prefix:2')).toBe(false);
+      expect((mockKV as any)._storage.has('other:3')).toBe(true);
     });
   });
 });

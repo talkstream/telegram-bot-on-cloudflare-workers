@@ -16,6 +16,7 @@ describe('Rate Limiter Middleware', () => {
     mockEnv = createMockEnv();
     mockNext = vi.fn().mockResolvedValue(undefined);
 
+    const mockRes = { _status: 200 };
     mockContext = {
       env: mockEnv,
       req: {
@@ -24,11 +25,15 @@ describe('Rate Limiter Middleware', () => {
           return null;
         }),
       },
-      res: {
-        status: 200,
-      },
+      res: mockRes,
       text: vi.fn(),
       header: vi.fn(),
+      status: (value?: number) => {
+        if (value !== undefined) {
+          mockRes._status = value;
+        }
+        return mockRes._status;
+      },
     } as unknown as Context<{ Bindings: Env }>;
   });
 
@@ -86,7 +91,7 @@ describe('Rate Limiter Middleware', () => {
       skipSuccessfulRequests: true,
     });
 
-    mockContext.res.status = 200;
+    mockContext.status(200);
 
     // Make multiple successful requests
     await middleware(mockContext, mockNext);
@@ -104,7 +109,7 @@ describe('Rate Limiter Middleware', () => {
       skipFailedRequests: true,
     });
 
-    mockContext.res.status = 500;
+    mockContext.status(500);
 
     // Make multiple failed requests
     await middleware(mockContext, mockNext);
@@ -129,7 +134,9 @@ describe('Rate Limiter Middleware', () => {
   });
 
   it('should handle KV storage errors gracefully', async () => {
-    mockEnv.RATE_LIMIT.get.mockRejectedValue(new Error('KV error'));
+    if (mockEnv.RATE_LIMIT && 'get' in mockEnv.RATE_LIMIT) {
+      (mockEnv.RATE_LIMIT.get as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('KV error'));
+    }
 
     const middleware = rateLimiter({ maxRequests: 5, windowMs: 60000 });
 
@@ -155,8 +162,8 @@ describe('Rate Limiter Middleware', () => {
     await new Promise((resolve) => setTimeout(resolve, 150));
 
     // Reset mocks
-    mockContext.text.mockClear();
-    mockNext.mockClear();
+    (mockContext.text as ReturnType<typeof vi.fn>).mockClear();
+    (mockNext as ReturnType<typeof vi.fn>).mockClear();
 
     // Third request (should be allowed)
     await middleware(mockContext, mockNext);
