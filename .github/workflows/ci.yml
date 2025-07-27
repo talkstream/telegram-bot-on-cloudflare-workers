@@ -59,7 +59,7 @@ jobs:
         run: npm ci
 
       - name: Run tests with coverage
-        run: npx vitest run --coverage --config vitest.config.ci.ts
+        run: ./scripts/ci-test-runner.sh
         env:
           NODE_OPTIONS: --max-old-space-size=3072
 

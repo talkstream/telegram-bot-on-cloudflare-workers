@@ -10,13 +10,8 @@ export default defineWorkersConfig({
     globals: true,
     setupFiles: ['./src/__tests__/setup/grammy-mock.ts'],
     exclude: ['eslint-rules/**', 'node_modules/**', 'website/**', '**/node_modules/**'],
-    // Run tests sequentially to reduce memory pressure in CI
-    pool: 'forks',
+    // Limit concurrent tests to reduce memory pressure
     poolOptions: {
-      forks: {
-        singleFork: true,
-        maxForks: 1,
-      },
       workers: {
         isolatedStorage: true,
         wrangler: {
@@ -25,6 +20,8 @@ export default defineWorkersConfig({
         miniflare: {
           compatibilityDate: '2024-01-01',
           compatibilityFlags: ['nodejs_compat'],
+          // Limit worker instances
+          workers: 1,
           // Bindings for unit tests
           bindings: {
             TELEGRAM_BOT_TOKEN: 'test-bot-token',
