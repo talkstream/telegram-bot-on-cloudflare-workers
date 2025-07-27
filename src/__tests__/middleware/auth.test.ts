@@ -439,7 +439,7 @@ describe('Auth Middleware', () => {
         })),
       }));
 
-      expect(await authMiddleware.isDebugEnabled(ctx)).toBe(false);
+      expect(await authMiddleware.isDebugEnabled(ctx, 1)).toBe(false);
     });
   });
 });

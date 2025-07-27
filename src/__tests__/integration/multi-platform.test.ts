@@ -246,10 +246,10 @@ describe('Multi-Platform Integration', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(events).toHaveLength(2);
-      expect(events[0].type).toBe(CommonEventType.CONNECTOR_INITIALIZED);
-      expect(events[0].payload.platform).toBe('cloudflare');
-      expect(events[1].type).toBe(CommonEventType.CONNECTOR_ERROR);
-      expect(events[1].payload.error.message).toContain('DynamoDB');
+      expect(events[0]?.type).toBe(CommonEventType.CONNECTOR_INITIALIZED);
+      expect((events[0]?.payload as { platform: string })?.platform).toBe('cloudflare');
+      expect(events[1]?.type).toBe(CommonEventType.CONNECTOR_ERROR);
+      expect((events[1]?.payload as { error: Error })?.error?.message).toContain('DynamoDB');
     });
 
     it('should handle platform-specific events with scoped EventBus', async () => {
@@ -285,10 +285,10 @@ describe('Multi-Platform Integration', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(cloudflareEvents).toHaveLength(1);
-      expect(cloudflareEvents[0].payload.key).toBe('user:123');
+      expect(cloudflareEvents[0]?.payload?.key).toBe('user:123');
 
       expect(awsEvents).toHaveLength(1);
-      expect(awsEvents[0].payload.functionName).toBe('processOrder');
+      expect(awsEvents[0]?.payload?.functionName).toBe('processOrder');
     });
   });
 
@@ -370,7 +370,7 @@ describe('Multi-Platform Integration', () => {
       const errors: ErrorEvent[] = [];
 
       eventBus.on(CommonEventType.CONNECTOR_ERROR, (event) => {
-        errors.push(event.payload);
+        errors.push(event.payload as ErrorEvent);
       });
 
       // Simulate Cloudflare error
