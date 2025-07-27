@@ -20,8 +20,6 @@ export default defineWorkersConfig({
         miniflare: {
           compatibilityDate: '2024-01-01',
           compatibilityFlags: ['nodejs_compat'],
-          // Limit worker instances
-          workers: 1,
           // Bindings for unit tests
           bindings: {
             TELEGRAM_BOT_TOKEN: 'test-bot-token',
