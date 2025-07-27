@@ -39,7 +39,7 @@ describe('Debug Command', () => {
 
       // Mock DB
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -73,7 +73,7 @@ describe('Debug Command', () => {
 
       // Mock DB
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -107,7 +107,7 @@ describe('Debug Command', () => {
 
       // Mock DB
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -169,7 +169,7 @@ describe('Debug Command', () => {
 
       // Mock DB
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.run.mockResolvedValue({ success: true, meta: {} });
+      // The helper already provides the correct structure for run()
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -279,7 +279,7 @@ describe('Debug Command', () => {
 
       await debugCommand(ctx);
 
-      const replyContent = ctx.reply.mock.calls[0][0];
+      const replyContent = ctx.reply.mock.calls[0]?.[0];
       expect(replyContent).toContain('🐛 Debug Mode Control');
       expect(replyContent).toContain('Usage:');
       expect(replyContent).toContain('/debug on');
@@ -335,10 +335,13 @@ describe('Debug Command', () => {
       ctx.match = 'on';
 
       // Mock DB to throw error
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        run: vi.fn().mockRejectedValue(new Error('Database error')),
-      });
+      // Mock DB to throw error
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.run.mockRejectedValue(new Error('Database error'));
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
@@ -367,14 +370,19 @@ describe('Debug Command', () => {
       ctx.match = 'status';
 
       // Mock DB to return debug level 1
-      ctx.env.DB.prepare = vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnThis(),
-        first: vi.fn().mockResolvedValue({ value: '1', updated_at: '2025-01-18T10:00:00Z' }),
+      const mockPreparedStatement = createMockD1PreparedStatement();
+      mockPreparedStatement.first.mockResolvedValue({
+        value: '1',
+        updated_at: '2025-01-18T10:00:00Z',
       });
+
+      if (ctx.env.DB) {
+        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+      }
 
       await debugCommand(ctx);
 
-      const replyContent = ctx.reply.mock.calls[0][0];
+      const replyContent = ctx.reply.mock.calls[0]?.[0];
       expect(replyContent).toContain('🐛 Debug mode:');
       expect(replyContent).toContain('Level: 1');
     });

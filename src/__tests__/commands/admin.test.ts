@@ -84,6 +84,7 @@ describe('Admin Command', () => {
           chat: { id: 123456, type: 'private', first_name: 'Owner' },
           from: { id: 123456, is_bot: false, first_name: 'Owner' },
           text: '/admin add',
+          // @ts-expect-error forward_from is a legacy field, but the code still checks for it
           forward_from: {
             id: 789012,
             is_bot: false,
@@ -234,7 +235,8 @@ describe('Admin Command', () => {
         }
         return Promise.resolve(null);
       });
-      mockPreparedStatement.run.mockResolvedValue({
+      // Override run to show 1 change was made
+      (mockPreparedStatement.run as Mock).mockResolvedValue({
         success: true,
         meta: {
           duration: 0,
@@ -342,7 +344,15 @@ describe('Admin Command', () => {
           },
         ],
         success: true,
-        meta: {},
+        meta: {
+          duration: 0,
+          changes: 0,
+          last_row_id: 0,
+          changed_db: false,
+          size_after: 0,
+          rows_read: 0,
+          rows_written: 0,
+        },
       });
 
       if (ctx.env.DB) {
@@ -351,7 +361,7 @@ describe('Admin Command', () => {
 
       await adminCommand(ctx);
 
-      const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+      const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
       expect(replyContent).toContain('Current admins:');
       expect(replyContent).toContain('• @admin1 (ID: 789012)');
       expect(replyContent).toContain('• Admin Two (ID: 789013)');
@@ -379,7 +389,19 @@ describe('Admin Command', () => {
 
       // Mock DB to return empty list
       const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.all.mockResolvedValue({ results: [], success: true, meta: {} });
+      mockPreparedStatement.all.mockResolvedValue({
+        results: [],
+        success: true,
+        meta: {
+          duration: 0,
+          changes: 0,
+          last_row_id: 0,
+          changed_db: false,
+          size_after: 0,
+          rows_read: 0,
+          rows_written: 0,
+        },
+      });
 
       if (ctx.env.DB) {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
@@ -413,7 +435,7 @@ describe('Admin Command', () => {
 
       await adminCommand(ctx);
 
-      const replyContent = (ctx.reply as Mock).mock.calls[0][0];
+      const replyContent = (ctx.reply as Mock).mock.calls[0]?.[0];
       expect(replyContent).toContain('📋 Admin Management');
       expect(replyContent).toContain('Usage:');
       expect(replyContent).toContain('/admin add');
