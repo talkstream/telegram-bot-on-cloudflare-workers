@@ -93,12 +93,31 @@ export function createMockD1PreparedStatement() {
   const mockStatement = {
     bind: vi.fn().mockReturnThis(),
     first: vi.fn().mockResolvedValue(null) as MockedFunction<D1PreparedStatement['first']>,
-    all: vi.fn().mockResolvedValue({ results: [], success: true, meta: {} }) as MockedFunction<
-      D1PreparedStatement['all']
-    >,
-    run: vi.fn().mockResolvedValue({ success: true, meta: {} }) as MockedFunction<
-      D1PreparedStatement['run']
-    >,
+    all: vi.fn().mockResolvedValue({
+      results: [],
+      success: true,
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
+    }) as MockedFunction<D1PreparedStatement['all']>,
+    run: vi.fn().mockResolvedValue({
+      success: true,
+      meta: {
+        duration: 0,
+        changes: 0,
+        last_row_id: 0,
+        changed_db: false,
+        size_after: 0,
+        rows_read: 0,
+        rows_written: 0,
+      },
+    }) as MockedFunction<D1PreparedStatement['run']>,
     raw: vi.fn().mockResolvedValue([]) as MockedFunction<D1PreparedStatement['raw']>,
   };
 

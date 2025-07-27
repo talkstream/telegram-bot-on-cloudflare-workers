@@ -97,8 +97,8 @@ describe('Access Callbacks', () => {
       // Verify DB operations
       if (ctx.env.DB) {
         const preparedCalls = (ctx.env.DB.prepare as Mock).mock.calls;
-        expect(preparedCalls[0][0]).toContain('SELECT id FROM access_requests');
-        expect(preparedCalls[1][0]).toContain('INSERT INTO access_requests');
+        expect(preparedCalls[0]?.[0]).toContain('SELECT id FROM access_requests');
+        expect(preparedCalls[1]?.[0]).toContain('INSERT INTO access_requests');
       }
     });
 
@@ -287,7 +287,7 @@ describe('Access Callbacks', () => {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
       }
 
-      await handleAccessCancel(ctx);
+      await handleAccessCancel(ctx, '1');
 
       expect(ctx.editMessageText).toHaveBeenCalledWith('Your access request has been cancelled.', {
         parse_mode: 'HTML',
@@ -312,7 +312,7 @@ describe('Access Callbacks', () => {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
       }
 
-      await handleAccessCancel(ctx);
+      await handleAccessCancel(ctx, '1');
 
       expect(ctx.editMessageText).toHaveBeenCalledWith('No access request found to cancel.', {
         parse_mode: 'HTML',
@@ -348,7 +348,7 @@ describe('Access Callbacks', () => {
       // Mock api.sendMessage
       (ctx.api.sendMessage as Mock).mockResolvedValue({ ok: true });
 
-      await handleAccessApprove(ctx);
+      await handleAccessApprove(ctx, '123456');
 
       expect(ctx.editMessageText).toHaveBeenCalledWith(
         '✅ Access granted to user 123456 (@testuser)',
@@ -374,7 +374,7 @@ describe('Access Callbacks', () => {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
       }
 
-      await handleAccessApprove(ctx);
+      await handleAccessApprove(ctx, '123456');
 
       expect(ctx.editMessageText).toHaveBeenCalledWith('Request not found.', {
         parse_mode: 'HTML',
@@ -410,7 +410,7 @@ describe('Access Callbacks', () => {
       // Mock api.sendMessage
       (ctx.api.sendMessage as Mock).mockResolvedValue({ ok: true });
 
-      await handleAccessReject(ctx);
+      await handleAccessReject(ctx, '123456');
 
       expect(ctx.editMessageText).toHaveBeenCalledWith(
         '❌ Access denied to user 123456 (@testuser)',
