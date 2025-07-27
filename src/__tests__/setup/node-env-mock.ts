@@ -7,6 +7,24 @@
 
 import { vi } from 'vitest';
 
+declare global {
+  var D1Database: any;
+
+  var KVNamespace: any;
+
+  var R2Bucket: any;
+
+  var DurableObjectNamespace: any;
+
+  var DurableObjectState: any;
+
+  var Queue: any;
+
+  var AnalyticsEngineDataset: any;
+
+  var caches: any;
+}
+
 // Mock D1Database
 global.D1Database = class D1Database {
   prepare() {
@@ -82,10 +100,11 @@ global.caches = {
 } as any;
 
 // Mock crypto.subtle
-if (!global.crypto) {
-  global.crypto = {} as any;
+const globalAny = global as any;
+if (!globalAny.crypto) {
+  globalAny.crypto = {};
 }
-global.crypto.subtle = {
+globalAny.crypto.subtle = {
   digest: vi.fn().mockImplementation(async (_algorithm: string, _data: ArrayBuffer) => {
     // Simple mock hash
     return new ArrayBuffer(32);
