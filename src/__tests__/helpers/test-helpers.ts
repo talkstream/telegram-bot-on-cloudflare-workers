@@ -11,7 +11,7 @@ import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types'
 
 import type { Env } from '../../types/env.js';
 import type { BotContext } from '../../types/index.js';
-import type { CloudPlatform } from '../../core/interfaces/cloud-platform.js';
+import type { ICloudPlatformConnector } from '../../core/interfaces/cloud-platform.js';
 
 /**
  * Create a test user with all required properties
@@ -236,13 +236,68 @@ export function createTestContext(overrides: Partial<BotContext> = {}): BotConte
     // Wireframe specific
     env,
     requestId: 'test-request-id',
-    platform: 'cloudflare' as CloudPlatform,
+    cloudConnector: createMockCloudPlatform(),
 
     // Apply overrides
     ...overrides,
   } as unknown as BotContext;
 
   return ctx;
+}
+
+/**
+ * Create a mock cloud platform connector
+ */
+export function createMockCloudPlatform(): ICloudPlatformConnector {
+  return {
+    platform: 'cloudflare',
+    getKeyValueStore: vi.fn().mockReturnValue({
+      get: vi.fn().mockResolvedValue(null),
+      getWithMetadata: vi.fn().mockResolvedValue({ value: null, metadata: null }),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ keys: [], list_complete: true }),
+    }),
+    getDatabaseStore: vi.fn().mockReturnValue({
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue(null),
+        all: vi.fn().mockResolvedValue({ results: [], meta: {} }),
+        run: vi.fn().mockResolvedValue({ meta: {}, success: true }),
+      }),
+      exec: vi.fn().mockResolvedValue(undefined),
+      batch: vi.fn().mockResolvedValue([]),
+    }),
+    getObjectStore: vi.fn().mockReturnValue({
+      put: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockResolvedValue(null),
+      head: vi.fn().mockResolvedValue(null),
+      delete: vi.fn().mockResolvedValue(undefined),
+      list: vi.fn().mockResolvedValue({ objects: [], truncated: false }),
+    }),
+    getCacheStore: vi.fn().mockReturnValue({
+      match: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(true),
+    }),
+    getEnv: vi.fn().mockReturnValue({}),
+    getFeatures: vi.fn().mockReturnValue({
+      hasEdgeCache: true,
+      hasWebSockets: false,
+      hasCron: true,
+      hasQueues: false,
+      maxRequestDuration: 10,
+      maxMemory: 128,
+    }),
+    getResourceConstraints: vi.fn().mockReturnValue({
+      cpuTime: { limit: 10, warning: 8 },
+      memory: { limit: 128, warning: 100 },
+      subrequests: { limit: 50, warning: 40 },
+      kvOperations: { limit: 1000, warning: 800 },
+      durableObjectRequests: { limit: 0, warning: 0 },
+      tier: 'free',
+    }),
+  };
 }
 
 /**

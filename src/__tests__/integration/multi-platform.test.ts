@@ -307,7 +307,6 @@ describe('Multi-Platform Integration', () => {
       const platforms = [
         new CloudflareConnector({
           env: { 'test-namespace': mockKVStore },
-          request: new Request('https://example.com'),
         }),
         new AWSConnector({
           env: { DYNAMODB_TABLES: { cache: 'cache-table' } },
