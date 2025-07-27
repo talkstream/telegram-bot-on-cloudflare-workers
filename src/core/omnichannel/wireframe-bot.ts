@@ -1,6 +1,6 @@
 /**
  * WireframeBot - The main entry point for Wireframe v2.0
- * 
+ *
  * One Bot, All Channels - Write once, deploy everywhere
  */
 
@@ -39,7 +39,12 @@ export interface BotContext {
   /** Reply to the message */
   reply: (text: string, options?: ReplyOptions) => Promise<void>;
   /** Send a message to a specific channel */
-  sendTo: (channel: string, recipientId: string, text: string, options?: ReplyOptions) => Promise<void>;
+  sendTo: (
+    channel: string,
+    recipientId: string,
+    text: string,
+    options?: ReplyOptions,
+  ) => Promise<void>;
   /** React to the message (if supported by platform) */
   react?: (emoji: string) => Promise<void>;
   /** Edit the original message (if supported) */
@@ -81,16 +86,16 @@ export class WireframeBot {
     // Initialize core components
     this.eventBus = config.eventBus || createEventBus();
     this.logger = config.logger || new ConsoleLogger('info');
-    
+
     // Create channel factory
     this.channelFactory = new ChannelFactory({
       logger: this.logger,
       eventBus: this.eventBus,
     });
-    
+
     // Convert channel strings to ChannelConfig objects
     const channelConfigs = this.normalizeChannels(config.channels);
-    
+
     // Create the omnichannel router
     this.router = new OmnichannelMessageRouter({
       channels: channelConfigs,
@@ -104,16 +109,19 @@ export class WireframeBot {
 
     // Install plugins if provided
     if (config.plugins) {
-      config.plugins.forEach(plugin => this.installPlugin(plugin));
+      config.plugins.forEach((plugin) => this.installPlugin(plugin));
     }
   }
 
   /**
    * Register a command handler
    */
-  command(command: string, handler: (ctx: BotContext, args: string[]) => Promise<void> | void): void {
+  command(
+    command: string,
+    handler: (ctx: BotContext, args: string[]) => Promise<void> | void,
+  ): void {
     this.commands.set(command, handler);
-    
+
     // Register with router
     this.router.command(command, async (_cmd, args, message, channel) => {
       const ctx = this.createContext(message, channel);
@@ -174,9 +182,21 @@ export class WireframeBot {
       this.command(name, async (ctx, args) => {
         // Convert to plugin command context
         const cmdContext = {
+          sender: {
+            id: ctx.sender?.id || '',
+            firstName: ctx.sender?.first_name,
+            lastName: ctx.sender?.last_name,
+            username: ctx.sender?.username,
+          },
+          args: args.reduce(
+            (acc, arg, index) => {
+              acc[`arg${index}`] = arg;
+              return acc;
+            },
+            {} as Record<string, unknown>,
+          ),
           reply: (text: string) => ctx.reply(text),
-          sender: ctx.sender,
-          chat: ctx.chat,
+          plugin: context,
         };
         await cmd.handler(args, cmdContext);
       });
@@ -251,10 +271,8 @@ export class WireframeBot {
    * Hot-add a new channel at runtime
    */
   async addChannel(channel: string | ChannelConfig): Promise<void> {
-    const config = typeof channel === 'string' 
-      ? await this.createChannelConfig(channel)
-      : channel;
-    
+    const config = typeof channel === 'string' ? await this.createChannelConfig(channel) : channel;
+
     this.router.addChannel(config);
   }
 
@@ -277,7 +295,7 @@ export class WireframeBot {
    */
   private normalizeChannels(channels: string[] | ChannelConfig[]): ChannelConfig[] {
     const configs: ChannelConfig[] = [];
-    
+
     for (const channel of channels) {
       if (typeof channel === 'string') {
         // For string channels, we'll create config but connector will be loaded later
@@ -292,7 +310,7 @@ export class WireframeBot {
         configs.push(channel);
       }
     }
-    
+
     return configs;
   }
 
@@ -320,7 +338,7 @@ export class WireframeBot {
     // Handle incoming messages
     this.router.onMessage(async (message, channel) => {
       const ctx = this.createContext(message, channel);
-      
+
       // Process through all message handlers
       for (const handler of this.messageHandlers) {
         try {
@@ -345,7 +363,7 @@ export class WireframeBot {
       message,
       sender: message.sender,
       chat: message.chat,
-      
+
       reply: async (text: string, options?: ReplyOptions) => {
         const chatId = message.chat?.id || message.sender?.id || 'unknown';
         await this.router.sendToChannel(channel, chatId, {
@@ -356,16 +374,18 @@ export class WireframeBot {
           content: {
             type: MessageType.TEXT,
             text,
-            markup: options?.keyboard ? {
-              type: 'inline' as const,
-              inline_keyboard: options.keyboard.map(row => 
-                row.map(btn => ({
-                  text: btn.text,
-                  callback_data: btn.callback,
-                  url: btn.url,
-                }))
-              ),
-            } : undefined,
+            markup: options?.keyboard
+              ? {
+                  type: 'inline' as const,
+                  inline_keyboard: options.keyboard.map((row) =>
+                    row.map((btn) => ({
+                      text: btn.text,
+                      callback_data: btn.callback,
+                      url: btn.url,
+                    })),
+                  ),
+                }
+              : undefined,
           },
           metadata: {
             replyTo: options?.replyTo || message.id,
@@ -376,7 +396,12 @@ export class WireframeBot {
         });
       },
 
-      sendTo: async (targetChannel: string, recipientId: string, text: string, options?: ReplyOptions) => {
+      sendTo: async (
+        targetChannel: string,
+        recipientId: string,
+        text: string,
+        options?: ReplyOptions,
+      ) => {
         await this.router.sendToChannel(targetChannel, recipientId, {
           id: Date.now().toString(),
           platform: message.platform,
@@ -385,16 +410,18 @@ export class WireframeBot {
           content: {
             type: MessageType.TEXT,
             text,
-            markup: options?.keyboard ? {
-              type: 'inline' as const,
-              inline_keyboard: options.keyboard.map(row => 
-                row.map(btn => ({
-                  text: btn.text,
-                  callback_data: btn.callback,
-                  url: btn.url,
-                }))
-              ),
-            } : undefined,
+            markup: options?.keyboard
+              ? {
+                  type: 'inline' as const,
+                  inline_keyboard: options.keyboard.map((row) =>
+                    row.map((btn) => ({
+                      text: btn.text,
+                      callback_data: btn.callback,
+                      url: btn.url,
+                    })),
+                  ),
+                }
+              : undefined,
           },
           metadata: {
             parseMode: options?.markdown ? 'Markdown' : options?.html ? 'HTML' : undefined,
@@ -406,8 +433,10 @@ export class WireframeBot {
     };
 
     // Add platform-specific capabilities if available
-    const capabilities = this.router.getChannelConfig(channel)?.connector.getMessagingCapabilities?.();
-    
+    const capabilities = this.router
+      .getChannelConfig(channel)
+      ?.connector.getMessagingCapabilities?.();
+
     if (capabilities?.supportsReactions) {
       ctx.react = async (_emoji: string) => {
         // Implementation would depend on platform

@@ -1,6 +1,6 @@
 /**
  * WhatsApp Business API Connector for Wireframe v2.0
- * 
+ *
  * Supports WhatsApp Cloud API and Business API
  */
 
@@ -73,10 +73,16 @@ export interface WhatsAppWebhookPayload {
           timestamp: string;
           type: string;
           text?: { body: string };
-          image?: { id: string; mime_type: string; sha256: string };
-          document?: { id: string; mime_type: string; sha256: string; filename: string };
-          audio?: { id: string; mime_type: string; sha256: string };
-          video?: { id: string; mime_type: string; sha256: string };
+          image?: { id: string; mime_type: string; sha256: string; caption?: string };
+          document?: {
+            id: string;
+            mime_type: string;
+            sha256: string;
+            filename: string;
+            caption?: string;
+          };
+          audio?: { id: string; mime_type: string; sha256: string; voice?: boolean };
+          video?: { id: string; mime_type: string; sha256: string; caption?: string };
           location?: { latitude: number; longitude: number; name?: string; address?: string };
           button?: { text: string; payload: string };
           interactive?: {
@@ -94,6 +100,12 @@ export interface WhatsAppWebhookPayload {
               currency: string;
             }>;
           };
+          contacts?: Array<{
+            name: { formatted_name: string; first_name?: string; last_name?: string };
+            phones?: Array<{ phone: string; type?: string }>;
+            emails?: Array<{ email: string; type?: string }>;
+          }>;
+          context?: { from: string; id: string };
         }>;
         statuses?: Array<{
           id: string;
@@ -186,11 +198,7 @@ export class WhatsAppConnector extends BaseMessagingConnector {
    * Check if connector is ready
    */
   protected checkReadiness(): boolean {
-    return !!(
-      this.config?.accessToken &&
-      this.config?.phoneNumberId &&
-      this.config?.verifyToken
-    );
+    return !!(this.config?.accessToken && this.config?.phoneNumberId && this.config?.verifyToken);
   }
 
   /**
@@ -210,13 +218,13 @@ export class WhatsAppConnector extends BaseMessagingConnector {
         `${this.apiUrl}/${this.apiVersion}/${this.config.phoneNumberId}`,
         {
           headers: {
-            'Authorization': `Bearer ${this.config.accessToken}`,
+            Authorization: `Bearer ${this.config.accessToken}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
-        const data = await response.json() as {
+        const data = (await response.json()) as {
           display_phone_number: string;
           verified_name?: string;
           quality_rating?: string;
@@ -265,21 +273,21 @@ export class WhatsAppConnector extends BaseMessagingConnector {
 
     try {
       const body = this.buildMessageBody(recipient, message);
-      
+
       const response = await fetch(
         `${this.apiUrl}/${this.apiVersion}/${this.config.phoneNumberId}/messages`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.config.accessToken}`,
+            Authorization: `Bearer ${this.config.accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
-        }
+        },
       );
 
       if (response.ok) {
-        const data = await response.json() as {
+        const data = (await response.json()) as {
           messages: Array<{ id: string }>;
         };
         return {
@@ -361,7 +369,7 @@ export class WhatsAppConnector extends BaseMessagingConnector {
    */
   private async handleWebhookNotification(request: Request): Promise<Response> {
     try {
-      const payload = await request.json() as WhatsAppWebhookPayload;
+      const payload = (await request.json()) as WhatsAppWebhookPayload;
 
       // Process each entry
       for (const entry of payload.entry) {
@@ -534,9 +542,9 @@ export class WhatsAppConnector extends BaseMessagingConnector {
             body.interactive = this.buildInteractiveMessage(message);
           } else {
             body.type = 'text';
-            body.text = { 
+            body.text = {
               body: message.content.text,
-              preview_url: true
+              preview_url: true,
             };
           }
         }
@@ -620,13 +628,15 @@ export class WhatsAppConnector extends BaseMessagingConnector {
             phones?: Array<{ number: string; type?: string }>;
           };
           body.type = 'contacts';
-          body.contacts = [{
-            name: {
-              formatted_name: contact.name,
-              first_name: contact.first_name || contact.name,
+          body.contacts = [
+            {
+              name: {
+                formatted_name: contact.name,
+                first_name: contact.first_name || contact.name,
+              },
+              phones: contact.phones || [],
             },
-            phones: contact.phones || [],
-          }];
+          ];
         }
         break;
 
@@ -656,7 +666,7 @@ export class WhatsAppConnector extends BaseMessagingConnector {
     if (!buttons || buttons.length === 0) {
       throw new Error('No buttons found in inline keyboard');
     }
-    
+
     // If we have 3 or fewer buttons, use button type
     if (buttons.length <= 3) {
       return {
@@ -690,14 +700,16 @@ export class WhatsAppConnector extends BaseMessagingConnector {
         },
         action: {
           button: 'Select',
-          sections: [{
-            title: 'Available options',
-            rows: buttons.map((btn, idx) => ({
-              id: btn.callback_data || `opt_${idx}`,
-              title: btn.text.substring(0, 24), // WhatsApp limit
-              description: btn.url ? 'Link' : undefined,
-            })),
-          }],
+          sections: [
+            {
+              title: 'Available options',
+              rows: buttons.map((btn, idx) => ({
+                id: btn.callback_data || `opt_${idx}`,
+                title: btn.text.substring(0, 24), // WhatsApp limit
+                description: btn.url ? 'Link' : undefined,
+              })),
+            },
+          ],
         },
       };
     }
@@ -708,7 +720,7 @@ export class WhatsAppConnector extends BaseMessagingConnector {
    */
   private convertToUnifiedMessage(
     message: NonNullable<WhatsAppWebhookPayload['entry'][0]['changes'][0]['value']['messages']>[0],
-    metadata: WhatsAppWebhookPayload['entry'][0]['changes'][0]['value']
+    metadata: WhatsAppWebhookPayload['entry'][0]['changes'][0]['value'],
   ): UnifiedMessage | null {
     try {
       const sender: User = {
@@ -755,39 +767,47 @@ export class WhatsAppConnector extends BaseMessagingConnector {
       } else if (message.image) {
         messageType = MessageType.IMAGE;
         text = message.image.caption || '';
-        attachments = [{
-          type: AttachmentType.PHOTO,
-          file_id: message.image.id,
-          mime_type: message.image.mime_type,
-          // sha256: message.image.sha256, // Not part of Attachment interface
-        }];
+        attachments = [
+          {
+            type: AttachmentType.PHOTO,
+            file_id: message.image.id,
+            mime_type: message.image.mime_type,
+            // sha256: message.image.sha256, // Not part of Attachment interface
+          },
+        ];
       } else if (message.video) {
         messageType = MessageType.VIDEO;
         text = message.video.caption || '';
-        attachments = [{
-          type: AttachmentType.VIDEO,
-          file_id: message.video.id,
-          mime_type: message.video.mime_type,
-          // sha256: message.video.sha256, // Not part of Attachment interface
-        }];
+        attachments = [
+          {
+            type: AttachmentType.VIDEO,
+            file_id: message.video.id,
+            mime_type: message.video.mime_type,
+            // sha256: message.video.sha256, // Not part of Attachment interface
+          },
+        ];
       } else if (message.audio) {
         messageType = MessageType.AUDIO;
-        attachments = [{
-          type: AttachmentType.AUDIO,
-          file_id: message.audio.id,
-          mime_type: message.audio.mime_type,
-          // sha256: message.audio.sha256, // Not part of Attachment interface
-        }];
+        attachments = [
+          {
+            type: AttachmentType.AUDIO,
+            file_id: message.audio.id,
+            mime_type: message.audio.mime_type,
+            // sha256: message.audio.sha256, // Not part of Attachment interface
+          },
+        ];
       } else if (message.document) {
         messageType = MessageType.DOCUMENT;
         text = message.document.caption || '';
-        attachments = [{
-          type: AttachmentType.DOCUMENT,
-          file_id: message.document.id,
-          file_name: message.document.filename,
-          mime_type: message.document.mime_type,
-          // sha256: message.document.sha256, // Not part of Attachment interface
-        }];
+        attachments = [
+          {
+            type: AttachmentType.DOCUMENT,
+            file_id: message.document.id,
+            file_name: message.document.filename,
+            mime_type: message.document.mime_type,
+            // sha256: message.document.sha256, // Not part of Attachment interface
+          },
+        ];
       } else if (message.location) {
         messageType = MessageType.LOCATION;
         messageMetadata.location = {
@@ -799,13 +819,15 @@ export class WhatsAppConnector extends BaseMessagingConnector {
       } else if (message.contacts && message.contacts.length > 0) {
         messageType = MessageType.CONTACT;
         const contact = message.contacts[0];
-        messageMetadata.contact = {
-          name: contact.name.formatted_name,
-          first_name: contact.name.first_name,
-          last_name: contact.name.last_name,
-          phones: contact.phones,
-          emails: contact.emails,
-        };
+        if (contact) {
+          messageMetadata.contact = {
+            name: contact.name.formatted_name,
+            first_name: contact.name.first_name,
+            last_name: contact.name.last_name,
+            phones: contact.phones,
+            emails: contact.emails,
+          };
+        }
       } else if (message.order) {
         // Handle catalog order
         messageType = MessageType.TEXT;
@@ -865,7 +887,7 @@ export class WhatsAppConnector extends BaseMessagingConnector {
         document?: { link: string; filename: string };
         video?: { link: string };
       }>;
-    }>
+    }>,
   ): Promise<MessageResult> {
     if (!this.config) {
       throw new Error('Connector not initialized');
@@ -891,15 +913,15 @@ export class WhatsAppConnector extends BaseMessagingConnector {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.config.accessToken}`,
+            Authorization: `Bearer ${this.config.accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
-        }
+        },
       );
 
       if (response.ok) {
-        const data = await response.json() as {
+        const data = (await response.json()) as {
           messages: Array<{ id: string }>;
         };
         return {
@@ -928,7 +950,7 @@ export class WhatsAppConnector extends BaseMessagingConnector {
     recipient: string,
     bodyText: string,
     catalogId: string,
-    productRetailerIds: string[]
+    productRetailerIds: string[],
   ): Promise<MessageResult> {
     if (!this.config) {
       throw new Error('Connector not initialized');
@@ -953,12 +975,14 @@ export class WhatsAppConnector extends BaseMessagingConnector {
         },
         action: {
           catalog_id: catalogId,
-          sections: [{
-            title: 'Featured Products',
-            product_items: productRetailerIds.map(id => ({
-              product_retailer_id: id,
-            })),
-          }],
+          sections: [
+            {
+              title: 'Featured Products',
+              product_items: productRetailerIds.map((id) => ({
+                product_retailer_id: id,
+              })),
+            },
+          ],
         },
       },
     };
@@ -969,15 +993,15 @@ export class WhatsAppConnector extends BaseMessagingConnector {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.config.accessToken}`,
+            Authorization: `Bearer ${this.config.accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
-        }
+        },
       );
 
       if (response.ok) {
-        const data = await response.json() as {
+        const data = (await response.json()) as {
           messages: Array<{ id: string }>;
         };
         return {
@@ -1014,17 +1038,14 @@ export class WhatsAppConnector extends BaseMessagingConnector {
     };
 
     try {
-      await fetch(
-        `${this.apiUrl}/${this.apiVersion}/${this.config.phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.config.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        }
-      );
+      await fetch(`${this.apiUrl}/${this.apiVersion}/${this.config.phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.config.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
     } catch (error) {
       if (this.logger) {
         this.logger.error('Failed to mark message as read', { error });
@@ -1053,20 +1074,17 @@ export class WhatsAppConnector extends BaseMessagingConnector {
 
     try {
       // First, get the media URL
-      const mediaResponse = await fetch(
-        `${this.apiUrl}/${this.apiVersion}/${mediaId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.config.accessToken}`,
-          },
-        }
-      );
+      const mediaResponse = await fetch(`${this.apiUrl}/${this.apiVersion}/${mediaId}`, {
+        headers: {
+          Authorization: `Bearer ${this.config.accessToken}`,
+        },
+      });
 
       if (!mediaResponse.ok) {
         throw new Error('Failed to get media URL');
       }
 
-      const mediaData = await mediaResponse.json() as {
+      const mediaData = (await mediaResponse.json()) as {
         url: string;
         mime_type: string;
       };

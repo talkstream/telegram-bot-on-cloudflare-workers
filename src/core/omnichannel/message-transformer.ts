@@ -1,16 +1,17 @@
 /**
  * Message Transformer for Wireframe v2.0
- * 
+ *
  * Transforms messages between different platform formats
  * Enables seamless message conversion across channels
  */
 
-import type { 
-  UnifiedMessage, 
-  MessageContent, 
-  Platform
+import type { UnifiedMessage, MessageContent, Platform } from '../interfaces/messaging.js';
+import {
+  Platform as PlatformEnum,
+  MessageType as MessageTypeEnum,
+  ChatType as ChatTypeEnum,
+  AttachmentType,
 } from '../interfaces/messaging.js';
-import { Platform as PlatformEnum, MessageType as MessageTypeEnum, ChatType as ChatTypeEnum, AttachmentType } from '../interfaces/messaging.js';
 import type { ILogger } from '../interfaces/logger.js';
 
 // Platform-specific message types
@@ -28,9 +29,24 @@ type TelegramMessage = {
     title?: string;
   };
   text?: string;
+  caption?: string;
   date?: number;
+  photo?: Array<{ file_id: string; file_unique_id: string; width: number; height: number }>;
+  document?: { file_id: string; file_name?: string; mime_type?: string };
+  video?: { file_id: string; duration: number; mime_type?: string };
+  audio?: { file_id: string; duration: number; mime_type?: string };
+  voice?: { file_id: string; duration: number; mime_type?: string };
+  reply_markup?: {
+    inline_keyboard?: Array<
+      Array<{
+        text: string;
+        callback_data?: string;
+        url?: string;
+      }>
+    >;
+  };
   [key: string]: unknown;
-}
+};
 
 type WhatsAppMessage = {
   id?: string;
@@ -39,7 +55,7 @@ type WhatsAppMessage = {
   text?: { body: string };
   timestamp?: string;
   [key: string]: unknown;
-}
+};
 
 type DiscordMessage = {
   id?: string;
@@ -51,8 +67,22 @@ type DiscordMessage = {
   };
   channel_id?: string;
   timestamp?: string;
+  embeds?: Array<{
+    title?: string;
+    description?: string;
+    url?: string;
+    image?: { url: string };
+    thumbnail?: { url: string };
+    fields?: Array<{ name: string; value: string; inline?: boolean }>;
+  }>;
+  attachments?: Array<{
+    id: string;
+    filename: string;
+    content_type?: string;
+    url: string;
+  }>;
   [key: string]: unknown;
-}
+};
 
 type SlackMessage = {
   type?: string;
@@ -61,7 +91,7 @@ type SlackMessage = {
   text?: string;
   channel?: string;
   [key: string]: unknown;
-}
+};
 
 /**
  * Platform-specific message format
@@ -97,13 +127,13 @@ export class MessageTransformer {
 
   constructor(config: MessageTransformerConfig = {}) {
     this.logger = config.logger;
-    
+
     // Register default transformation rules
     this.registerDefaultRules();
-    
+
     // Register custom rules if provided
     if (config.customRules) {
-      config.customRules.forEach(rule => this.addRule(rule));
+      config.customRules.forEach((rule) => this.addRule(rule));
     }
   }
 
@@ -116,11 +146,11 @@ export class MessageTransformer {
     }
     const ruleKey = this.getRuleKey(message.platform, targetPlatform);
     const rule = this.rules.get(ruleKey);
-    
+
     if (rule) {
       return rule.transform(message);
     }
-    
+
     // If no specific rule, try generic transformation
     return this.genericTransform(message, targetPlatform);
   }
@@ -201,7 +231,11 @@ export class MessageTransformer {
     if (message.content.type === 'text' && message.content.text) {
       data.type = 'text';
       data.text = { body: message.content.text };
-    } else if (message.content.type === MessageTypeEnum.IMAGE && message.attachments && message.attachments.length > 0) {
+    } else if (
+      message.content.type === MessageTypeEnum.IMAGE &&
+      message.attachments &&
+      message.attachments.length > 0
+    ) {
       const attachment = message.attachments[0];
       if (attachment) {
         data.type = 'image';
@@ -247,7 +281,11 @@ export class MessageTransformer {
     // Transform content
     if (message.content.type === 'text') {
       data.text = message.content.text;
-    } else if (message.content.type === MessageTypeEnum.IMAGE && message.attachments && message.attachments.length > 0) {
+    } else if (
+      message.content.type === MessageTypeEnum.IMAGE &&
+      message.attachments &&
+      message.attachments.length > 0
+    ) {
       const attachment = message.attachments[0];
       if (attachment) {
         data.photo = attachment.url || attachment.file_id || '';
@@ -271,10 +309,12 @@ export class MessageTransformer {
     }
     const whatsappData = message.metadata as WhatsAppInteractiveData;
     if (whatsappData?.interactive?.type === 'button') {
-      const buttons = whatsappData.interactive.action.buttons.map(btn => [{
-        text: btn.reply.title,
-        callback_data: btn.reply.id,
-      }]);
+      const buttons = whatsappData.interactive.action.buttons.map((btn) => [
+        {
+          text: btn.reply.title,
+          callback_data: btn.reply.id,
+        },
+      ]);
       data.reply_markup = {
         inline_keyboard: buttons,
       };
@@ -293,16 +333,18 @@ export class MessageTransformer {
 
     // Transform inline keyboard to Discord components
     if (message.content.markup?.type === 'inline' && message.content.markup.inline_keyboard) {
-      const components = [{
-        type: 1, // Action row
-        components: message.content.markup.inline_keyboard[0]?.slice(0, 5).map(btn => ({
-          type: 2, // Button
-          style: btn.url ? 5 : 1, // Link or primary
-          label: btn.text,
-          custom_id: btn.callback_data,
-          url: btn.url,
-        })),
-      }];
+      const components = [
+        {
+          type: 1, // Action row
+          components: message.content.markup.inline_keyboard[0]?.slice(0, 5).map((btn) => ({
+            type: 2, // Button
+            style: btn.url ? 5 : 1, // Link or primary
+            label: btn.text,
+            custom_id: btn.callback_data,
+            url: btn.url,
+          })),
+        },
+      ];
       data.components = components;
     }
 
@@ -310,10 +352,12 @@ export class MessageTransformer {
     if (message.attachments && message.attachments.length > 0) {
       const attachment = message.attachments[0];
       if (attachment) {
-        data.embeds = [{
-          image: { url: attachment.url || '' },
-          description: message.content.text,
-        }];
+        data.embeds = [
+          {
+            image: { url: attachment.url || '' },
+            description: message.content.text,
+          },
+        ];
       }
     }
 
@@ -341,11 +385,13 @@ export class MessageTransformer {
     }
     const discordData = message.metadata as DiscordComponents;
     if (discordData?.components) {
-      const keyboard = discordData.components[0]?.components.map(btn => [{
-        text: btn.label,
-        callback_data: btn.custom_id,
-        url: btn.url,
-      }]);
+      const keyboard = discordData.components[0]?.components.map((btn) => [
+        {
+          text: btn.label,
+          callback_data: btn.custom_id,
+          url: btn.url,
+        },
+      ]);
       data.reply_markup = {
         inline_keyboard: keyboard,
       };
@@ -366,13 +412,18 @@ export class MessageTransformer {
 
     // Will handle media through attachments
     let attachments: UnifiedMessage['attachments'];
-    if (msg.photo) {
+    if (msg.photo && msg.photo.length > 0) {
       content.type = MessageTypeEnum.IMAGE;
-      attachments = [{
-        type: AttachmentType.PHOTO,
-        file_id: msg.photo[msg.photo.length - 1].file_id,
-        mime_type: 'image/jpeg',
-      }];
+      const lastPhoto = msg.photo[msg.photo.length - 1];
+      if (lastPhoto) {
+        attachments = [
+          {
+            type: AttachmentType.PHOTO,
+            file_id: lastPhoto.file_id,
+            mime_type: 'image/jpeg',
+          },
+        ];
+      }
     }
 
     // Handle markup
@@ -392,11 +443,13 @@ export class MessageTransformer {
         first_name: msg.from?.first_name,
         last_name: msg.from?.last_name,
       },
-      chat: msg.chat ? {
-        id: msg.chat.id.toString(),
-        type: msg.chat.type as ChatTypeEnum,
-        title: msg.chat.title,
-      } : undefined,
+      chat: msg.chat
+        ? {
+            id: msg.chat.id.toString(),
+            type: msg.chat.type as ChatTypeEnum,
+            title: msg.chat.title,
+          }
+        : undefined,
       content,
       attachments,
       timestamp: msg.date ? msg.date * 1000 : Date.now(),
@@ -443,10 +496,12 @@ export class MessageTransformer {
       if (interactive?.type === 'button' && interactive.action?.buttons) {
         content.markup = {
           type: 'inline',
-          inline_keyboard: [interactive.action.buttons.map(btn => ({
-            text: btn.reply.title,
-            callback_data: btn.reply.id,
-          }))],
+          inline_keyboard: [
+            interactive.action.buttons.map((btn) => ({
+              text: btn.reply.title,
+              callback_data: btn.reply.id,
+            })),
+          ],
         };
       }
     }
@@ -477,7 +532,7 @@ export class MessageTransformer {
     // Handle embeds as media
     if (msg.embeds && msg.embeds.length > 0) {
       const embed = msg.embeds[0];
-      if (embed.image) {
+      if (embed && embed.image) {
         content.type = MessageTypeEnum.IMAGE;
         content.text = embed.description || '';
         // Embeds handled separately in Discord
@@ -498,7 +553,7 @@ export class MessageTransformer {
     if (msgWithComponents.components && msgWithComponents.components.length > 0) {
       const firstRow = msgWithComponents.components[0];
       if (firstRow?.components) {
-        const buttons = firstRow.components.map(btn => ({
+        const buttons = firstRow.components.map((btn) => ({
           text: btn.label || '',
           callback_data: btn.custom_id,
           url: btn.url,
