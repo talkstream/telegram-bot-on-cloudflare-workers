@@ -12,10 +12,26 @@ vi.mock('@/services/user-service', () => ({
 
 // Mock role service
 const mockRoleService = {
+  // Access checks
   hasAccess: vi.fn().mockResolvedValue(true),
   isOwner: vi.fn().mockResolvedValue(false),
   isAdmin: vi.fn().mockResolvedValue(false),
+  hasRole: vi.fn().mockResolvedValue(false),
   getUserRole: vi.fn().mockResolvedValue('user'),
+
+  // Role management
+  assignRole: vi.fn().mockResolvedValue(undefined),
+  removeRole: vi.fn().mockResolvedValue(undefined),
+
+  // Batch operations
+  getUsersByRole: vi.fn().mockResolvedValue([]),
+  getAllRoles: vi.fn().mockResolvedValue([]),
+
+  // Platform-specific
+  getRoleByPlatformId: vi.fn().mockResolvedValue(null),
+  getUsersByPlatform: vi.fn().mockResolvedValue([]),
+
+  // Legacy permission check (for test compatibility)
   hasPermission: vi.fn().mockResolvedValue(false),
 };
 
@@ -107,10 +123,12 @@ describe('Start Command', () => {
     });
 
     // Mock DB response for pending request check
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue(null), // No pending request
-    });
+    if (ctx.env.DB) {
+      ctx.env.DB.prepare = vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue(null), // No pending request
+      });
+    }
 
     await startCommand(ctx);
 
@@ -151,10 +169,12 @@ describe('Start Command', () => {
     });
 
     // Mock DB response for pending request
-    ctx.env.DB.prepare = vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnThis(),
-      first: vi.fn().mockResolvedValue({ id: 1, status: 'pending' }),
-    });
+    if (ctx.env.DB) {
+      ctx.env.DB.prepare = vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ id: 1, status: 'pending' }),
+      });
+    }
 
     await startCommand(ctx);
 
