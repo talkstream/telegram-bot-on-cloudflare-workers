@@ -9,6 +9,7 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles: ['./src/__tests__/setup/node-env-mock.js', './src/__tests__/setup/grammy-mock.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
     exclude: ['eslint-rules/**', 'node_modules/**', 'website/**', '**/node_modules/**'],
     // Use standard node pool instead of workers
     pool: 'threads',
