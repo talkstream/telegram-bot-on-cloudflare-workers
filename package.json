@@ -14,7 +14,7 @@
     "deploy:staging": "wrangler deploy --env staging",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --pool=forks --poolOptions.forks.singleFork=true",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",

@@ -55,6 +55,12 @@
     // Type Definitions
     "types": ["@cloudflare/workers-types", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.json", "tests/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.json",
+    "tests/**/*.ts",
+    "vitest.config.ts",
+    "vitest.config.ci.ts"
+  ],
   "exclude": ["node_modules", "dist", ".wrangler"]
 }
