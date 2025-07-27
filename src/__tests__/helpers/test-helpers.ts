@@ -10,7 +10,8 @@ import { vi } from 'vitest';
 import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
 
 import type { Env } from '../../types/env.js';
-import type { CloudPlatform } from '../../core/interfaces/platform.js';
+import type { BotContext } from '../../types/index.js';
+import type { CloudPlatform } from '../../core/interfaces/cloud-platform.js';
 
 /**
  * Create a test user with all required properties
@@ -79,11 +80,11 @@ export function createTestChat(
 ): Chat {
   switch (type) {
     case 'private':
-      return createTestPrivateChat(overrides as Partial<PrivateChat>);
+      return createTestPrivateChat(overrides as Partial<Chat.PrivateChat>);
     case 'group':
-      return createTestGroupChat(overrides as Partial<GroupChat>);
+      return createTestGroupChat(overrides as Partial<Chat.GroupChat>);
     case 'supergroup':
-      return createTestSupergroupChat(overrides as Partial<SupergroupChat>);
+      return createTestSupergroupChat(overrides as Partial<Chat.SupergroupChat>);
   }
 }
 
@@ -190,7 +191,7 @@ export function createMockAI() {
 /**
  * Create a test context with proper typing
  */
-export function createTestContext(overrides: Partial<WireframeContext> = {}): WireframeContext {
+export function createTestContext(overrides: Partial<BotContext> = {}): BotContext {
   const env = createTestEnv();
   const from = createTestUser();
   const chat = createTestPrivateChat();
@@ -239,7 +240,7 @@ export function createTestContext(overrides: Partial<WireframeContext> = {}): Wi
 
     // Apply overrides
     ...overrides,
-  } as unknown as WireframeContext;
+  } as unknown as BotContext;
 
   return ctx;
 }
@@ -247,9 +248,7 @@ export function createTestContext(overrides: Partial<WireframeContext> = {}): Wi
 /**
  * Create a context with DB guaranteed to exist
  */
-export function createTestContextWithDB(
-  overrides: Partial<WireframeContext> = {},
-): WireframeContext & {
+export function createTestContextWithDB(overrides: Partial<BotContext> = {}): BotContext & {
   env: Env & { DB: D1Database };
 } {
   const ctx = createTestContext(overrides);
@@ -259,13 +258,13 @@ export function createTestContextWithDB(
     ctx.env.DB = createMockD1Database();
   }
 
-  return ctx as WireframeContext & { env: Env & { DB: D1Database } };
+  return ctx as BotContext & { env: Env & { DB: D1Database } };
 }
 
 /**
  * Type guard to check if context has DB
  */
-export function hasDB(ctx: WireframeContext): ctx is WireframeContext & {
+export function hasDB(ctx: BotContext): ctx is BotContext & {
   env: Env & { DB: D1Database };
 } {
   return ctx.env.DB !== undefined;
@@ -274,7 +273,7 @@ export function hasDB(ctx: WireframeContext): ctx is WireframeContext & {
 /**
  * Assert that context has DB (throws if not)
  */
-export function assertHasDB(ctx: WireframeContext): asserts ctx is WireframeContext & {
+export function assertHasDB(ctx: BotContext): asserts ctx is BotContext & {
   env: Env & { DB: D1Database };
 } {
   if (!ctx.env.DB) {
