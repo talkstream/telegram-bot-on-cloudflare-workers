@@ -82,8 +82,14 @@ export class EventBus {
       maxListeners: options.maxListeners ?? 100,
       debug: options.debug ?? false,
       errorHandler: options.errorHandler ?? this.defaultErrorHandler,
-      enableHistory: options.enableHistory ?? true,
+      // Disable history by default in test environment
+      enableHistory: options.enableHistory ?? process.env.NODE_ENV !== 'test',
     };
+
+    // Reduce history size in test environment
+    if (process.env.NODE_ENV === 'test') {
+      this.maxHistorySize = 10;
+    }
   }
 
   /**
@@ -333,6 +339,11 @@ export class EventBus {
    * Add event to history
    */
   private addToHistory(event: Event): void {
+    // Skip history in test environment unless explicitly enabled
+    if (!this.options.enableHistory) {
+      return;
+    }
+
     this.eventHistory.push(event);
     if (this.eventHistory.length > this.maxHistorySize) {
       this.eventHistory.shift();

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Run tests in batches to avoid memory exhaustion
+# Run tests with optimized memory management
 echo "🧪 Running tests with optimized memory management..."
 
-# Use memory limit from environment or default to 4GB for CI
-export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
+# Use memory limit from environment or default to 1GB
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1024}"
 
 # Enable V8 garbage collection for better memory management
 export NODE_OPTIONS="$NODE_OPTIONS --expose-gc"
@@ -15,21 +15,22 @@ export NODE_ENV="test"
 # Clear any previous coverage data
 rm -rf coverage/
 
-# Detect if we're in CI environment
-if [ -n "$CI" ]; then
-  echo "🔧 CI environment detected - using Node pool configuration..."
-  CONFIG_FILE="vitest.config.ci-node.ts"
+# Use memory-efficient test runner
+echo "🚀 Using memory-efficient test runner..."
+node scripts/memory-efficient-test-runner.js
+
+# Check if tests passed
+if [ $? -eq 0 ]; then
+  echo "✅ All tests passed with optimized memory management!"
+  
+  # Generate coverage report if coverage data exists
+  if [ -d "coverage" ]; then
+    echo "📊 Generating coverage report..."
+    npx nyc report --reporter=lcov --reporter=text --reporter=html || true
+  fi
+  
+  exit 0
 else
-  CONFIG_FILE="vitest.config.ci.ts"
+  echo "❌ Some tests failed"
+  exit 1
 fi
-
-# For CI with Node pool, run all tests together since we're using single thread
-echo "📦 Running all tests with Node.js configuration..."
-npx vitest run --config $CONFIG_FILE --coverage || exit 1
-
-# Merge coverage reports
-echo "📊 Merging coverage reports..."
-npx nyc merge coverage coverage/merged.json || true
-npx nyc report --reporter=lcov --reporter=text --reporter=html || true
-
-echo "✅ All tests passed with optimized memory management!"

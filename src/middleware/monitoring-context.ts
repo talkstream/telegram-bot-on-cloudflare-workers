@@ -1,6 +1,6 @@
 import type { Middleware } from 'grammy';
 
-import type { BotContext } from '@/lib/types.js';
+import type { BotContext } from '@/core/bot-context.js';
 import type { IMonitoringConnector } from '@/core/interfaces/monitoring.js';
 
 /**

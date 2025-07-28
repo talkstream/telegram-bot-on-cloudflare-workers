@@ -1,6 +1,16 @@
-import type { IEventBusPlugin, Event } from '@/core/events/interfaces';
+import type { Event } from '@/core/events/event-bus';
 import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
 import { getMonitoringConnector } from '@/config/sentry';
+
+interface IEventBusPlugin {
+  name: string;
+  version: string;
+  onInit?(): void | Promise<void>;
+  onDestroy?(): void | Promise<void>;
+  beforeEmit?(event: Event): void | Promise<void>;
+  afterEmit?(event: Event): void | Promise<void>;
+  onError?(error: Error, event?: Event): void | Promise<void>;
+}
 
 /**
  * EventBus plugin that automatically tracks events with monitoring
@@ -72,7 +82,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
   private handleErrorEvent(event: Event): void {
     if (!this.monitoring) return;
 
-    const errorData = event.data as any;
+    const errorData = event.data as Record<string, unknown>;
     const error = errorData.error || errorData.exception || errorData;
 
     if (error instanceof Error) {
@@ -93,7 +103,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
   private handlePerformanceEvent(event: Event): void {
     if (!this.monitoring) return;
 
-    const data = event.data as any;
+    const data = event.data as Record<string, unknown>;
     const duration = data.duration || data.elapsed || data.time;
 
     // Add performance breadcrumb
