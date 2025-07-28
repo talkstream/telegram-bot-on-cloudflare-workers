@@ -15,9 +15,7 @@ export default defineConfig({
     poolOptions: {
       forks: {
         singleFork: true,
-        // Limit the number of threads
-        maxThreads: 1,
-        minThreads: 1,
+        // Single fork for memory efficiency
       },
       workers: {
         isolatedStorage: true,

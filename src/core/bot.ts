@@ -75,17 +75,16 @@ export async function createBot(env: Env) {
     tier,
   );
 
-  // Register all providers with monitoring
+  // Register all providers (monitoring removed for now)
   for (const provider of providers) {
-    const monitoredProvider = MonitoredProviderAdapter.fromProvider(provider, monitoring);
-    aiService.registerProvider(monitoredProvider);
+    aiService.registerProvider(provider);
   }
 
   const paymentRepo = new PaymentRepository(cloudConnector.getDatabaseStore('DB'));
   const telegramStarsService = new TelegramStarsService(bot.api.raw, paymentRepo, tier);
 
   // Add monitoring context middleware first
-  bot.use(createMonitoringContextMiddleware(monitoring));
+  bot.use(createMonitoringContextMiddleware(monitoring ?? undefined));
 
   // Middleware to attach services, session, and i18n to the context
   bot.use(async (ctx, next) => {
@@ -137,7 +136,7 @@ export async function createBot(env: Env) {
   // Example commands and handlers (these would typically be moved to src/adapters/telegram/commands/ and callbacks/)
   bot.command(
     'start',
-    createMonitoredCommand(monitoring, 'start', async (ctx) => {
+    createMonitoredCommand(monitoring ?? undefined, 'start', async (ctx) => {
       const userId = ctx.from?.id;
       if (userId) {
         let session = await ctx.services.session.getSession(userId);
@@ -159,7 +158,7 @@ export async function createBot(env: Env) {
 
   bot.command(
     'askgemini',
-    createMonitoredCommand(monitoring, 'askgemini', async (ctx) => {
+    createMonitoredCommand(monitoring ?? undefined, 'askgemini', async (ctx) => {
       const prompt = ctx.match;
       if (!prompt) {
         await ctx.reply(ctx.i18n.t('ai.gemini.prompt_needed', { namespace: 'telegram' }));
@@ -182,7 +181,7 @@ export async function createBot(env: Env) {
 
   bot.command(
     'menu',
-    createMonitoredCommand(monitoring, 'menu', async (ctx) => {
+    createMonitoredCommand(monitoring ?? undefined, 'menu', async (ctx) => {
       const inlineKeyboard = new InlineKeyboard()
         .text('Option 1', 'option_1')
         .row()
@@ -203,7 +202,7 @@ export async function createBot(env: Env) {
 
   bot.command(
     'buy_message',
-    createMonitoredCommand(monitoring, 'buy_message', async (ctx) => {
+    createMonitoredCommand(monitoring ?? undefined, 'buy_message', async (ctx) => {
       const userId = ctx.from?.id;
       if (!userId) {
         await ctx.reply('Could not identify user.');

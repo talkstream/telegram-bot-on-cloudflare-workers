@@ -51,7 +51,7 @@ export class AIConnectorFactory {
    * Create multiple AI connectors from environment configuration
    */
   static createFromEnv(
-    env: Record<string, string | undefined>,
+    _env: Record<string, string | undefined>,
     options?: AIConnectorFactoryOptions,
   ): AIConnector[] {
     const connectors: AIConnector[] = [];

@@ -119,7 +119,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
     });
 
     // Alert on slow operations
-    if (duration && this.isSlowOperation(event.type, duration)) {
+    if (duration && typeof duration === 'number' && this.isSlowOperation(event.type, duration)) {
       this.monitoring.captureMessage(`Slow operation detected: ${event.type}`, 'warning', {
         duration,
         threshold: this.getThreshold(event.type),
