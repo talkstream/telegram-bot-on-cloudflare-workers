@@ -48,14 +48,21 @@ function categorizeTests(testFiles) {
   const worker = [];
   
   for (const file of testFiles) {
+    // Integration tests
     if (file.includes('.integration.test.') || file.includes('/integration/')) {
       integration.push(file);
-    } else if (file.includes('.worker.test.') || 
-               file.includes('/commands/') || 
-               file.includes('/middleware/') ||
-               file.includes('/connectors/')) {
+    } 
+    // Worker tests - these require Cloudflare Workers environment
+    else if (file.includes('.worker.test.') || 
+             file.includes('/commands/') || 
+             file.includes('/middleware/') ||
+             file.includes('/connectors/') ||
+             file.includes('/adapters/telegram/commands/') ||
+             file.includes('/adapters/telegram/middleware/')) {
       worker.push(file);
-    } else {
+    } 
+    // Everything else is a unit test
+    else {
       unit.push(file);
     }
   }
@@ -140,7 +147,10 @@ async function main() {
     if (unit.length > 0) {
       console.log(colors.yellow('\n🔬 Running Unit Tests...'));
       for (let i = 0; i < unit.length; i += BATCH_SIZE) {
-        const batch = unit.slice(i, i + BATCH_SIZE);
+        // Reduce batch size for the last batch if it contains memory-intensive tests
+        const isLastBatch = i + BATCH_SIZE >= unit.length;
+        const effectiveBatchSize = isLastBatch ? 2 : BATCH_SIZE; // Smaller batch for last one
+        const batch = unit.slice(i, i + effectiveBatchSize);
         const batchName = `Unit Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(unit.length / BATCH_SIZE)}`;
         
         try {
@@ -148,6 +158,11 @@ async function main() {
         } catch (err) {
           failedBatches.push(batchName);
           console.error(colors.red(`❌ ${batchName} failed`));
+        }
+        
+        // Update i if we used a smaller batch
+        if (isLastBatch && effectiveBatchSize < BATCH_SIZE) {
+          i = i - BATCH_SIZE + effectiveBatchSize;
         }
       }
     }
