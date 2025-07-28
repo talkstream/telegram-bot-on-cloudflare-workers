@@ -16,15 +16,15 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./src/__tests__/setup/unit-test-setup.ts'],
     include: [
-      // Core business logic tests
-      'src/core/**/*.test.ts',
-      'src/patterns/**/*.test.ts',
-      'src/plugins/**/*.test.ts',
-      'src/lib/**/*.test.ts',
-      'src/services/**/*.test.ts',
-      // Exclude integration tests
-      '!src/**/*.integration.test.ts',
-      '!src/**/*.worker.test.ts',
+      // All test files
+      'src/**/*.{test,spec}.ts',
+      // Exclude integration and worker tests
+      '!src/**/*.integration.{test,spec}.ts',
+      '!src/**/*.worker.{test,spec}.ts',
+      // Exclude commands and middleware (they need Worker environment)
+      '!src/adapters/telegram/commands/**/*.{test,spec}.ts',
+      '!src/adapters/telegram/middleware/**/*.{test,spec}.ts',
+      '!src/connectors/**/*.{test,spec}.ts',
     ],
     exclude: ['eslint-rules/**', 'node_modules/**', 'website/**'],
     // Memory-efficient pool configuration

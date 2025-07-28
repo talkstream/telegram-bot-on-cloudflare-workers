@@ -66,15 +66,30 @@ function categorizeTests(testFiles) {
 // Run tests in batch
 async function runBatch(files, config, batchName) {
   return new Promise((resolve, reject) => {
-    const filePattern = files.map(f => path.relative(process.cwd(), f)).join(' ');
+    // Filter out non-existent files
+    const existingFiles = files.filter(file => {
+      try {
+        return fs.existsSync(file);
+      } catch (err) {
+        console.warn(colors.yellow(`⚠️  Cannot access file: ${file}`));
+        return false;
+      }
+    });
     
-    console.log(colors.blue(`\n📦 Running ${batchName} (${files.length} files)...`));
+    // Skip batch if no files exist
+    if (existingFiles.length === 0) {
+      console.log(colors.gray(`⏭️  Skipping ${batchName} - no test files found`));
+      resolve();
+      return;
+    }
+    
+    console.log(colors.blue(`\n📦 Running ${batchName} (${existingFiles.length} files)...`));
     
     const args = [
       'vitest',
       'run',
       '--config', config,
-      ...files.map(f => path.relative(process.cwd(), f))
+      ...existingFiles.map(f => path.relative(process.cwd(), f))
     ];
     
     const env = {
