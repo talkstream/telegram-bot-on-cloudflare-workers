@@ -92,8 +92,8 @@ export function createTestChat(
  * Create a mock D1 prepared statement
  */
 export function createMockD1PreparedStatement() {
-  const mockStatement = {
-    bind: vi.fn().mockReturnThis(),
+  const mockStatement: any = {
+    bind: vi.fn(),
     first: vi.fn().mockResolvedValue(null) as MockedFunction<D1PreparedStatement['first']>,
     all: vi.fn().mockResolvedValue({
       results: [],
@@ -122,6 +122,9 @@ export function createMockD1PreparedStatement() {
     }) as MockedFunction<D1PreparedStatement['run']>,
     raw: vi.fn().mockResolvedValue([]) as MockedFunction<D1PreparedStatement['raw']>,
   };
+
+  // Properly bind the mockReturnValue to return the statement itself
+  mockStatement.bind.mockReturnValue(mockStatement);
 
   return mockStatement;
 }

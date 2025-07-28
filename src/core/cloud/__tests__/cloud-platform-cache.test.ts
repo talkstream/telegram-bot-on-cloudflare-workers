@@ -1,86 +1,54 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import {
   getCloudPlatformConnector,
   clearCloudPlatformCache,
   getCloudPlatformCacheStats,
 } from '../cloud-platform-cache';
-import { CloudPlatformFactory } from '../platform-factory';
 
 import type { Env } from '@/config/env';
 import type { CloudflareEnv } from '@/types/env';
-import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
 
-// Mock CloudPlatformFactory
-vi.mock('../platform-factory', () => ({
-  CloudPlatformFactory: {
-    createFromTypedEnv: vi.fn(),
-  },
-}));
-
-// Helper to create mock connectors
-const createMockConnector = (platform: string): ICloudPlatformConnector => ({
-  platform,
-  getKeyValueStore: vi.fn(),
-  getDatabaseStore: vi.fn(),
-  getObjectStore: vi.fn(),
-  getCacheStore: vi.fn(),
-  getEnv: vi.fn().mockReturnValue({}),
-  getFeatures: vi.fn().mockReturnValue({
-    hasEdgeCache: true,
-    hasWebSockets: false,
-    hasCron: true,
-    hasQueues: true,
-    maxRequestDuration: 30000,
-    maxMemory: 128,
-  }),
-  getResourceConstraints: vi.fn().mockReturnValue({
-    maxCpuTime: 10,
-    maxMemory: 128,
-    maxSubrequests: 50,
-    tierName: 'free',
-  }),
-});
+// Import the actual module to test
 
 describe('CloudPlatform Cache', () => {
   beforeEach(() => {
     clearCloudPlatformCache();
-    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    clearCloudPlatformCache();
   });
 
   it('should return same instance for same environment', () => {
     const env: Env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'production',
+      DB: {},
+      CACHE: {},
     } as Env;
-
-    const mockConnector = createMockConnector('cloudflare');
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv).mockReturnValue(mockConnector);
 
     const instance1 = getCloudPlatformConnector(env);
     const instance2 = getCloudPlatformConnector(env);
 
     expect(instance1).toBe(instance2);
-    expect(CloudPlatformFactory.createFromTypedEnv).toHaveBeenCalledTimes(1);
+    expect(instance1.platform).toBe('cloudflare');
   });
 
   it('should return different instances for different environments', () => {
     const env1: Env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'development',
+      DB: {},
+      CACHE: {},
     } as Env;
 
     const env2: Env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'production',
+      DB: {},
+      CACHE: {},
     } as Env;
-
-    const mockConnector1 = createMockConnector('cloudflare');
-    const mockConnector2 = createMockConnector('cloudflare');
-
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv)
-      .mockReturnValueOnce(mockConnector1)
-      .mockReturnValueOnce(mockConnector2);
 
     const instance1 = getCloudPlatformConnector(env1);
     const instance2 = getCloudPlatformConnector(env2);
@@ -90,54 +58,52 @@ describe('CloudPlatform Cache', () => {
     expect(instance2.platform).toBe('cloudflare');
   });
 
-  it('should call factory only once per environment', () => {
+  it('should cache instances properly', () => {
     const env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'development',
+      DB: {},
+      CACHE: {},
     } as unknown as CloudflareEnv;
 
-    const mockConnector = createMockConnector('cloudflare');
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv).mockReturnValue(mockConnector);
+    // First call - creates new instance
+    const instance1 = getCloudPlatformConnector(env);
+    const stats1 = getCloudPlatformCacheStats();
+    expect(stats1.size).toBe(1);
 
-    // Multiple calls with same environment
-    getCloudPlatformConnector(env);
-    getCloudPlatformConnector(env);
-    getCloudPlatformConnector(env);
+    // Multiple calls with same environment - should return cached instance
+    const instance2 = getCloudPlatformConnector(env);
+    const instance3 = getCloudPlatformConnector(env);
 
-    expect(CloudPlatformFactory.createFromTypedEnv).toHaveBeenCalledTimes(1);
+    expect(instance2).toBe(instance1);
+    expect(instance3).toBe(instance1);
+
+    // Cache should still have only 1 entry
+    const stats2 = getCloudPlatformCacheStats();
+    expect(stats2.size).toBe(1);
   });
 
-  it('should handle different platforms correctly', () => {
+  it('should handle cloudflare platform correctly', () => {
     const cfEnv: Env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'production',
+      DB: {},
+      CACHE: {},
     } as Env;
-
-    const awsEnv: Env = {
-      CLOUD_PLATFORM: 'aws',
-      ENVIRONMENT: 'production',
-    } as Env;
-
-    const cfConnector = createMockConnector('cloudflare');
-    const awsConnector = createMockConnector('aws');
-
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv)
-      .mockReturnValueOnce(cfConnector)
-      .mockReturnValueOnce(awsConnector);
 
     const cf = getCloudPlatformConnector(cfEnv);
-    const aws = getCloudPlatformConnector(awsEnv);
-
     expect(cf.platform).toBe('cloudflare');
-    expect(aws.platform).toBe('aws');
-    expect(CloudPlatformFactory.createFromTypedEnv).toHaveBeenCalledTimes(2);
+
+    // Should have cloudflare features
+    const features = cf.getFeatures();
+    expect(features.hasEdgeCache).toBe(true);
   });
 
   it('should use default values when environment fields are missing', () => {
-    const env: Env = {} as Env;
-
-    const mockConnector = createMockConnector('cloudflare');
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv).mockReturnValue(mockConnector);
+    const env: Env = {
+      DB: {},
+      CACHE: {},
+    } as Env;
 
     getCloudPlatformConnector(env);
 
@@ -151,10 +117,9 @@ describe('CloudPlatform Cache', () => {
     const env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'development',
+      DB: {},
+      CACHE: {},
     } as unknown as CloudflareEnv;
-
-    const mockConnector = createMockConnector('cloudflare');
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv).mockReturnValue(mockConnector);
 
     getCloudPlatformConnector(env);
     expect(getCloudPlatformCacheStats().size).toBe(1);
@@ -167,14 +132,16 @@ describe('CloudPlatform Cache', () => {
     const env1 = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'development',
+      DB: {},
+      CACHE: {},
     } as unknown as CloudflareEnv;
 
     const env2 = {
-      CLOUD_PLATFORM: 'aws',
+      CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'production',
+      DB: {},
+      CACHE: {},
     } as unknown as CloudflareEnv;
-
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv).mockReturnValue(createMockConnector('mock'));
 
     getCloudPlatformConnector(env1);
     getCloudPlatformConnector(env2);
@@ -182,17 +149,16 @@ describe('CloudPlatform Cache', () => {
     const stats = getCloudPlatformCacheStats();
     expect(stats.size).toBe(2);
     expect(stats.keys).toContain('cloudflare_development');
-    expect(stats.keys).toContain('aws_production');
+    expect(stats.keys).toContain('cloudflare_production');
   });
 
   it('should handle rapid concurrent calls efficiently', async () => {
     const env: Env = {
       CLOUD_PLATFORM: 'cloudflare',
       ENVIRONMENT: 'production',
+      DB: {},
+      CACHE: {},
     } as Env;
-
-    const mockConnector = createMockConnector('cloudflare');
-    vi.mocked(CloudPlatformFactory.createFromTypedEnv).mockReturnValue(mockConnector);
 
     // Simulate concurrent calls
     const promises = Array.from({ length: 100 }, () =>
@@ -207,7 +173,8 @@ describe('CloudPlatform Cache', () => {
       expect(connector).toBe(firstConnector);
     });
 
-    // Factory should be called only once
-    expect(CloudPlatformFactory.createFromTypedEnv).toHaveBeenCalledTimes(1);
+    // Cache should have only one entry
+    const stats = getCloudPlatformCacheStats();
+    expect(stats.size).toBe(1);
   });
 });

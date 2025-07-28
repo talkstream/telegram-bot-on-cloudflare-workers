@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
+// Import global mocks first
+import '../mocks/logger';
+import '../setup/grammy-mock';
+
 import { createMockContext } from '../utils/mock-context';
 import { createMockD1PreparedStatement } from '../helpers/test-helpers';
 
@@ -11,49 +15,7 @@ vi.mock('@/middleware/auth', () => ({
   isAdmin: vi.fn().mockReturnValue(true),
 }));
 
-// Mock InlineKeyboard
-let mockKeyboard: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> };
-vi.mock('grammy', () => ({
-  InlineKeyboard: vi.fn().mockImplementation(() => {
-    const keyboard = {
-      _inline_keyboard: [] as Array<Array<{ text: string; callback_data: string }>>,
-      currentRow: [] as Array<{ text: string; callback_data: string }>,
-      text: vi.fn().mockImplementation(function (
-        this: { currentRow: Array<{ text: string; callback_data: string }> },
-        text: string,
-        data: string,
-      ) {
-        this.currentRow.push({ text, callback_data: data });
-        return this;
-      }),
-      row: vi.fn().mockImplementation(function (this: {
-        currentRow: Array<{ text: string; callback_data: string }>;
-        _inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
-      }) {
-        if (this.currentRow.length > 0) {
-          this._inline_keyboard.push(this.currentRow);
-          this.currentRow = [];
-        }
-        return this;
-      }),
-    };
-    // Finalize any pending row when accessed
-    Object.defineProperty(keyboard, 'inline_keyboard', {
-      get: function (this: typeof keyboard) {
-        if (this.currentRow.length > 0) {
-          this._inline_keyboard.push(this.currentRow);
-          this.currentRow = [];
-        }
-        return this._inline_keyboard;
-      },
-    });
-    const keyboardWithProperty = keyboard as typeof keyboard & {
-      inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
-    };
-    mockKeyboard = keyboardWithProperty;
-    return keyboardWithProperty;
-  }),
-}));
+// InlineKeyboard is already mocked in setup/grammy-mock.ts
 
 describe('Requests Command', () => {
   beforeEach(() => {
@@ -114,7 +76,9 @@ describe('Requests Command', () => {
     expect(replyContent).toContain('📊 Pending requests: 1/3');
 
     // Check the keyboard structure
-    const keyboard = mockKeyboard;
+    const replyCall = (ctx.reply as Mock).mock.calls[0];
+    const keyboard = replyCall?.[1]?.reply_markup;
+    expect(keyboard).toBeDefined();
     expect(keyboard.inline_keyboard).toHaveLength(2); // Two rows
     expect(keyboard.inline_keyboard[0]).toHaveLength(2); // Approve/Reject buttons
     expect(keyboard.inline_keyboard[0]?.[0]).toEqual({
@@ -173,7 +137,9 @@ describe('Requests Command', () => {
     expect(ctx.reply).toHaveBeenCalled();
 
     // Check the keyboard structure
-    const keyboard = mockKeyboard;
+    const replyCall = (ctx.reply as Mock).mock.calls[0];
+    const keyboard = replyCall?.[1]?.reply_markup;
+    expect(keyboard).toBeDefined();
     expect(keyboard.inline_keyboard).toHaveLength(1); // Only one row
     expect(keyboard.inline_keyboard[0]).toHaveLength(2); // Two buttons (approve/reject)
     expect(keyboard.inline_keyboard[0]?.[0]?.text).toBe('Approve');

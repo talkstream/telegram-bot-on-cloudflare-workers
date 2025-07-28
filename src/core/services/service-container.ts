@@ -5,6 +5,8 @@
  * to optimize memory usage and cold start performance
  */
 
+import type { D1Database } from '@cloudflare/workers-types';
+
 import type { Env } from '@/config/env';
 import type { IDatabaseStore, IKeyValueStore } from '@/core/interfaces/storage';
 import type { AIConnector } from '@/core/interfaces/ai';
@@ -81,8 +83,8 @@ function registerCoreServices(): void {
       throw new Error('Environment not configured');
     }
     // UniversalRoleService requires D1Database directly, not IDatabaseStore wrapper
-    const platform = getCloudPlatformConnector(serviceConfig.env);
-    const db = (platform as unknown as { env?: { DB?: unknown } }).env?.DB;
+    // Try to get DB from environment (Cloudflare pattern)
+    const db = (serviceConfig.env as Record<string, unknown>).DB;
     if (!db) {
       throw new Error('D1 Database required for RoleService');
     }

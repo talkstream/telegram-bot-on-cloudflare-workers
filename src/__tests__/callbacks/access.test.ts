@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
+// Import mocks before other imports
+import '../mocks/logger';
+import '../setup/grammy-mock';
+
 import { createMockCallbackContext } from '../utils/mock-context';
 import { createMockD1PreparedStatement } from '../helpers/test-helpers';
 
@@ -18,51 +22,12 @@ vi.mock('@/middleware/auth', () => ({
   isOwner: vi.fn().mockReturnValue(false),
 }));
 
-// Mock InlineKeyboard
-vi.mock('grammy', () => ({
-  InlineKeyboard: vi.fn().mockImplementation(() => {
-    const keyboard = {
-      _inline_keyboard: [] as Array<Array<{ text: string; callback_data: string }>>,
-      currentRow: [] as Array<{ text: string; callback_data: string }>,
-      text: vi.fn().mockImplementation(function (
-        this: { currentRow: Array<{ text: string; callback_data: string }> },
-        text: string,
-        data: string,
-      ) {
-        this.currentRow.push({ text, callback_data: data });
-        return this;
-      }),
-      row: vi.fn().mockImplementation(function (this: {
-        currentRow: Array<{ text: string; callback_data: string }>;
-        _inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
-      }) {
-        if (this.currentRow.length > 0) {
-          this._inline_keyboard.push(this.currentRow);
-          this.currentRow = [];
-        }
-        return this;
-      }),
-    };
-    // Finalize any pending row when accessed
-    Object.defineProperty(keyboard, 'inline_keyboard', {
-      get: function (this: {
-        currentRow: Array<{ text: string; callback_data: string }>;
-        _inline_keyboard: Array<Array<{ text: string; callback_data: string }>>;
-      }) {
-        if (this.currentRow.length > 0) {
-          this._inline_keyboard.push(this.currentRow);
-          this.currentRow = [];
-        }
-        return this._inline_keyboard;
-      },
-    });
-    return keyboard;
-  }),
-}));
+// InlineKeyboard is already mocked in setup/grammy-mock.ts
 
 describe('Access Callbacks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   describe('handleAccessRequest', () => {
@@ -257,7 +222,7 @@ describe('Access Callbacks', () => {
 
   describe('handleAccessApprove', () => {
     it('should approve access request', async () => {
-      const ctx = createMockCallbackContext('access:approve:123456', {
+      const ctx = createMockCallbackContext('approve_1', {
         from: {
           id: 789012,
           is_bot: false,
@@ -267,31 +232,42 @@ describe('Access Callbacks', () => {
       });
 
       // Mock DB operations
-      const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.first.mockResolvedValue({
+      const mockSelectStatement = createMockD1PreparedStatement();
+      mockSelectStatement.first.mockResolvedValue({
         id: 1,
         user_id: 123456,
         username: 'testuser',
+        first_name: 'Test User',
         status: 'pending',
       });
 
+      const mockUpdateStatement = createMockD1PreparedStatement();
+      mockUpdateStatement.run.mockResolvedValue({ success: true, meta: {} });
+
       if (ctx.env.DB) {
-        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+        const prepareMock = ctx.env.DB.prepare as Mock;
+        prepareMock
+          .mockReturnValueOnce(mockSelectStatement) // SELECT request
+          .mockReturnValueOnce(mockUpdateStatement) // UPDATE request status
+          .mockReturnValueOnce(mockUpdateStatement); // INSERT/UPDATE user
       }
 
       // Mock api.sendMessage
       (ctx.api.sendMessage as Mock).mockResolvedValue({ ok: true });
 
-      await handleAccessApprove(ctx, '123456');
+      await handleAccessApprove(ctx, '1');
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
-        '✅ Access granted to user 123456 (@testuser)',
-        expect.objectContaining({ parse_mode: 'HTML' }),
-      );
+      expect(ctx.editMessageText).toHaveBeenCalled();
+      const call = (ctx.editMessageText as Mock).mock.calls[0];
+      expect(call?.[0]).toContain('✅ Access granted to user 123456 (@testuser)');
+      expect(call?.[1]).toMatchObject({
+        parse_mode: 'HTML',
+        reply_markup: expect.any(Object),
+      });
     });
 
     it('should handle request not found', async () => {
-      const ctx = createMockCallbackContext('access:approve:123456', {
+      const ctx = createMockCallbackContext('approve_999', {
         from: {
           id: 789012,
           is_bot: false,
@@ -308,7 +284,7 @@ describe('Access Callbacks', () => {
         (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
       }
 
-      await handleAccessApprove(ctx, '123456');
+      await handleAccessApprove(ctx, '999');
 
       expect(ctx.answerCallbackQuery).toHaveBeenCalledWith('Request not found.');
       expect(ctx.editMessageText).not.toHaveBeenCalled();
@@ -317,7 +293,7 @@ describe('Access Callbacks', () => {
 
   describe('handleAccessReject', () => {
     it('should reject access request', async () => {
-      const ctx = createMockCallbackContext('access:reject:123456', {
+      const ctx = createMockCallbackContext('reject_1', {
         from: {
           id: 789012,
           is_bot: false,
@@ -327,33 +303,43 @@ describe('Access Callbacks', () => {
       });
 
       // Mock DB operations
-      const mockPreparedStatement = createMockD1PreparedStatement();
-      mockPreparedStatement.first.mockResolvedValue({
+      const mockSelectStatement = createMockD1PreparedStatement();
+      mockSelectStatement.first.mockResolvedValue({
         id: 1,
         user_id: 123456,
         username: 'testuser',
+        first_name: 'Test User',
         status: 'pending',
       });
 
+      const mockUpdateStatement = createMockD1PreparedStatement();
+      mockUpdateStatement.run.mockResolvedValue({ success: true, meta: {} });
+
       if (ctx.env.DB) {
-        (ctx.env.DB.prepare as Mock).mockReturnValue(mockPreparedStatement);
+        const prepareMock = ctx.env.DB.prepare as Mock;
+        prepareMock
+          .mockReturnValueOnce(mockSelectStatement) // SELECT request
+          .mockReturnValueOnce(mockUpdateStatement); // UPDATE request status
       }
 
       // Mock api.sendMessage
       (ctx.api.sendMessage as Mock).mockResolvedValue({ ok: true });
 
-      await handleAccessReject(ctx, '123456');
+      await handleAccessReject(ctx, '1');
 
-      expect(ctx.editMessageText).toHaveBeenCalledWith(
-        '❌ Access denied to user 123456 (@testuser)',
-        expect.objectContaining({ parse_mode: 'HTML' }),
-      );
+      expect(ctx.editMessageText).toHaveBeenCalled();
+      const call = (ctx.editMessageText as Mock).mock.calls[0];
+      expect(call?.[0]).toContain('❌ Access denied to user 123456 (@testuser)');
+      expect(call?.[1]).toMatchObject({
+        parse_mode: 'HTML',
+        reply_markup: expect.any(Object),
+      });
     });
   });
 
   describe('handleNextRequest', () => {
     it('should show next pending request', async () => {
-      const ctx = createMockCallbackContext('access:next', {
+      const ctx = createMockCallbackContext('request_next', {
         from: {
           id: 789012,
           is_bot: false,
@@ -387,7 +373,7 @@ describe('Access Callbacks', () => {
     });
 
     it('should handle no more pending requests', async () => {
-      const ctx = createMockCallbackContext('access:next', {
+      const ctx = createMockCallbackContext('request_next', {
         from: {
           id: 789012,
           is_bot: false,

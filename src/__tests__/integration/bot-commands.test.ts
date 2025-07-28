@@ -1,17 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import type { BotCommand } from 'grammy/types';
 
+import '../mocks/core-bot'; // Import the mock
 import { createMockEnv } from '../utils/mock-env';
-import { createBot } from '../mocks/core-bot';
+
+import { createBot } from '@/core/bot';
 
 describe('Bot Commands Registration', () => {
   const mockEnv = createMockEnv();
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Don't clear mocks since we need the module mock
   });
 
-  it('should register all required commands', async () => {
+  it('should register all required commands with proper descriptions', async () => {
     const bot = createBot(mockEnv);
 
     // Get the registered commands
@@ -30,13 +32,8 @@ describe('Bot Commands Registration', () => {
     expect(commandNames).toContain('settings');
     expect(commandNames).toContain('pay');
     expect(commandNames).toContain('stats');
-  });
 
-  it('should have proper descriptions for commands', async () => {
-    const bot = createBot(mockEnv);
-    const commands = await bot.api.getMyCommands();
-
-    // Find the help command
+    // Check descriptions
     const helpCommand = commands.find((c: BotCommand) => c.command === 'help');
     expect(helpCommand).toBeDefined();
     expect(helpCommand?.description).toBeTruthy();

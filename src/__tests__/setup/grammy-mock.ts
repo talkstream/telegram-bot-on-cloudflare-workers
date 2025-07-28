@@ -33,10 +33,42 @@ vi.mock('grammy', () => ({
     ctx.session = ctx.session || {};
     return next();
   }),
-  InlineKeyboard: vi.fn().mockImplementation(() => ({
-    text: vi.fn().mockReturnThis(),
-    row: vi.fn().mockReturnThis(),
-    url: vi.fn().mockReturnThis(),
-  })),
+  InlineKeyboard: vi.fn(() => {
+    const _inline_keyboard: any[] = [];
+    let currentRow: any[] = [];
+
+    const kb = {
+      text: vi.fn().mockReturnThis(),
+      row: vi.fn().mockReturnThis(),
+      url: vi.fn().mockReturnThis(),
+    };
+
+    kb.text.mockImplementation((text: string, data: string) => {
+      currentRow.push({ text, callback_data: data });
+      return kb;
+    });
+
+    kb.row.mockImplementation(() => {
+      if (currentRow.length > 0) {
+        _inline_keyboard.push(currentRow);
+        currentRow = [];
+      }
+      return kb;
+    });
+
+    // Finalize any pending row when accessed
+    Object.defineProperty(kb, 'inline_keyboard', {
+      get: function () {
+        if (currentRow.length > 0) {
+          _inline_keyboard.push(currentRow);
+          currentRow = [];
+        }
+        return _inline_keyboard;
+      },
+      configurable: true,
+    });
+
+    return kb;
+  }),
   InputFile: vi.fn(),
 }));
