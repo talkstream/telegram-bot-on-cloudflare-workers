@@ -61,7 +61,8 @@
     "tests/**/*.ts",
     "vitest.config.ts",
     "vitest.config.ci.ts",
-    "vitest.config.ci-node.ts"
+    "vitest.config.ci-node.ts",
+    "vitest.config.coverage.ts"
   ],
   "exclude": ["node_modules", "dist", ".wrangler"]
 }

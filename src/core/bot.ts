@@ -12,6 +12,11 @@ import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 import { MonitoringFactory } from '@/connectors/monitoring/monitoring-factory';
 import { I18nFactory } from '@/connectors/i18n/i18n-factory';
 import { EventBus } from '@/core/events/event-bus';
+import {
+  createMonitoringContextMiddleware,
+  createMonitoredCommand,
+} from '@/middleware/monitoring-context';
+import { MonitoredProviderAdapter } from '@/lib/ai/monitored-provider-adapter';
 // Register all cloud connectors
 import '@/connectors/cloud';
 
@@ -70,13 +75,17 @@ export async function createBot(env: Env) {
     tier,
   );
 
-  // Register all providers
+  // Register all providers with monitoring
   for (const provider of providers) {
-    aiService.registerProvider(provider);
+    const monitoredProvider = MonitoredProviderAdapter.fromProvider(provider, monitoring);
+    aiService.registerProvider(monitoredProvider);
   }
 
   const paymentRepo = new PaymentRepository(cloudConnector.getDatabaseStore('DB'));
   const telegramStarsService = new TelegramStarsService(bot.api.raw, paymentRepo, tier);
+
+  // Add monitoring context middleware first
+  bot.use(createMonitoringContextMiddleware(monitoring));
 
   // Middleware to attach services, session, and i18n to the context
   bot.use(async (ctx, next) => {
@@ -99,12 +108,6 @@ export async function createBot(env: Env) {
 
     if (ctx.from?.id) {
       ctx.session = (await sessionService.getSession(ctx.from.id)) || undefined;
-
-      // Set user context for monitoring
-      monitoring?.setUserContext(String(ctx.from.id), {
-        username: ctx.from.username,
-        languageCode: ctx.from.language_code,
-      });
     }
 
     try {
@@ -132,52 +135,61 @@ export async function createBot(env: Env) {
   );
 
   // Example commands and handlers (these would typically be moved to src/adapters/telegram/commands/ and callbacks/)
-  bot.command('start', async (ctx) => {
-    const userId = ctx.from?.id;
-    if (userId) {
-      let session = await ctx.services.session.getSession(userId);
-      if (!session) {
-        session = { userId, step: 'initial', data: {} };
-        await ctx.services.session.saveSession(session);
+  bot.command(
+    'start',
+    createMonitoredCommand(monitoring, 'start', async (ctx) => {
+      const userId = ctx.from?.id;
+      if (userId) {
+        let session = await ctx.services.session.getSession(userId);
+        if (!session) {
+          session = { userId, step: 'initial', data: {} };
+          await ctx.services.session.saveSession(session);
+        }
+        await ctx.reply(
+          ctx.i18n.t('welcome_session', {
+            namespace: 'telegram',
+            params: { step: session.step },
+          }),
+        );
+      } else {
+        await ctx.reply(ctx.i18n.t('welcome', { namespace: 'telegram' }));
       }
-      await ctx.reply(
-        ctx.i18n.t('welcome_session', {
-          namespace: 'telegram',
-          params: { step: session.step },
-        }),
-      );
-    } else {
-      await ctx.reply(ctx.i18n.t('welcome', { namespace: 'telegram' }));
-    }
-  });
+    }),
+  );
 
-  bot.command('askgemini', async (ctx) => {
-    const prompt = ctx.match;
-    if (!prompt) {
-      await ctx.reply(ctx.i18n.t('ai.gemini.prompt_needed', { namespace: 'telegram' }));
-      return;
-    }
-    if (!ctx.services.ai) {
-      await ctx.reply(ctx.i18n.t('ai.gemini.not_available', { namespace: 'telegram' }));
-      return;
-    }
+  bot.command(
+    'askgemini',
+    createMonitoredCommand(monitoring, 'askgemini', async (ctx) => {
+      const prompt = ctx.match;
+      if (!prompt) {
+        await ctx.reply(ctx.i18n.t('ai.gemini.prompt_needed', { namespace: 'telegram' }));
+        return;
+      }
+      if (!ctx.services.ai) {
+        await ctx.reply(ctx.i18n.t('ai.gemini.not_available', { namespace: 'telegram' }));
+        return;
+      }
 
-    try {
-      await ctx.reply(ctx.i18n.t('ai.gemini.thinking', { namespace: 'telegram' }));
-      const response = await ctx.services.ai.generateText(prompt);
-      await ctx.reply(response);
-    } catch (_error) {
-      await ctx.reply(ctx.i18n.t('ai.gemini.error', { namespace: 'telegram' }));
-    }
-  });
+      try {
+        await ctx.reply(ctx.i18n.t('ai.gemini.thinking', { namespace: 'telegram' }));
+        const response = await ctx.services.ai.generateText(prompt);
+        await ctx.reply(response);
+      } catch (_error) {
+        await ctx.reply(ctx.i18n.t('ai.gemini.error', { namespace: 'telegram' }));
+      }
+    }),
+  );
 
-  bot.command('menu', async (ctx) => {
-    const inlineKeyboard = new InlineKeyboard()
-      .text('Option 1', 'option_1')
-      .row()
-      .text('Option 2', 'option_2');
-    await ctx.reply('Choose an option:', { reply_markup: inlineKeyboard });
-  });
+  bot.command(
+    'menu',
+    createMonitoredCommand(monitoring, 'menu', async (ctx) => {
+      const inlineKeyboard = new InlineKeyboard()
+        .text('Option 1', 'option_1')
+        .row()
+        .text('Option 2', 'option_2');
+      await ctx.reply('Choose an option:', { reply_markup: inlineKeyboard });
+    }),
+  );
 
   bot.callbackQuery('option_1', async (ctx) => {
     await ctx.answerCallbackQuery('You chose Option 1!');
@@ -189,28 +201,31 @@ export async function createBot(env: Env) {
     await ctx.editMessageText('You selected: Option 2');
   });
 
-  bot.command('buy_message', async (ctx) => {
-    const userId = ctx.from?.id;
-    if (!userId) {
-      await ctx.reply('Could not identify user.');
-      return;
-    }
-    try {
-      // For demonstration, let's assume a fixed target_masked_id and amount
-      const targetMaskedId = 'TEST_USER_123';
-      const starsAmount = 100;
-      const invoiceLink = await ctx.services.telegramStars.createDirectMessageInvoice(
-        userId,
-        userId, // Using userId as playerId for simplicity in wireframe
-        targetMaskedId,
-        starsAmount,
-      );
-      await ctx.reply(`Please pay for your message: ${invoiceLink}`);
-    } catch (error) {
-      await ctx.reply('Failed to create invoice. Please try again later.');
-      console.error('Error creating invoice:', error);
-    }
-  });
+  bot.command(
+    'buy_message',
+    createMonitoredCommand(monitoring, 'buy_message', async (ctx) => {
+      const userId = ctx.from?.id;
+      if (!userId) {
+        await ctx.reply('Could not identify user.');
+        return;
+      }
+      try {
+        // For demonstration, let's assume a fixed target_masked_id and amount
+        const targetMaskedId = 'TEST_USER_123';
+        const starsAmount = 100;
+        const invoiceLink = await ctx.services.telegramStars.createDirectMessageInvoice(
+          userId,
+          userId, // Using userId as playerId for simplicity in wireframe
+          targetMaskedId,
+          starsAmount,
+        );
+        await ctx.reply(`Please pay for your message: ${invoiceLink}`);
+      } catch (error) {
+        await ctx.reply('Failed to create invoice. Please try again later.');
+        console.error('Error creating invoice:', error);
+      }
+    }),
+  );
 
   bot.on('message', async (ctx) => {
     const userId = ctx.from?.id;

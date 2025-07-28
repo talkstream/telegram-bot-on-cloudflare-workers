@@ -1,12 +1,14 @@
 import { InlineKeyboard } from 'grammy';
 
+import { withMonitoring } from '../utils/monitored-command';
+
 import type { CommandHandler } from '@/types';
 import { logger } from '@/lib/logger';
 import { getUserService } from '@/services/user-service';
 import { escapeMarkdown } from '@/lib/telegram-formatter';
 // Auth check will use roleService from context
 
-export const startCommand: CommandHandler = async (ctx): Promise<void> => {
+const startCommandHandler: CommandHandler = async (ctx): Promise<void> => {
   const userId = ctx.from?.id;
 
   if (!userId) {
@@ -134,3 +136,5 @@ Let's get started\\! What would you like to do today?
     await ctx.reply(ctx.i18n.t('system.errors.general', { namespace: 'core' }));
   }
 };
+
+export const startCommand = withMonitoring('start', startCommandHandler);
