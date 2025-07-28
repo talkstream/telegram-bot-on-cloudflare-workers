@@ -14,7 +14,7 @@ describe('Bot Commands Registration', () => {
   });
 
   it('should register all required commands with proper descriptions', async () => {
-    const bot = createBot(mockEnv);
+    const bot = await createBot(mockEnv);
 
     // Get the registered commands
     const commands = await bot.api.getMyCommands();

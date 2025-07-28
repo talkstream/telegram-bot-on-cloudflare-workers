@@ -10,7 +10,7 @@ export function withMonitoring(commandName: string, handler: CommandHandler): Co
     const monitoring = ctx.monitoring;
 
     // Create monitored version of the handler
-    const monitoredHandler = createMonitoredCommand(monitoring, commandName, handler);
+    const monitoredHandler = createMonitoredCommand(monitoring ?? undefined, commandName, handler);
 
     // Execute the monitored handler
     await monitoredHandler(ctx);

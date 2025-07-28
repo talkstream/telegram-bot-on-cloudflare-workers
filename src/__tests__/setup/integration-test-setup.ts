@@ -20,7 +20,6 @@ vi.mock('@/core/events/event-bus', async () => {
       super({
         ...options,
         enableHistory: false, // Still disable history in tests
-        maxHistorySize: 10, // If enabled, limit to 10 events
       });
     }
   }

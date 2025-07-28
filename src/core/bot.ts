@@ -16,7 +16,7 @@ import {
   createMonitoringContextMiddleware,
   createMonitoredCommand,
 } from '@/middleware/monitoring-context';
-import { MonitoredProviderAdapter } from '@/lib/ai/monitored-provider-adapter';
+// Monitored provider adapter removed - using direct AI connectors
 // Register all cloud connectors
 import '@/connectors/cloud';
 

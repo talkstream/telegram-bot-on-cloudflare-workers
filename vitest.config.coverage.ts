@@ -1,11 +1,11 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
+import { defineConfig } from 'vitest/config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineWorkersConfig({
+export default defineConfig({
   test: {
     globals: true,
     setupFiles: ['./src/__tests__/setup/grammy-mock.ts'],

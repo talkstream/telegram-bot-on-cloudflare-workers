@@ -17,7 +17,7 @@ rm -rf coverage/
 
 # Use memory-efficient test runner
 echo "🚀 Using memory-efficient test runner..."
-node scripts/memory-efficient-test-runner.js
+node scripts/memory-efficient-test-runner.cjs
 
 # Check if tests passed
 if [ $? -eq 0 ]; then

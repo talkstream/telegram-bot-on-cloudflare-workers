@@ -73,7 +73,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
         message: event.type,
         category: 'event',
         level: 'info',
-        data: this.sanitizeEventData(event.data),
+        data: this.sanitizeEventData(event.payload),
         timestamp: event.timestamp,
       });
     }
@@ -82,19 +82,19 @@ export class MonitoringPlugin implements IEventBusPlugin {
   private handleErrorEvent(event: Event): void {
     if (!this.monitoring) return;
 
-    const errorData = event.data as Record<string, unknown>;
+    const errorData = event.payload as Record<string, unknown>;
     const error = errorData.error || errorData.exception || errorData;
 
     if (error instanceof Error) {
       this.monitoring.captureException(error, {
         eventType: event.type,
-        eventData: this.sanitizeEventData(event.data),
+        eventData: this.sanitizeEventData(event.payload),
         timestamp: event.timestamp,
       });
     } else {
       this.monitoring.captureMessage(`Event Error: ${event.type}`, 'error', {
         error: String(error),
-        eventData: this.sanitizeEventData(event.data),
+        eventData: this.sanitizeEventData(event.payload),
         timestamp: event.timestamp,
       });
     }
@@ -103,7 +103,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
   private handlePerformanceEvent(event: Event): void {
     if (!this.monitoring) return;
 
-    const data = event.data as Record<string, unknown>;
+    const data = event.payload as Record<string, unknown>;
     const duration = data.duration || data.elapsed || data.time;
 
     // Add performance breadcrumb
@@ -113,7 +113,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
       level: 'info',
       data: {
         duration,
-        ...this.sanitizeEventData(event.data),
+        ...this.sanitizeEventData(event.payload),
       },
       timestamp: event.timestamp,
     });
@@ -123,7 +123,7 @@ export class MonitoringPlugin implements IEventBusPlugin {
       this.monitoring.captureMessage(`Slow operation detected: ${event.type}`, 'warning', {
         duration,
         threshold: this.getThreshold(event.type),
-        eventData: this.sanitizeEventData(event.data),
+        eventData: this.sanitizeEventData(event.payload),
       });
     }
   }
