@@ -8,7 +8,16 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const chalk = require('chalk');
+// Use console colors instead of chalk for simplicity
+const colors = {
+  bold: (text) => `\x1b[1m${text}\x1b[0m`,
+  blue: (text) => `\x1b[34m${text}\x1b[0m`,
+  green: (text) => `\x1b[32m${text}\x1b[0m`,
+  red: (text) => `\x1b[31m${text}\x1b[0m`,
+  yellow: (text) => `\x1b[33m${text}\x1b[0m`,
+  cyan: (text) => `\x1b[36m${text}\x1b[0m`,
+  gray: (text) => `\x1b[90m${text}\x1b[0m`,
+};
 
 // Configuration
 const BATCH_SIZE = 5; // Number of test files per batch
@@ -59,7 +68,7 @@ async function runBatch(files, config, batchName) {
   return new Promise((resolve, reject) => {
     const filePattern = files.map(f => path.relative(process.cwd(), f)).join(' ');
     
-    console.log(chalk.blue(`\n📦 Running ${batchName} (${files.length} files)...`));
+    console.log(colors.blue(`\n📦 Running ${batchName} (${files.length} files)...`));
     
     const args = [
       'vitest',
@@ -82,7 +91,7 @@ async function runBatch(files, config, batchName) {
     
     child.on('close', (code) => {
       if (code === 0) {
-        console.log(chalk.green(`✅ ${batchName} completed successfully`));
+        console.log(colors.green(`✅ ${batchName} completed successfully`));
         resolve();
       } else {
         reject(new Error(`${batchName} failed with code ${code}`));
@@ -97,24 +106,24 @@ async function runBatch(files, config, batchName) {
 
 // Main execution
 async function main() {
-  console.log(chalk.bold('🧪 Memory-Efficient Test Runner'));
-  console.log(chalk.gray(`Batch size: ${BATCH_SIZE} files, Memory limit: ${MAX_MEMORY}MB\n`));
+  console.log(colors.bold('🧪 Memory-Efficient Test Runner'));
+  console.log(colors.gray(`Batch size: ${BATCH_SIZE} files, Memory limit: ${MAX_MEMORY}MB\n`));
   
   // Find and categorize tests
   const testFiles = findTestFiles(TEST_DIR);
   const { unit, integration, worker } = categorizeTests(testFiles);
   
-  console.log(chalk.cyan(`Found ${testFiles.length} test files:`));
-  console.log(chalk.gray(`  - Unit tests: ${unit.length}`));
-  console.log(chalk.gray(`  - Integration tests: ${integration.length}`));
-  console.log(chalk.gray(`  - Worker tests: ${worker.length}`));
+  console.log(colors.cyan(`Found ${testFiles.length} test files:`));
+  console.log(colors.gray(`  - Unit tests: ${unit.length}`));
+  console.log(colors.gray(`  - Integration tests: ${integration.length}`));
+  console.log(colors.gray(`  - Worker tests: ${worker.length}`));
   
   let failedBatches = [];
   
   try {
     // Run unit tests in batches
     if (unit.length > 0) {
-      console.log(chalk.yellow('\n🔬 Running Unit Tests...'));
+      console.log(colors.yellow('\n🔬 Running Unit Tests...'));
       for (let i = 0; i < unit.length; i += BATCH_SIZE) {
         const batch = unit.slice(i, i + BATCH_SIZE);
         const batchName = `Unit Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(unit.length / BATCH_SIZE)}`;
@@ -123,14 +132,14 @@ async function main() {
           await runBatch(batch, 'vitest.config.unit.ts', batchName);
         } catch (err) {
           failedBatches.push(batchName);
-          console.error(chalk.red(`❌ ${batchName} failed`));
+          console.error(colors.red(`❌ ${batchName} failed`));
         }
       }
     }
     
     // Run integration tests (smaller batches)
     if (integration.length > 0) {
-      console.log(chalk.yellow('\n🌐 Running Integration Tests...'));
+      console.log(colors.yellow('\n🌐 Running Integration Tests...'));
       const integrationBatchSize = Math.max(1, Math.floor(BATCH_SIZE / 2));
       
       for (let i = 0; i < integration.length; i += integrationBatchSize) {
@@ -141,14 +150,14 @@ async function main() {
           await runBatch(batch, 'vitest.config.integration.ts', batchName);
         } catch (err) {
           failedBatches.push(batchName);
-          console.error(chalk.red(`❌ ${batchName} failed`));
+          console.error(colors.red(`❌ ${batchName} failed`));
         }
       }
     }
     
     // Run worker tests (one at a time due to high memory usage)
     if (worker.length > 0) {
-      console.log(chalk.yellow('\n⚙️ Running Worker Tests...'));
+      console.log(colors.yellow('\n⚙️ Running Worker Tests...'));
       
       for (let i = 0; i < worker.length; i++) {
         const batch = [worker[i]];
@@ -158,24 +167,24 @@ async function main() {
           await runBatch(batch, 'vitest.config.integration.ts', batchName);
         } catch (err) {
           failedBatches.push(batchName);
-          console.error(chalk.red(`❌ ${batchName} failed`));
+          console.error(colors.red(`❌ ${batchName} failed`));
         }
       }
     }
     
     // Summary
-    console.log(chalk.bold('\n📊 Test Summary:'));
+    console.log(colors.bold('\n📊 Test Summary:'));
     if (failedBatches.length === 0) {
-      console.log(chalk.green('✅ All tests passed!'));
+      console.log(colors.green('✅ All tests passed!'));
       process.exit(0);
     } else {
-      console.log(chalk.red(`❌ ${failedBatches.length} batches failed:`));
-      failedBatches.forEach(batch => console.log(chalk.red(`   - ${batch}`)));
+      console.log(colors.red(`❌ ${failedBatches.length} batches failed:`));
+      failedBatches.forEach(batch => console.log(colors.red(`   - ${batch}`)));
       process.exit(1);
     }
     
   } catch (err) {
-    console.error(chalk.red('\n💥 Test runner failed:'), err);
+    console.error(colors.red('\n💥 Test runner failed:'), err);
     process.exit(1);
   }
 }
