@@ -3,8 +3,8 @@
 # Run tests in batches to avoid memory exhaustion
 echo "🧪 Running tests with optimized memory management..."
 
-# Use memory limit from environment or default to 3GB for CI
-export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=3072}"
+# Use memory limit from environment or default to 4GB for CI
+export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
 
 # Enable V8 garbage collection for better memory management
 export NODE_OPTIONS="$NODE_OPTIONS --expose-gc"
