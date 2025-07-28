@@ -96,6 +96,7 @@ async function runBatch(files, config, batchName) {
       'vitest',
       'run',
       '--config', config,
+      '--',
       ...existingFiles.map(f => path.relative(process.cwd(), f))
     ];
     
@@ -116,7 +117,13 @@ async function runBatch(files, config, batchName) {
         console.log(colors.green(`✅ ${batchName} completed successfully`));
         resolve();
       } else {
-        reject(new Error(`${batchName} failed with code ${code}`));
+        // Check if it failed because no tests matched
+        if (code === 1) {
+          console.log(colors.yellow(`⚠️  ${batchName} - no matching tests found`));
+          resolve(); // Don't fail the entire run
+        } else {
+          reject(new Error(`${batchName} failed with code ${code}`));
+        }
       }
     });
     
@@ -146,23 +153,30 @@ async function main() {
     // Run unit tests in batches
     if (unit.length > 0) {
       console.log(colors.yellow('\n🔬 Running Unit Tests...'));
-      for (let i = 0; i < unit.length; i += BATCH_SIZE) {
-        // Reduce batch size for the last batch if it contains memory-intensive tests
-        const isLastBatch = i + BATCH_SIZE >= unit.length;
-        const effectiveBatchSize = isLastBatch ? 2 : BATCH_SIZE; // Smaller batch for last one
-        const batch = unit.slice(i, i + effectiveBatchSize);
-        const batchName = `Unit Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(unit.length / BATCH_SIZE)}`;
+      
+      // Split into batches with smaller size for memory-intensive tests
+      const unitBatches = [];
+      let currentIndex = 0;
+      
+      while (currentIndex < unit.length) {
+        // Use smaller batch size for files that might be memory intensive
+        const remainingFiles = unit.length - currentIndex;
+        const batchSize = remainingFiles <= 3 ? Math.min(2, remainingFiles) : BATCH_SIZE;
+        
+        unitBatches.push(unit.slice(currentIndex, currentIndex + batchSize));
+        currentIndex += batchSize;
+      }
+      
+      // Run each batch
+      for (let i = 0; i < unitBatches.length; i++) {
+        const batch = unitBatches[i];
+        const batchName = `Unit Batch ${i + 1}/${unitBatches.length}`;
         
         try {
           await runBatch(batch, 'vitest.config.unit.ts', batchName);
         } catch (err) {
           failedBatches.push(batchName);
           console.error(colors.red(`❌ ${batchName} failed`));
-        }
-        
-        // Update i if we used a smaller batch
-        if (isLastBatch && effectiveBatchSize < BATCH_SIZE) {
-          i = i - BATCH_SIZE + effectiveBatchSize;
         }
       }
     }

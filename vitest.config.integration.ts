@@ -15,12 +15,14 @@ export default defineWorkersConfig({
     globals: true,
     setupFiles: ['./src/__tests__/setup/integration-test-setup.ts'],
     include: [
-      // Only integration tests that need Worker environment
+      // Integration tests
       'src/**/*.integration.{test,spec}.ts',
+      'src/**/integration/**/*.{test,spec}.ts',
+      // Worker tests
       'src/**/*.worker.{test,spec}.ts',
-      // Specific tests that require Cloudflare runtime
-      'src/adapters/telegram/commands/**/*.{test,spec}.ts',
-      'src/adapters/telegram/middleware/**/*.{test,spec}.ts',
+      // Command and middleware tests that require Cloudflare runtime
+      'src/**/commands/**/*.{test,spec}.ts',
+      'src/**/middleware/**/*.{test,spec}.ts',
       'src/connectors/**/*.{test,spec}.ts',
     ],
     exclude: ['eslint-rules/**', 'node_modules/**', 'website/**'],
