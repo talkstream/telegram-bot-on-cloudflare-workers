@@ -9,6 +9,10 @@ import type {
   IMonitoringConnector,
   MonitoringConfig,
   Breadcrumb,
+  TransactionOptions,
+  SpanOptions,
+  ITransaction,
+  ISpan,
 } from '../../core/interfaces/monitoring';
 
 export class MockMonitoringConnector implements IMonitoringConnector {
@@ -27,11 +31,15 @@ export class MockMonitoringConnector implements IMonitoringConnector {
     });
   }
 
-  captureMessage(message: string, level: 'debug' | 'info' | 'warning' | 'error' = 'info'): void {
+  captureMessage(
+    message: string,
+    level: 'debug' | 'info' | 'warning' | 'error' = 'info',
+    context?: Record<string, unknown>,
+  ): void {
     const logFn =
       level === 'error' ? console.error : level === 'warning' ? console.warn : console.info;
 
-    logFn(`[MockMonitoring] ${level.toUpperCase()}: ${message}`);
+    logFn(`[MockMonitoring] ${level.toUpperCase()}: ${message}`, context || '');
   }
 
   addBreadcrumb(breadcrumb: Breadcrumb): void {
@@ -66,35 +74,47 @@ export class MockMonitoringConnector implements IMonitoringConnector {
     return true;
   }
 
-  startTransaction(
-    name: string,
-    operation: string,
-  ): {
-    name: string;
-    operation: string;
-    startTime: number;
-    finish: () => void;
-    setTag: (key: string, value: string | number | boolean) => void;
-    setData: (key: string, value: unknown) => void;
-  } {
+  startTransaction(options: TransactionOptions): ITransaction {
     const startTime = Date.now();
-    console.info(`[MockMonitoring] Transaction started: ${name} (${operation})`);
+    console.info(
+      `[MockMonitoring] Transaction started: ${options.name} (op: ${options.op || 'unknown'})`,
+    );
 
     return {
-      name,
-      operation,
-      startTime,
-      finish: () => {
-        const duration = Date.now() - startTime;
-        console.info(`[MockMonitoring] Transaction finished: ${name} (${duration}ms)`);
-      },
-      setTag: (key: string, value: string | number | boolean) => {
-        console.info(`[MockMonitoring] Transaction tag: ${key} = ${value}`);
+      setStatus: (status: 'ok' | 'cancelled' | 'internal_error' | 'unknown') => {
+        console.info(`[MockMonitoring] Transaction status: ${status}`);
       },
       setData: (key: string, value: unknown) => {
         console.info(`[MockMonitoring] Transaction data: ${key} = ${JSON.stringify(value)}`);
       },
+      finish: () => {
+        const duration = Date.now() - startTime;
+        console.info(`[MockMonitoring] Transaction finished: ${options.name} (${duration}ms)`);
+      },
     };
+  }
+
+  startSpan(options: SpanOptions): ISpan {
+    const startTime = Date.now();
+    console.info(`[MockMonitoring] Span started: ${options.op} - ${options.description || ''}`);
+
+    const span: ISpan = {
+      startTime,
+      endTime: undefined,
+      setStatus: (status: 'ok' | 'cancelled' | 'internal_error' | 'unknown') => {
+        console.info(`[MockMonitoring] Span status: ${status}`);
+      },
+      setData: (key: string, value: unknown) => {
+        console.info(`[MockMonitoring] Span data: ${key} = ${JSON.stringify(value)}`);
+      },
+      finish: () => {
+        span.endTime = Date.now();
+        const duration = span.endTime - startTime;
+        console.info(`[MockMonitoring] Span finished: ${options.op} (${duration}ms)`);
+      },
+    };
+
+    return span;
   }
 
   measurePerformance<T>(name: string, operation: () => Promise<T>): Promise<T> {

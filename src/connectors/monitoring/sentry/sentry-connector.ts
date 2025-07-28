@@ -118,12 +118,34 @@ export class SentryConnector extends BaseMonitoringConnector {
     });
   }
 
-  captureMessage(message: string, level: 'debug' | 'info' | 'warning' | 'error' = 'info'): void {
+  captureMessage(
+    message: string,
+    level: 'debug' | 'info' | 'warning' | 'error' = 'info',
+    context?: Record<string, unknown>,
+  ): void {
     if (!this.client || !this.isAvailable()) {
       return;
     }
 
-    this.client.captureMessage(message, level);
+    if (context) {
+      // Capture with context
+      const event = this.createEvent({
+        message,
+        level,
+        extra: context,
+      });
+
+      this.client.captureMessage(message, {
+        level,
+        contexts: {
+          additional: context,
+        },
+        tags: event.tags,
+      } as any);
+    } else {
+      // Simple capture
+      this.client.captureMessage(message, level);
+    }
   }
 
   protected doSetUserContext(userId: string, data?: Record<string, unknown>): void {

@@ -14,9 +14,13 @@ export interface IMonitoringConnector {
   captureException(error: Error, context?: Record<string, unknown>): void;
 
   /**
-   * Capture a message
+   * Capture a message with optional context
    */
-  captureMessage(message: string, level?: 'debug' | 'info' | 'warning' | 'error'): void;
+  captureMessage(
+    message: string,
+    level?: 'debug' | 'info' | 'warning' | 'error',
+    context?: Record<string, unknown>,
+  ): void;
 
   /**
    * Set user context
@@ -32,6 +36,16 @@ export interface IMonitoringConnector {
    * Add breadcrumb
    */
   addBreadcrumb(breadcrumb: Breadcrumb): void;
+
+  /**
+   * Start a transaction for performance monitoring
+   */
+  startTransaction?(options: TransactionOptions): ITransaction | undefined;
+
+  /**
+   * Start a span for performance monitoring
+   */
+  startSpan?(options: SpanOptions): ISpan | undefined;
 
   /**
    * Flush pending events
@@ -87,6 +101,33 @@ export interface Breadcrumb {
   type?: 'default' | 'http' | 'navigation' | 'user';
   data?: Record<string, unknown>;
   timestamp?: number;
+}
+
+export interface TransactionOptions {
+  name: string;
+  op?: string;
+  data?: Record<string, unknown>;
+  tags?: Record<string, string>;
+}
+
+export interface SpanOptions {
+  op: string;
+  description?: string;
+  data?: Record<string, unknown>;
+}
+
+export interface ITransaction {
+  setStatus(status: 'ok' | 'cancelled' | 'internal_error' | 'unknown'): void;
+  setData(key: string, value: unknown): void;
+  finish(): void;
+}
+
+export interface ISpan {
+  setStatus(status: 'ok' | 'cancelled' | 'internal_error' | 'unknown'): void;
+  setData(key: string, value: unknown): void;
+  finish(): void;
+  startTime?: number;
+  endTime?: number;
 }
 
 /**
