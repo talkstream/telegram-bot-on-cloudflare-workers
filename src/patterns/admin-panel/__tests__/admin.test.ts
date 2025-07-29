@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { createMockContext } from '../utils/mock-context';
+import { createMockContext } from '../../../__tests__/utils/mock-context';
 
 import { adminCommand } from '@/adapters/telegram/commands/owner/admin';
 
