@@ -35,6 +35,15 @@ export function generateProjectFiles(options: ProjectOptions): FileTemplate[] {
       path: 'tests/bot.test.ts',
       content: generateTestFile(options),
     },
+    // Type definitions
+    {
+      path: 'src/types/context.ts',
+      content: generateContextTypes(options),
+    },
+    {
+      path: 'src/types/env.d.ts',
+      content: generateEnvTypes(options),
+    },
   ];
 
   // Add feature-specific files
@@ -98,12 +107,13 @@ function generateBotFile(options: ProjectOptions): string {
  */
 
 import { EventBus } from '@wireframe/core';
+import type { ICloudPlatformConnector } from '@wireframe/core';
 import { setupPlatform } from './platform/connector.js';
 import { registerCommands } from './commands/index.js';
 ${options.features.includes('database') ? "import { setupDatabase } from './services/database.js';" : ''}
 ${options.features.includes('i18n') ? "import { setupI18n } from './services/i18n.js';" : ''}
 
-export async function setupBot(cloud: any) {
+export async function setupBot(cloud: ICloudPlatformConnector) {
   // Create event bus
   const eventBus = new EventBus();
 
@@ -140,10 +150,12 @@ function generateStartCommand(options: ProjectOptions): string {
  * Start Command Handler
  */
 
+import type { CommandContext } from '../types/context.js';
+
 export const startCommand = {
   command: 'start',
   description: 'Start the bot',
-  handler: async (ctx: any) => {
+  handler: async (ctx: CommandContext) => {
     const message = \`Welcome to ${options.name}! 🚀
 
 I'm a bot running on ${options.platform} powered by ${options.ai}.
@@ -161,10 +173,12 @@ function generateHelpCommand(_options: ProjectOptions): string {
  * Help Command Handler
  */
 
+import type { CommandContext } from '../types/context.js';
+
 export const helpCommand = {
   command: 'help',
   description: 'Show help message',
-  handler: async (ctx: any) => {
+  handler: async (ctx: CommandContext) => {
     const commands = [
       '/start - Start the bot',
       '/help - Show this message',
@@ -282,11 +296,11 @@ function generateDatabaseService(_options: ProjectOptions): string {
  * Database Service
  */
 
-import type { IDatabaseStore } from '@wireframe/core';
+import type { IDatabaseStore, ICloudPlatformConnector } from '@wireframe/core';
 
 let db: IDatabaseStore;
 
-export async function setupDatabase(cloud: any) {
+export async function setupDatabase(cloud: ICloudPlatformConnector) {
   db = cloud.getDatabaseStore('main');
   
   // Initialize database schema
@@ -381,8 +395,11 @@ export function setupI18n() {
 function getCloudHandler(cloud: string): string {
   switch (cloud) {
     case 'cloudflare':
-      return `export default {
-  async fetch(request: Request, env: any, ctx: any) {
+      return `import type { CloudflareEnv } from '../types/env.js';
+import type { ExecutionContext } from '@cloudflare/workers-types';
+
+export default {
+  async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
     // Handle webhook
     if (request.method === 'POST') {
       const { bot } = app;
@@ -394,7 +411,9 @@ function getCloudHandler(cloud: string): string {
 };`;
 
     case 'aws':
-      return `export const handler = async (event: any, context: any) => {
+      return `import type { AWSEvent, AWSContext } from '../types/context.js';
+
+export const handler = async (event: AWSEvent, context: AWSContext) => {
   // Handle webhook
   if (event.httpMethod === 'POST') {
     const { bot } = app;
@@ -435,4 +454,92 @@ function getFeatureName(feature: string): string {
   };
 
   return names[feature] || feature;
+}
+
+function generateContextTypes(_options: ProjectOptions): string {
+  return `/**
+ * Context types for bot commands and handlers
+ */
+
+import type { UnifiedMessage, MessageContent } from '@wireframe/core';
+import type { ICloudPlatformConnector } from '@wireframe/core';
+
+/**
+ * Command handler context
+ */
+export interface CommandContext {
+  /**
+   * The incoming message
+   */
+  message: UnifiedMessage;
+
+  /**
+   * Reply to the message
+   */
+  reply: (content: MessageContent | string) => Promise<void>;
+
+  /**
+   * Platform identifier
+   */
+  platform: string;
+
+  /**
+   * Cloud platform instance
+   */
+  cloud: ICloudPlatformConnector;
+}
+
+/**
+ * AWS Lambda handler types
+ */
+export interface AWSEvent {
+  httpMethod: string;
+  path: string;
+  headers: Record<string, string>;
+  body?: string;
+  queryStringParameters?: Record<string, string>;
+}
+
+export interface AWSContext {
+  functionName: string;
+  functionVersion: string;
+  invokedFunctionArn: string;
+  memoryLimitInMB: string;
+  awsRequestId: string;
+  logGroupName: string;
+  logStreamName: string;
+  getRemainingTimeInMillis: () => number;
+}
+`;
+}
+
+function generateEnvTypes(options: ProjectOptions): string {
+  return `/// <reference types="@cloudflare/workers-types" />
+
+import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+
+declare global {
+  interface CloudflareEnv extends Record<string, unknown> {
+    // Environment Variables
+    ${options.platform === 'telegram' ? 'TELEGRAM_BOT_TOKEN?: string;' : ''}
+    ${options.platform === 'discord' ? 'DISCORD_BOT_TOKEN?: string;' : ''}
+    ${options.platform === 'slack' ? 'SLACK_BOT_TOKEN?: string;' : ''}
+    WEBHOOK_SECRET?: string;
+    ENVIRONMENT?: 'development' | 'staging' | 'production';
+
+    // AI Provider configuration
+    ${options.ai === 'openai' ? 'OPENAI_API_KEY?: string;' : ''}
+    ${options.ai === 'anthropic' ? 'ANTHROPIC_API_KEY?: string;' : ''}
+    ${options.ai === 'google' ? 'GEMINI_API_KEY?: string;' : ''}
+
+    // Bindings
+    ${options.features.includes('database') ? 'DB?: D1Database;' : ''}
+    CACHE?: KVNamespace;
+    SESSIONS?: KVNamespace;
+  }
+}
+
+export type Env = CloudflareEnv;
+export { CloudflareEnv };
+`;
 }

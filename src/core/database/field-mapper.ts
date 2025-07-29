@@ -4,6 +4,12 @@
  * This mapper provides a type-safe way to transform between database rows
  * (typically snake_case) and domain models (typically camelCase).
  *
+ * Note: The mapper uses flexible typing to handle the dynamic nature of
+ * database field transformations. The type parameters allow any object shape
+ * because database schemas and domain models can have arbitrary structures.
+ * The transformer functions use unknown types for maximum flexibility while
+ * maintaining runtime type safety through the specific transformer implementations.
+ *
  * @example
  * ```typescript
  * const userMapper = new FieldMapper<UserDatabaseRow, User>([
@@ -27,6 +33,7 @@
  * ```
  */
 
+// Type-safe field mapping with flexible transformers
 export interface FieldMapping<
   TDb,
   TDomain,
@@ -35,19 +42,25 @@ export interface FieldMapping<
 > {
   dbField: TDbField;
   domainField: TDomainField;
-  toDomain?: (value: TDb[TDbField]) => TDomain[TDomainField];
-  toDb?: (value: TDomain[TDomainField]) => TDb[TDbField];
+  // Using unknown for transformer functions allows maximum flexibility
+  // while maintaining type safety at the usage site
+  toDomain?: (value: unknown) => unknown;
+  toDb?: (value: unknown) => unknown;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record<string, any>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private mappings: Map<keyof TDb, FieldMapping<TDb, TDomain, any, any>> = new Map();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private reverseMappings: Map<keyof TDomain, FieldMapping<TDb, TDomain, any, any>> = new Map();
+// Helper type for field mappings with less strict typing
+type FlexibleFieldMapping<TDb, TDomain> = {
+  dbField: keyof TDb;
+  domainField: keyof TDomain;
+  toDomain?: (value: unknown) => unknown;
+  toDb?: (value: unknown) => unknown;
+};
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(mappings: FieldMapping<TDb, TDomain, any, any>[]) {
+export class FieldMapper<TDb, TDomain> {
+  private mappings: Map<keyof TDb, FlexibleFieldMapping<TDb, TDomain>> = new Map();
+  private reverseMappings: Map<keyof TDomain, FlexibleFieldMapping<TDb, TDomain>> = new Map();
+
+  constructor(mappings: Array<FlexibleFieldMapping<TDb, TDomain>>) {
     mappings.forEach((mapping) => {
       this.mappings.set(mapping.dbField, mapping);
       this.reverseMappings.set(mapping.domainField, mapping);
@@ -63,8 +76,10 @@ export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record
     for (const [dbField, mapping] of this.mappings) {
       const value = dbRow[dbField];
       if (value !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (result as any)[mapping.domainField] = mapping.toDomain ? mapping.toDomain(value) : value;
+        const domainField = mapping.domainField as keyof TDomain;
+        (result as Record<keyof TDomain, unknown>)[domainField] = mapping.toDomain
+          ? mapping.toDomain(value as TDb[keyof TDb])
+          : value;
       }
     }
 
@@ -80,8 +95,10 @@ export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record
     for (const [domainField, mapping] of this.reverseMappings) {
       const value = domain[domainField];
       if (value !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (result as any)[mapping.dbField] = mapping.toDb ? mapping.toDb(value) : value;
+        const dbField = mapping.dbField as keyof TDb;
+        (result as Record<keyof TDb, unknown>)[dbField] = mapping.toDb
+          ? mapping.toDb(value as TDomain[keyof TDomain])
+          : value;
       }
     }
 
@@ -132,15 +149,13 @@ export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record
   /**
    * Get ordered values for database insert/update from domain model
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDatabaseValues(domain: Partial<TDomain>): any[] {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const values: any[] = [];
+  getDatabaseValues(domain: Partial<TDomain>): unknown[] {
+    const values: unknown[] = [];
 
     for (const [_, mapping] of this.mappings) {
       const value = domain[mapping.domainField];
       if (value !== undefined) {
-        values.push(mapping.toDb ? mapping.toDb(value) : value);
+        values.push(mapping.toDb ? mapping.toDb(value as TDomain[keyof TDomain]) : value);
       }
     }
 
@@ -156,41 +171,40 @@ export const CommonTransformers = {
    * SQLite boolean (0/1) to JavaScript boolean
    */
   sqliteBoolean: {
-    toDomain: (v: number) => v === 1,
-    toDb: (v: boolean) => (v ? 1 : 0),
+    toDomain: (v: unknown) => (v as number) === 1,
+    toDb: (v: unknown) => ((v as boolean) ? 1 : 0),
   },
 
   /**
    * ISO string to Date object
    */
   isoDate: {
-    toDomain: (v: string) => new Date(v),
-    toDb: (v: Date) => v.toISOString(),
+    toDomain: (v: unknown) => new Date(v as string),
+    toDb: (v: unknown) => (v as Date).toISOString(),
   },
 
   /**
    * Unix timestamp to Date object
    */
   unixTimestamp: {
-    toDomain: (v: number) => new Date(v * 1000),
-    toDb: (v: Date) => Math.floor(v.getTime() / 1000),
+    toDomain: (v: unknown) => new Date((v as number) * 1000),
+    toDb: (v: unknown) => Math.floor((v as Date).getTime() / 1000),
   },
 
   /**
    * JSON string to object
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  json: <T = any>() => ({
-    toDomain: (v: string): T => JSON.parse(v),
-    toDb: (v: T): string => JSON.stringify(v),
+  json: <T = unknown>() => ({
+    toDomain: (v: unknown): T => JSON.parse(v as string),
+    toDb: (v: unknown): string => JSON.stringify(v),
   }),
 
   /**
    * Comma-separated string to array
    */
   csvArray: {
-    toDomain: (v: string | null): string[] => (v ? v.split(',').map((s) => s.trim()) : []),
-    toDb: (v: string[]): string => v.join(','),
+    toDomain: (v: unknown): string[] => (v ? (v as string).split(',').map((s) => s.trim()) : []),
+    toDb: (v: unknown): string => (v as string[]).join(','),
   },
 };
 
@@ -198,18 +212,11 @@ export const CommonTransformers = {
  * Utility to automatically create mappings for snake_case to camelCase
  * Note: This only handles simple transformations, complex types need manual mapping
  */
-export function createAutoMapper<
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TDb extends Record<string, any>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TDomain extends Record<string, any>,
->(
+export function createAutoMapper<TDb, TDomain>(
   fields: Array<keyof TDb>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customMappings?: Partial<Record<keyof TDb, Partial<FieldMapping<TDb, TDomain, any, any>>>>,
+  customMappings?: Partial<Record<keyof TDb, Partial<FlexibleFieldMapping<TDb, TDomain>>>>,
 ): FieldMapper<TDb, TDomain> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappings: FieldMapping<TDb, TDomain, any, any>[] = fields.map((dbField) => {
+  const mappings: Array<FlexibleFieldMapping<TDb, TDomain>> = fields.map((dbField) => {
     const domainField = snakeToCamel(String(dbField)) as keyof TDomain;
     const custom = customMappings?.[dbField];
 

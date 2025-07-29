@@ -5,6 +5,7 @@
  * where most fields just need snake_case to camelCase conversion.
  */
 
+import type { IDatabaseStore } from '@/core/interfaces/storage';
 import { createAutoMapper, CommonTransformers } from '../field-mapper';
 
 // Simple service table with mostly straightforward mappings
@@ -68,10 +69,12 @@ interface BotSettingsDatabaseRow {
   updated_by?: number;
 }
 
+type SettingValue = string | number | boolean | Record<string, unknown> | unknown[];
+
 interface BotSettings {
   id: number;
   settingKey: string;
-  settingValue: any; // Dynamic based on valueType
+  settingValue: SettingValue; // Dynamic based on valueType
   valueType: 'string' | 'number' | 'boolean' | 'json';
   isSensitive: boolean;
   updatedAt: Date;
@@ -86,11 +89,11 @@ export const settingsMapper = createAutoMapper<BotSettingsDatabaseRow, BotSettin
     updated_at: CommonTransformers.isoDate,
     setting_value: {
       domainField: 'settingValue',
-      toDomain: (value: string) => {
+      toDomain: (value: unknown) => {
         // Note: In real implementation, you'd need access to row.value_type
         // This is a limitation of the simple transformer pattern
         // For now, return as string - actual transformation would happen elsewhere
-        return value;
+        return value as string;
         /* Example of what you'd do with row context:
         switch (row.value_type) {
           case 'number': return Number(value);
@@ -100,9 +103,10 @@ export const settingsMapper = createAutoMapper<BotSettingsDatabaseRow, BotSettin
         }
         */
       },
-      toDb: (value: any) => {
+      toDb: (value: unknown) => {
         // Simple conversion - in practice you'd handle based on type
-        return typeof value === 'object' ? JSON.stringify(value) : String(value);
+        const val = value as SettingValue;
+        return typeof val === 'object' ? JSON.stringify(val) : String(val);
       },
     },
   },
@@ -172,8 +176,14 @@ export const providerMapper = createAutoMapper<ProviderDatabaseRow, Provider>(
     is_verified: CommonTransformers.sqliteBoolean,
     verification_date: {
       domainField: 'verificationDate',
-      toDomain: (v: string | null) => (v ? new Date(v) : undefined),
-      toDb: (v: Date | undefined) => (v ? v.toISOString() : null),
+      toDomain: (v: unknown) => {
+        const val = v as string | null;
+        return val ? new Date(val) : undefined;
+      },
+      toDb: (v: unknown) => {
+        const val = v as Date | undefined;
+        return val ? val.toISOString() : null;
+      },
     },
     created_at: CommonTransformers.isoDate,
   },
@@ -182,7 +192,7 @@ export const providerMapper = createAutoMapper<ProviderDatabaseRow, Provider>(
 // Usage example: Repository pattern with field mapper
 export class ProviderRepository {
   constructor(
-    private db: any,
+    private db: IDatabaseStore,
     private mapper = providerMapper,
   ) {}
 
@@ -204,7 +214,7 @@ export class ProviderRepository {
 
     const { results } = await this.db.prepare(query).bind(`%${regionId}%`).all();
 
-    return results.map((row: any) => this.mapper.toDomain(row as ProviderDatabaseRow));
+    return results.map((row) => this.mapper.toDomain(row as ProviderDatabaseRow));
   }
 
   async save(provider: Provider): Promise<void> {
