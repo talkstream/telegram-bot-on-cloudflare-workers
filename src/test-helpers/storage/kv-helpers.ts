@@ -2,7 +2,6 @@ import { vi } from 'vitest';
 import type { KVNamespace } from '@cloudflare/workers-types';
 
 type KVGetOptions = { type?: 'text' | 'json' | 'arrayBuffer' | 'stream'; cacheTtl?: number };
-type KVPutOptions = { expiration?: number; expirationTtl?: number; metadata?: unknown };
 
 // Define KVListResult locally if not exported from workers-types
 interface KVListResult<T = unknown> {
@@ -260,22 +259,55 @@ export class KVTestUtils {
    */
   static createNamespacedKV(kv: KVNamespace, prefix: string): KVNamespace {
     const prefixKey = (key: string) => `${prefix}:${key}`;
+    const prefixKeys = (keys: string[]) => keys.map((k) => `${prefix}:${k}`);
 
-    return {
-      get: (key: string, ...args: unknown[]) => (kv.get as any)(prefixKey(key), ...args),
-      getWithMetadata: (key: string, ...args: unknown[]) =>
-        (kv.getWithMetadata as any)(prefixKey(key), ...args),
-      put: ((
-        key: string,
-        value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
-        options?: KVPutOptions,
-      ) => kv.put(prefixKey(key), value, options)) as unknown as KVNamespace['put'],
-      delete: (key: string) => kv.delete(prefixKey(key)),
-      list: (options?: { prefix?: string; limit?: number; cursor?: string }) =>
-        kv.list({
-          ...options,
-          prefix: options?.prefix ? `${prefix}:${options.prefix}` : `${prefix}:`,
-        }),
-    } as KVNamespace;
+    // Create a wrapper that implements all KVNamespace methods
+    const namespacedKV: KVNamespace = {
+      get: ((keyOrKeys: unknown, typeOrOptions?: unknown) => {
+        if (Array.isArray(keyOrKeys)) {
+          // Handle array of keys
+          const prefixedKeys = prefixKeys(keyOrKeys as string[]);
+          return (kv.get as Function)(prefixedKeys, typeOrOptions);
+        } else {
+          // Handle single key
+          const prefixedKey = prefixKey(keyOrKeys as string);
+          return (kv.get as Function)(prefixedKey, typeOrOptions);
+        }
+      }) as KVNamespace['get'],
+
+      getWithMetadata: ((keyOrKeys: unknown, typeOrOptions?: unknown) => {
+        if (Array.isArray(keyOrKeys)) {
+          // Handle array of keys
+          const prefixedKeys = prefixKeys(keyOrKeys as string[]);
+          return (kv.getWithMetadata as Function)(prefixedKeys, typeOrOptions);
+        } else {
+          // Handle single key
+          const prefixedKey = prefixKey(keyOrKeys as string);
+          return (kv.getWithMetadata as Function)(prefixedKey, typeOrOptions);
+        }
+      }) as KVNamespace['getWithMetadata'],
+
+      put: ((key: unknown, value: unknown, options?: unknown) => {
+        return kv.put(
+          prefixKey(key as string),
+          value as string | ArrayBuffer | ArrayBufferView | ReadableStream,
+          options as Parameters<KVNamespace['put']>[2],
+        );
+      }) as KVNamespace['put'],
+
+      delete: ((key: unknown) => {
+        return kv.delete(prefixKey(key as string));
+      }) as KVNamespace['delete'],
+
+      list: ((options?: unknown) => {
+        const typedOptions = options as Parameters<KVNamespace['list']>[0];
+        return kv.list({
+          ...typedOptions,
+          prefix: typedOptions?.prefix ? `${prefix}:${typedOptions.prefix}` : `${prefix}:`,
+        });
+      }) as KVNamespace['list'],
+    };
+
+    return namespacedKV;
   }
 }
