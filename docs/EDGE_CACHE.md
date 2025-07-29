@@ -8,7 +8,7 @@ The Edge Cache Service provides ultra-fast caching at the edge using Cloudflare'
 - **Automatic cache invalidation** - Expire content based on TTL
 - **Tag-based purging** - Invalidate groups of related content
 - **Response caching** - Cache entire HTTP responses
-- **Cache warming** - Pre-populate cache with frequently accessed data
+- **Advanced cache warming** - Pre-populate cache with scheduled workers and parallel warming
 - **Type-safe API** - Full TypeScript support with no `any` types
 
 ## Installation
@@ -141,6 +141,120 @@ await cacheService.warmUp([
     options: { ttl: 600, tags: ['products'] },
   },
 ]);
+```
+
+### Advanced Cache Warming
+
+Use the Cache Warmup Worker for scheduled and sophisticated warming:
+
+```typescript
+import { CacheWarmupService, CacheWarmupPatterns } from '@/workers/cache-warmup';
+
+const warmupService = new CacheWarmupService(cacheService, logger);
+
+// Configure warmup
+const config = {
+  items: [
+    // Warm up API endpoints
+    ...CacheWarmupPatterns.createApiEndpointWarmup(
+      [
+        { path: '/api/config', ttl: 3600, priority: 10 },
+        { path: '/api/categories', ttl: 1800, priority: 9 },
+        { path: '/api/featured', ttl: 600, priority: 8 },
+      ],
+      (endpoint) => async () => {
+        const response = await fetch(`${API_URL}${endpoint.path}`);
+        return response.json();
+      },
+    ),
+
+    // Warm up database queries
+    ...CacheWarmupPatterns.createDatabaseWarmup([
+      {
+        name: 'active-users-count',
+        query: async () => db.query('SELECT COUNT(*) FROM users WHERE active = true'),
+        ttl: 300,
+        tags: ['users', 'stats'],
+        priority: 7,
+      },
+    ]),
+
+    // Custom warmup items
+    {
+      key: 'top-products',
+      factory: async () => getTopProducts(),
+      options: { ttl: 600, tags: ['products'] },
+      priority: 10,
+      skipIfCached: true, // Don't warm if already cached
+    },
+  ],
+  concurrency: 10, // Warm up 10 items in parallel
+  retryFailures: true,
+  maxRetries: 3,
+};
+
+// Run warmup
+const result = await warmupService.warmup(config);
+console.log(`Warmed ${result.successful}/${result.total} items in ${result.duration}ms`);
+```
+
+### Scheduled Cache Warming
+
+Configure automatic cache warming with Cloudflare Cron Triggers:
+
+```toml
+# wrangler.toml
+[[triggers.crons]]
+cron = "0 6 * * *"  # Every day at 6 AM
+
+[vars]
+API_URL = "https://api.example.com"
+WARMUP_SECRET = "your-secret-key"
+```
+
+The warmup worker will automatically run at the scheduled time:
+
+```typescript
+// src/workers/cache-warmup.ts
+export async function scheduled(
+  controller: ScheduledController,
+  env: any,
+  ctx: ExecutionContext,
+): Promise<void> {
+  // Your warmup logic runs automatically
+}
+```
+
+### Manual Cache Warming
+
+Trigger cache warming via HTTP endpoint:
+
+```typescript
+// Add to your routes
+app.post('/admin/cache/warmup', async (c) => {
+  const auth = c.req.header('Authorization');
+  if (auth !== `Bearer ${c.env.WARMUP_SECRET}`) {
+    return c.text('Unauthorized', 401);
+  }
+
+  const body = await c.req.json();
+  const result = await handleCacheWarmup(c.req.raw, c.env);
+  return result;
+});
+
+// Trigger warmup
+fetch('https://your-app.workers.dev/admin/cache/warmup', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your-secret-key',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    items: [
+      { key: 'special-data', factory: ... }
+    ]
+  })
+});
 ```
 
 ## Middleware Configuration

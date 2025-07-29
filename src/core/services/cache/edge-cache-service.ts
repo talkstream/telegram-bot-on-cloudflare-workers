@@ -1,6 +1,13 @@
 import type { IEdgeCacheService, CacheOptions } from '../../interfaces/cache';
 import type { ILogger } from '../../interfaces/logger';
 
+// Cloudflare Cache API globals
+declare global {
+  const caches: {
+    default: Cache;
+  };
+}
+
 /**
  * Edge Cache Service using Cloudflare Cache API
  * Provides ultra-fast caching at the edge for improved performance
