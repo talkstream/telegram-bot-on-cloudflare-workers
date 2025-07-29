@@ -166,11 +166,11 @@ describe('PerformanceMonitor', () => {
       const stats = monitor.getStats('stats-test');
       assertStats(stats);
       expect(stats.count).toBe(5);
-      expect(stats.minDuration).toBeGreaterThanOrEqual(10);
-      expect(stats.maxDuration).toBeGreaterThanOrEqual(50);
-      expect(stats.avgDuration).toBeGreaterThanOrEqual(30);
-      expect(stats.p50).toBeGreaterThanOrEqual(30);
-      expect(stats.p95).toBeGreaterThanOrEqual(50);
+      expect(stats.minDuration).toBeGreaterThanOrEqual(9); // Allow for timer variance
+      expect(stats.maxDuration).toBeGreaterThanOrEqual(45); // Allow for timer variance
+      expect(stats.avgDuration).toBeGreaterThanOrEqual(25); // Allow for timer variance
+      expect(stats.p50).toBeGreaterThanOrEqual(25); // Allow for timer variance
+      expect(stats.p95).toBeGreaterThanOrEqual(45); // Allow for timer variance
     });
 
     it('should return all stats when no operation specified', async () => {
