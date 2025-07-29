@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Revenue Sharing Service** - Platform-agnostic revenue distribution system
+  - Flexible commission structures (default, category, tier, custom rates)
+  - Automated transaction tracking with full audit trail
+  - Comprehensive partner statistics and analytics
+  - Automated payout processing with configurable schedules
+  - Support for multiple payment providers
+  - TypeScript-first with full type safety
+  - Example implementation for Telegram marketplace bot
 - **Anthropic Claude AI Provider** - Full support for Claude 4 models
   - Claude Sonnet 4 (default) - Balanced performance model
   - Claude Opus 4 - Most powerful model with extended thinking
@@ -37,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- Added Revenue Sharing pattern documentation with examples
 - Added comprehensive Anthropic provider guide
 - Created CLI tool documentation
 - Updated AI providers documentation
