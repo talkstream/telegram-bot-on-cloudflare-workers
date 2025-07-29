@@ -1,10 +1,30 @@
 import { vi } from 'vitest';
 
-import type {
-  IKeyValueStore,
-  IEdgeCacheService,
-  CacheOptions,
-} from '../../core/interfaces/index.js';
+import type { IKeyValueStore } from '../../core/interfaces/index.js';
+
+// Define minimal interfaces for cache service
+export interface CacheOptions {
+  ttl?: number;
+  tags?: string[];
+}
+
+export interface IEdgeCacheService {
+  get<T>(key: string): Promise<T | null>;
+  set<T>(key: string, value: T, options?: CacheOptions): Promise<void>;
+  delete(key: string): Promise<void>;
+  has(key: string): Promise<boolean>;
+  clear(): Promise<void>;
+  list?(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{
+    keys: Array<{ name: string; metadata?: Record<string, unknown> }>;
+    list_complete: boolean;
+    cursor?: string;
+  }>;
+  getMultiple?<T>(keys: string[]): Promise<Map<string, T>>;
+  setMultiple?<T>(entries: Map<string, T>, options?: CacheOptions): Promise<void>;
+  deleteMultiple?(keys: string[]): Promise<void>;
+  purgeByTag?(tag: string): Promise<void>;
+  purgeByPattern?(pattern: string | RegExp): Promise<void>;
+}
 
 /**
  * Mock cache service for testing
@@ -133,7 +153,15 @@ export function createMockCacheStore(): IKeyValueStore {
   const store = new Map<string, string>();
 
   return {
-    get: vi.fn(async (key: string) => store.get(key) || null),
+    get: vi.fn(async <T = string>(key: string): Promise<T | null> => {
+      const value = store.get(key);
+      if (!value) return null;
+      try {
+        return JSON.parse(value) as T;
+      } catch {
+        return value as unknown as T;
+      }
+    }),
 
     put: vi.fn(async (key: string, value: string) => {
       store.set(key, value);
@@ -143,13 +171,35 @@ export function createMockCacheStore(): IKeyValueStore {
       store.delete(key);
     }),
 
-    list: vi.fn(async (prefix?: string) => {
-      const keys = Array.from(store.keys())
+    list: vi.fn(async (options?: { prefix?: string; limit?: number; cursor?: string }) => {
+      const prefix = typeof options === 'string' ? options : options?.prefix;
+      const limit = typeof options === 'object' ? options.limit : undefined;
+
+      const matchingKeys = Array.from(store.keys())
         .filter((key) => !prefix || key.startsWith(prefix))
-        .map((key) => ({ key, value: store.get(key)! }));
-      return keys;
+        .slice(0, limit);
+
+      return {
+        keys: matchingKeys.map((name) => ({ name, metadata: undefined })),
+        list_complete: true,
+        cursor: undefined,
+      };
     }),
-  };
+
+    getWithMetadata: vi.fn(
+      async <T = string>(
+        key: string,
+      ): Promise<{ value: T | null; metadata: Record<string, unknown> | null }> => {
+        const value = store.get(key);
+        if (!value) return { value: null, metadata: null };
+        try {
+          return { value: JSON.parse(value) as T, metadata: null };
+        } catch {
+          return { value: value as unknown as T, metadata: null };
+        }
+      },
+    ),
+  } as IKeyValueStore;
 }
 
 /**
@@ -166,7 +216,7 @@ export class CacheTestUtils {
     // Force cache to check expirations
     const keys = Array.from((cache as any).cache.keys());
     for (const key of keys) {
-      await cache.has(key);
+      await cache.has(key as string);
     }
   }
 

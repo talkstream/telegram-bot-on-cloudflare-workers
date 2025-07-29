@@ -114,10 +114,10 @@ export async function parallelLimit<T>(
         return result;
       })
       .finally(() => {
-        executing.delete(promise);
+        executing.delete(promise as Promise<void>);
       });
 
-    executing.add(promise);
+    executing.add(promise as Promise<void>);
 
     if (executing.size >= limit) {
       await Promise.race(executing);

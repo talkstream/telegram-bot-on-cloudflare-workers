@@ -1,5 +1,17 @@
 import { vi } from 'vitest';
-import type { KVNamespace, KVListResult } from '@cloudflare/workers-types';
+import type { KVNamespace } from '@cloudflare/workers-types';
+
+// Define KVListResult locally if not exported from workers-types
+interface KVListResult<T = unknown> {
+  keys: Array<{
+    name: string;
+    expiration?: number;
+    metadata?: T;
+  }>;
+  list_complete: boolean;
+  cursor?: string;
+  cacheStatus?: string | null;
+}
 
 /**
  * Enhanced KV mock with in-memory storage and expiration support
@@ -27,42 +39,50 @@ export function createMockKVNamespace(): MockKVNamespace {
     }
   };
 
-  const mockKV = {
-    get: vi.fn(async (key: string, options?: { type?: string; cacheTtl?: number }) => {
-      cleanExpired();
-      const data = storage.get(key);
+  const mockGet = vi.fn(async (key: string, typeOrOptions?: any) => {
+    cleanExpired();
+    const data = storage.get(key);
 
-      if (!data) return null;
+    if (!data) return null;
 
-      if (options?.type === 'json') {
-        try {
-          return JSON.parse(data.value);
-        } catch {
-          return null;
-        }
-      } else if (options?.type === 'arrayBuffer') {
-        return new TextEncoder().encode(data.value).buffer;
-      } else if (options?.type === 'stream') {
-        return new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode(data.value));
-            controller.close();
-          },
-        });
+    // Handle both overload signatures
+    const type = typeof typeOrOptions === 'string' ? typeOrOptions : typeOrOptions?.type;
+
+    if (type === 'json') {
+      try {
+        return JSON.parse(data.value);
+      } catch {
+        return null;
       }
+    } else if (type === 'arrayBuffer') {
+      return new TextEncoder().encode(data.value).buffer;
+    } else if (type === 'stream') {
+      return new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(data.value));
+          controller.close();
+        },
+      });
+    }
 
-      return data.value;
-    }),
+    return data.value;
+  });
 
-    getWithMetadata: vi.fn(async (key: string, options?: { type?: string; cacheTtl?: number }) => {
+  const mockKV = {
+    get: mockGet as any,
+
+    getWithMetadata: vi.fn(async (key: string, typeOrOptions?: any) => {
       cleanExpired();
       const data = storage.get(key);
 
-      if (!data) return { value: null, metadata: null };
+      if (!data) return { value: null, metadata: null, cacheStatus: null };
+
+      // Handle both overload signatures
+      const type = typeof typeOrOptions === 'string' ? typeOrOptions : typeOrOptions?.type;
 
       let value: unknown = data.value;
 
-      if (options?.type === 'json') {
+      if (type === 'json') {
         try {
           value = JSON.parse(data.value);
         } catch {
@@ -70,8 +90,8 @@ export function createMockKVNamespace(): MockKVNamespace {
         }
       }
 
-      return { value, metadata: data.metadata || null };
-    }),
+      return { value, metadata: data.metadata || null, cacheStatus: null };
+    }) as any,
 
     put: vi.fn(
       async (
@@ -161,8 +181,9 @@ export function createMockKVNamespace(): MockKVNamespace {
             metadata: storage.get(name)?.metadata,
           })),
           list_complete,
-          cursor,
-        };
+          cursor: cursor ?? undefined,
+          cacheStatus: null,
+        } as any;
       },
     ),
 

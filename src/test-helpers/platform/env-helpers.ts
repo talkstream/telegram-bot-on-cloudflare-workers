@@ -84,7 +84,7 @@ export function createMockQueue(): MockQueue {
 export function createMockExecutionContext(): ExecutionContext {
   const promises: Promise<unknown>[] = [];
 
-  return {
+  const ctx = {
     waitUntil: vi.fn((promise: Promise<unknown>) => {
       promises.push(promise);
     }),
@@ -93,7 +93,12 @@ export function createMockExecutionContext(): ExecutionContext {
 
     // Test helper
     _promises: promises,
-  } as ExecutionContext & { _promises: Promise<unknown>[] };
+
+    // Add missing ExecutionContext properties
+    props: {} as any,
+  };
+
+  return ctx as ExecutionContext & { _promises: Promise<unknown>[] };
 }
 
 /**
@@ -146,12 +151,20 @@ export function createMockDurableObjectNamespace(): MockDurableObjectNamespace {
       return stubs.get(idString)!;
     }),
 
+    jurisdiction: vi.fn(() => {
+      // Return the same namespace - jurisdiction is just a hint in tests
+      return createMockDurableObjectNamespace();
+    }),
+
     _stubs: stubs,
   } as MockDurableObjectNamespace;
 }
 
 export interface MockDurableObjectStub {
+  id: any;
+  name?: string;
   fetch: ReturnType<typeof vi.fn>;
+  connect: ReturnType<typeof vi.fn>;
   _storage: Map<string, unknown>;
   _id: string;
 }
@@ -186,6 +199,18 @@ function createMockDurableObjectStub(id: string): MockDurableObjectStub {
       return new Response('Not found', { status: 404 });
     }),
 
+    connect: vi.fn(() => {
+      // Return a mock Socket for WebSocket connections
+      return {
+        close: vi.fn(),
+        send: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as any;
+    }),
+
+    id: { toString: () => id },
+    name: undefined,
     _storage: storage,
     _id: id,
   };
