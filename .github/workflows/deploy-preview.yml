@@ -29,9 +29,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build project
-        run: npm run build
-
       - name: Create deployment status
         uses: actions/github-script@v7
         with:
