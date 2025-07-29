@@ -15,7 +15,11 @@ describe('Admin Dashboard', () => {
     // Create mock environment
     mockEnv = {
       DB: {
-        prepare: vi.fn(),
+        prepare: vi.fn(() =>
+          createMockPreparedStatement({
+            first: vi.fn().mockResolvedValue(null),
+          }),
+        ),
         dump: vi.fn(),
         batch: vi.fn(),
         exec: vi.fn(),

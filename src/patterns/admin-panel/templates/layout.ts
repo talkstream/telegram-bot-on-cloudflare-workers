@@ -190,6 +190,68 @@ export function renderAdminLayout(options: LayoutOptions): string {
             color: #666;
         }
         
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-primary {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .badge-success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .badge-warning {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .badge-error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .badge-info {
+            background: #e1f5fe;
+            color: #0288d1;
+        }
+        
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .button.small {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        
+        dl {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 10px 20px;
+            margin: 20px 0;
+        }
+        
+        dt {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        dd {
+            margin: 0;
+        }
+        
         @media (max-width: 768px) {
             .stat-grid {
                 grid-template-columns: 1fr;
