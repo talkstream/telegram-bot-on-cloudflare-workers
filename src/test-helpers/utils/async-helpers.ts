@@ -79,7 +79,7 @@ export async function retry<T>(
   const maxDelay = options?.maxDelay ?? 5000;
   const factor = options?.factor ?? 2;
 
-  let lastError: Error;
+  let lastError: Error | undefined;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -157,7 +157,7 @@ export class TestEventEmitter<T extends Record<string, unknown[]>> {
 
   on<K extends keyof T>(event: K, listener: (...args: T[K]) => void): void {
     const listeners = this.listeners.get(event) || [];
-    listeners.push(listener);
+    listeners.push(listener as (...args: unknown[]) => void);
     this.listeners.set(event, listeners);
   }
 

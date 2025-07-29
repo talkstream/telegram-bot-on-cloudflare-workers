@@ -1,5 +1,10 @@
 import { vi } from 'vitest';
-import type { D1Database, D1PreparedStatement, D1Result } from '@cloudflare/workers-types';
+import type {
+  D1Database,
+  D1PreparedStatement,
+  D1Result,
+  D1ExecResult,
+} from '@cloudflare/workers-types';
 
 /**
  * Enhanced D1 mock with better type safety and query tracking
@@ -124,13 +129,12 @@ export function createMockD1Database(): MockD1Database {
       dump: vi.fn(async () => new ArrayBuffer(0)),
       withSession: vi.fn(),
       getBookmark: vi.fn(() => 'mock-bookmark'),
-      setQueries: mockDb.setQueries,
-      getQueries: mockDb.getQueries,
-      setQueryResult: mockDb.setQueryResult,
-      reset: mockDb.reset,
+      _queries: mockDb._queries,
+      _setQueryResult: mockDb._setQueryResult,
+      _reset: mockDb._reset,
     })),
     dump: vi.fn(async () => new ArrayBuffer(0)),
-  } as MockD1Database;
+  } as unknown as MockD1Database;
 
   return fullMockDb as MockD1Database;
 }
@@ -157,7 +161,7 @@ export function createD1Result<T>(
       last_row_id: 0,
       changed_db: false,
       changes: 0,
-    } as D1MetaData,
+    },
   };
 }
 
@@ -181,7 +185,7 @@ export function createD1RunResult(options?: {
       rows_written: options?.changes ?? 1,
       size_after: 0,
       changed_db: true,
-    } as D1MetaData,
+    },
   };
 }
 

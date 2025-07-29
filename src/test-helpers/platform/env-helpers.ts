@@ -211,7 +211,10 @@ function createMockDurableObjectStub(id: string): MockDurableObjectStub {
       } as unknown as WebSocket;
     }),
 
-    id: { toString: () => id },
+    id: {
+      toString: () => id,
+      equals: (other: DurableObjectId) => other.toString() === id,
+    } as DurableObjectId,
     name: undefined,
     _storage: storage,
     _id: id,

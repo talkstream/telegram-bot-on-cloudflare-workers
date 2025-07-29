@@ -100,7 +100,8 @@ export class MockCacheService implements IEdgeCacheService {
     const keysToDelete: string[] = [];
 
     for (const [key, entry] of this.cache) {
-      if (entry.tags && tags.some((tag) => entry.tags.includes(tag))) {
+      const entryTags = entry.tags;
+      if (entryTags && tags.some((tag) => entryTags.includes(tag))) {
         keysToDelete.push(key);
       }
     }

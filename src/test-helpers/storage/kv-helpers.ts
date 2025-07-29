@@ -77,7 +77,7 @@ export function createMockKVNamespace(): MockKVNamespace {
   );
 
   const mockKV = {
-    get: mockGet as KVNamespace['get'],
+    get: mockGet as unknown as KVNamespace['get'],
 
     getWithMetadata: vi.fn(
       async (
@@ -104,7 +104,7 @@ export function createMockKVNamespace(): MockKVNamespace {
 
         return { value, metadata: data.metadata || null, cacheStatus: null };
       },
-    ) as KVNamespace['getWithMetadata'],
+    ) as unknown as KVNamespace['getWithMetadata'],
 
     put: vi.fn(
       async (
@@ -167,7 +167,8 @@ export function createMockKVNamespace(): MockKVNamespace {
 
         // Filter by prefix
         if (options?.prefix) {
-          keys = keys.filter((key) => key.startsWith(options.prefix));
+          const prefix = options.prefix;
+          keys = keys.filter((key) => key.startsWith(prefix));
         }
 
         // Handle cursor-based pagination
@@ -261,17 +262,14 @@ export class KVTestUtils {
     const prefixKey = (key: string) => `${prefix}:${key}`;
 
     return {
-      get: ((key: string, options?: 'text' | 'json' | 'arrayBuffer' | 'stream' | KVGetOptions) =>
-        kv.get(prefixKey(key), options)) as KVNamespace['get'],
-      getWithMetadata: ((
-        key: string,
-        options?: 'text' | 'json' | 'arrayBuffer' | 'stream' | KVGetOptions,
-      ) => kv.getWithMetadata(prefixKey(key), options)) as KVNamespace['getWithMetadata'],
+      get: (key: string, ...args: unknown[]) => (kv.get as any)(prefixKey(key), ...args),
+      getWithMetadata: (key: string, ...args: unknown[]) =>
+        (kv.getWithMetadata as any)(prefixKey(key), ...args),
       put: ((
         key: string,
         value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
         options?: KVPutOptions,
-      ) => kv.put(prefixKey(key), value, options)) as KVNamespace['put'],
+      ) => kv.put(prefixKey(key), value, options)) as unknown as KVNamespace['put'],
       delete: (key: string) => kv.delete(prefixKey(key)),
       list: (options?: { prefix?: string; limit?: number; cursor?: string }) =>
         kv.list({

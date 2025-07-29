@@ -26,6 +26,7 @@ interface ExpressResponse {
   statusCode: number;
   headersSent: boolean;
   setHeader: (name: string, value: string) => void;
+  json: (data: unknown) => void;
 }
 
 type ExpressNext = () => void;
@@ -35,6 +36,8 @@ interface KoaContext {
   method: string;
   path: string;
   status: number;
+  headers: Record<string, string | string[] | undefined>;
+  ip: string;
   request: {
     header: Record<string, string | string[] | undefined>;
     ip: string;
@@ -214,8 +217,8 @@ export function createKoaMiddleware(
           path: ctx.path,
           method: ctx.method,
           statusCode: ctx.status,
-          userAgent: ctx.headers['user-agent'],
-          ip: ctx.ip,
+          userAgent: ctx.request.header['user-agent'],
+          ip: ctx.request.ip,
         },
       });
 
@@ -239,7 +242,7 @@ export function createFastifyPlugin(
       request.performanceTimer = perfMonitor.startTimer();
     });
 
-    fastify.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
+    fastify.addHook('onResponse', async (request: FastifyRequest, reply?: FastifyReply) => {
       if (request.performanceTimer) {
         const duration = request.performanceTimer.stop();
         const operation = `${request.method} ${request.routerPath || request.url}`;
@@ -247,12 +250,12 @@ export function createFastifyPlugin(
         perfMonitor.recordMetric({
           operation,
           duration,
-          success: reply.statusCode < 400,
+          success: reply ? reply.statusCode < 400 : false,
           timestamp: Date.now(),
           metadata: {
             path: request.url,
             method: request.method,
-            statusCode: reply.statusCode,
+            statusCode: reply?.statusCode ?? 0,
             userAgent: request.headers['user-agent'],
             ip: request.ip,
           },
@@ -299,22 +302,27 @@ export function createStatsHandler(monitor?: PerformanceMonitor) {
 /**
  * Calculate summary statistics
  */
-function calculateSummary(stats: OperationStats[]): SummaryStats | null {
-  if (!stats || !Array.isArray(stats) || stats.length === 0) {
+function calculateSummary(stats: OperationStats | OperationStats[] | null): SummaryStats | null {
+  if (!stats) {
     return null;
   }
 
-  const totalRequests = stats.reduce((sum, stat) => sum + stat.count, 0);
-  const totalErrors = stats.reduce((sum, stat) => sum + stat.errorCount, 0);
-  const avgDuration =
-    stats.reduce((sum, stat) => sum + stat.avgDuration * stat.count, 0) / totalRequests;
+  const statsArray = Array.isArray(stats) ? stats : [stats];
+  if (statsArray.length === 0) {
+    return null;
+  }
 
-  const slowestOperation = stats.reduce(
+  const totalRequests = statsArray.reduce((sum, stat) => sum + stat.count, 0);
+  const totalErrors = statsArray.reduce((sum, stat) => sum + stat.errorCount, 0);
+  const avgDuration =
+    statsArray.reduce((sum, stat) => sum + stat.avgDuration * stat.count, 0) / totalRequests;
+
+  const slowestOperation = statsArray.reduce<OperationStats | null>(
     (slowest, stat) => (stat.maxDuration > (slowest?.maxDuration || 0) ? stat : slowest),
     null,
   );
 
-  const busiestOperation = stats.reduce(
+  const busiestOperation = statsArray.reduce<OperationStats | null>(
     (busiest, stat) => (stat.count > (busiest?.count || 0) ? stat : busiest),
     null,
   );
