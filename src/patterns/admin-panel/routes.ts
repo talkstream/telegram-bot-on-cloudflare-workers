@@ -7,6 +7,7 @@ import type { ExecutionContext } from '@cloudflare/workers-types';
 
 import { handleAdminAuth } from './handlers/auth';
 import { handleAdminDashboard } from './handlers/dashboard';
+// import { handleAdminUsers, handleAdminUserDetail } from './handlers/users';
 import { requireAdminAuth } from './middleware/auth';
 import type { AdminEnv, AdminRequest } from './types';
 
@@ -42,12 +43,18 @@ export async function handleAdminRoutes(
     case '/admin/logout':
       return handleAdminLogout();
 
-    // Add your custom routes here
     // case '/admin/users':
     //   return handleAdminUsers(authenticatedRequest, env);
 
-    default:
+    default: {
+      // Check for user detail route pattern
+      // const userMatch = path.match(/^\/admin\/users\/(\d+)$/);
+      // if (userMatch) {
+      //   return handleAdminUserDetail(authenticatedRequest, env, userMatch[1]);
+      // }
+
       return new Response('Not Found', { status: 404 });
+    }
   }
 }
 

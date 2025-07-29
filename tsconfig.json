@@ -6,6 +6,10 @@
     "moduleResolution": "bundler",
     "lib": ["ESNext"],
 
+    // Decorator Support
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
     // Emit Configuration
     "noEmit": true,
     "isolatedModules": true,

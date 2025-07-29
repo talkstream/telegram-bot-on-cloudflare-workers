@@ -5,6 +5,7 @@
  * with various field types including booleans, dates, and arrays.
  */
 
+import type { IDatabaseStore } from '@/core/interfaces/storage';
 import { FieldMapper, CommonTransformers } from '../field-mapper';
 
 // Database row type (snake_case)
@@ -91,7 +92,7 @@ export const userMapper = new FieldMapper<UserDatabaseRow, User>([
 
 // Example usage in a service
 export class UserService {
-  constructor(private db: any) {}
+  constructor(private db: IDatabaseStore) {}
 
   async getUser(telegramId: number): Promise<User | null> {
     // Generate SELECT with automatic aliases
@@ -140,7 +141,9 @@ export class UserService {
 }
 
 // Example with JOIN query
-export async function getUsersWithRoles(db: any): Promise<Array<User & { role?: string }>> {
+export async function getUsersWithRoles(
+  db: IDatabaseStore,
+): Promise<Array<User & { role?: string }>> {
   const query = `
     SELECT 
       ${userMapper.generateSelectSQL('u')},
@@ -151,8 +154,8 @@ export async function getUsersWithRoles(db: any): Promise<Array<User & { role?: 
 
   const { results } = await db.prepare(query).all();
 
-  return results.map((row: any) => ({
-    ...userMapper.toDomain(row),
-    role: row.role,
+  return results.map((row) => ({
+    ...userMapper.toDomain(row as UserDatabaseRow & { role?: string }),
+    role: (row as { role?: string }).role,
   }));
 }

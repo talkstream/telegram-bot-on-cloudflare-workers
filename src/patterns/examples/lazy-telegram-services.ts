@@ -10,14 +10,42 @@ import type { IDatabaseStore } from '@/core/interfaces/storage';
 import { LazyServiceContainer } from '@/patterns/lazy-services';
 import { getDatabaseStore, getKVCache } from '@/core/services/service-container';
 
+// Type definitions
+interface User {
+  id: number;
+  telegram_id: number;
+  username?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface CreateUserInput {
+  telegram_id: number;
+  username?: string;
+}
+
+interface Location {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+}
+
+interface AnalyticsEventData {
+  userId?: number;
+  action?: string;
+  metadata?: Record<string, unknown>;
+}
+
 // Example service interfaces
 interface UserService {
-  getUser(telegramId: number): Promise<any>;
-  createUser(data: any): Promise<any>;
+  getUser(telegramId: number): Promise<User | null>;
+  createUser(data: CreateUserInput): Promise<User>;
 }
 
 interface LocationService {
-  getNearbyLocations(lat: number, lng: number): Promise<any[]>;
+  getNearbyLocations(lat: number, lng: number): Promise<Location[]>;
 }
 
 interface NotificationService {
@@ -25,7 +53,7 @@ interface NotificationService {
 }
 
 interface AnalyticsService {
-  trackEvent(event: string, data: any): Promise<void>;
+  trackEvent(event: string, data: AnalyticsEventData): Promise<void>;
 }
 
 /**
@@ -91,19 +119,24 @@ function createUserService(db: IDatabaseStore): UserService {
         .prepare('SELECT * FROM users WHERE telegram_id = ?')
         .bind(telegramId)
         .first();
-      return result;
+      return result as User | null;
     },
-    async createUser(data: any) {
+    async createUser(data: CreateUserInput) {
       const result = await db
         .prepare('INSERT INTO users (telegram_id, username) VALUES (?, ?) RETURNING *')
         .bind(data.telegram_id, data.username)
         .first();
-      return result;
+      return result as User;
     },
   };
 }
 
-function createCachedUserService(db: IDatabaseStore, cache: any): UserService {
+interface CacheAdapter {
+  getOrSet<T>(key: string, factory: () => Promise<T>, options?: { ttl?: number }): Promise<T>;
+  set<T>(key: string, value: T, options?: { ttl?: number }): Promise<void>;
+}
+
+function createCachedUserService(db: IDatabaseStore, cache: CacheAdapter): UserService {
   const baseService = createUserService(db);
 
   return {
@@ -114,7 +147,7 @@ function createCachedUserService(db: IDatabaseStore, cache: any): UserService {
         { ttl: 300 }, // 5 minutes
       );
     },
-    async createUser(data: any) {
+    async createUser(data: CreateUserInput) {
       const user = await baseService.createUser(data);
       await cache.set(`user:${user.telegram_id}`, user, { ttl: 300 });
       return user;
@@ -138,7 +171,7 @@ function createLocationService(db: IDatabaseStore): LocationService {
         )
         .bind(lat, radius / 111, lng, radius / 111, lat, lat, lng, lng)
         .all();
-      return results.results || [];
+      return (results.results || []) as Location[];
     },
   };
 }
@@ -154,7 +187,7 @@ function createNotificationService(): NotificationService {
 
 function createAnalyticsService(db: IDatabaseStore): AnalyticsService {
   return {
-    async trackEvent(event: string, data: any) {
+    async trackEvent(event: string, data: AnalyticsEventData) {
       await db
         .prepare('INSERT INTO analytics_events (event, data, timestamp) VALUES (?, ?, ?)')
         .bind(event, JSON.stringify(data), Date.now())
