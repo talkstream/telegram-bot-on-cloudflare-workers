@@ -78,7 +78,7 @@ export function createMockD1Database(): MockD1Database {
     batch: vi.fn(async (statements: D1PreparedStatement[]) => {
       const results: D1Result[] = [];
       for (const stmt of statements) {
-        const result = await (stmt as any).run();
+        const result = await stmt.run();
         results.push(result);
       }
       return results;
@@ -89,7 +89,7 @@ export function createMockD1Database(): MockD1Database {
       return {
         count: 0,
         duration: 0.1,
-      } as any;
+      } as D1ExecResult;
     }),
 
     // Test helpers
@@ -114,14 +114,23 @@ export function createMockD1Database(): MockD1Database {
   };
 
   // Add missing methods required by D1Database interface
-  const fullMockDb: any = {
+  const fullMockDb: MockD1Database = {
     ...mockDb,
     withSession: vi.fn(() => ({
-      ...fullMockDb,
+      ...mockDb,
+      prepare: mockDb.prepare,
+      batch: mockDb.batch,
+      exec: mockDb.exec,
+      dump: vi.fn(async () => new ArrayBuffer(0)),
+      withSession: vi.fn(),
       getBookmark: vi.fn(() => 'mock-bookmark'),
+      setQueries: mockDb.setQueries,
+      getQueries: mockDb.getQueries,
+      setQueryResult: mockDb.setQueryResult,
+      reset: mockDb.reset,
     })),
     dump: vi.fn(async () => new ArrayBuffer(0)),
-  };
+  } as MockD1Database;
 
   return fullMockDb as MockD1Database;
 }
@@ -148,7 +157,7 @@ export function createD1Result<T>(
       last_row_id: 0,
       changed_db: false,
       changes: 0,
-    } as any,
+    } as D1MetaData,
   };
 }
 
@@ -172,7 +181,7 @@ export function createD1RunResult(options?: {
       rows_written: options?.changes ?? 1,
       size_after: 0,
       changed_db: true,
-    } as any,
+    } as D1MetaData,
   };
 }
 

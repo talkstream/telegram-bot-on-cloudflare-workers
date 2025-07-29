@@ -100,7 +100,7 @@ export class MockCacheService implements IEdgeCacheService {
     const keysToDelete: string[] = [];
 
     for (const [key, entry] of this.cache) {
-      if (entry.tags && tags.some((tag) => entry.tags!.includes(tag))) {
+      if (entry.tags && tags.some((tag) => entry.tags.includes(tag))) {
         keysToDelete.push(key);
       }
     }
@@ -124,6 +124,7 @@ export class MockCacheService implements IEdgeCacheService {
 
   // Test helpers
   getStats() {
+    // eslint-disable-next-line db-mapping/use-field-mapper -- This is not database mapping, it's cache statistics
     return {
       hits: this.hits,
       misses: this.misses,
@@ -214,7 +215,7 @@ export class CacheTestUtils {
     vi.advanceTimersByTime(advanceTime);
 
     // Force cache to check expirations
-    const keys = Array.from((cache as any).cache.keys());
+    const keys = Array.from((cache as unknown as { cache: Map<string, unknown> }).cache.keys());
     for (const key of keys) {
       await cache.has(key as string);
     }

@@ -1,6 +1,9 @@
 import { vi } from 'vitest';
 import type { KVNamespace } from '@cloudflare/workers-types';
 
+type KVGetOptions = { type?: 'text' | 'json' | 'arrayBuffer' | 'stream'; cacheTtl?: number };
+type KVPutOptions = { expiration?: number; expirationTtl?: number; metadata?: unknown };
+
 // Define KVListResult locally if not exported from workers-types
 interface KVListResult<T = unknown> {
   keys: Array<{
@@ -39,59 +42,69 @@ export function createMockKVNamespace(): MockKVNamespace {
     }
   };
 
-  const mockGet = vi.fn(async (key: string, typeOrOptions?: any) => {
-    cleanExpired();
-    const data = storage.get(key);
-
-    if (!data) return null;
-
-    // Handle both overload signatures
-    const type = typeof typeOrOptions === 'string' ? typeOrOptions : typeOrOptions?.type;
-
-    if (type === 'json') {
-      try {
-        return JSON.parse(data.value);
-      } catch {
-        return null;
-      }
-    } else if (type === 'arrayBuffer') {
-      return new TextEncoder().encode(data.value).buffer;
-    } else if (type === 'stream') {
-      return new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode(data.value));
-          controller.close();
-        },
-      });
-    }
-
-    return data.value;
-  });
-
-  const mockKV = {
-    get: mockGet as any,
-
-    getWithMetadata: vi.fn(async (key: string, typeOrOptions?: any) => {
+  const mockGet = vi.fn(
+    async (
+      key: string,
+      typeOrOptions?: 'text' | 'json' | 'arrayBuffer' | 'stream' | KVGetOptions,
+    ) => {
       cleanExpired();
       const data = storage.get(key);
 
-      if (!data) return { value: null, metadata: null, cacheStatus: null };
+      if (!data) return null;
 
       // Handle both overload signatures
       const type = typeof typeOrOptions === 'string' ? typeOrOptions : typeOrOptions?.type;
 
-      let value: unknown = data.value;
-
       if (type === 'json') {
         try {
-          value = JSON.parse(data.value);
+          return JSON.parse(data.value);
         } catch {
-          value = null;
+          return null;
         }
+      } else if (type === 'arrayBuffer') {
+        return new TextEncoder().encode(data.value).buffer;
+      } else if (type === 'stream') {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(data.value));
+            controller.close();
+          },
+        });
       }
 
-      return { value, metadata: data.metadata || null, cacheStatus: null };
-    }) as any,
+      return data.value;
+    },
+  );
+
+  const mockKV = {
+    get: mockGet as KVNamespace['get'],
+
+    getWithMetadata: vi.fn(
+      async (
+        key: string,
+        typeOrOptions?: 'text' | 'json' | 'arrayBuffer' | 'stream' | KVGetOptions,
+      ) => {
+        cleanExpired();
+        const data = storage.get(key);
+
+        if (!data) return { value: null, metadata: null, cacheStatus: null };
+
+        // Handle both overload signatures
+        const type = typeof typeOrOptions === 'string' ? typeOrOptions : typeOrOptions?.type;
+
+        let value: unknown = data.value;
+
+        if (type === 'json') {
+          try {
+            value = JSON.parse(data.value);
+          } catch {
+            value = null;
+          }
+        }
+
+        return { value, metadata: data.metadata || null, cacheStatus: null };
+      },
+    ) as KVNamespace['getWithMetadata'],
 
     put: vi.fn(
       async (
@@ -154,7 +167,7 @@ export function createMockKVNamespace(): MockKVNamespace {
 
         // Filter by prefix
         if (options?.prefix) {
-          keys = keys.filter((key) => key.startsWith(options.prefix!));
+          keys = keys.filter((key) => key.startsWith(options.prefix));
         }
 
         // Handle cursor-based pagination
@@ -183,7 +196,7 @@ export function createMockKVNamespace(): MockKVNamespace {
           list_complete,
           cursor: cursor ?? undefined,
           cacheStatus: null,
-        } as any;
+        } as KVListResult;
       },
     ),
 
@@ -248,11 +261,19 @@ export class KVTestUtils {
     const prefixKey = (key: string) => `${prefix}:${key}`;
 
     return {
-      get: (key: string, options?: any) => kv.get(prefixKey(key), options),
-      getWithMetadata: (key: string, options?: any) => kv.getWithMetadata(prefixKey(key), options),
-      put: (key: string, value: any, options?: any) => kv.put(prefixKey(key), value, options),
+      get: ((key: string, options?: 'text' | 'json' | 'arrayBuffer' | 'stream' | KVGetOptions) =>
+        kv.get(prefixKey(key), options)) as KVNamespace['get'],
+      getWithMetadata: ((
+        key: string,
+        options?: 'text' | 'json' | 'arrayBuffer' | 'stream' | KVGetOptions,
+      ) => kv.getWithMetadata(prefixKey(key), options)) as KVNamespace['getWithMetadata'],
+      put: ((
+        key: string,
+        value: string | ArrayBuffer | ArrayBufferView | ReadableStream,
+        options?: KVPutOptions,
+      ) => kv.put(prefixKey(key), value, options)) as KVNamespace['put'],
       delete: (key: string) => kv.delete(prefixKey(key)),
-      list: (options?: any) =>
+      list: (options?: { prefix?: string; limit?: number; cursor?: string }) =>
         kv.list({
           ...options,
           prefix: options?.prefix ? `${prefix}:${options.prefix}` : `${prefix}:`,

@@ -46,15 +46,19 @@ export interface DeferredPromise<T> {
 }
 
 export function createDeferred<T>(): DeferredPromise<T> {
-  let resolve: (value: T) => void;
-  let reject: (error: Error) => void;
+  let resolve: (value: T) => void = () => {
+    throw new Error('Promise not initialized');
+  };
+  let reject: (error: Error) => void = () => {
+    throw new Error('Promise not initialized');
+  };
 
   const promise = new Promise<T>((_resolve, _reject) => {
     resolve = _resolve;
     reject = _reject;
   });
 
-  return { promise, resolve: resolve!, reject: reject! };
+  return { promise, resolve, reject };
 }
 
 /**
@@ -94,7 +98,7 @@ export async function retry<T>(
     }
   }
 
-  throw lastError!;
+  throw lastError || new Error('Retry failed with unknown error');
 }
 
 /**
@@ -148,7 +152,7 @@ export function withTimeout<T>(
  * Event emitter for testing async flows
  */
 export class TestEventEmitter<T extends Record<string, unknown[]>> {
-  private listeners = new Map<keyof T, Array<(...args: any[]) => void>>();
+  private listeners = new Map<keyof T, Array<(...args: unknown[]) => void>>();
   private eventHistory: Array<{ event: keyof T; args: unknown[]; timestamp: number }> = [];
 
   on<K extends keyof T>(event: K, listener: (...args: T[K]) => void): void {

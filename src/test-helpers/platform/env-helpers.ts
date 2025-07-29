@@ -95,7 +95,7 @@ export function createMockExecutionContext(): ExecutionContext {
     _promises: promises,
 
     // Add missing ExecutionContext properties
-    props: {} as any,
+    props: {} as Record<string, unknown>,
   };
 
   return ctx as ExecutionContext & { _promises: Promise<unknown>[] };
@@ -128,27 +128,29 @@ export function createMockDurableObjectNamespace(): MockDurableObjectNamespace {
     newUniqueId: vi.fn(() => {
       return {
         toString: () => `mock-id-${Date.now()}-${Math.random()}`,
-      } as any;
+      } as DurableObjectId;
     }),
 
     idFromName: vi.fn((name: string) => {
       return {
         toString: () => `mock-id-from-${name}`,
-      } as any;
+      } as DurableObjectId;
     }),
 
     idFromString: vi.fn((id: string) => {
       return {
         toString: () => id,
-      } as any;
+      } as DurableObjectId;
     }),
 
-    get: vi.fn((id: any) => {
+    get: vi.fn((id: DurableObjectId) => {
       const idString = id.toString();
       if (!stubs.has(idString)) {
         stubs.set(idString, createMockDurableObjectStub(idString));
       }
-      return stubs.get(idString)!;
+      const stub = stubs.get(idString);
+      if (!stub) throw new Error(`Stub not found for id: ${idString}`);
+      return stub;
     }),
 
     jurisdiction: vi.fn(() => {
@@ -161,7 +163,7 @@ export function createMockDurableObjectNamespace(): MockDurableObjectNamespace {
 }
 
 export interface MockDurableObjectStub {
-  id: any;
+  id: DurableObjectId;
   name?: string;
   fetch: ReturnType<typeof vi.fn>;
   connect: ReturnType<typeof vi.fn>;
@@ -185,13 +187,13 @@ function createMockDurableObjectStub(id: string): MockDurableObjectStub {
       }
 
       if (path === '/put' && request.method === 'POST') {
-        const { key, value } = (await request.json()) as any;
+        const { key, value } = (await request.json()) as { key: string; value: unknown };
         storage.set(key, value);
         return new Response(JSON.stringify({ success: true }));
       }
 
       if (path === '/delete' && request.method === 'POST') {
-        const { key } = (await request.json()) as any;
+        const { key } = (await request.json()) as { key: string };
         storage.delete(key);
         return new Response(JSON.stringify({ success: true }));
       }
@@ -206,7 +208,7 @@ function createMockDurableObjectStub(id: string): MockDurableObjectStub {
         send: vi.fn(),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
-      } as any;
+      } as unknown as WebSocket;
     }),
 
     id: { toString: () => id },
