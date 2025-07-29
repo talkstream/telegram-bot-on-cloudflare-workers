@@ -8,6 +8,10 @@ jobs:
   deploy-preview:
     runs-on: ubuntu-latest
     name: Deploy Preview
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
     environment:
       name: preview
       url: https://pr-${{ github.event.pull_request.number }}.wireframe-preview.pages.dev
@@ -31,6 +35,7 @@ jobs:
 
       - name: Create deployment status
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
