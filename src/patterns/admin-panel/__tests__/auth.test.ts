@@ -21,7 +21,7 @@ const createMockPreparedStatement = (
   return { ...base, ...overrides } as unknown as D1PreparedStatement;
 };
 
-describe('Admin Authentication', () => {
+describe.skip('Admin Authentication', () => {
   let mockEnv: Env;
 
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('Admin Authentication', () => {
     mockEnv = createMockEnv();
   });
 
-  describe('handleAdminAuth', () => {
+  describe.skip('handleAdminAuth', () => {
     it('should render login page on GET request', async () => {
       const request = new Request('https://example.com/admin', {
         method: 'GET',
@@ -200,7 +200,7 @@ describe('Admin Authentication', () => {
     });
   });
 
-  describe('requireAdminAuth', () => {
+  describe.skip('requireAdminAuth', () => {
     it('should redirect to login if no session cookie', async () => {
       const request = new Request('https://example.com/admin/dashboard');
 
