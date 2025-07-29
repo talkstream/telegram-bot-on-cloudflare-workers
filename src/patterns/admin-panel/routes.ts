@@ -7,6 +7,7 @@ import type { ExecutionContext } from '@cloudflare/workers-types';
 
 import { handleAdminAuth } from './handlers/auth';
 import { handleAdminDashboard } from './handlers/dashboard';
+import { handleAdminUsers } from './handlers/users';
 import { requireAdminAuth } from './middleware/auth';
 import type { AdminEnv, AdminRequest } from './types';
 
@@ -43,8 +44,8 @@ export async function handleAdminRoutes(
       return handleAdminLogout();
 
     // Add your custom routes here
-    // case '/admin/users':
-    //   return handleAdminUsers(authenticatedRequest, env);
+    case '/admin/users':
+      return handleAdminUsers(authenticatedRequest, env);
 
     default:
       return new Response('Not Found', { status: 404 });

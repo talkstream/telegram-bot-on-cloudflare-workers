@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ExecutionContext, D1PreparedStatement } from '@cloudflare/workers-types';
 
 import { handleAdminRoutes } from '../routes';
-import { createMockEnv } from '../../__tests__/utils/mock-env';
+import { createMockEnv } from '../../../__tests__/utils/mock-env';
 
 import type { Env } from '@/types/env';
 

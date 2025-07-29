@@ -3,7 +3,7 @@ import type { D1PreparedStatement } from '@cloudflare/workers-types';
 
 import { handleAdminAuth } from '../handlers/auth';
 import { requireAdminAuth } from '../middleware/auth';
-import { createMockEnv } from '../../__tests__/utils/mock-env';
+import { createMockEnv } from '../../../__tests__/utils/mock-env';
 
 import type { Env } from '@/types/env';
 

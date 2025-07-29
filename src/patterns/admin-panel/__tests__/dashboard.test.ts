@@ -15,7 +15,7 @@ describe('Admin Dashboard', () => {
     // Create mock environment
     mockEnv = {
       DB: {
-        prepare: vi.fn(),
+        prepare: vi.fn().mockReturnValue(createMockPreparedStatement()),
         dump: vi.fn(),
         batch: vi.fn(),
         exec: vi.fn(),
@@ -53,9 +53,11 @@ describe('Admin Dashboard', () => {
     // Mock database query for stats
     vi.mocked(mockEnv.DB.prepare).mockImplementation((query: string) => {
       if (query.includes('COUNT(*)')) {
-        return createMockPreparedStatement({ total: 42 });
+        return createMockPreparedStatement({
+          first: vi.fn().mockResolvedValue({ total: 42 }),
+        });
       }
-      return createMockPreparedStatement(null);
+      return createMockPreparedStatement();
     });
 
     const response = await handleAdminDashboard(mockRequest, mockEnv);
