@@ -3,7 +3,67 @@
  * Adapters for various web frameworks
  */
 
-import { PerformanceMonitor, type PerformanceMonitorConfig } from './performance-monitor';
+import type { Context, Next } from 'hono';
+
+import {
+  PerformanceMonitor,
+  type PerformanceMonitorConfig,
+  type OperationStats,
+} from './performance-monitor';
+
+// Express/Connect types
+interface ExpressRequest {
+  method: string;
+  path?: string;
+  url?: string;
+  headers: Record<string, string | string[] | undefined>;
+  ip?: string;
+  connection?: { remoteAddress?: string };
+}
+
+interface ExpressResponse {
+  end: (...args: unknown[]) => unknown;
+  statusCode: number;
+  headersSent: boolean;
+  setHeader: (name: string, value: string) => void;
+}
+
+type ExpressNext = () => void;
+
+// Koa types
+interface KoaContext {
+  method: string;
+  path: string;
+  status: number;
+  request: {
+    header: Record<string, string | string[] | undefined>;
+    ip: string;
+  };
+  set: (field: string, value: string) => void;
+}
+
+type KoaNext = () => Promise<void>;
+
+// Fastify types
+interface FastifyInstance {
+  addHook: (
+    name: string,
+    handler: (request: FastifyRequest, reply?: FastifyReply) => Promise<void>,
+  ) => void;
+}
+
+interface FastifyRequest {
+  method: string;
+  url: string;
+  routerPath?: string;
+  headers: Record<string, string | string[] | undefined>;
+  ip: string;
+  performanceTimer?: { stop: () => number };
+}
+
+interface FastifyReply {
+  statusCode: number;
+}
 
 export interface HttpMetrics {
   path: string;
@@ -16,6 +76,27 @@ export interface HttpMetrics {
   headers?: Record<string, string>;
 }
 
+interface SummaryStats {
+  totalRequests: number;
+  totalErrors: number;
+  errorRate: number;
+  avgDuration: number;
+  slowestOperation?: string;
+  slowestDuration?: number;
+  busiestOperation?: string;
+  busiestCount?: number;
+}
+
+interface PerformanceMemory {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+interface PerformanceWithMemory extends Performance {
+  memory: PerformanceMemory;
+}
+
 /**
  * Create Express/Connect middleware
  */
@@ -25,14 +106,14 @@ export function createExpressMiddleware(
 ) {
   const perfMonitor = monitor || new PerformanceMonitor(config);
 
-  return (req: any, res: any, next: any) => {
+  return (req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => {
     const timer = perfMonitor.startTimer();
     const operation = `${req.method} ${req.path || req.url}`;
 
     // Capture original end method
     const originalEnd = res.end;
 
-    res.end = function (...args: any[]) {
+    res.end = function (...args: unknown[]) {
       const duration = timer.stop();
 
       // Restore original method
@@ -77,7 +158,7 @@ export function createHonoMiddleware(
 ) {
   const perfMonitor = monitor || new PerformanceMonitor(config);
 
-  return async (c: any, next: any) => {
+  return async (c: Context, next: Next) => {
     const timer = perfMonitor.startTimer();
     const operation = `${c.req.method} ${c.req.path}`;
 
@@ -115,7 +196,7 @@ export function createKoaMiddleware(
 ) {
   const perfMonitor = monitor || new PerformanceMonitor(config);
 
-  return async (ctx: any, next: any) => {
+  return async (ctx: KoaContext, next: KoaNext) => {
     const timer = perfMonitor.startTimer();
     const operation = `${ctx.method} ${ctx.path}`;
 
@@ -153,12 +234,12 @@ export function createFastifyPlugin(
 ) {
   const perfMonitor = monitor || new PerformanceMonitor(config);
 
-  return async function performancePlugin(fastify: any) {
-    fastify.addHook('onRequest', async (request: any) => {
+  return async function performancePlugin(fastify: FastifyInstance) {
+    fastify.addHook('onRequest', async (request: FastifyRequest) => {
       request.performanceTimer = perfMonitor.startTimer();
     });
 
-    fastify.addHook('onResponse', async (request: any, reply: any) => {
+    fastify.addHook('onResponse', async (request: FastifyRequest, reply: FastifyReply) => {
       if (request.performanceTimer) {
         const duration = request.performanceTimer.stop();
         const operation = `${request.method} ${request.routerPath || request.url}`;
@@ -187,7 +268,7 @@ export function createFastifyPlugin(
 export function createStatsHandler(monitor?: PerformanceMonitor) {
   const perfMonitor = monitor || new PerformanceMonitor();
 
-  return (_req: any, res: any) => {
+  return (_req: unknown, res: ExpressResponse) => {
     const stats = perfMonitor.getStats();
 
     const response = {
@@ -218,7 +299,7 @@ export function createStatsHandler(monitor?: PerformanceMonitor) {
 /**
  * Calculate summary statistics
  */
-function calculateSummary(stats: any): any {
+function calculateSummary(stats: OperationStats[]): SummaryStats | null {
   if (!stats || !Array.isArray(stats) || stats.length === 0) {
     return null;
   }
@@ -273,7 +354,7 @@ export function getMemoryMetrics(): MemoryMetrics {
 
   // Fallback for browser environments
   if (typeof performance !== 'undefined' && 'memory' in performance) {
-    const memory = (performance as any).memory;
+    const memory = (performance as PerformanceWithMemory).memory;
     return {
       heapUsed: Math.round(memory.usedJSHeapSize / 1024 / 1024),
       heapTotal: Math.round(memory.totalJSHeapSize / 1024 / 1024),

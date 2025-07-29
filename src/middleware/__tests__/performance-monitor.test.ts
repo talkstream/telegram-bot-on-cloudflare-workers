@@ -5,7 +5,26 @@ import {
   TrackPerformance,
   getDefaultMonitor,
   resetDefaultMonitor,
+  type OperationStats,
 } from '../performance-monitor';
+
+// Helper to assert stats are not null
+function assertStats(
+  stats: OperationStats | OperationStats[] | null,
+): asserts stats is OperationStats {
+  expect(stats).toBeTruthy();
+  expect(stats).not.toBeNull();
+  expect(Array.isArray(stats)).toBe(false);
+}
+
+// Helper to assert stats array
+function assertStatsArray(
+  stats: OperationStats | OperationStats[] | null,
+): asserts stats is OperationStats[] {
+  expect(stats).toBeTruthy();
+  expect(stats).not.toBeNull();
+  expect(Array.isArray(stats)).toBe(true);
+}
 
 describe('PerformanceMonitor', () => {
   let monitor: PerformanceMonitor;
@@ -66,10 +85,10 @@ describe('PerformanceMonitor', () => {
       expect(result).toBe('success');
 
       const stats = monitor.getStats('test-operation');
-      expect(stats).toBeTruthy();
-      expect(stats!.count).toBe(1);
-      expect(stats!.successCount).toBe(1);
-      expect(stats!.errorCount).toBe(0);
+      assertStats(stats);
+      expect(stats.count).toBe(1);
+      expect(stats.successCount).toBe(1);
+      expect(stats.errorCount).toBe(0);
     });
 
     it('should track failed operations', async () => {
@@ -80,9 +99,10 @@ describe('PerformanceMonitor', () => {
       ).rejects.toThrow('Test error');
 
       const stats = monitor.getStats('failing-operation');
-      expect(stats!.count).toBe(1);
-      expect(stats!.successCount).toBe(0);
-      expect(stats!.errorCount).toBe(1);
+      assertStats(stats);
+      expect(stats.count).toBe(1);
+      expect(stats.successCount).toBe(0);
+      expect(stats.errorCount).toBe(1);
     });
 
     it('should track synchronous operations', async () => {
@@ -90,7 +110,8 @@ describe('PerformanceMonitor', () => {
 
       expect(result).toBe(42);
       const stats = monitor.getStats('sync-operation');
-      expect(stats!.count).toBe(1);
+      assertStats(stats);
+      expect(stats.count).toBe(1);
     });
 
     it('should handle slow operations', async () => {
@@ -143,13 +164,13 @@ describe('PerformanceMonitor', () => {
       }
 
       const stats = monitor.getStats('stats-test');
-      expect(stats).toBeTruthy();
-      expect(stats!.count).toBe(5);
-      expect(stats!.minDuration).toBeGreaterThanOrEqual(10);
-      expect(stats!.maxDuration).toBeGreaterThanOrEqual(50);
-      expect(stats!.avgDuration).toBeGreaterThanOrEqual(30);
-      expect(stats!.p50).toBeGreaterThanOrEqual(30);
-      expect(stats!.p95).toBeGreaterThanOrEqual(50);
+      assertStats(stats);
+      expect(stats.count).toBe(5);
+      expect(stats.minDuration).toBeGreaterThanOrEqual(10);
+      expect(stats.maxDuration).toBeGreaterThanOrEqual(50);
+      expect(stats.avgDuration).toBeGreaterThanOrEqual(30);
+      expect(stats.p50).toBeGreaterThanOrEqual(30);
+      expect(stats.p95).toBeGreaterThanOrEqual(50);
     });
 
     it('should return all stats when no operation specified', async () => {
@@ -157,9 +178,9 @@ describe('PerformanceMonitor', () => {
       await monitor.trackOperation('op2', () => Promise.resolve());
 
       const allStats = monitor.getStats();
-      expect(Array.isArray(allStats)).toBe(true);
+      assertStatsArray(allStats);
       expect(allStats).toHaveLength(2);
-      expect(allStats!.map((s) => s.operation).sort()).toEqual(['op1', 'op2']);
+      expect(allStats.map((s) => s.operation).sort()).toEqual(['op1', 'op2']);
     });
 
     it('should return null for non-existent operation', () => {
@@ -215,8 +236,8 @@ describe('PerformanceMonitor', () => {
       await scoped.trackOperation('users', () => Promise.resolve());
 
       const stats = monitor.getStats('api.users');
-      expect(stats).toBeTruthy();
-      expect(stats!.operation).toBe('api.users');
+      assertStats(stats);
+      expect(stats.operation).toBe('api.users');
     });
 
     it('should filter scoped stats', async () => {
@@ -227,9 +248,9 @@ describe('PerformanceMonitor', () => {
       await dbScope.trackOperation('query', () => Promise.resolve());
 
       const apiStats = apiScope.getStats();
-      expect(Array.isArray(apiStats)).toBe(true);
+      assertStatsArray(apiStats);
       expect(apiStats).toHaveLength(1);
-      expect(apiStats![0].operation).toBe('api.users');
+      expect(apiStats[0].operation).toBe('api.users');
     });
   });
 
@@ -258,8 +279,8 @@ describe('PerformanceMonitor', () => {
       expect(result).toBe('data');
 
       const stats = defaultMon.getStats('TestService.fetchData');
-      expect(stats).toBeTruthy();
-      expect(stats!.count).toBe(1);
+      assertStats(stats);
+      expect(stats.count).toBe(1);
 
       await service.customMethod();
       const customStats = defaultMon.getStats('custom-operation');

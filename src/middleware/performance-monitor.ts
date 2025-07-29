@@ -121,7 +121,7 @@ export class PerformanceMonitor {
       }
     }
 
-    return result!;
+    return result;
   }
 
   /**
@@ -134,7 +134,11 @@ export class PerformanceMonitor {
       this.metrics.set(operation, []);
     }
 
-    const operationMetrics = this.metrics.get(operation)!;
+    const operationMetrics = this.metrics.get(operation);
+    if (!operationMetrics) {
+      // This should not happen as we just set it, but TypeScript doesn't know that
+      return;
+    }
     operationMetrics.push(metric);
 
     // Keep only recent metrics
@@ -289,7 +293,10 @@ export class ScopedPerformanceMonitor {
 }
 
 // Singleton instance storage
-const globalStore = globalThis as any;
+interface GlobalWithMonitor {
+  [key: symbol]: PerformanceMonitor | undefined;
+}
+const globalStore = globalThis as GlobalWithMonitor;
 const MONITOR_KEY = Symbol.for('__wireframe_performance_monitor');
 
 /**
@@ -313,7 +320,7 @@ export function resetDefaultMonitor(): void {
  * Decorator for tracking method performance
  */
 export function TrackPerformance(operation?: string) {
-  return function (target: any, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
+  return function (target: object, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
     // Handle different decorator invocation patterns
     if (!descriptor) {
       // This might be a newer decorator format or property decorator
@@ -330,7 +337,7 @@ export function TrackPerformance(operation?: string) {
     const methodName = String(propertyKey);
     const operationName = operation || `${className}.${methodName}`;
 
-    descriptor.value = async function (...args: any[]) {
+    descriptor.value = async function (...args: unknown[]) {
       const monitor = getDefaultMonitor();
       return monitor.trackOperation(operationName, () => originalMethod.apply(this, args), {
         methodName,
