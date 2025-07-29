@@ -36,7 +36,7 @@ jobs:
       - name: Check for Conflicts
         run: |
           # Check if PR has conflicts with other open PRs
-          gh pr list --state open --json number,files -q '.[] | select(.number != ${{ github.event.pull_request.number }})' > other_prs.json
+          gh pr list --state open --json number,files | jq '[.[] | select(.number != ${{ github.event.pull_request.number }})]' > other_prs.json
 
           # Get files changed in this PR
           gh pr view ${{ github.event.pull_request.number }} --json files -q '.files[].path' > this_pr_files.txt
