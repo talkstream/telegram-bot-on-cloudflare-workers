@@ -183,7 +183,7 @@ export class RequestCache {
    */
   private log(message: string): void {
     if (this.options.debug) {
-      console.log(`[RequestCache] ${message}`);
+      console.info(`[RequestCache] ${message}`);
     }
   }
 }
@@ -234,7 +234,7 @@ export class RequestCacheFactory {
  * ```
  */
 export function Cached(namespace?: string) {
-  return function (_target: any, propertyKey: string, descriptor?: PropertyDescriptor) {
+  return function (_target: unknown, propertyKey: string, descriptor?: PropertyDescriptor) {
     if (!descriptor) {
       throw new Error('@Cached decorator can only be used on methods');
     }
@@ -245,7 +245,7 @@ export function Cached(namespace?: string) {
       throw new Error('@Cached decorator can only be used on methods');
     }
 
-    descriptor.value = async function (this: any, ...args: any[]) {
+    descriptor.value = async function (this: { _requestCache?: RequestCache }, ...args: unknown[]) {
       // Get or create cache instance
       if (!this._requestCache) {
         this._requestCache = new RequestCache({ namespace });

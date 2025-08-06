@@ -48,7 +48,7 @@ describe('RequestCache', () => {
       expect(compute).toHaveBeenCalledTimes(1);
 
       // Resolve the computation
-      resolveCompute!('computed value');
+      resolveCompute?.('computed value');
 
       const [result1, result2] = await Promise.all([promise1, promise2]);
 

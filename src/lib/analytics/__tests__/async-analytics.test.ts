@@ -9,13 +9,13 @@ import {
 
 describe('AsyncAnalytics', () => {
   let analytics: AsyncAnalytics;
-  let mockCtx: any;
-  let waitUntilCalls: any[] = [];
+  let mockCtx: { waitUntil: ReturnType<typeof vi.fn> };
+  let waitUntilCalls: Promise<unknown>[] = [];
 
   beforeEach(() => {
     waitUntilCalls = [];
     mockCtx = {
-      waitUntil: vi.fn((promise: Promise<any>) => {
+      waitUntil: vi.fn((promise: Promise<unknown>) => {
         waitUntilCalls.push(promise);
       }),
       passThroughOnException: vi.fn(),
@@ -166,7 +166,7 @@ describe('AsyncAnalytics', () => {
     });
 
     it('should skip sending when no endpoint', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
       analytics.track('test_event');
 
@@ -186,8 +186,8 @@ describe('AsyncAnalytics', () => {
 
 describe('CloudflareAnalytics', () => {
   let analytics: CloudflareAnalytics;
-  let mockCtx: any;
-  let mockAnalyticsEngine: any;
+  let mockCtx: { waitUntil: ReturnType<typeof vi.fn> };
+  let mockAnalyticsEngine: { writeDataPoint: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockCtx = {
@@ -268,7 +268,7 @@ describe('createAnalyticsMiddleware', () => {
       track: vi.fn(),
     };
 
-    const middleware = createAnalyticsMiddleware(() => mockAnalytics as any);
+    const middleware = createAnalyticsMiddleware(() => mockAnalytics as AsyncAnalytics);
 
     const ctx = {
       request: {
@@ -300,7 +300,7 @@ describe('createAnalyticsMiddleware', () => {
       track: vi.fn(),
     };
 
-    const middleware = createAnalyticsMiddleware(() => mockAnalytics as any);
+    const middleware = createAnalyticsMiddleware(() => mockAnalytics as AsyncAnalytics);
 
     const ctx = {
       request: {
@@ -327,7 +327,7 @@ describe('createAnalyticsMiddleware', () => {
 
 describe('Production Scenarios', () => {
   let analytics: AsyncAnalytics;
-  let mockCtx: any;
+  let mockCtx: { waitUntil: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockCtx = {

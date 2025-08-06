@@ -12,7 +12,7 @@ import type { ExecutionContext } from '@cloudflare/workers-types';
 
 export interface AnalyticsEvent {
   event: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   timestamp?: number;
   userId?: string | number;
   sessionId?: string;
@@ -249,7 +249,9 @@ export class AsyncAnalytics {
    */
   protected log(message: string): void {
     if (this.options.debug) {
-      console.log(`[AsyncAnalytics] ${message}`);
+      // Use console.info for debug messages (allowed by ESLint)
+
+      console.info(`[AsyncAnalytics] ${message}`);
     }
   }
 }
@@ -290,6 +292,14 @@ export class CloudflareAnalytics extends AsyncAnalytics {
   }
 }
 
+// Environment interface
+interface AnalyticsEnvironment {
+  ANALYTICS_ENDPOINT?: string;
+  ANALYTICS_API_KEY?: string;
+  ANALYTICS_ENGINE?: unknown;
+  DEBUG?: string;
+}
+
 /**
  * Factory for creating analytics instances
  */
@@ -297,7 +307,11 @@ export class AnalyticsFactory {
   /**
    * Create analytics instance based on environment
    */
-  static create(ctx: ExecutionContext, env: any, options?: AsyncAnalyticsOptions): AsyncAnalytics {
+  static create(
+    ctx: ExecutionContext,
+    env: AnalyticsEnvironment,
+    options?: AsyncAnalyticsOptions,
+  ): AsyncAnalytics {
     // Use Cloudflare Analytics Engine if available
     if (env.ANALYTICS_ENGINE) {
       return new CloudflareAnalytics(ctx, env.ANALYTICS_ENGINE, options);
@@ -342,10 +356,10 @@ export class AnalyticsFactory {
  * ```
  */
 export function TrackPerformance(metricName: string) {
-  return function (_target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (_target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (this: any, ...args: any[]) {
+    descriptor.value = async function (this: { analytics?: AsyncAnalytics }, ...args: unknown[]) {
       const start = Date.now();
 
       try {
@@ -380,8 +394,17 @@ export function TrackPerformance(metricName: string) {
 /**
  * Middleware for automatic request tracking
  */
-export function createAnalyticsMiddleware(getAnalytics: (ctx: any) => AsyncAnalytics) {
-  return async (ctx: any, next: () => Promise<void>) => {
+// Middleware context type
+interface MiddlewareContext {
+  request?: Request;
+  response?: Response;
+  [key: string]: unknown;
+}
+
+export function createAnalyticsMiddleware(
+  getAnalytics: (ctx: MiddlewareContext) => AsyncAnalytics,
+) {
+  return async (ctx: MiddlewareContext, next: () => Promise<void>) => {
     const analytics = getAnalytics(ctx);
     const start = Date.now();
 
@@ -391,8 +414,8 @@ export function createAnalyticsMiddleware(getAnalytics: (ctx: any) => AsyncAnaly
       // Track request success
       const duration = Date.now() - start;
       analytics.track('request_completed', {
-        path: ctx.request.url,
-        method: ctx.request.method,
+        path: ctx.request?.url || 'unknown',
+        method: ctx.request?.method || 'unknown',
         status: ctx.response?.status || 200,
         duration,
       });
@@ -400,8 +423,8 @@ export function createAnalyticsMiddleware(getAnalytics: (ctx: any) => AsyncAnaly
       // Track request error
       const duration = Date.now() - start;
       analytics.track('request_error', {
-        path: ctx.request.url,
-        method: ctx.request.method,
+        path: ctx.request?.url || 'unknown',
+        method: ctx.request?.method || 'unknown',
         duration,
         error: error instanceof Error ? error.message : String(error),
       });
