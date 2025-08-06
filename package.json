@@ -31,7 +31,9 @@
     "db:types:watch": "tsx src/cli/generate-db-types.ts --watch",
     "secrets:list": "wrangler secret list --env production",
     "tail": "wrangler tail --env production",
-    "contribute": "tsx src/cli/contribute.ts"
+    "contribute": "tsx src/cli/contribute.ts",
+    "docs:generate": "node scripts/generate-claude-setup.js",
+    "docs:check": "node scripts/generate-claude-setup.js --check"
   },
   "repository": {
     "type": "git",
@@ -66,8 +68,8 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.60",
-    "@google/generative-ai": "^0.24.1",
-    "@sentry/cloudflare": "^9.41.0",
+    "@google/genai": "^1.12.0",
+    "@sentry/cloudflare": "^10.2.0",
     "date-fns": "^4.1.0",
     "grammy": "^1.31.0",
     "hono": "^4.6.21",

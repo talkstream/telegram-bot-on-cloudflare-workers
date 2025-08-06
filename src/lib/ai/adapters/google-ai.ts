@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 import type {
   CompletionRequest,
@@ -21,8 +21,7 @@ export interface GoogleAIConfig {
  * Adapter for Google Gemini AI
  */
 export class GoogleAIProvider extends BaseAIProvider {
-  private genAI: GoogleGenerativeAI;
-  private model: GenerativeModel;
+  private genAI: GoogleGenAI;
   private modelName: string;
 
   constructor(config: GoogleAIConfig, tier?: 'free' | 'paid') {
@@ -35,8 +34,7 @@ export class GoogleAIProvider extends BaseAIProvider {
     });
 
     this.modelName = config.model || 'gemini-2.5-flash';
-    this.genAI = new GoogleGenerativeAI(config.apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: this.modelName });
+    this.genAI = new GoogleGenAI({ apiKey: config.apiKey });
   }
 
   async doComplete(request: CompletionRequest): Promise<CompletionResponse> {
@@ -44,10 +42,17 @@ export class GoogleAIProvider extends BaseAIProvider {
       // Convert messages to Gemini format
       const prompt = this.messagesToPrompt(request.messages);
 
-      // Generate content
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      // Generate content using new API
+      const response = await this.genAI.models.generateContent({
+        model: this.modelName,
+        contents: prompt,
+        config: {
+          maxOutputTokens: request.options?.maxTokens || 1000,
+          temperature: request.options?.temperature || 0.7,
+        },
+      });
+
+      const text = response.text || '';
 
       // Extract usage if available
       const usage: UsageMetrics = {
@@ -55,12 +60,15 @@ export class GoogleAIProvider extends BaseAIProvider {
         outputUnits: 0,
       };
 
-      // Try to get usage metadata if available
-      if (response.usageMetadata) {
-        usage.inputUnits = response.usageMetadata.promptTokenCount || 0;
-        usage.outputUnits = response.usageMetadata.candidatesTokenCount || 0;
-        usage.totalUnits = response.usageMetadata.totalTokenCount || 0;
-      }
+      // Note: @google/genai v1.12.0 has a known issue where usageMetadata
+      // is not available in generateContent responses.
+      // It's only available in generateContentStream.
+      // For now, we'll set defaults. See: https://github.com/googleapis/nodejs-vertexai/issues/140
+
+      // TODO: When fixed, use: response.usageMetadata
+      // usage.inputUnits = response.usageMetadata?.promptTokenCount || 0;
+      // usage.outputUnits = response.usageMetadata?.candidatesTokenCount || 0;
+      // usage.totalUnits = response.usageMetadata?.totalTokenCount || 0;
 
       logger.info('Google AI call successful');
 
@@ -85,10 +93,10 @@ export class GoogleAIProvider extends BaseAIProvider {
     }
 
     try {
-      // Validate by attempting to create a model
-      const testAI = new GoogleGenerativeAI(config.config.apiKey as string);
-      testAI.getGenerativeModel({ model: this.modelName });
-      return true;
+      // Validate by attempting to create a client
+      const testAI = new GoogleGenAI({ apiKey: config.config.apiKey as string });
+      // Just check if the client was created successfully
+      return !!testAI.models;
     } catch {
       return false;
     }

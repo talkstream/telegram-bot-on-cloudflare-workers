@@ -407,4 +407,4 @@ If setup fails at any point:
 3. Save partial configuration for retry
 4. Offer to start over or continue from failure point
 
-<!-- CONFIG_CHECKSUM:7c145d8f9dee3cf49ba2675150fcb616 -->
+<!-- CONFIG_CHECKSUM:2c8b04b6e6ec9fb3ad5047822ff22662 -->
