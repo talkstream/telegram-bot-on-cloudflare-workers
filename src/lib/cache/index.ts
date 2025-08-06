@@ -22,5 +22,13 @@ export {
 
 export { CachedService, CachedRepository, Cached, createCachedProxy } from './cached-service';
 
+export {
+  RequestCache,
+  RequestCacheFactory,
+  Cached as CachedRequest,
+  type CacheEntry,
+  type RequestCacheOptions,
+} from './request-cache';
+
 // Re-export examples for documentation
 export type { CachedUserService } from './examples/cached-user-service';
