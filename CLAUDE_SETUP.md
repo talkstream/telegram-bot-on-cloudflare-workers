@@ -36,6 +36,7 @@ Show progress:
 
 Use GitMCP to clone the repository
 
+
 Show progress:
 
 ```
@@ -46,6 +47,7 @@ Show progress:
 ### 1.2 Environment Check
 
 Verify Node.js and npm versions
+
 
 **⚠️ This step is critical and must succeed to continue.**
 
@@ -85,7 +87,7 @@ If missing, provide installation instructions:
 4. Choose a username (must end with 'bot', e.g., 'myawesome_bot')
 5. Copy the token you receive
 
-📝 Enter your telegram bot token:
+📝 Enter your telegram bot token: 
 ```
 
 Validate the format: `^\d{10}:[A-Za-z0-9_-]{35}$`
@@ -100,7 +102,7 @@ Example: `1234567890:ABCdefGHIjklmNOPqrstUVwxyz1234567890`
 2. Start the bot
 3. It will show your User ID
 
-📝 Enter your bot owner ids:
+📝 Enter your bot owner ids: 
 ```
 
 Validate the format: `^\d+(,\d+)*$`
@@ -118,7 +120,7 @@ Available options:
 4. DeepSeek
 5. Cloudflare AI
 
-Choose option [1-5]:
+Choose option [1-5]: 
 ```
 
 If user chooses a provider, help them get the API key:
@@ -136,7 +138,7 @@ If user chooses a provider, help them get the API key:
 
 Get it from: https://sentry.io/settings/YOUR-ORG/projects/YOUR-PROJECT/keys/
 
-📝 SENTRY_DSN (or press Enter to skip):
+📝 SENTRY_DSN (or press Enter to skip): 
 ```
 
 Validate the format: `^https://[a-f0-9]+@[a-z0-9.-]+/\d+$`
@@ -148,7 +150,7 @@ If yes:
 Please provide your Sentry DSN:
 (Get it from https://sentry.io/settings/YOUR-ORG/projects/YOUR-PROJECT/keys/)
 
-📝 Sentry DSN (or press Enter to skip):
+📝 Sentry DSN (or press Enter to skip): 
 ```
 
 ## ☁️ Phase 3: Cloudflare Setup
@@ -165,7 +167,9 @@ wrangler login
 
 Create SQLite database at the edge
 
+
 ### 3.3 Create KV Namespaces
+
 
 Show progress:
 
@@ -254,7 +258,9 @@ npm run dev
 
 ### 6.3 Set Webhook
 
+
 ### 6.4 Test Bot
+
 
 ### 6.4 Test Bot
 
@@ -359,7 +365,7 @@ For each phase, implement proper error handling:
    • This might be due to:
    • • Missing environment variables
    • • Database not properly initialized
-   •
+   • 
    • Run 'npm run test:watch' to debug
    ```
 

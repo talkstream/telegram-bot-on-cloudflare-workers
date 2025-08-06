@@ -328,7 +328,7 @@ function getDependencies(options: ProjectOptions): Record<string, string> {
       deps['@anthropic-ai/sdk'] = '^1.0.0';
       break;
     case 'google':
-      deps['@google/generative-ai'] = '^0.24.0';
+      deps['@google/genai'] = '^1.12.0';
       break;
   }
 

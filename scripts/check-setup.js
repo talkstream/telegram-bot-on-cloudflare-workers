@@ -94,7 +94,7 @@ try {
   const deps = Object.keys(pkg.dependencies || {});
   const devDeps = Object.keys(pkg.devDependencies || {});
 
-  const requiredDeps = ['grammy', 'hono', 'zod', '@google/generative-ai'];
+  const requiredDeps = ['grammy', 'hono', 'zod', '@google/genai'];
   const requiredDevDeps = ['typescript', 'vitest', 'wrangler', '@cloudflare/workers-types'];
 
   requiredDeps.forEach((dep) => {
