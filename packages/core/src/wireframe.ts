@@ -5,7 +5,8 @@
 import { EventBus } from './events';
 import { Registry } from './registry';
 import { PluginManager } from './plugins';
-import type { Config, Bot, MessageHandler, Connector, ConnectorType } from './interfaces';
+import type { Config, Bot, MessageHandler, Connector } from './interfaces';
+import { ConnectorType } from './interfaces';
 
 export class Wireframe implements Bot {
   private eventBus: EventBus;
@@ -132,7 +133,7 @@ export class Wireframe implements Bot {
   get ai(): any {
     const connector = this.getConnector(ConnectorType.AI);
     return connector || {
-      async complete(prompt: string): Promise<string> {
+      async complete(_prompt: string): Promise<string> {
         throw new Error('No AI connector configured');
       }
     };
@@ -144,7 +145,7 @@ export class Wireframe implements Bot {
   get messaging(): any {
     const connector = this.getConnector(ConnectorType.MESSAGING);
     return connector || {
-      async sendMessage(chatId: string, text: string): Promise<void> {
+      async sendMessage(_chatId: string, _text: string): Promise<void> {
         throw new Error('No messaging connector configured');
       }
     };

@@ -14,7 +14,7 @@ export interface PackageInfo {
 }
 
 export class Registry {
-  private packages: Map<string, PackageInfo> = new Map();
+  // Removed unused packages map
   private instances: Map<string, Connector | Plugin> = new Map();
   private loaders: Map<string, () => Promise<unknown>> = new Map();
 

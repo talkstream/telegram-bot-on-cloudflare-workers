@@ -30,7 +30,7 @@ export const addCommand = new Command('add')
 
     try {
       // Prepare package names
-      const packageNames = packages.map(pkg => {
+      const packageNames = packages.map((pkg: string) => {
         if (pkg.startsWith('@wireframe/')) {
           return pkg
         }
@@ -55,8 +55,8 @@ export const addCommand = new Command('add')
         console.log(chalk.dim('Example:'))
         console.log(chalk.dim(`
 export default defineConfig({
-  connectors: [${packages.filter(p => !options.plugin).map(p => `'${p}'`).join(', ')}],
-  plugins: [${options.plugin ? packages.map(p => `'${p}'`).join(', ') : ''}]
+  connectors: [${packages.filter((_p: string) => !options.plugin).map((p: string) => `'${p}'`).join(', ')}],
+  plugins: [${options.plugin ? packages.map((p: string) => `'${p}'`).join(', ') : ''}]
 })`))
       }
 

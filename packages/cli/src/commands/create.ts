@@ -4,11 +4,7 @@ import chalk from 'chalk'
 import ora from 'ora'
 import fs from 'fs-extra'
 import path from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// Using ES modules - no need for __dirname
 
 export const createCommand = new Command('create')
   .description('Create a new Wireframe bot')
@@ -116,13 +112,13 @@ export const createCommand = new Command('create')
 
       // Add connector dependencies
       if (config.messaging) {
-        packageJson.dependencies[`@wireframe/connector-${config.messaging}`] = '^2.0.0-alpha'
+        (packageJson.dependencies as any)[`@wireframe/connector-${config.messaging}`] = '^2.0.0-alpha'
       }
       if (config.ai) {
-        packageJson.dependencies[`@wireframe/connector-${config.ai}`] = '^2.0.0-alpha'
+        (packageJson.dependencies as any)[`@wireframe/connector-${config.ai}`] = '^2.0.0-alpha'
       }
       if (config.cloud) {
-        packageJson.dependencies[`@wireframe/connector-${config.cloud}`] = '^2.0.0-alpha'
+        (packageJson.dependencies as any)[`@wireframe/connector-${config.cloud}`] = '^2.0.0-alpha'
       }
 
       await fs.writeJson(path.join(targetDir, 'package.json'), packageJson, { spaces: 2 })
