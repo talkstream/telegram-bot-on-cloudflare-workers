@@ -3,35 +3,35 @@
  * Example implementation showing user list and management
  */
 
-import { renderAdminLayout } from '../templates/layout';
-import type { AdminRequest, AdminEnv } from '../types';
+import { renderAdminLayout } from '../templates/layout'
+import type { AdminEnv, AdminRequest } from '../types'
 
 export async function handleAdminUsers(request: AdminRequest, env: AdminEnv): Promise<Response> {
-  const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') || '1');
-  const limit = 20;
-  const offset = (page - 1) * limit;
+  const url = new URL(request.url)
+  const page = parseInt(url.searchParams.get('page') || '1')
+  const limit = 20
+  const offset = (page - 1) * limit
 
-  let totalUsers = 0;
+  let totalUsers = 0
   let users: Array<{
-    telegram_id: number;
-    username?: string;
-    first_name?: string;
-    last_name?: string;
-    created_at?: string;
-    is_active?: number;
-  }> = [];
+    telegram_id: number
+    username?: string
+    first_name?: string
+    last_name?: string
+    created_at?: string
+    is_active?: number
+  }> = []
 
   // Fetch users from database if available
   if (env.DB) {
     try {
       // Get total count
       const countResult = await env.DB.prepare('SELECT COUNT(*) as total FROM users').first<{
-        total: number;
-      }>();
+        total: number
+      }>()
 
       if (countResult) {
-        totalUsers = countResult.total;
+        totalUsers = countResult.total
       }
 
       // Get users with pagination
@@ -41,27 +41,27 @@ export async function handleAdminUsers(request: AdminRequest, env: AdminEnv): Pr
         FROM users
         ORDER BY created_at DESC
         LIMIT ? OFFSET ?
-      `,
+      `
       )
         .bind(limit, offset)
         .all<{
-          telegram_id: number;
-          username?: string;
-          first_name?: string;
-          last_name?: string;
-          created_at?: string;
-          is_active?: number;
-        }>();
+          telegram_id: number
+          username?: string
+          first_name?: string
+          last_name?: string
+          created_at?: string
+          is_active?: number
+        }>()
 
       if (usersResult) {
-        users = usersResult.results;
+        users = usersResult.results
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error('Failed to fetch users:', error)
     }
   }
 
-  const totalPages = Math.ceil(totalUsers / limit);
+  const totalPages = Math.ceil(totalUsers / limit)
 
   const content = `
     <h1 class="page-title">Users Management</h1>
@@ -87,7 +87,7 @@ export async function handleAdminUsers(request: AdminRequest, env: AdminEnv): Pr
             users.length > 0
               ? users
                   .map(
-                    (user) => `
+                    user => `
             <tr>
               <td>${user.telegram_id}</td>
               <td>${user.username || '-'}</td>
@@ -98,7 +98,7 @@ export async function handleAdminUsers(request: AdminRequest, env: AdminEnv): Pr
                 <button class="button small" onclick="alert('View user ${user.telegram_id}')">View</button>
               </td>
             </tr>
-          `,
+          `
                   )
                   .join('')
               : '<tr><td colspan="6" style="text-align: center;">No users found</td></tr>'
@@ -154,19 +154,19 @@ export async function handleAdminUsers(request: AdminRequest, env: AdminEnv): Pr
         font-size: 14px;
       }
     </style>
-  `;
+  `
 
   return new Response(
     renderAdminLayout({
       title: 'Users',
       content,
       activeMenu: 'users',
-      adminId: request.adminId,
+      adminId: request.adminId
     }),
     {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
-    },
-  );
+        'Content-Type': 'text/html; charset=utf-8'
+      }
+    }
+  )
 }

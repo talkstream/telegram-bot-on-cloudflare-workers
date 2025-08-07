@@ -3,31 +3,31 @@
  * Bridges the existing SessionService with the new connector architecture
  */
 
-import type { EventBus } from '../../core/events/event-bus';
-import type { UserSession, SessionOptions } from '../../services/session-service';
-import type { MultiLayerCache } from '../../lib/multi-layer-cache';
-import { SessionService } from '../../services/session-service';
-import { logger } from '../../lib/logger';
+import type { EventBus } from '../../core/events/event-bus'
+import { logger } from '../../lib/logger'
+import type { MultiLayerCache } from '../../lib/multi-layer-cache'
+import type { SessionOptions, UserSession } from '../../services/session-service'
+import { SessionService } from '../../services/session-service'
 
-import type { IKeyValueStore } from '@/core/interfaces/storage';
-import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints'
+import type { IKeyValueStore } from '@/core/interfaces/storage'
 
 export interface SessionServiceConfig {
-  sessionsKv: IKeyValueStore;
-  constraints?: ResourceConstraints;
-  cache?: MultiLayerCache;
+  sessionsKv: IKeyValueStore
+  constraints?: ResourceConstraints
+  cache?: MultiLayerCache
 }
 
 export class SessionServiceConnector {
-  private sessionService: SessionService;
+  private sessionService: SessionService
 
   constructor(
     private eventBus: EventBus,
-    config: SessionServiceConfig,
+    config: SessionServiceConfig
   ) {
     // SessionService now uses ResourceConstraints directly
-    this.sessionService = new SessionService(config.sessionsKv, config.constraints, config.cache);
-    this.setupEventHandlers();
+    this.sessionService = new SessionService(config.sessionsKv, config.constraints, config.cache)
+    this.setupEventHandlers()
   }
 
   /**
@@ -35,117 +35,117 @@ export class SessionServiceConnector {
    */
   private setupEventHandlers(): void {
     // Handle session retrieval
-    this.eventBus.on('session:get', async (event) => {
+    this.eventBus.on('session:get', async event => {
       const { userId, requestId } = event.payload as {
-        userId: number;
-        requestId: string;
-      };
+        userId: number
+        requestId: string
+      }
 
       try {
-        const session = await this.sessionService.getSession(userId);
+        const session = await this.sessionService.getSession(userId)
 
         // Emit success event
         this.eventBus.emit(
           'session:get:success',
           {
             requestId,
-            session,
+            session
           },
-          'SessionServiceConnector',
-        );
+          'SessionServiceConnector'
+        )
       } catch (error) {
         // Emit error event
         this.eventBus.emit(
           'session:get:error',
           {
             requestId,
-            error: error instanceof Error ? error.message : 'Failed to get session',
+            error: error instanceof Error ? error.message : 'Failed to get session'
           },
-          'SessionServiceConnector',
-        );
+          'SessionServiceConnector'
+        )
 
-        logger.error('Failed to get session', { error, userId, requestId });
+        logger.error('Failed to get session', { error, userId, requestId })
       }
-    });
+    })
 
     // Handle session save
-    this.eventBus.on('session:save', async (event) => {
+    this.eventBus.on('session:save', async event => {
       const { session, options, requestId } = event.payload as {
-        session: UserSession;
-        options?: SessionOptions;
-        requestId: string;
-      };
+        session: UserSession
+        options?: SessionOptions
+        requestId: string
+      }
 
       try {
-        await this.sessionService.saveSession(session, options);
+        await this.sessionService.saveSession(session, options)
 
         // Emit success event
         this.eventBus.emit(
           'session:save:success',
           {
             requestId,
-            userId: session.userId,
+            userId: session.userId
           },
-          'SessionServiceConnector',
-        );
+          'SessionServiceConnector'
+        )
       } catch (error) {
         // Emit error event
         this.eventBus.emit(
           'session:save:error',
           {
             requestId,
-            error: error instanceof Error ? error.message : 'Failed to save session',
+            error: error instanceof Error ? error.message : 'Failed to save session'
           },
-          'SessionServiceConnector',
-        );
+          'SessionServiceConnector'
+        )
 
-        logger.error('Failed to save session', { error, session, requestId });
+        logger.error('Failed to save session', { error, session, requestId })
       }
-    });
+    })
 
     // Handle session deletion
-    this.eventBus.on('session:delete', async (event) => {
+    this.eventBus.on('session:delete', async event => {
       const { userId, requestId } = event.payload as {
-        userId: number;
-        requestId: string;
-      };
+        userId: number
+        requestId: string
+      }
 
       try {
-        await this.sessionService.deleteSession(userId);
+        await this.sessionService.deleteSession(userId)
 
         // Emit success event
         this.eventBus.emit(
           'session:delete:success',
           {
             requestId,
-            userId,
+            userId
           },
-          'SessionServiceConnector',
-        );
+          'SessionServiceConnector'
+        )
       } catch (error) {
         // Emit error event
         this.eventBus.emit(
           'session:delete:error',
           {
             requestId,
-            error: error instanceof Error ? error.message : 'Failed to delete session',
+            error: error instanceof Error ? error.message : 'Failed to delete session'
           },
-          'SessionServiceConnector',
-        );
+          'SessionServiceConnector'
+        )
 
-        logger.error('Failed to delete session', { error, userId, requestId });
+        logger.error('Failed to delete session', { error, userId, requestId })
       }
-    });
+    })
 
     // Handle session touch (update last activity)
-    this.eventBus.on('session:touch', async (event) => {
+    this.eventBus.on('session:touch', async event => {
       const { userId, requestId } = event.payload as {
-        userId: number;
-        requestId?: string;
-      };
+        userId: number
+        requestId?: string
+      }
 
       try {
-        await this.sessionService.touchSession(userId);
+        await this.sessionService.touchSession(userId)
 
         // Emit success event if requestId provided
         if (requestId) {
@@ -153,10 +153,10 @@ export class SessionServiceConnector {
             'session:touch:success',
             {
               requestId,
-              userId,
+              userId
             },
-            'SessionServiceConnector',
-          );
+            'SessionServiceConnector'
+          )
         }
       } catch (error) {
         // Emit error event if requestId provided
@@ -165,25 +165,25 @@ export class SessionServiceConnector {
             'session:touch:error',
             {
               requestId,
-              error: error instanceof Error ? error.message : 'Failed to touch session',
+              error: error instanceof Error ? error.message : 'Failed to touch session'
             },
-            'SessionServiceConnector',
-          );
+            'SessionServiceConnector'
+          )
         }
 
-        logger.error('Failed to touch session', { error, userId });
+        logger.error('Failed to touch session', { error, userId })
       }
-    });
+    })
 
     // Handle cleanup of expired sessions
-    this.eventBus.on('session:cleanup', async (event) => {
+    this.eventBus.on('session:cleanup', async event => {
       const { limit, requestId } = event.payload as {
-        limit?: number;
-        requestId?: string;
-      };
+        limit?: number
+        requestId?: string
+      }
 
       try {
-        const cleaned = await this.sessionService.cleanupExpiredSessions(limit);
+        const cleaned = await this.sessionService.cleanupExpiredSessions(limit)
 
         // Emit success event if requestId provided
         if (requestId) {
@@ -191,13 +191,13 @@ export class SessionServiceConnector {
             'session:cleanup:success',
             {
               requestId,
-              cleaned,
+              cleaned
             },
-            'SessionServiceConnector',
-          );
+            'SessionServiceConnector'
+          )
         }
 
-        logger.info('Session cleanup completed', { cleaned });
+        logger.info('Session cleanup completed', { cleaned })
       } catch (error) {
         // Emit error event if requestId provided
         if (requestId) {
@@ -205,21 +205,21 @@ export class SessionServiceConnector {
             'session:cleanup:error',
             {
               requestId,
-              error: error instanceof Error ? error.message : 'Cleanup failed',
+              error: error instanceof Error ? error.message : 'Cleanup failed'
             },
-            'SessionServiceConnector',
-          );
+            'SessionServiceConnector'
+          )
         }
 
-        logger.error('Session cleanup failed', { error });
+        logger.error('Session cleanup failed', { error })
       }
-    });
+    })
   }
 
   /**
    * Get the underlying session service instance
    */
   getService(): SessionService {
-    return this.sessionService;
+    return this.sessionService
   }
 }

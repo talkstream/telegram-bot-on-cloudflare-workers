@@ -9,26 +9,26 @@
 
 export {
   KVCache,
-  type CacheOptions,
-  type CacheMetadata,
-  type CacheStats,
+  getExponentialTTL,
+  getLongTTL,
+  getMediumTTL,
+  getShortTTL,
   // TTL utilities
   getTTLUntilEndOfDay,
-  getExponentialTTL,
-  getShortTTL,
-  getMediumTTL,
-  getLongTTL,
-} from './kv-cache';
+  type CacheMetadata,
+  type CacheOptions,
+  type CacheStats
+} from './kv-cache'
 
-export { CachedService, CachedRepository, Cached, createCachedProxy } from './cached-service';
+export { Cached, CachedRepository, CachedService, createCachedProxy } from './cached-service'
 
 export {
+  Cached as CachedRequest,
   RequestCache,
   RequestCacheFactory,
-  Cached as CachedRequest,
   type CacheEntry,
-  type RequestCacheOptions,
-} from './request-cache';
+  type RequestCacheOptions
+} from './request-cache'
 
 // Re-export examples for documentation
-export type { CachedUserService } from './examples/cached-user-service';
+export type { CachedUserService } from './examples/cached-user-service'

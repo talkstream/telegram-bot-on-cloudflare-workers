@@ -5,43 +5,43 @@
  * with various field types including booleans, dates, and arrays.
  */
 
-import { FieldMapper, CommonTransformers } from '../field-mapper';
+import { CommonTransformers, FieldMapper } from '../field-mapper'
 
 // Database row type (snake_case)
 interface UserDatabaseRow {
-  telegram_id: number;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  language_code?: string;
-  is_premium?: number;
-  has_access: number;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-  star_balance?: number;
-  notification_settings?: string; // JSON
-  tags?: string; // Comma-separated
+  telegram_id: number
+  username?: string
+  first_name?: string
+  last_name?: string
+  language_code?: string
+  is_premium?: number
+  has_access: number
+  is_active: number
+  created_at: string
+  updated_at: string
+  star_balance?: number
+  notification_settings?: string // JSON
+  tags?: string // Comma-separated
 }
 
 // Domain model type (camelCase)
 interface User {
-  telegramId: number;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  languageCode?: string;
-  isPremium?: boolean;
-  hasAccess: boolean;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  starBalance?: number;
+  telegramId: number
+  username?: string
+  firstName?: string
+  lastName?: string
+  languageCode?: string
+  isPremium?: boolean
+  hasAccess: boolean
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  starBalance?: number
   notificationSettings?: {
-    email: boolean;
-    push: boolean;
-  };
-  tags?: string[];
+    email: boolean
+    push: boolean
+  }
+  tags?: string[]
 }
 
 // Create the mapper with explicit field mappings
@@ -54,40 +54,40 @@ export const userMapper = new FieldMapper<UserDatabaseRow, User>([
   {
     dbField: 'is_premium',
     domainField: 'isPremium',
-    ...CommonTransformers.sqliteBoolean,
+    ...CommonTransformers.sqliteBoolean
   },
   {
     dbField: 'has_access',
     domainField: 'hasAccess',
-    ...CommonTransformers.sqliteBoolean,
+    ...CommonTransformers.sqliteBoolean
   },
   {
     dbField: 'is_active',
     domainField: 'isActive',
-    ...CommonTransformers.sqliteBoolean,
+    ...CommonTransformers.sqliteBoolean
   },
   {
     dbField: 'created_at',
     domainField: 'createdAt',
-    ...CommonTransformers.isoDate,
+    ...CommonTransformers.isoDate
   },
   {
     dbField: 'updated_at',
     domainField: 'updatedAt',
-    ...CommonTransformers.isoDate,
+    ...CommonTransformers.isoDate
   },
   { dbField: 'star_balance', domainField: 'starBalance' },
   {
     dbField: 'notification_settings',
     domainField: 'notificationSettings',
-    ...CommonTransformers.json<{ email: boolean; push: boolean }>(),
+    ...CommonTransformers.json<{ email: boolean; push: boolean }>()
   },
   {
     dbField: 'tags',
     domainField: 'tags',
-    ...CommonTransformers.csvArray,
-  },
-]);
+    ...CommonTransformers.csvArray
+  }
+])
 
 // Example usage in a service
 export class UserService {
@@ -95,47 +95,47 @@ export class UserService {
 
   async getUser(telegramId: number): Promise<User | null> {
     // Generate SELECT with automatic aliases
-    const selectFields = userMapper.generateSelectSQL();
-    const query = `SELECT ${selectFields} FROM users WHERE telegram_id = ?`;
+    const selectFields = userMapper.generateSelectSQL()
+    const query = `SELECT ${selectFields} FROM users WHERE telegram_id = ?`
 
-    const row = await this.db.prepare(query).bind(telegramId).first();
+    const row = await this.db.prepare(query).bind(telegramId).first()
 
-    if (!row) return null;
+    if (!row) return null
 
     // Transform database row to domain model
-    return userMapper.toDomain(row as UserDatabaseRow);
+    return userMapper.toDomain(row as UserDatabaseRow)
   }
 
   async createUser(user: Omit<User, 'createdAt' | 'updatedAt'>): Promise<void> {
-    const { fields, placeholders } = userMapper.generateInsertSQL();
-    const query = `INSERT INTO users (${fields.join(', ')}) VALUES (${placeholders.join(', ')})`;
+    const { fields, placeholders } = userMapper.generateInsertSQL()
+    const query = `INSERT INTO users (${fields.join(', ')}) VALUES (${placeholders.join(', ')})`
 
     // Get values in order for binding
-    const values = userMapper.getDatabaseValues(user);
+    const values = userMapper.getDatabaseValues(user)
 
     await this.db
       .prepare(query)
       .bind(...values)
-      .run();
+      .run()
   }
 
   async updateUser(telegramId: number, updates: Partial<User>): Promise<void> {
     // Transform updates to database format
-    const dbUpdates = userMapper.toDatabase(updates as User);
+    const dbUpdates = userMapper.toDatabase(updates as User)
 
     // Build UPDATE query dynamically
     const setClause = Object.keys(dbUpdates)
-      .map((field) => `${field} = ?`)
-      .join(', ');
+      .map(field => `${field} = ?`)
+      .join(', ')
 
-    const values = Object.values(dbUpdates);
-    values.push(telegramId); // WHERE clause value
+    const values = Object.values(dbUpdates)
+    values.push(telegramId) // WHERE clause value
 
-    const query = `UPDATE users SET ${setClause} WHERE telegram_id = ?`;
+    const query = `UPDATE users SET ${setClause} WHERE telegram_id = ?`
     await this.db
       .prepare(query)
       .bind(...values)
-      .run();
+      .run()
   }
 }
 
@@ -147,12 +147,12 @@ export async function getUsersWithRoles(db: any): Promise<Array<User & { role?: 
       r.role as role
     FROM users u
     LEFT JOIN user_roles r ON u.telegram_id = r.user_id
-  `;
+  `
 
-  const { results } = await db.prepare(query).all();
+  const { results } = await db.prepare(query).all()
 
   return results.map((row: any) => ({
     ...userMapper.toDomain(row),
-    role: row.role,
-  }));
+    role: row.role
+  }))
 }

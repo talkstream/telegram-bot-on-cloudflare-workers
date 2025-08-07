@@ -2,7 +2,7 @@
  * Application context types
  */
 
-import type { EventBus } from '../core/events/event-bus.js';
+import type { EventBus } from '../core/events/event-bus.js'
 
 /**
  * Base application context
@@ -11,20 +11,20 @@ export interface AppContext {
   /**
    * Event bus instance
    */
-  eventBus?: EventBus;
+  eventBus?: EventBus
 
   /**
    * Request ID for tracing
    */
-  requestId?: string;
+  requestId?: string
 
   /**
    * User session data
    */
-  session?: Record<string, unknown>;
+  session?: Record<string, unknown>
 
   /**
    * Custom context data
    */
-  [key: string]: unknown;
+  [key: string]: unknown
 }

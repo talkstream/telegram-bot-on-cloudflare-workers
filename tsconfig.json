@@ -55,6 +55,19 @@
     // Type Definitions
     "types": ["@cloudflare/workers-types", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.json", "packages/*/src/**/*.ts", "packages/connectors/*/src/**/*.ts"],
-  "exclude": ["node_modules", "dist", ".wrangler", "**/*.test.ts", "**/*.spec.ts", "packages/*/dist", "packages/*/node_modules"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.json",
+    "packages/*/src/**/*.ts",
+    "packages/connectors/*/src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".wrangler",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "packages/*/dist",
+    "packages/*/node_modules"
+  ]
 }

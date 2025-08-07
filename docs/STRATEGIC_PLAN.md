@@ -90,22 +90,22 @@ wireframe/
 ```typescript
 interface MessagingConnector {
   // Основные методы
-  sendMessage(recipient: string, message: UnifiedMessage): Promise<void>;
-  sendBulk(recipients: string[], message: UnifiedMessage): Promise<BulkResult>;
-  editMessage(messageId: string, message: UnifiedMessage): Promise<void>;
-  deleteMessage(messageId: string): Promise<void>;
+  sendMessage(recipient: string, message: UnifiedMessage): Promise<void>
+  sendBulk(recipients: string[], message: UnifiedMessage): Promise<BulkResult>
+  editMessage(messageId: string, message: UnifiedMessage): Promise<void>
+  deleteMessage(messageId: string): Promise<void>
 
   // Webhook обработка
-  handleWebhook(request: Request): Promise<Response>;
-  validateWebhook(request: Request): Promise<boolean>;
+  handleWebhook(request: Request): Promise<Response>
+  validateWebhook(request: Request): Promise<boolean>
 
   // Управление ботом
-  setCommands(commands: Command[]): Promise<void>;
-  setWebhook(url: string, options?: WebhookOptions): Promise<void>;
+  setCommands(commands: Command[]): Promise<void>
+  setWebhook(url: string, options?: WebhookOptions): Promise<void>
 
   // Capabilities
-  getCapabilities(): MessagingCapabilities;
-  getSupportedFeatures(): Feature[];
+  getCapabilities(): MessagingCapabilities
+  getSupportedFeatures(): Feature[]
 }
 ```
 
@@ -116,18 +116,18 @@ interface MessagingConnector {
 ```typescript
 interface AIConnector {
   // Основные операции
-  complete(prompt: string, options?: AIOptions): Promise<AIResponse>;
-  stream(prompt: string, options?: AIOptions): AsyncIterator<StreamChunk>;
+  complete(prompt: string, options?: AIOptions): Promise<AIResponse>
+  stream(prompt: string, options?: AIOptions): AsyncIterator<StreamChunk>
 
   // Расширенные возможности
-  embeddings(text: string | string[]): Promise<Embedding[]>;
-  vision(image: Buffer, prompt: string): Promise<string>;
-  audio(audio: Buffer, options?: AudioOptions): Promise<TranscriptionResult>;
+  embeddings(text: string | string[]): Promise<Embedding[]>
+  vision(image: Buffer, prompt: string): Promise<string>
+  audio(audio: Buffer, options?: AudioOptions): Promise<TranscriptionResult>
 
   // Управление
-  getCost(usage: Usage): Cost;
-  getModelInfo(): ModelInfo;
-  validateApiKey(): Promise<boolean>;
+  getCost(usage: Usage): Cost
+  getModelInfo(): ModelInfo
+  validateApiKey(): Promise<boolean>
 }
 ```
 
@@ -138,22 +138,22 @@ interface AIConnector {
 ```typescript
 interface CloudConnector {
   // Deployment
-  deploy(config: DeployConfig): Promise<DeployResult>;
-  rollback(deploymentId: string): Promise<void>;
+  deploy(config: DeployConfig): Promise<DeployResult>
+  rollback(deploymentId: string): Promise<void>
 
   // Resources
-  getStorage(): StorageAdapter;
-  getDatabase(): DatabaseAdapter;
-  getSecrets(): SecretsAdapter;
-  getQueue(): QueueAdapter;
+  getStorage(): StorageAdapter
+  getDatabase(): DatabaseAdapter
+  getSecrets(): SecretsAdapter
+  getQueue(): QueueAdapter
 
   // Monitoring
-  getLogs(options?: LogOptions): AsyncIterator<LogEntry>;
-  getMetrics(options?: MetricOptions): Promise<Metrics>;
+  getLogs(options?: LogOptions): AsyncIterator<LogEntry>
+  getMetrics(options?: MetricOptions): Promise<Metrics>
 
   // Management
-  getHealthStatus(): Promise<HealthStatus>;
-  estimateCost(usage: ResourceUsage): Cost;
+  getHealthStatus(): Promise<HealthStatus>
+  estimateCost(usage: ResourceUsage): Cost
 }
 ```
 
@@ -165,22 +165,22 @@ interface CloudConnector {
 
 ```typescript
 interface UnifiedMessage {
-  id: string;
-  platform: Platform;
-  sender: User;
-  chat: Chat;
-  content: MessageContent;
-  attachments?: Attachment[];
-  replyTo?: string;
-  metadata: Record<string, any>;
-  timestamp: number;
+  id: string
+  platform: Platform
+  sender: User
+  chat: Chat
+  content: MessageContent
+  attachments?: Attachment[]
+  replyTo?: string
+  metadata: Record<string, any>
+  timestamp: number
 }
 
 interface MessageContent {
-  text?: string;
-  entities?: Entity[];
-  markup?: Markup;
-  components?: InteractiveComponent[];
+  text?: string
+  entities?: Entity[]
+  markup?: Markup
+  components?: InteractiveComponent[]
 }
 ```
 
@@ -190,15 +190,15 @@ interface MessageContent {
 
 ```typescript
 interface Command {
-  name: string;
-  description: string;
-  aliases?: string[];
-  parameters?: Parameter[];
-  platforms?: Platform[];
-  permissions?: Permission[];
+  name: string
+  description: string
+  aliases?: string[]
+  parameters?: Parameter[]
+  platforms?: Platform[]
+  permissions?: Permission[]
 
-  execute(context: CommandContext): Promise<void>;
-  autocomplete?(partial: string): Promise<string[]>;
+  execute(context: CommandContext): Promise<void>
+  autocomplete?(partial: string): Promise<string[]>
 }
 ```
 
@@ -208,18 +208,18 @@ interface Command {
 
 ```typescript
 interface EventBus {
-  emit<T>(event: Event<T>): void;
-  on<T>(type: EventType, handler: EventHandler<T>): Unsubscribe;
-  once<T>(type: EventType, handler: EventHandler<T>): Unsubscribe;
-  off(type: EventType, handler?: EventHandler): void;
+  emit<T>(event: Event<T>): void
+  on<T>(type: EventType, handler: EventHandler<T>): Unsubscribe
+  once<T>(type: EventType, handler: EventHandler<T>): Unsubscribe
+  off(type: EventType, handler?: EventHandler): void
 }
 
 interface Event<T = any> {
-  type: EventType;
-  payload: T;
-  source: string;
-  timestamp: number;
-  metadata?: Record<string, any>;
+  type: EventType
+  payload: T
+  source: string
+  timestamp: number
+  metadata?: Record<string, any>
 }
 ```
 
@@ -229,21 +229,21 @@ interface Event<T = any> {
 
 ```typescript
 interface Plugin {
-  name: string;
-  version: string;
-  description: string;
-  dependencies?: Dependency[];
+  name: string
+  version: string
+  description: string
+  dependencies?: Dependency[]
 
   // Lifecycle
-  install(context: PluginContext): Promise<void>;
-  activate(): Promise<void>;
-  deactivate(): Promise<void>;
-  uninstall(): Promise<void>;
+  install(context: PluginContext): Promise<void>
+  activate(): Promise<void>
+  deactivate(): Promise<void>
+  uninstall(): Promise<void>
 
   // Capabilities
-  getCommands?(): Command[];
-  getMiddleware?(): Middleware[];
-  getConnectors?(): Connector[];
+  getCommands?(): Command[]
+  getMiddleware?(): Middleware[]
+  getConnectors?(): Connector[]
 }
 ```
 

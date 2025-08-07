@@ -16,15 +16,15 @@ This connector enables Discord bot functionality within the Wireframe platform, 
 ## Configuration
 
 ```typescript
-import { DiscordConnector } from '@/connectors/messaging/discord';
+import { DiscordConnector } from '@/connectors/messaging/discord'
 
-const connector = new DiscordConnector();
+const connector = new DiscordConnector()
 await connector.initialize({
   applicationId: process.env.DISCORD_APPLICATION_ID,
   publicKey: process.env.DISCORD_PUBLIC_KEY,
   botToken: process.env.DISCORD_BOT_TOKEN, // Optional, for REST API
-  webhookUrl: process.env.DISCORD_WEBHOOK_URL,
-});
+  webhookUrl: process.env.DISCORD_WEBHOOK_URL
+})
 ```
 
 ## Usage Example
@@ -39,17 +39,17 @@ await connector.sendMessage(channelId, {
       inline_keyboard: [
         [
           { text: 'Option 1', callback_data: 'opt1' },
-          { text: 'Option 2', callback_data: 'opt2' },
-        ],
-      ],
-    },
-  },
-});
+          { text: 'Option 2', callback_data: 'opt2' }
+        ]
+      ]
+    }
+  }
+})
 
 // Handle webhook
-app.post('/discord/webhook', async (req) => {
-  return await connector.handleWebhook(req);
-});
+app.post('/discord/webhook', async req => {
+  return await connector.handleWebhook(req)
+})
 ```
 
 ## Discord-Specific Features

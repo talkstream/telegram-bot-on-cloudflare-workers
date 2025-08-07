@@ -3,50 +3,50 @@
  */
 
 import type {
+  Breadcrumb,
   IMonitoringConnector,
   MonitoringConfig,
-  MonitoringEvent,
-  Breadcrumb,
-} from '../../core/interfaces/monitoring';
+  MonitoringEvent
+} from '../../core/interfaces/monitoring'
 
 export abstract class BaseMonitoringConnector implements IMonitoringConnector {
-  protected config?: MonitoringConfig;
-  protected initialized = false;
-  protected breadcrumbs: Breadcrumb[] = [];
-  protected userContext?: { id: string; data?: Record<string, unknown> };
+  protected config?: MonitoringConfig
+  protected initialized = false
+  protected breadcrumbs: Breadcrumb[] = []
+  protected userContext?: { id: string; data?: Record<string, unknown> }
 
   async initialize(config: MonitoringConfig): Promise<void> {
-    this.config = config;
-    await this.doInitialize(config);
-    this.initialized = true;
+    this.config = config
+    await this.doInitialize(config)
+    this.initialized = true
   }
 
-  abstract captureException(error: Error, context?: Record<string, unknown>): void;
+  abstract captureException(error: Error, context?: Record<string, unknown>): void
 
-  abstract captureMessage(message: string, level?: 'debug' | 'info' | 'warning' | 'error'): void;
+  abstract captureMessage(message: string, level?: 'debug' | 'info' | 'warning' | 'error'): void
 
   setUserContext(userId: string, data?: Record<string, unknown>): void {
-    this.userContext = { id: userId, data };
-    this.doSetUserContext(userId, data);
+    this.userContext = { id: userId, data }
+    this.doSetUserContext(userId, data)
   }
 
   clearUserContext(): void {
-    this.userContext = undefined;
-    this.doClearUserContext();
+    this.userContext = undefined
+    this.doClearUserContext()
   }
 
   addBreadcrumb(breadcrumb: Breadcrumb): void {
     // Keep last 100 breadcrumbs
     if (this.breadcrumbs.length >= 100) {
-      this.breadcrumbs.shift();
+      this.breadcrumbs.shift()
     }
 
     this.breadcrumbs.push({
       ...breadcrumb,
-      timestamp: breadcrumb.timestamp || Date.now(),
-    });
+      timestamp: breadcrumb.timestamp || Date.now()
+    })
 
-    this.doAddBreadcrumb(breadcrumb);
+    this.doAddBreadcrumb(breadcrumb)
   }
 
   trackEvent(name: string, data?: Record<string, unknown>): void {
@@ -55,8 +55,8 @@ export abstract class BaseMonitoringConnector implements IMonitoringConnector {
       message: name,
       category: 'event',
       level: 'info',
-      data,
-    });
+      data
+    })
   }
 
   trackMetric(name: string, value: number, tags?: Record<string, string>): void {
@@ -67,36 +67,36 @@ export abstract class BaseMonitoringConnector implements IMonitoringConnector {
       level: 'info',
       data: {
         value,
-        ...tags,
-      },
-    });
+        ...tags
+      }
+    })
   }
 
-  abstract flush(timeout?: number): Promise<boolean>;
+  abstract flush(timeout?: number): Promise<boolean>
 
   isAvailable(): boolean {
-    return this.initialized && !!this.config?.dsn;
+    return this.initialized && !!this.config?.dsn
   }
 
   /**
    * Platform-specific initialization
    */
-  protected abstract doInitialize(config: MonitoringConfig): Promise<void>;
+  protected abstract doInitialize(config: MonitoringConfig): Promise<void>
 
   /**
    * Platform-specific user context setting
    */
-  protected abstract doSetUserContext(userId: string, data?: Record<string, unknown>): void;
+  protected abstract doSetUserContext(userId: string, data?: Record<string, unknown>): void
 
   /**
    * Platform-specific user context clearing
    */
-  protected abstract doClearUserContext(): void;
+  protected abstract doClearUserContext(): void
 
   /**
    * Platform-specific breadcrumb adding
    */
-  protected abstract doAddBreadcrumb(breadcrumb: Breadcrumb): void;
+  protected abstract doAddBreadcrumb(breadcrumb: Breadcrumb): void
 
   /**
    * Helper to create monitoring event
@@ -108,17 +108,17 @@ export abstract class BaseMonitoringConnector implements IMonitoringConnector {
       tags: {
         environment: this.config?.environment || 'development',
         release: this.config?.release || 'unknown',
-        ...base.tags,
-      },
-    };
+        ...base.tags
+      }
+    }
 
     if (this.userContext) {
       event.user = {
         id: this.userContext.id,
-        ...this.userContext.data,
-      };
+        ...this.userContext.data
+      }
     }
 
-    return event;
+    return event
   }
 }

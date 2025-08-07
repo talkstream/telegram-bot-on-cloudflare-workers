@@ -4,18 +4,18 @@
  * Processes incoming Telegram webhook requests
  */
 
-import type { EventBus } from '../../core/events/event-bus';
-import type { ICloudPlatformConnector } from '../../core/interfaces/cloud-platform';
-import type { Env } from '../../config/env';
-import { getBotToken } from '../../lib/env-guards';
+import type { Env } from '../../config/env'
+import type { EventBus } from '../../core/events/event-bus'
+import type { ICloudPlatformConnector } from '../../core/interfaces/cloud-platform'
+import { getBotToken } from '../../lib/env-guards'
 
-import { createBot } from './lightweight-adapter';
+import { createBot } from './lightweight-adapter'
 
 interface WebhookContext {
-  env: Env;
-  eventBus: EventBus;
-  platform: ICloudPlatformConnector;
-  isDemoMode: boolean;
+  env: Env
+  eventBus: EventBus
+  platform: ICloudPlatformConnector
+  isDemoMode: boolean
 }
 
 /**
@@ -23,19 +23,19 @@ interface WebhookContext {
  */
 export async function handleTelegramWebhook(
   body: unknown,
-  context: WebhookContext,
+  context: WebhookContext
 ): Promise<{ ok: boolean }> {
   try {
-    const { env, eventBus, platform, isDemoMode } = context;
+    const { env, eventBus, platform, isDemoMode } = context
 
     if (isDemoMode) {
       // Mock response for demo mode - silently process
-      return { ok: true };
+      return { ok: true }
     }
 
-    const token = getBotToken(env);
+    const token = getBotToken(env)
     if (!token) {
-      throw new Error('Bot token not configured');
+      throw new Error('Bot token not configured')
     }
 
     // Create bot instance
@@ -43,17 +43,17 @@ export async function handleTelegramWebhook(
       token,
       eventBus,
       platform,
-      env,
-    });
+      env
+    })
 
     // Process update
     if (bot && typeof bot.handleUpdate === 'function') {
-      await bot.handleUpdate(body);
+      await bot.handleUpdate(body)
     }
 
-    return { ok: true };
+    return { ok: true }
   } catch (error) {
-    console.error('[Telegram] Webhook processing error:', error);
-    throw error;
+    console.error('[Telegram] Webhook processing error:', error)
+    throw error
   }
 }

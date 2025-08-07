@@ -33,5 +33,5 @@ export enum AIEventType {
   // Cache events
   CACHE_HIT = 'ai:cache:hit',
   CACHE_MISS = 'ai:cache:miss',
-  CACHE_INVALIDATED = 'ai:cache:invalidated',
+  CACHE_INVALIDATED = 'ai:cache:invalidated'
 }

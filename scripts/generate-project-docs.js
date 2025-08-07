@@ -5,24 +5,24 @@
  * Removes private information and customizes for the specific project
  */
 
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import Handlebars from 'handlebars';
-import chalk from 'chalk';
-import ora from 'ora';
+import chalk from 'chalk'
+import fs from 'fs/promises'
+import Handlebars from 'handlebars'
+import ora from 'ora'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Register Handlebars helpers
-Handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
-  return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
-});
+Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
+  return arg1 == arg2 ? options.fn(this) : options.inverse(this)
+})
 
-Handlebars.registerHelper('includes', function(array, value, options) {
-  if (!array) return options.inverse(this);
-  return array.includes(value) ? options.fn(this) : options.inverse(this);
-});
+Handlebars.registerHelper('includes', function (array, value, options) {
+  if (!array) return options.inverse(this)
+  return array.includes(value) ? options.fn(this) : options.inverse(this)
+})
 
 // Private information patterns to filter out
 const PRIVATE_PATTERNS = [
@@ -35,8 +35,8 @@ const PRIVATE_PATTERNS = [
   /\b\d{10}:[A-Za-z0-9_-]{35}\b/g, // Telegram tokens
   /https?:\/\/[^\s]*\/(private|internal)\//g, // Private URLs
   /TODO\s*:.*kogotochki.*/gi, // Project-specific TODOs
-  /\[personal.*?\]/gi, // Personal notes
-];
+  /\[personal.*?\]/gi // Personal notes
+]
 
 // Template variables that will be replaced
 const DEFAULT_VARIABLES = {
@@ -49,8 +49,8 @@ const DEFAULT_VARIABLES = {
   cloudProvider: 'cloudflare',
   aiProvider: 'google-ai',
   features: [],
-  setupDate: new Date().toISOString().split('T')[0],
-};
+  setupDate: new Date().toISOString().split('T')[0]
+}
 
 /**
  * Load and compile Handlebars template
@@ -58,14 +58,14 @@ const DEFAULT_VARIABLES = {
  * @returns {Function} Compiled template function
  */
 async function loadTemplate(templateName) {
-  const templatePath = path.join(__dirname, '..', 'src', 'templates', 'project-docs', templateName);
-  
+  const templatePath = path.join(__dirname, '..', 'src', 'templates', 'project-docs', templateName)
+
   try {
-    const templateContent = await fs.readFile(templatePath, 'utf8');
-    return Handlebars.compile(templateContent);
+    const templateContent = await fs.readFile(templatePath, 'utf8')
+    return Handlebars.compile(templateContent)
   } catch (error) {
     // Fallback to inline template if file doesn't exist
-    return getInlineTemplate(templateName);
+    return getInlineTemplate(templateName)
   }
 }
 
@@ -181,15 +181,15 @@ npm run deploy
 - Visit the [Wireframe Documentation](https://github.com/talkstream/typescript-wireframe-platform)
 
 Generated for {{authorName}} on {{setupDate}}
-`,
-  };
-
-  const template = templates[templateName];
-  if (!template) {
-    throw new Error(`Template ${templateName} not found`);
+`
   }
-  
-  return Handlebars.compile(template);
+
+  const template = templates[templateName]
+  if (!template) {
+    throw new Error(`Template ${templateName} not found`)
+  }
+
+  return Handlebars.compile(template)
 }
 
 /**
@@ -198,21 +198,21 @@ Generated for {{authorName}} on {{setupDate}}
  * @returns {string} Filtered content
  */
 function filterPrivateInfo(content) {
-  let filtered = content;
-  
+  let filtered = content
+
   // Apply all private patterns
   PRIVATE_PATTERNS.forEach(pattern => {
-    filtered = filtered.replace(pattern, '[REDACTED]');
-  });
-  
+    filtered = filtered.replace(pattern, '[REDACTED]')
+  })
+
   // Replace specific project paths with generic ones
   filtered = filtered
     .replace(/\/Documents\/Dropbox\/AApps\/wireframe/g, '/path/to/project')
     .replace(/\/Documents\/Dropbox\/AApps\/kogotochki/g, '/path/to/bot-project')
     .replace(/wireframe-kogotochki/g, 'wireframe-bot')
-    .replace(/kogotochki/gi, 'bot-project');
-  
-  return filtered;
+    .replace(/kogotochki/gi, 'bot-project')
+
+  return filtered
 }
 
 /**
@@ -221,39 +221,39 @@ function filterPrivateInfo(content) {
  * @param {string} outputDir - Output directory
  */
 export async function generateProjectDocs(config = {}, outputDir = process.cwd()) {
-  const spinner = ora('Generating project documentation...').start();
-  
+  const spinner = ora('Generating project documentation...').start()
+
   try {
     // Merge config with defaults
-    const variables = { ...DEFAULT_VARIABLES, ...config };
-    
+    const variables = { ...DEFAULT_VARIABLES, ...config }
+
     // Ensure output directory exists
-    await fs.mkdir(outputDir, { recursive: true });
-    
+    await fs.mkdir(outputDir, { recursive: true })
+
     // Generate CLAUDE.md
-    spinner.text = 'Generating CLAUDE.md...';
-    const claudeTemplate = await loadTemplate('claude.md.hbs');
-    let claudeContent = claudeTemplate(variables);
-    claudeContent = filterPrivateInfo(claudeContent);
-    
-    const claudePath = path.join(outputDir, 'CLAUDE.md');
-    await fs.writeFile(claudePath, claudeContent);
-    spinner.succeed(`Generated ${chalk.green('CLAUDE.md')}`);
-    
+    spinner.text = 'Generating CLAUDE.md...'
+    const claudeTemplate = await loadTemplate('claude.md.hbs')
+    let claudeContent = claudeTemplate(variables)
+    claudeContent = filterPrivateInfo(claudeContent)
+
+    const claudePath = path.join(outputDir, 'CLAUDE.md')
+    await fs.writeFile(claudePath, claudeContent)
+    spinner.succeed(`Generated ${chalk.green('CLAUDE.md')}`)
+
     // Generate INIT.md
-    spinner.start('Generating INIT.md...');
-    const initTemplate = await loadTemplate('init.md.hbs');
-    let initContent = initTemplate(variables);
-    initContent = filterPrivateInfo(initContent);
-    
-    const initPath = path.join(outputDir, 'INIT.md');
-    await fs.writeFile(initPath, initContent);
-    spinner.succeed(`Generated ${chalk.green('INIT.md')}`);
-    
-    return { claudePath, initPath };
+    spinner.start('Generating INIT.md...')
+    const initTemplate = await loadTemplate('init.md.hbs')
+    let initContent = initTemplate(variables)
+    initContent = filterPrivateInfo(initContent)
+
+    const initPath = path.join(outputDir, 'INIT.md')
+    await fs.writeFile(initPath, initContent)
+    spinner.succeed(`Generated ${chalk.green('INIT.md')}`)
+
+    return { claudePath, initPath }
   } catch (error) {
-    spinner.fail(chalk.red('Failed to generate documentation'));
-    throw error;
+    spinner.fail(chalk.red('Failed to generate documentation'))
+    throw error
   }
 }
 
@@ -264,33 +264,33 @@ export async function generateProjectDocs(config = {}, outputDir = process.cwd()
  */
 export async function extractFromExistingClaude(claudePath) {
   try {
-    const content = await fs.readFile(claudePath, 'utf8');
-    
+    const content = await fs.readFile(claudePath, 'utf8')
+
     // Extract safe information
-    const config = {};
-    
+    const config = {}
+
     // Extract version
-    const versionMatch = content.match(/Current Version:\s*v?([\d.]+)/i);
-    if (versionMatch) config.currentVersion = versionMatch[1];
-    
+    const versionMatch = content.match(/Current Version:\s*v?([\d.]+)/i)
+    if (versionMatch) config.currentVersion = versionMatch[1]
+
     // Extract project name
-    const nameMatch = content.match(/^#.*?Wireframe\s+v[\d.]+\s*$/m);
-    if (nameMatch) config.projectName = 'wireframe-bot';
-    
+    const nameMatch = content.match(/^#.*?Wireframe\s+v[\d.]+\s*$/m)
+    if (nameMatch) config.projectName = 'wireframe-bot'
+
     // Extract features
-    const featuresMatch = content.match(/Key Achievements.*?\n((?:- .*\n)+)/s);
+    const featuresMatch = content.match(/Key Achievements.*?\n((?:- .*\n)+)/s)
     if (featuresMatch) {
       config.features = featuresMatch[1]
         .split('\n')
         .filter(line => line.startsWith('- '))
         .map(line => line.replace(/^- /, '').replace(/✅/g, '').trim())
-        .filter(feature => !feature.includes('private') && !feature.includes('token'));
+        .filter(feature => !feature.includes('private') && !feature.includes('token'))
     }
-    
-    return config;
+
+    return config
   } catch (error) {
-    console.warn('Could not extract from existing CLAUDE.md:', error.message);
-    return {};
+    console.warn('Could not extract from existing CLAUDE.md:', error.message)
+    return {}
   }
 }
 
@@ -298,8 +298,8 @@ export async function extractFromExistingClaude(claudePath) {
  * CLI interface
  */
 async function main() {
-  const args = process.argv.slice(2);
-  
+  const args = process.argv.slice(2)
+
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
 ${chalk.bold('Generate Project Documentation')}
@@ -320,56 +320,58 @@ Options:
 Examples:
   node generate-project-docs.js --name "my-bot" --platform telegram
   node generate-project-docs.js --extract ./CLAUDE.md --output ./my-project
-`);
-    process.exit(0);
+`)
+    process.exit(0)
   }
-  
+
   // Parse arguments
-  const config = {};
+  const config = {}
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
       case '--name':
-        config.projectName = args[++i];
-        break;
+        config.projectName = args[++i]
+        break
       case '--description':
-        config.projectDescription = args[++i];
-        break;
+        config.projectDescription = args[++i]
+        break
       case '--platform':
-        config.primaryPlatform = args[++i];
-        break;
+        config.primaryPlatform = args[++i]
+        break
       case '--cloud':
-        config.cloudProvider = args[++i];
-        break;
+        config.cloudProvider = args[++i]
+        break
       case '--ai':
-        config.aiProvider = args[++i];
-        break;
+        config.aiProvider = args[++i]
+        break
       case '--output':
-        config.outputDir = args[++i];
-        break;
+        config.outputDir = args[++i]
+        break
       case '--extract':
-        const extracted = await extractFromExistingClaude(args[++i]);
-        Object.assign(config, extracted);
-        break;
+        const extracted = await extractFromExistingClaude(args[++i])
+        Object.assign(config, extracted)
+        break
     }
   }
-  
-  const outputDir = config.outputDir || process.cwd();
-  delete config.outputDir;
-  
+
+  const outputDir = config.outputDir || process.cwd()
+  delete config.outputDir
+
   try {
-    const { claudePath, initPath } = await generateProjectDocs(config, outputDir);
-    
-    console.log(chalk.green('\n✅ Documentation generated successfully!'));
-    console.log(chalk.blue(`  CLAUDE.md: ${claudePath}`));
-    console.log(chalk.blue(`  INIT.md: ${initPath}`));
-    console.log(chalk.yellow('\nThese files contain project-specific instructions for development.'));
+    const { claudePath, initPath } = await generateProjectDocs(config, outputDir)
+
+    console.log(chalk.green('\n✅ Documentation generated successfully!'))
+    console.log(chalk.blue(`  CLAUDE.md: ${claudePath}`))
+    console.log(chalk.blue(`  INIT.md: ${initPath}`))
+    console.log(
+      chalk.yellow('\nThese files contain project-specific instructions for development.')
+    )
   } catch (error) {
-    console.error(chalk.red('\n❌ Error generating documentation:'), error.message);
-    process.exit(1);
+    console.error(chalk.red('\n❌ Error generating documentation:'), error.message)
+    process.exit(1)
   }
 }
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
+  main()
 }

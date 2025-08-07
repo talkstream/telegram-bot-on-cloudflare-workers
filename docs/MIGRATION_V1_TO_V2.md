@@ -11,15 +11,15 @@ Wireframe v2.0 transforms from a monolithic framework into a modular ecosystem. 
 **v1.x (Monolithic)**
 
 ```typescript
-import { Bot, TelegramConnector, OpenAIConnector } from 'wireframe';
+import { Bot, TelegramConnector, OpenAIConnector } from 'wireframe'
 ```
 
 **v2.0 (Modular)**
 
 ```typescript
-import { Wireframe } from '@wireframe/core';
-import telegram from '@wireframe/connector-telegram';
-import openai from '@wireframe/connector-openai';
+import { Wireframe } from '@wireframe/core'
+import telegram from '@wireframe/connector-telegram'
+import openai from '@wireframe/connector-openai'
 ```
 
 ### 2. Configuration
@@ -29,8 +29,8 @@ import openai from '@wireframe/connector-openai';
 ```typescript
 const bot = new Bot({
   telegram: { token: process.env.BOT_TOKEN },
-  openai: { apiKey: process.env.OPENAI_KEY },
-});
+  openai: { apiKey: process.env.OPENAI_KEY }
+})
 ```
 
 **v2.0**
@@ -40,9 +40,9 @@ const bot = await Wireframe.create({
   connectors: ['telegram', 'openai'],
   config: {
     telegram: { token: process.env.BOT_TOKEN },
-    openai: { apiKey: process.env.OPENAI_KEY },
-  },
-});
+    openai: { apiKey: process.env.OPENAI_KEY }
+  }
+})
 ```
 
 ### 3. Vendor Dependencies
@@ -72,10 +72,10 @@ npm install @wireframe/connector-cloudflare
 
 ```typescript
 // Old
-import { Bot, TelegramConnector, CloudflareKVAdapter, OpenAIProvider } from 'wireframe';
+import { Bot, TelegramConnector, CloudflareKVAdapter, OpenAIProvider } from 'wireframe'
 
 // New
-import { Wireframe } from '@wireframe/core';
+import { Wireframe } from '@wireframe/core'
 // Connectors loaded dynamically via registry
 ```
 
@@ -84,42 +84,42 @@ import { Wireframe } from '@wireframe/core';
 Create `wireframe.config.ts`:
 
 ```typescript
-import { defineConfig } from '@wireframe/core';
+import { defineConfig } from '@wireframe/core'
 
 export default defineConfig({
   connectors: {
     messaging: 'telegram',
     ai: 'openai',
-    cloud: 'cloudflare',
+    cloud: 'cloudflare'
   },
-  plugins: ['analytics', 'admin-panel'],
-});
+  plugins: ['analytics', 'admin-panel']
+})
 ```
 
 ### Step 4: Update Bot Initialization
 
 ```typescript
 // Old
-const bot = new Bot(config);
-await bot.start();
+const bot = new Bot(config)
+await bot.start()
 
 // New
-const bot = await Wireframe.create();
-await bot.start();
+const bot = await Wireframe.create()
+await bot.start()
 ```
 
 ### Step 5: Update Event Handlers
 
 ```typescript
 // Old
-bot.on('message', async (ctx) => {
-  await ctx.reply('Hello');
-});
+bot.on('message', async ctx => {
+  await ctx.reply('Hello')
+})
 
 // New - Same API, works identically
-bot.on('message', async (ctx) => {
-  await ctx.reply('Hello');
-});
+bot.on('message', async ctx => {
+  await ctx.reply('Hello')
+})
 ```
 
 ## Features Mapping
@@ -146,10 +146,10 @@ bot.on('message', async (ctx) => {
 For gradual migration, use compatibility wrapper:
 
 ```typescript
-import { createV1Compat } from '@wireframe/compat';
+import { createV1Compat } from '@wireframe/compat'
 
 // Works with old v1 code
-const bot = createV1Compat(oldConfig);
+const bot = createV1Compat(oldConfig)
 ```
 
 ## Performance Improvements

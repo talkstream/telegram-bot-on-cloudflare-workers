@@ -1,6 +1,6 @@
 /**
  * @wireframe/connector-cloudflare
- * 
+ *
  * Cloudflare Workers connector for Wireframe
  */
 
@@ -43,12 +43,18 @@ export class CloudflareConnector implements Connector {
       get: async (key: string): Promise<string | null> => {
         return await this.config!.kv!.get(key)
       },
-      
-      getWithMetadata: async <T = unknown>(key: string): Promise<{ value: string | null, metadata: T | null }> => {
+
+      getWithMetadata: async <T = unknown>(
+        key: string
+      ): Promise<{ value: string | null; metadata: T | null }> => {
         return await this.config!.kv!.getWithMetadata<T>(key)
       },
 
-      put: async (key: string, value: string, options?: { expirationTtl?: number, metadata?: unknown }): Promise<void> => {
+      put: async (
+        key: string,
+        value: string,
+        options?: { expirationTtl?: number; metadata?: unknown }
+      ): Promise<void> => {
         await this.config!.kv!.put(key, value, options)
       },
 
@@ -56,7 +62,11 @@ export class CloudflareConnector implements Connector {
         await this.config!.kv!.delete(key)
       },
 
-      list: async (options?: { prefix?: string, limit?: number, cursor?: string }): Promise<KVNamespaceListResult<unknown>> => {
+      list: async (options?: {
+        prefix?: string
+        limit?: number
+        cursor?: string
+      }): Promise<KVNamespaceListResult<unknown>> => {
         return await this.config!.kv!.list(options)
       }
     }
@@ -102,7 +112,11 @@ export class CloudflareConnector implements Connector {
         return await this.config!.r2!.get(key)
       },
 
-      put: async (key: string, value: ReadableStream | ArrayBuffer | string, options?: R2PutOptions): Promise<R2Object> => {
+      put: async (
+        key: string,
+        value: ReadableStream | ArrayBuffer | string,
+        options?: R2PutOptions
+      ): Promise<R2Object> => {
         return await this.config!.r2!.put(key, value, options)
       },
 
@@ -133,7 +147,9 @@ export class CloudflareConnector implements Connector {
         await this.config!.queue!.send(message)
       },
 
-      sendBatch: async (messages: Array<{ body: unknown, contentType?: string }>): Promise<void> => {
+      sendBatch: async (
+        messages: Array<{ body: unknown; contentType?: string }>
+      ): Promise<void> => {
         await this.config!.queue!.sendBatch(messages as any)
       }
     }

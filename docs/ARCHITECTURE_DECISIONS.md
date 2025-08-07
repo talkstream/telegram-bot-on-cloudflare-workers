@@ -167,7 +167,7 @@ Implement adaptive architecture with two modes:
 
 ```typescript
 const adapter =
-  env.TIER === 'free' ? new LightweightAdapter(bot, env) : new TelegramAdapter(bot, env);
+  env.TIER === 'free' ? new LightweightAdapter(bot, env) : new TelegramAdapter(bot, env)
 ```
 
 ### Consequences

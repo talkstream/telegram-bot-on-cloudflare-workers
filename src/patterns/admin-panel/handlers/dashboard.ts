@@ -3,15 +3,15 @@
  * Example implementation showing statistics
  */
 
-import { renderAdminLayout } from '../templates/layout';
-import type { AdminRequest, AdminEnv, DashboardStats } from '../types';
+import { renderAdminLayout } from '../templates/layout'
+import type { AdminEnv, AdminRequest, DashboardStats } from '../types'
 
 export async function handleAdminDashboard(
   request: AdminRequest,
-  env: AdminEnv,
+  env: AdminEnv
 ): Promise<Response> {
   // Fetch statistics (customize based on your bot's needs)
-  const stats = await getDashboardStats(env);
+  const stats = await getDashboardStats(env)
 
   const content = `
     <h1 class="page-title">Dashboard</h1>
@@ -24,7 +24,7 @@ export async function handleAdminDashboard(
           <div class="stat-label">${stat.icon || ''} ${stat.label}</div>
           <div class="stat-value">${stat.value}</div>
         </div>
-      `,
+      `
         )
         .join('')}
     </div>
@@ -43,21 +43,21 @@ export async function handleAdminDashboard(
       <h2>Recent Activity</h2>
       <p>You can add a recent activity log here.</p>
     </div>
-  `;
+  `
 
   return new Response(
     renderAdminLayout({
       title: 'Dashboard',
       content,
       activeMenu: 'dashboard',
-      adminId: request.adminId,
+      adminId: request.adminId
     }),
     {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
-    },
-  );
+        'Content-Type': 'text/html; charset=utf-8'
+      }
+    }
+  )
 }
 
 /**
@@ -69,42 +69,42 @@ async function getDashboardStats(env: AdminEnv): Promise<DashboardStats> {
     totalUsers: {
       label: 'Total Users',
       value: 0,
-      icon: '👥',
+      icon: '👥'
     },
     activeToday: {
       label: 'Active Today',
       value: 0,
-      icon: '📊',
+      icon: '📊'
     },
     messagesProcessed: {
       label: 'Messages Processed',
       value: 0,
-      icon: '💬',
+      icon: '💬'
     },
     uptime: {
       label: 'Uptime',
       value: '100%',
-      icon: '✅',
-    },
-  };
+      icon: '✅'
+    }
+  }
 
   // Example: Fetch from database if available
   if (env.DB) {
     try {
       // Example query - adjust based on your schema
       const userCount = await env.DB.prepare('SELECT COUNT(*) as total FROM users').first<{
-        total: number;
-      }>();
+        total: number
+      }>()
 
       if (userCount && stats.totalUsers) {
-        stats.totalUsers.value = userCount.total;
+        stats.totalUsers.value = userCount.total
       }
 
       // Add more queries based on your needs...
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error('Failed to fetch stats:', error)
     }
   }
 
-  return stats;
+  return stats
 }

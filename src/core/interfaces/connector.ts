@@ -5,52 +5,52 @@ export interface Connector {
   /**
    * Unique identifier for the connector
    */
-  id: string;
+  id: string
 
   /**
    * Display name of the connector
    */
-  name: string;
+  name: string
 
   /**
    * Connector version
    */
-  version: string;
+  version: string
 
   /**
    * Connector type
    */
-  type: ConnectorType;
+  type: ConnectorType
 
   /**
    * Initialize the connector with configuration
    */
-  initialize(config: ConnectorConfig): Promise<void>;
+  initialize(config: ConnectorConfig): Promise<void>
 
   /**
    * Check if the connector is properly configured and ready
    */
-  isReady(): boolean;
+  isReady(): boolean
 
   /**
    * Validate the connector configuration
    */
-  validateConfig(config: ConnectorConfig): ValidationResult;
+  validateConfig(config: ConnectorConfig): ValidationResult
 
   /**
    * Get connector capabilities
    */
-  getCapabilities(): ConnectorCapabilities;
+  getCapabilities(): ConnectorCapabilities
 
   /**
    * Get connector health status
    */
-  getHealthStatus(): Promise<HealthStatus>;
+  getHealthStatus(): Promise<HealthStatus>
 
   /**
    * Cleanup resources when connector is destroyed
    */
-  destroy(): Promise<void>;
+  destroy(): Promise<void>
 }
 
 export enum ConnectorType {
@@ -62,63 +62,63 @@ export enum ConnectorType {
   ANALYTICS = 'analytics',
   SECURITY = 'security',
   SESSION = 'session',
-  I18N = 'i18n',
+  I18N = 'i18n'
 }
 
 export interface ConnectorConfig {
   /**
    * Connector-specific configuration
    */
-  [key: string]: unknown;
+  [key: string]: unknown
 }
 
 export interface ValidationResult {
-  valid: boolean;
-  errors?: ValidationError[];
+  valid: boolean
+  errors?: ValidationError[]
 }
 
 export interface ValidationError {
-  field: string;
-  message: string;
-  code?: string;
+  field: string
+  message: string
+  code?: string
 }
 
 export interface ConnectorCapabilities {
   /**
    * List of supported features
    */
-  features: string[];
+  features: string[]
 
   /**
    * Rate limits
    */
-  rateLimits?: RateLimit[];
+  rateLimits?: RateLimit[]
 
   /**
    * Supported file types for uploads
    */
-  supportedFileTypes?: string[];
+  supportedFileTypes?: string[]
 
   /**
    * Maximum file size in bytes
    */
-  maxFileSize?: number;
+  maxFileSize?: number
 
   /**
    * Custom capabilities
    */
-  [key: string]: unknown;
+  [key: string]: unknown
 }
 
 export interface RateLimit {
-  resource: string;
-  limit: number;
-  window: number; // in seconds
+  resource: string
+  limit: number
+  window: number // in seconds
 }
 
 export interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  message?: string;
-  details?: Record<string, unknown>;
-  timestamp: number;
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  message?: string
+  details?: Record<string, unknown>
+  timestamp: number
 }

@@ -1,10 +1,10 @@
 import path from 'path'
 
-import { Command } from 'commander'
-import prompts from 'prompts'
 import chalk from 'chalk'
-import ora from 'ora'
+import { Command } from 'commander'
 import fs from 'fs-extra'
+import ora from 'ora'
+import prompts from 'prompts'
 // Using ES modules - no need for __dirname
 
 export const createCommand = new Command('create')
@@ -22,7 +22,7 @@ export const createCommand = new Command('create')
         name: 'name',
         message: 'What is your bot name?',
         initial: 'my-bot',
-        validate: (value) => {
+        validate: value => {
           if (!value) return 'Bot name is required'
           if (!/^[a-z0-9-]+$/.test(value)) {
             return 'Bot name must be lowercase with hyphens only'
@@ -105,21 +105,24 @@ export const createCommand = new Command('create')
         dependencies: {
           '@wireframe/core': '^2.0.0-alpha'
         },
-        devDependencies: config.typescript ? {
-          'typescript': '^5.3.3',
-          '@types/node': '^20.11.5'
-        } : {}
+        devDependencies: config.typescript
+          ? {
+              typescript: '^5.3.3',
+              '@types/node': '^20.11.5'
+            }
+          : {}
       }
 
       // Add connector dependencies
       if (config.messaging) {
-        (packageJson.dependencies as any)[`@wireframe/connector-${config.messaging}`] = '^2.0.0-alpha'
+        ;(packageJson.dependencies as any)[`@wireframe/connector-${config.messaging}`] =
+          '^2.0.0-alpha'
       }
       if (config.ai) {
-        (packageJson.dependencies as any)[`@wireframe/connector-${config.ai}`] = '^2.0.0-alpha'
+        ;(packageJson.dependencies as any)[`@wireframe/connector-${config.ai}`] = '^2.0.0-alpha'
       }
       if (config.cloud) {
-        (packageJson.dependencies as any)[`@wireframe/connector-${config.cloud}`] = '^2.0.0-alpha'
+        ;(packageJson.dependencies as any)[`@wireframe/connector-${config.cloud}`] = '^2.0.0-alpha'
       }
 
       await fs.writeJson(path.join(targetDir, 'package.json'), packageJson, { spaces: 2 })
@@ -127,17 +130,32 @@ export const createCommand = new Command('create')
       // Create wireframe.config.ts/js
       const configFile = config.typescript ? 'wireframe.config.ts' : 'wireframe.config.js'
       const configContent = `${config.typescript ? "import { defineConfig } from '@wireframe/core'\n\n" : "const { defineConfig } = require('@wireframe/core')\n\n"}export default defineConfig({
-  connectors: [${[config.messaging, config.ai, config.cloud].filter(Boolean).map(c => `'${c}'`).join(', ')}],
-  config: {${config.messaging ? `
+  connectors: [${[config.messaging, config.ai, config.cloud]
+    .filter(Boolean)
+    .map(c => `'${c}'`)
+    .join(', ')}],
+  config: {${
+    config.messaging
+      ? `
     ${config.messaging}: {
       token: process.env.BOT_TOKEN
-    },` : ''}${config.ai ? `
+    },`
+      : ''
+  }${
+    config.ai
+      ? `
     ${config.ai}: {
       apiKey: process.env.${config.ai.toUpperCase()}_API_KEY
-    },` : ''}${config.cloud ? `
+    },`
+      : ''
+  }${
+    config.cloud
+      ? `
     ${config.cloud}: {
       // Cloud configuration
-    }` : ''}
+    }`
+      : ''
+  }
   }
 })`
 
@@ -149,8 +167,12 @@ export const createCommand = new Command('create')
 const bot = await Wireframe.create()
 
 bot.on('message', async (message) => {
-  ${config.ai ? `const response = await bot.ai.complete(message.text)
-  await message.reply(response)` : `await message.reply('Hello from Wireframe!')`}
+  ${
+    config.ai
+      ? `const response = await bot.ai.complete(message.text)
+  await message.reply(response)`
+      : `await message.reply('Hello from Wireframe!')`
+  }
 })
 
 await bot.start()
@@ -238,7 +260,6 @@ A Wireframe AI Assistant bot.
       }
       console.log(chalk.cyan('  npm run dev'))
       console.log('\nHappy building! 🚀\n')
-
     } catch (error) {
       spinner.fail('Failed to create bot')
       console.error(error)

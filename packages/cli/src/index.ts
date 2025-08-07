@@ -2,8 +2,8 @@
 
 import { Command } from 'commander'
 
-import { createCommand } from './commands/create.js'
 import { addCommand } from './commands/add.js'
+import { createCommand } from './commands/create.js'
 
 const program = new Command()
 

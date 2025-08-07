@@ -1,4 +1,4 @@
-import type { ConnectorConfig } from '../../../core/interfaces/connector.js';
+import type { ConnectorConfig } from '../../../core/interfaces/connector.js'
 
 /**
  * Discord connector configuration
@@ -7,32 +7,32 @@ export interface DiscordConnectorConfig extends ConnectorConfig {
   /**
    * Discord application ID
    */
-  applicationId: string;
+  applicationId: string
 
   /**
    * Discord public key for webhook verification
    */
-  publicKey: string;
+  publicKey: string
 
   /**
    * Bot token (optional, required for REST API operations)
    */
-  botToken?: string;
+  botToken?: string
 
   /**
    * Webhook URL for receiving interactions
    */
-  webhookUrl?: string;
+  webhookUrl?: string
 
   /**
    * Guild ID for guild-specific commands (optional)
    */
-  guildId?: string;
+  guildId?: string
 
   /**
    * Enable debug logging
    */
-  debug?: boolean;
+  debug?: boolean
 }
 
 /**
@@ -43,7 +43,7 @@ export enum InteractionType {
   APPLICATION_COMMAND = 2,
   MESSAGE_COMPONENT = 3,
   APPLICATION_COMMAND_AUTOCOMPLETE = 4,
-  MODAL_SUBMIT = 5,
+  MODAL_SUBMIT = 5
 }
 
 /**
@@ -56,7 +56,7 @@ export enum InteractionResponseType {
   DEFERRED_UPDATE_MESSAGE = 6,
   UPDATE_MESSAGE = 7,
   APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 8,
-  MODAL = 9,
+  MODAL = 9
 }
 
 /**
@@ -64,7 +64,7 @@ export enum InteractionResponseType {
  */
 export enum MessageFlags {
   EPHEMERAL = 1 << 6,
-  SUPPRESS_EMBEDS = 1 << 2,
+  SUPPRESS_EMBEDS = 1 << 2
 }
 
 /**
@@ -78,7 +78,7 @@ export enum ComponentType {
   USER_SELECT = 5,
   ROLE_SELECT = 6,
   MENTIONABLE_SELECT = 7,
-  CHANNEL_SELECT = 8,
+  CHANNEL_SELECT = 8
 }
 
 /**
@@ -89,80 +89,80 @@ export enum ButtonStyle {
   SECONDARY = 2,
   SUCCESS = 3,
   DANGER = 4,
-  LINK = 5,
+  LINK = 5
 }
 
 /**
  * Discord embed structure
  */
 export interface DiscordEmbed {
-  title?: string;
-  description?: string;
-  url?: string;
-  timestamp?: string;
-  color?: number;
+  title?: string
+  description?: string
+  url?: string
+  timestamp?: string
+  color?: number
   footer?: {
-    text: string;
-    icon_url?: string;
-  };
+    text: string
+    icon_url?: string
+  }
   image?: {
-    url: string;
-  };
+    url: string
+  }
   thumbnail?: {
-    url: string;
-  };
+    url: string
+  }
   author?: {
-    name: string;
-    url?: string;
-    icon_url?: string;
-  };
+    name: string
+    url?: string
+    icon_url?: string
+  }
   fields?: {
-    name: string;
-    value: string;
-    inline?: boolean;
-  }[];
+    name: string
+    value: string
+    inline?: boolean
+  }[]
 }
 
 /**
  * Discord component structures
  */
 export interface DiscordButton {
-  type: ComponentType.BUTTON;
-  style: ButtonStyle;
-  label?: string;
+  type: ComponentType.BUTTON
+  style: ButtonStyle
+  label?: string
   emoji?: {
-    id?: string;
-    name?: string;
-  };
-  custom_id?: string;
-  url?: string;
-  disabled?: boolean;
+    id?: string
+    name?: string
+  }
+  custom_id?: string
+  url?: string
+  disabled?: boolean
 }
 
 export interface DiscordSelectMenu {
-  type: ComponentType;
-  custom_id: string;
-  placeholder?: string;
-  min_values?: number;
-  max_values?: number;
-  disabled?: boolean;
-  options?: DiscordSelectOption[];
+  type: ComponentType
+  custom_id: string
+  placeholder?: string
+  min_values?: number
+  max_values?: number
+  disabled?: boolean
+  options?: DiscordSelectOption[]
 }
 
 export interface DiscordSelectOption {
-  label: string;
-  value: string;
-  description?: string;
+  label: string
+  value: string
+  description?: string
   emoji?: {
-    id?: string;
-    name?: string;
-  };
-  default?: boolean;
+    id?: string
+    name?: string
+  }
+  default?: boolean
 }
 
 export interface DiscordActionRow {
-  type: ComponentType.ACTION_ROW;
-  components: (DiscordButton | DiscordSelectMenu)[];
+  type: ComponentType.ACTION_ROW
+  components: (DiscordButton | DiscordSelectMenu)[]
 }
 
 /**
@@ -172,9 +172,9 @@ export class DiscordAPIError extends Error {
   constructor(
     message: string,
     public code: string,
-    public status: number,
+    public status: number
   ) {
-    super(message);
-    this.name = 'DiscordAPIError';
+    super(message)
+    this.name = 'DiscordAPIError'
   }
 }

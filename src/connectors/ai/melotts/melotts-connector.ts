@@ -6,168 +6,168 @@
  * @module connectors/ai/melotts/melotts-connector
  */
 
-import { BaseConnector } from '@/connectors/base/base-connector';
+import { BaseConnector } from '@/connectors/base/base-connector'
+import { EventBus } from '@/core/events/event-bus'
 import type {
+  AICapabilities,
   AIConnector,
   CompletionRequest,
   CompletionResponse,
-  Usage,
   Cost,
   ModelInfo,
-  AICapabilities,
-} from '@/core/interfaces/ai';
+  Usage
+} from '@/core/interfaces/ai'
 import type {
-  ConnectorConfig,
-  ValidationResult,
   ConnectorCapabilities,
+  ConnectorConfig,
   HealthStatus,
-} from '@/core/interfaces/connector';
-import { ConnectorType } from '@/core/interfaces/connector';
-import { EventBus } from '@/core/events/event-bus';
-import { logger } from '@/lib/logger';
+  ValidationResult
+} from '@/core/interfaces/connector'
+import { ConnectorType } from '@/core/interfaces/connector'
+import { logger } from '@/lib/logger'
 
 export interface MeloTTSConfig extends ConnectorConfig {
-  accountId: string;
-  apiToken?: string;
-  baseUrl?: string;
-  defaultVoice?: string;
-  defaultLanguage?: string;
-  eventBus?: EventBus;
+  accountId: string
+  apiToken?: string
+  baseUrl?: string
+  defaultVoice?: string
+  defaultLanguage?: string
+  eventBus?: EventBus
 }
 
 export interface TTSOptions {
-  voice?: string;
-  language?: string;
-  speed?: number; // 0.5 to 2.0
-  pitch?: number; // -20 to 20 semitones
-  volume?: number; // 0 to 1
-  format?: 'mp3' | 'wav' | 'ogg' | 'flac';
-  sampleRate?: 8000 | 16000 | 22050 | 24000 | 44100 | 48000;
-  emotion?: 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
+  voice?: string
+  language?: string
+  speed?: number // 0.5 to 2.0
+  pitch?: number // -20 to 20 semitones
+  volume?: number // 0 to 1
+  format?: 'mp3' | 'wav' | 'ogg' | 'flac'
+  sampleRate?: 8000 | 16000 | 22050 | 24000 | 44100 | 48000
+  emotion?: 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised'
 }
 
 export interface TTSResponse {
-  audio: Buffer | string; // Buffer or base64 string
-  format: string;
-  duration: number; // in seconds
-  sampleRate: number;
-  size: number; // in bytes
+  audio: Buffer | string // Buffer or base64 string
+  format: string
+  duration: number // in seconds
+  sampleRate: number
+  size: number // in bytes
   metadata?: {
-    voice: string;
-    language: string;
-    emotion?: string;
-    characterCount: number;
-  };
+    voice: string
+    language: string
+    emotion?: string
+    characterCount: number
+  }
 }
 
 export class MeloTTSConnector extends BaseConnector implements AIConnector {
-  id = 'melotts-connector';
-  name = 'MeloTTS Text-to-Speech Connector';
-  version = '1.0.0';
-  type = ConnectorType.AI;
+  id = 'melotts-connector'
+  name = 'MeloTTS Text-to-Speech Connector'
+  version = '1.0.0'
+  type = ConnectorType.AI
 
-  private accountId!: string;
-  private apiToken?: string;
-  private baseUrl: string;
-  private defaultVoice: string;
-  private defaultLanguage: string;
+  private accountId!: string
+  private apiToken?: string
+  private baseUrl: string
+  private defaultVoice: string
+  private defaultLanguage: string
 
   constructor(config?: MeloTTSConfig) {
-    super();
+    super()
     if (config) {
-      this.accountId = config.accountId;
-      this.apiToken = config.apiToken;
-      this.baseUrl = config.baseUrl || 'https://api.cloudflare.com/client/v4';
-      this.defaultVoice = config.defaultVoice || 'en-US-Standard-A';
-      this.defaultLanguage = config.defaultLanguage || 'en-US';
+      this.accountId = config.accountId
+      this.apiToken = config.apiToken
+      this.baseUrl = config.baseUrl || 'https://api.cloudflare.com/client/v4'
+      this.defaultVoice = config.defaultVoice || 'en-US-Standard-A'
+      this.defaultLanguage = config.defaultLanguage || 'en-US'
       if (config.eventBus) {
-        this.eventBus = config.eventBus;
+        this.eventBus = config.eventBus
       }
     } else {
-      this.baseUrl = 'https://api.cloudflare.com/client/v4';
-      this.defaultVoice = 'en-US-Standard-A';
-      this.defaultLanguage = 'en-US';
+      this.baseUrl = 'https://api.cloudflare.com/client/v4'
+      this.defaultVoice = 'en-US-Standard-A'
+      this.defaultLanguage = 'en-US'
     }
   }
 
   protected async doInitialize(config: ConnectorConfig): Promise<void> {
-    const ttsConfig = config as MeloTTSConfig;
+    const ttsConfig = config as MeloTTSConfig
 
-    this.accountId = ttsConfig.accountId;
-    this.apiToken = ttsConfig.apiToken;
-    this.baseUrl = ttsConfig.baseUrl || this.baseUrl;
-    this.defaultVoice = ttsConfig.defaultVoice || this.defaultVoice;
-    this.defaultLanguage = ttsConfig.defaultLanguage || this.defaultLanguage;
+    this.accountId = ttsConfig.accountId
+    this.apiToken = ttsConfig.apiToken
+    this.baseUrl = ttsConfig.baseUrl || this.baseUrl
+    this.defaultVoice = ttsConfig.defaultVoice || this.defaultVoice
+    this.defaultLanguage = ttsConfig.defaultLanguage || this.defaultLanguage
 
     logger.info('[MeloTTSConnector] Initializing MeloTTS connector', {
       accountId: this.accountId,
       defaultVoice: this.defaultVoice,
-      defaultLanguage: this.defaultLanguage,
-    });
+      defaultLanguage: this.defaultLanguage
+    })
 
     // Validate credentials if available
     if (this.apiToken) {
-      const valid = await this.validateCredentials();
+      const valid = await this.validateCredentials()
       if (!valid) {
-        throw new Error('Invalid API credentials for MeloTTS');
+        throw new Error('Invalid API credentials for MeloTTS')
       }
     }
 
     this.emitEvent('ai:tts:connector:initialized', {
       connector: this.id,
-      capabilities: this.getAICapabilities(),
-    });
+      capabilities: this.getAICapabilities()
+    })
   }
 
   protected doValidateConfig(config: ConnectorConfig): ValidationResult['errors'] {
-    const errors: ValidationResult['errors'] = [];
-    const ttsConfig = config as MeloTTSConfig;
+    const errors: ValidationResult['errors'] = []
+    const ttsConfig = config as MeloTTSConfig
 
     if (!ttsConfig.accountId) {
       errors?.push({
         field: 'accountId',
         message: 'Cloudflare account ID is required',
-        code: 'REQUIRED_FIELD',
-      });
+        code: 'REQUIRED_FIELD'
+      })
     }
 
-    return errors;
+    return errors
   }
 
   protected checkReadiness(): boolean {
-    return !!this.accountId;
+    return !!this.accountId
   }
 
   protected async checkHealth(): Promise<Partial<HealthStatus>> {
     try {
       // Check if the TTS service is available
-      const modelInfo = await this.getModelInfo('melotts');
+      const modelInfo = await this.getModelInfo('melotts')
 
       return {
         status: modelInfo ? 'healthy' : 'degraded',
         message: modelInfo ? 'MeloTTS connector is operational' : 'Service unavailable',
         details: {
           service: 'melotts',
-          available: !!modelInfo,
-        },
-      };
+          available: !!modelInfo
+        }
+      }
     } catch (error) {
       return {
         status: 'unhealthy',
         message: 'Failed to check service availability',
         details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      };
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      }
     }
   }
 
   protected async doDestroy(): Promise<void> {
-    logger.info('[MeloTTSConnector] Destroying MeloTTS connector');
+    logger.info('[MeloTTSConnector] Destroying MeloTTS connector')
 
     this.emitEvent('ai:tts:connector:destroyed', {
-      connector: this.id,
-    });
+      connector: this.id
+    })
   }
 
   getCapabilities(): ConnectorCapabilities {
@@ -185,9 +185,9 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
         'emotion-control',
         'speed-control',
         'pitch-control',
-        'streaming-audio',
-      ],
-    };
+        'streaming-audio'
+      ]
+    }
   }
 
   getAICapabilities(): AICapabilities {
@@ -206,10 +206,10 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
           textToSpeech: true,
           multiLanguage: true,
           emotionControl: true,
-          voiceCloning: false,
-        },
-      },
-    };
+          voiceCloning: false
+        }
+      }
+    }
   }
 
   /**
@@ -221,10 +221,10 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
         textLength: text.length,
         voice: options?.voice || this.defaultVoice,
         language: options?.language || this.defaultLanguage,
-        format: options?.format || 'mp3',
-      });
+        format: options?.format || 'mp3'
+      })
 
-      const startTime = Date.now();
+      const startTime = Date.now()
 
       // Prepare the request payload
       const payload = {
@@ -236,16 +236,16 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
         volume: options?.volume || 1.0,
         format: options?.format || 'mp3',
         sample_rate: options?.sampleRate || 24000,
-        emotion: options?.emotion || 'neutral',
-      };
+        emotion: options?.emotion || 'neutral'
+      }
 
       // Make API call to Cloudflare Workers AI
-      const response = await this.callAPI(payload);
-      const latency = Date.now() - startTime;
+      const response = await this.callAPI(payload)
+      const latency = Date.now() - startTime
 
       // Decode base64 audio if needed
-      const result = response as { audio?: string; duration?: number };
-      const audioBuffer = Buffer.from(result.audio || '', 'base64');
+      const result = response as { audio?: string; duration?: number }
+      const audioBuffer = Buffer.from(result.audio || '', 'base64')
 
       const ttsResponse: TTSResponse = {
         audio: audioBuffer,
@@ -257,33 +257,33 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
           voice: options?.voice || this.defaultVoice,
           language: options?.language || this.defaultLanguage,
           emotion: options?.emotion,
-          characterCount: text.length,
-        },
-      };
+          characterCount: text.length
+        }
+      }
 
       logger.info('[MeloTTSConnector] TTS synthesis successful', {
         duration: ttsResponse.duration,
         size: ttsResponse.size,
-        latency,
-      });
+        latency
+      })
 
       this.emitEvent('ai:tts:synthesis:success', {
         connector: this.id,
         duration: ttsResponse.duration,
         size: ttsResponse.size,
-        latency,
-      });
+        latency
+      })
 
-      return ttsResponse;
+      return ttsResponse
     } catch (error) {
-      logger.error('[MeloTTSConnector] TTS synthesis failed', error);
+      logger.error('[MeloTTSConnector] TTS synthesis failed', error)
 
       this.emitEvent('ai:tts:synthesis:error', {
         connector: this.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
 
-      throw error;
+      throw error
     }
   }
 
@@ -294,8 +294,8 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
     try {
       logger.info('[MeloTTSConnector] Starting streaming TTS', {
         textLength: text.length,
-        voice: options?.voice || this.defaultVoice,
-      });
+        voice: options?.voice || this.defaultVoice
+      })
 
       const payload = {
         text,
@@ -307,32 +307,32 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
         format: options?.format || 'mp3',
         sample_rate: options?.sampleRate || 24000,
         emotion: options?.emotion || 'neutral',
-        stream: true,
-      };
+        stream: true
+      }
 
       // Stream response from API
-      const stream = await this.callStreamingAPI(payload);
-      const reader = stream.getReader();
+      const stream = await this.callStreamingAPI(payload)
+      const reader = stream.getReader()
 
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        const { done, value } = await reader.read()
+        if (done) break
 
-        yield value;
+        yield value
       }
 
       this.emitEvent('ai:tts:stream:complete', {
-        connector: this.id,
-      });
+        connector: this.id
+      })
     } catch (error) {
-      logger.error('[MeloTTSConnector] Streaming TTS failed', error);
+      logger.error('[MeloTTSConnector] Streaming TTS failed', error)
 
       this.emitEvent('ai:tts:stream:error', {
         connector: this.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
 
-      throw error;
+      throw error
     }
   }
 
@@ -341,11 +341,11 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
    */
   async getVoices(): Promise<
     Array<{
-      id: string;
-      name: string;
-      language: string;
-      gender: string;
-      preview_url?: string;
+      id: string
+      name: string
+      language: string
+      gender: string
+      preview_url?: string
     }>
   > {
     return [
@@ -355,7 +355,7 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
         id: 'en-GB-Standard-A',
         name: 'British English Female',
         language: 'en-GB',
-        gender: 'female',
+        gender: 'female'
       },
       { id: 'en-GB-Standard-B', name: 'British English Male', language: 'en-GB', gender: 'male' },
       { id: 'es-ES-Standard-A', name: 'Spanish Female', language: 'es-ES', gender: 'female' },
@@ -365,20 +365,20 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
       { id: 'ja-JP-Standard-A', name: 'Japanese Female', language: 'ja-JP', gender: 'female' },
       { id: 'ko-KR-Standard-A', name: 'Korean Female', language: 'ko-KR', gender: 'female' },
       { id: 'zh-CN-Standard-A', name: 'Chinese Female', language: 'zh-CN', gender: 'female' },
-      { id: 'ru-RU-Standard-A', name: 'Russian Female', language: 'ru-RU', gender: 'female' },
-    ];
+      { id: 'ru-RU-Standard-A', name: 'Russian Female', language: 'ru-RU', gender: 'female' }
+    ]
   }
 
   // Implement required AIConnector methods (not used for TTS-only connector)
   async complete(_request: CompletionRequest): Promise<CompletionResponse> {
     throw new Error(
-      'MeloTTS connector does not support text completion. Use synthesize() method for TTS.',
-    );
+      'MeloTTS connector does not support text completion. Use synthesize() method for TTS.'
+    )
   }
 
   async getModelInfo(modelId: string): Promise<ModelInfo> {
     if (modelId !== 'melotts') {
-      throw new Error(`Model ${modelId} not supported by MeloTTS connector`);
+      throw new Error(`Model ${modelId} not supported by MeloTTS connector`)
     }
 
     return {
@@ -398,27 +398,27 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
         audio: true,
         function_calling: false,
         json_mode: false,
-        streaming: true,
+        streaming: true
       },
       version: '1.0',
-      languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh'],
-    };
+      languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh']
+    }
   }
 
   calculateCost(usage: Usage): Cost {
     // MeloTTS pricing is based on character count
     // Estimate 5 characters per token
-    const characters = usage.total_tokens * 5;
-    const cost = (characters / 1000) * 0.02;
+    const characters = usage.total_tokens * 5
+    const cost = (characters / 1000) * 0.02
 
     return {
       total: cost,
       currency: 'USD',
       breakdown: {
         prompt: cost,
-        completion: 0,
-      },
-    };
+        completion: 0
+      }
+    }
   }
 
   async validateCredentials(): Promise<boolean> {
@@ -427,59 +427,59 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
       const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/ai/models`, {
         headers: {
           Authorization: `Bearer ${this.apiToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+          'Content-Type': 'application/json'
+        }
+      })
 
-      return response.ok;
+      return response.ok
     } catch (error) {
-      logger.error('[MeloTTSConnector] Credential validation failed', error);
-      return false;
+      logger.error('[MeloTTSConnector] Credential validation failed', error)
+      return false
     }
   }
 
   private async callAPI(payload: Record<string, unknown>): Promise<unknown> {
-    const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/bytedance/melotts`;
+    const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/bytedance/melotts`
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: this.apiToken ? `Bearer ${this.apiToken}` : '',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload),
-    });
+      body: JSON.stringify(payload)
+    })
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`MeloTTS API error: ${response.status} - ${error}`);
+      const error = await response.text()
+      throw new Error(`MeloTTS API error: ${response.status} - ${error}`)
     }
 
-    return response.json();
+    return response.json()
   }
 
   private async callStreamingAPI(payload: Record<string, unknown>): Promise<ReadableStream> {
-    const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/bytedance/melotts`;
+    const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/bytedance/melotts`
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: this.apiToken ? `Bearer ${this.apiToken}` : '',
         'Content-Type': 'application/json',
-        Accept: 'audio/mpeg',
+        Accept: 'audio/mpeg'
       },
-      body: JSON.stringify(payload),
-    });
+      body: JSON.stringify(payload)
+    })
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`MeloTTS streaming API error: ${response.status} - ${error}`);
+      const error = await response.text()
+      throw new Error(`MeloTTS streaming API error: ${response.status} - ${error}`)
     }
 
-    const body = response.body;
+    const body = response.body
     if (!body) {
-      throw new Error('Response has no body');
+      throw new Error('Response has no body')
     }
-    return body;
+    return body
   }
 }

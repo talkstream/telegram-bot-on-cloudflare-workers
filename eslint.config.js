@@ -1,10 +1,10 @@
-import js from '@eslint/js';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import importPlugin from 'eslint-plugin-import';
-import promisePlugin from 'eslint-plugin-promise';
-import globals from 'globals';
-import dbMappingPlugin from './eslint-rules/index.js';
+import js from '@eslint/js'
+import tsPlugin from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import importPlugin from 'eslint-plugin-import'
+import promisePlugin from 'eslint-plugin-promise'
+import globals from 'globals'
+import dbMappingPlugin from './eslint-rules/index.js'
 
 export default [
   // Ignore patterns
@@ -20,8 +20,8 @@ export default [
       '**/.husky/**',
       '**/website/**',
       '**/examples/**',
-      '**/scripts/**',
-    ],
+      '**/scripts/**'
+    ]
   },
 
   // Base configuration
@@ -35,19 +35,19 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: ['./tsconfig.json', './tsconfig.test.json'],
+        project: ['./tsconfig.json', './tsconfig.test.json']
       },
       globals: {
         ...globals.es2022,
         ...globals.node,
-        ...globals.worker,
-      },
+        ...globals.worker
+      }
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
       import: importPlugin,
       promise: promisePlugin,
-      'db-mapping': dbMappingPlugin,
+      'db-mapping': dbMappingPlugin
     },
     rules: {
       // TypeScript specific rules
@@ -56,8 +56,8 @@ export default [
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-        },
+          caughtErrorsIgnorePattern: '^_'
+        }
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -77,8 +77,8 @@ export default [
         'error',
         {
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-          'newlines-between': 'always',
-        },
+          'newlines-between': 'always'
+        }
       ],
 
       // Promise rules
@@ -100,31 +100,31 @@ export default [
         'error',
         {
           allowedPatterns: ['\\.bind\\(', '\\.all\\(', '\\.first\\(', '\\.run\\('],
-          databaseRowTypes: ['DatabaseRow', 'DBRow', 'Row', 'DynamoDBRow'],
-        },
+          databaseRowTypes: ['DatabaseRow', 'DBRow', 'Row', 'DynamoDBRow']
+        }
       ],
       'db-mapping/require-boolean-conversion': 'error',
       'db-mapping/require-date-conversion': [
         'error',
         {
-          allowNullChecks: true,
-        },
+          allowNullChecks: true
+        }
       ],
       'db-mapping/use-field-mapper': [
         'warn',
         {
-          minimumFields: 3,
-        },
-      ],
-    },
+          minimumFields: 3
+        }
+      ]
+    }
   },
 
   // Allow console in specific files
   {
     files: ['**/logger.ts', '**/logger.js'],
     rules: {
-      'no-console': 'off',
-    },
+      'no-console': 'off'
+    }
   },
 
   // JavaScript files
@@ -139,8 +139,8 @@ export default [
         __dirname: 'readonly',
         __filename: 'readonly',
         require: 'readonly',
-        process: 'readonly',
-      },
+        process: 'readonly'
+      }
     },
     rules: {
       'no-console': 'off',
@@ -148,9 +148,9 @@ export default [
         'error',
         {
           argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
-    },
-  },
-];
+          varsIgnorePattern: '^_'
+        }
+      ]
+    }
+  }
+]

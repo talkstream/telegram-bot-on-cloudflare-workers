@@ -67,7 +67,7 @@ jobs:
           cd packages/core
           npm install
           npm run build
-          
+
           # Validate bundle size
           if [ -f dist/index.js ]; then
             SIZE=$(stat -f%z dist/index.js 2>/dev/null || stat -c%s dist/index.js)

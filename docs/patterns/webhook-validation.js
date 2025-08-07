@@ -21,20 +21,20 @@
 // by the TelegramAdapter in /src/core/telegram-adapter.ts
 async function processUpdate(data, _env, _ctx) {
   // Process the Telegram update
-  console.log('Processing update:', data);
+  console.log('Processing update:', data)
 }
 
 // Method 1: Secret Token Validation (Recommended)
 export async function validateWebhookWithSecret(request, env) {
   // Telegram sends the secret token in the X-Telegram-Bot-Api-Secret-Token header
-  const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
+  const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
 
   if (!token || token !== env.TELEGRAM_WEBHOOK_SECRET) {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response('Unauthorized', { status: 401 })
   }
 
   // Webhook is valid, proceed with processing
-  return null; // Continue processing
+  return null // Continue processing
 }
 
 // Method 2: IP Whitelist Validation (Additional Security)
@@ -60,33 +60,33 @@ const TELEGRAM_IP_RANGES = [
   '91.105.214.0/23',
   '91.105.216.0/23',
   '91.105.218.0/23',
-  '185.76.151.0/24',
-];
+  '185.76.151.0/24'
+]
 
 function ipToInt(ip) {
-  return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+  return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0
 }
 
 function isIpInRange(ip, range) {
-  const [rangeIp, rangeBits] = range.split('/');
-  const ipInt = ipToInt(ip);
-  const rangeInt = ipToInt(rangeIp);
-  const mask = (0xffffffff << (32 - parseInt(rangeBits))) >>> 0;
-  return (ipInt & mask) === (rangeInt & mask);
+  const [rangeIp, rangeBits] = range.split('/')
+  const ipInt = ipToInt(ip)
+  const rangeInt = ipToInt(rangeIp)
+  const mask = (0xffffffff << (32 - parseInt(rangeBits))) >>> 0
+  return (ipInt & mask) === (rangeInt & mask)
 }
 
 export function validateTelegramIP(request) {
-  const clientIP = request.headers.get('CF-Connecting-IP');
+  const clientIP = request.headers.get('CF-Connecting-IP')
 
   if (!clientIP) {
-    return false;
+    return false
   }
 
-  return TELEGRAM_IP_RANGES.some((range) => isIpInRange(clientIP, range));
+  return TELEGRAM_IP_RANGES.some(range => isIpInRange(clientIP, range))
 }
 
 // Method 3: Request Body Validation with Zod
-import { z } from 'zod';
+import { z } from 'zod'
 
 const telegramUpdateSchema = z
   .object({
@@ -100,14 +100,14 @@ const telegramUpdateSchema = z
             is_bot: z.boolean(),
             first_name: z.string(),
             username: z.string().optional(),
-            language_code: z.string().optional(),
+            language_code: z.string().optional()
           })
           .optional(),
         chat: z.object({
           id: z.number(),
           type: z.enum(['private', 'group', 'supergroup', 'channel']),
           title: z.string().optional(),
-          username: z.string().optional(),
+          username: z.string().optional()
         }),
         date: z.number(),
         text: z.string().optional(),
@@ -116,10 +116,10 @@ const telegramUpdateSchema = z
             z.object({
               type: z.string(),
               offset: z.number(),
-              length: z.number(),
-            }),
+              length: z.number()
+            })
           )
-          .optional(),
+          .optional()
       })
       .optional(),
     callback_query: z
@@ -128,64 +128,64 @@ const telegramUpdateSchema = z
         from: z.object({
           id: z.number(),
           is_bot: z.boolean(),
-          first_name: z.string(),
+          first_name: z.string()
         }),
         data: z.string(),
-        message: z.any().optional(),
+        message: z.any().optional()
       })
-      .optional(),
+      .optional()
     // Add more update types as needed
   })
-  .passthrough(); // Allow additional fields
+  .passthrough() // Allow additional fields
 
 export async function validateRequestBody(request) {
   try {
-    const body = await request.json();
-    const validated = telegramUpdateSchema.parse(body);
-    return { valid: true, data: validated };
+    const body = await request.json()
+    const validated = telegramUpdateSchema.parse(body)
+    return { valid: true, data: validated }
   } catch (error) {
-    console.error('Invalid webhook payload:', error);
-    return { valid: false, error };
+    console.error('Invalid webhook payload:', error)
+    return { valid: false, error }
   }
 }
 
 // Complete Webhook Handler with All Validations
 export async function handleWebhook(request, env, ctx) {
   // 1. Validate secret token
-  const secretError = await validateWebhookWithSecret(request, env);
-  if (secretError) return secretError;
+  const secretError = await validateWebhookWithSecret(request, env)
+  if (secretError) return secretError
 
   // 2. Optionally validate IP (may not work behind some proxies)
   if (env.VALIDATE_IP === 'true' && !validateTelegramIP(request)) {
-    console.warn('Request from non-Telegram IP:', request.headers.get('CF-Connecting-IP'));
+    console.warn('Request from non-Telegram IP:', request.headers.get('CF-Connecting-IP'))
     // You might want to just log this rather than reject
   }
 
   // 3. Parse and validate body
-  const { valid, data, error } = await validateRequestBody(request.clone());
+  const { valid, data, error } = await validateRequestBody(request.clone())
   if (!valid) {
-    console.error('Invalid update format:', error);
-    return new Response('Bad Request', { status: 400 });
+    console.error('Invalid update format:', error)
+    return new Response('Bad Request', { status: 400 })
   }
 
   // 4. Process the validated update
   try {
-    await processUpdate(data, env, ctx);
-    return new Response('OK');
+    await processUpdate(data, env, ctx)
+    return new Response('OK')
   } catch (error) {
-    console.error('Error processing update:', error);
+    console.error('Error processing update:', error)
     // Return OK to prevent Telegram from retrying
-    return new Response('OK');
+    return new Response('OK')
   }
 }
 
 // Webhook Setup Helper
 export async function setupWebhook(token, workerUrl, secret) {
-  const url = new URL(`https://api.telegram.org/bot${token}/setWebhook`);
-  url.searchParams.set('url', `${workerUrl}/webhook`);
+  const url = new URL(`https://api.telegram.org/bot${token}/setWebhook`)
+  url.searchParams.set('url', `${workerUrl}/webhook`)
 
   if (secret) {
-    url.searchParams.set('secret_token', secret);
+    url.searchParams.set('secret_token', secret)
   }
 
   // Optionally set allowed updates
@@ -202,18 +202,18 @@ export async function setupWebhook(token, workerUrl, secret) {
       'shipping_query',
       'pre_checkout_query',
       'poll',
-      'poll_answer',
-    ]),
-  );
+      'poll_answer'
+    ])
+  )
 
-  const response = await fetch(url);
-  const result = await response.json();
+  const response = await fetch(url)
+  const result = await response.json()
 
   if (!result.ok) {
-    throw new Error(`Failed to set webhook: ${result.description}`);
+    throw new Error(`Failed to set webhook: ${result.description}`)
   }
 
-  return result;
+  return result
 }
 
 // Usage Example

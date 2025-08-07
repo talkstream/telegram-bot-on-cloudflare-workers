@@ -2,57 +2,57 @@
  * Project templates
  */
 
-import type { ProjectOptions, FileTemplate } from '../types.js';
+import type { FileTemplate, ProjectOptions } from '../types.js'
 
 export function generateProjectFiles(options: ProjectOptions): FileTemplate[] {
   const files: FileTemplate[] = [
     // Main entry point
     {
       path: 'src/index.ts',
-      content: generateIndexFile(options),
+      content: generateIndexFile(options)
     },
     // Bot setup
     {
       path: 'src/bot.ts',
-      content: generateBotFile(options),
+      content: generateBotFile(options)
     },
     // Commands
     {
       path: 'src/commands/start.ts',
-      content: generateStartCommand(options),
+      content: generateStartCommand(options)
     },
     {
       path: 'src/commands/help.ts',
-      content: generateHelpCommand(options),
+      content: generateHelpCommand(options)
     },
     // README
     {
       path: 'README.md',
-      content: generateReadme(options),
+      content: generateReadme(options)
     },
     // Tests
     {
       path: 'tests/bot.test.ts',
-      content: generateTestFile(options),
-    },
-  ];
+      content: generateTestFile(options)
+    }
+  ]
 
   // Add feature-specific files
   if (options.features.includes('database')) {
     files.push({
       path: 'src/services/database.ts',
-      content: generateDatabaseService(options),
-    });
+      content: generateDatabaseService(options)
+    })
   }
 
   if (options.features.includes('i18n')) {
     files.push({
       path: 'src/services/i18n.ts',
-      content: generateI18nService(options),
-    });
+      content: generateI18nService(options)
+    })
   }
 
-  return files;
+  return files
 }
 
 function generateIndexFile(options: ProjectOptions): string {
@@ -89,7 +89,7 @@ async function initialize() {
 // Initialize on startup
 const app = await initialize();
 export { app };
-`;
+`
 }
 
 function generateBotFile(options: ProjectOptions): string {
@@ -132,7 +132,7 @@ export async function setupBot(cloud: any) {
     eventBus,
   };
 }
-`;
+`
 }
 
 function generateStartCommand(options: ProjectOptions): string {
@@ -153,7 +153,7 @@ Type /help to see available commands.\`;
     await ctx.reply(message);
   },
 };
-`;
+`
 }
 
 function generateHelpCommand(_options: ProjectOptions): string {
@@ -175,7 +175,7 @@ export const helpCommand = {
     await ctx.reply(message);
   },
 };
-`;
+`
 }
 
 function generateReadme(options: ProjectOptions): string {
@@ -188,7 +188,7 @@ A ${options.platform} bot running on ${options.cloud} using the Wireframe platfo
 - 🤖 AI-powered responses using ${options.ai}
 - ☁️ Deployed on ${options.cloud}
 - 🚀 Built with TypeScript and Wireframe
-${options.features.map((f) => `- ✅ ${getFeatureName(f)}`).join('\n')}
+${options.features.map(f => `- ✅ ${getFeatureName(f)}`).join('\n')}
 
 ## Setup
 
@@ -243,7 +243,7 @@ MIT
 ---
 
 Built with [Wireframe](https://github.com/talkstream/typescript-wireframe-platform)
-`;
+`
 }
 
 function generateTestFile(options: ProjectOptions): string {
@@ -274,7 +274,7 @@ describe('Bot', () => {
     // Add command tests here
   });
 });
-`;
+`
 }
 
 function generateDatabaseService(_options: ProjectOptions): string {
@@ -337,7 +337,7 @@ export async function createUser(platformId: string, username?: string) {
   
   return { id, platform_id: platformId, username };
 }
-`;
+`
 }
 
 function generateI18nService(_options: ProjectOptions): string {
@@ -375,7 +375,7 @@ export function setupI18n() {
     },
   };
 }
-`;
+`
 }
 
 function getCloudHandler(cloud: string): string {
@@ -391,7 +391,7 @@ function getCloudHandler(cloud: string): string {
     
     return new Response('Bot is running!');
   },
-};`;
+};`
 
     case 'aws':
       return `export const handler = async (event: any, context: any) => {
@@ -415,10 +415,10 @@ function getCloudHandler(cloud: string): string {
     statusCode: 200,
     body: 'Bot is running!',
   };
-};`;
+};`
 
     default:
-      return `// Configure handler for ${cloud}`;
+      return `// Configure handler for ${cloud}`
   }
 }
 
@@ -431,8 +431,8 @@ function getFeatureName(feature: string): string {
     plugins: 'Plugin system',
     admin: 'Admin panel',
     monitoring: 'Monitoring & logging',
-    testing: 'Testing setup',
-  };
+    testing: 'Testing setup'
+  }
 
-  return names[feature] || feature;
+  return names[feature] || feature
 }

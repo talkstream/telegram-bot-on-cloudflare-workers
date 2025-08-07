@@ -1,40 +1,40 @@
-import { RuleTester } from 'eslint';
-import rule from '../no-snake-case-db-fields.js';
+import { RuleTester } from 'eslint'
+import rule from '../no-snake-case-db-fields.js'
 
 const ruleTester = new RuleTester({
   parserOptions: {
     ecmaVersion: 2022,
-    sourceType: 'module',
-  },
-});
+    sourceType: 'module'
+  }
+})
 
 ruleTester.run('no-snake-case-db-fields', rule, {
   valid: [
     // Accessing camelCase properties is fine
     {
-      code: 'const id = user.userId;',
+      code: 'const id = user.userId;'
     },
     // Snake case in non-database context is fine
     {
-      code: 'const MY_CONSTANT = some_function();',
+      code: 'const MY_CONSTANT = some_function();'
     },
     // Snake case in SQL strings is fine
     {
-      code: 'const query = "SELECT user_id FROM users";',
+      code: 'const query = "SELECT user_id FROM users";'
     },
     // Using a mapper is the recommended approach
     {
-      code: 'const user = userMapper.toDomain(row);',
+      code: 'const user = userMapper.toDomain(row);'
     },
     // Allowed patterns
     {
       code: 'db.prepare("SELECT user_id FROM users").bind(row.user_id)',
       options: [
         {
-          allowedPatterns: ['\\.bind\\(.*\\)'],
-        },
-      ],
-    },
+          allowedPatterns: ['\\.bind\\(.*\\)']
+        }
+      ]
+    }
   ],
 
   invalid: [
@@ -44,9 +44,9 @@ ruleTester.run('no-snake-case-db-fields', rule, {
       errors: [
         {
           messageId: 'snakeCaseAccess',
-          data: { field: 'user_id' },
-        },
-      ],
+          data: { field: 'user_id' }
+        }
+      ]
     },
     // Destructuring snake_case fields
     {
@@ -54,13 +54,13 @@ ruleTester.run('no-snake-case-db-fields', rule, {
       errors: [
         {
           messageId: 'snakeCaseAccess',
-          data: { field: 'user_id' },
+          data: { field: 'user_id' }
         },
         {
           messageId: 'snakeCaseAccess',
-          data: { field: 'first_name' },
-        },
-      ],
+          data: { field: 'first_name' }
+        }
+      ]
     },
     // Accessing nested snake_case
     {
@@ -68,9 +68,9 @@ ruleTester.run('no-snake-case-db-fields', rule, {
       errors: [
         {
           messageId: 'snakeCaseAccess',
-          data: { field: 'first_name' },
-        },
-      ],
+          data: { field: 'first_name' }
+        }
+      ]
     },
     // Database record patterns
     {
@@ -78,9 +78,9 @@ ruleTester.run('no-snake-case-db-fields', rule, {
       errors: [
         {
           messageId: 'snakeCaseAccess',
-          data: { field: 'is_active' },
-        },
-      ],
-    },
-  ],
-});
+          data: { field: 'is_active' }
+        }
+      ]
+    }
+  ]
+})

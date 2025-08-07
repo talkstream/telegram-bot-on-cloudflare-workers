@@ -1,6 +1,6 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
-import type { CloudflareEnv } from '@/types/env';
+import type { CloudflareEnv } from '@/types/env'
 
 const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().optional().default('demo'), // Optional for demo mode
@@ -8,7 +8,7 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SENTRY_DEBUG: z
     .string()
-    .transform((val) => val === 'true')
+    .transform(val => val === 'true')
     .optional(),
   ENVIRONMENT: z.string().optional().default('development'),
   RELEASE: z.string().optional(),
@@ -34,24 +34,24 @@ const envSchema = z.object({
   // Cost tracking
   AI_COST_TRACKING_ENABLED: z
     .string()
-    .transform((val) => val === 'true')
+    .transform(val => val === 'true')
     .optional(),
   AI_COST_CONFIG_URL: z.string().url().optional(),
 
   // Owner configuration
-  BOT_OWNER_IDS: z.string().optional(), // Comma-separated list of owner Telegram IDs
+  BOT_OWNER_IDS: z.string().optional() // Comma-separated list of owner Telegram IDs
 
   // Add other environment variables here
-});
+})
 
-export type Env = CloudflareEnv;
+export type Env = CloudflareEnv
 
 export function validateEnv(env: unknown): Env {
-  const parsed = envSchema.safeParse(env);
+  const parsed = envSchema.safeParse(env)
   if (!parsed.success) {
-    console.error('Invalid environment variables:', parsed.error.flatten().fieldErrors);
-    throw new Error('Invalid environment variables');
+    console.error('Invalid environment variables:', parsed.error.flatten().fieldErrors)
+    throw new Error('Invalid environment variables')
   }
   // Cast to CloudflareEnv type as we've validated the structure
-  return env as Env;
+  return env as Env
 }

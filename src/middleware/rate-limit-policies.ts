@@ -1,6 +1,6 @@
-import { rateLimiter } from './rate-limiter';
+import { rateLimiter } from './rate-limiter'
 
-import type { EventBus } from '@/core/events/event-bus';
+import type { EventBus } from '@/core/events/event-bus'
 
 /**
  * Rate limiting policies for different endpoint types
@@ -8,16 +8,16 @@ import type { EventBus } from '@/core/events/event-bus';
  */
 
 interface RateLimitPolicyConfig {
-  windowMs?: number;
-  maxRequests?: number;
-  eventBus?: EventBus;
+  windowMs?: number
+  maxRequests?: number
+  eventBus?: EventBus
 }
 
 /**
  * Creates rate limit policies with optional EventBus integration
  */
 export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
-  const { eventBus } = config || {};
+  const { eventBus } = config || {}
 
   return {
     /**
@@ -28,7 +28,7 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       windowMs: 60000, // 1 minute
       maxRequests: 100, // 100 requests per minute
       eventBus,
-      message: 'Global rate limit exceeded. Please slow down your requests.',
+      message: 'Global rate limit exceeded. Please slow down your requests.'
     }),
 
     /**
@@ -39,7 +39,7 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       windowMs: 60000, // 1 minute
       maxRequests: 20, // 20 requests per minute
       eventBus,
-      message: 'Rate limit exceeded for this endpoint. Please try again later.',
+      message: 'Rate limit exceeded for this endpoint. Please try again later.'
     }),
 
     /**
@@ -51,7 +51,7 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       maxRequests: 60, // 60 requests per minute
       skipFailedRequests: true, // Don't count failed requests
       eventBus,
-      message: 'API rate limit exceeded. Please check the Retry-After header.',
+      message: 'API rate limit exceeded. Please check the Retry-After header.'
     }),
 
     /**
@@ -63,7 +63,7 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       maxRequests: 120, // 120 requests per minute (2 per second)
       skipSuccessfulRequests: false,
       eventBus,
-      message: 'Health check rate limit exceeded.',
+      message: 'Health check rate limit exceeded.'
     }),
 
     /**
@@ -75,7 +75,7 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       maxRequests: 200, // 200 requests per minute
       skipSuccessfulRequests: true, // Only count errors
       eventBus,
-      message: 'Static content rate limit exceeded.',
+      message: 'Static content rate limit exceeded.'
     }),
 
     /**
@@ -87,7 +87,7 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       maxRequests: 5, // 5 attempts per 15 minutes
       skipSuccessfulRequests: true, // Only count failed attempts
       eventBus,
-      message: 'Too many authentication attempts. Please try again in 15 minutes.',
+      message: 'Too many authentication attempts. Please try again in 15 minutes.'
     }),
 
     /**
@@ -98,9 +98,9 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
       windowMs: 1000, // 1 second
       maxRequests: 10, // 10 requests per second max
       eventBus,
-      message: 'Burst limit exceeded. Please spread out your requests.',
-    }),
-  };
+      message: 'Burst limit exceeded. Please spread out your requests.'
+    })
+  }
 }
 
 /**
@@ -108,16 +108,16 @@ export function createRateLimitPolicies(config?: RateLimitPolicyConfig) {
  * Adjusts limits based on deployment environment
  */
 export function getEnvironmentRateLimits(environment?: string) {
-  const isProd = environment === 'production';
-  const isDev = environment === 'development';
+  const isProd = environment === 'production'
+  const isDev = environment === 'development'
 
   if (isDev) {
     // Very permissive in development
     return {
       globalMax: 1000,
       apiMax: 500,
-      strictMax: 100,
-    };
+      strictMax: 100
+    }
   }
 
   if (isProd) {
@@ -125,16 +125,16 @@ export function getEnvironmentRateLimits(environment?: string) {
     return {
       globalMax: 100,
       apiMax: 60,
-      strictMax: 20,
-    };
+      strictMax: 20
+    }
   }
 
   // Default (staging, test, etc.)
   return {
     globalMax: 200,
     apiMax: 100,
-    strictMax: 40,
-  };
+    strictMax: 40
+  }
 }
 
 /**
@@ -164,5 +164,5 @@ export const rateLimitGroups = {
   /**
    * Monitoring endpoints - health checks and metrics
    */
-  monitoring: ['health'],
-};
+  monitoring: ['health']
+}

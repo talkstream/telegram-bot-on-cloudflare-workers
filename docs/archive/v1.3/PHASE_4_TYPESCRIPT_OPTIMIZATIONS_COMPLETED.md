@@ -68,13 +68,13 @@ Schema Compilation: Pre-compiled
 
 ```typescript
 // Before: Heavy import at startup
-import { Grammy } from 'grammy';
+import { Grammy } from 'grammy'
 
 // After: Load only when needed
 const loadGrammy = async () => {
-  const { Grammy } = await import('grammy');
-  return Grammy;
-};
+  const { Grammy } = await import('grammy')
+  return Grammy
+}
 ```
 
 ### Schema Optimization
@@ -84,22 +84,22 @@ const loadGrammy = async () => {
 const compiledSchema = compileSchema(UserSchema, 'user', {
   strict: true,
   cache: true,
-  preprocess: true,
-});
+  preprocess: true
+})
 
 // Create optimized validator
-const validateUser = createValidator(compiledSchema, 'user');
+const validateUser = createValidator(compiledSchema, 'user')
 ```
 
 ### Route-Based Code Splitting
 
 ```typescript
 // Admin panel loaded only when accessed
-app.get('/admin/*', async (c) => {
-  const { createAdminRouter } = await import('./adapters/admin/router');
-  const adminRouter = await createAdminRouter();
-  return adminRouter.fetch(c.req.raw, c.env, c.executionCtx);
-});
+app.get('/admin/*', async c => {
+  const { createAdminRouter } = await import('./adapters/admin/router')
+  const adminRouter = await createAdminRouter()
+  return adminRouter.fetch(c.req.raw, c.env, c.executionCtx)
+})
 ```
 
 ## Measured Results

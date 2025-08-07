@@ -352,9 +352,9 @@ vars = { TIER = "free" }
 ```typescript
 return new Response(data, {
   headers: {
-    'Cache-Control': 'public, max-age=300',
-  },
-});
+    'Cache-Control': 'public, max-age=300'
+  }
+})
 ```
 
 3. **Minimize Dependencies**:
@@ -409,7 +409,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 ```typescript
 // Send announcement
-await notifyUsers('🎉 Bot updated with new features!');
+await notifyUsers('🎉 Bot updated with new features!')
 ```
 
 ### 2. Monitor Metrics

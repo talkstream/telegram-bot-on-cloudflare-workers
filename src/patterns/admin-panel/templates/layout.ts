@@ -2,15 +2,15 @@
  * Base layout template for admin panel
  */
 
-import type { LayoutOptions } from '../types';
+import type { LayoutOptions } from '../types'
 
 export function renderAdminLayout(options: LayoutOptions): string {
-  const { title, content, activeMenu = 'dashboard', adminId } = options;
+  const { title, content, activeMenu = 'dashboard', adminId } = options
 
   const menuItems = [
-    { id: 'dashboard', label: '📊 Dashboard', href: '/admin/dashboard' },
+    { id: 'dashboard', label: '📊 Dashboard', href: '/admin/dashboard' }
     // Add your custom menu items here
-  ];
+  ]
 
   return `
 <!DOCTYPE html>
@@ -219,11 +219,11 @@ export function renderAdminLayout(options: LayoutOptions): string {
         <div class="nav-content">
             ${menuItems
               .map(
-                (item) => `
+                item => `
                 <a href="${item.href}" class="nav-item ${item.id === activeMenu ? 'active' : ''}">
                     ${item.label}
                 </a>
-            `,
+            `
               )
               .join('')}
         </div>
@@ -234,5 +234,5 @@ export function renderAdminLayout(options: LayoutOptions): string {
     </main>
 </body>
 </html>
-  `;
+  `
 }

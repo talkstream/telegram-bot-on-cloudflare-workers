@@ -7,8 +7,8 @@ This pattern provides type-safe access to Cloudflare D1 database metadata, elimi
 Previously, accessing D1 metadata required unsafe type assertions:
 
 ```typescript
-const result = await db.prepare(query).run();
-const id = (result.meta as any).last_row_id; // 😱 Unsafe!
+const result = await db.prepare(query).run()
+const id = (result.meta as any).last_row_id // 😱 Unsafe!
 ```
 
 ## Solution
@@ -16,16 +16,16 @@ const id = (result.meta as any).last_row_id; // 😱 Unsafe!
 Use the new `D1RunMeta` and `D1AllMeta` interfaces:
 
 ```typescript
-import type { D1RunMeta } from '@/core/interfaces/storage';
+import type { D1RunMeta } from '@/core/interfaces/storage'
 
-const result = await db.prepare(query).run();
-const meta = result.meta as D1RunMeta;
+const result = await db.prepare(query).run()
+const meta = result.meta as D1RunMeta
 
 if (!meta.last_row_id) {
-  throw new Error('Failed to get last_row_id from database');
+  throw new Error('Failed to get last_row_id from database')
 }
 
-const id = meta.last_row_id; // ✅ Type-safe!
+const id = meta.last_row_id // ✅ Type-safe!
 ```
 
 ## Examples
@@ -37,14 +37,14 @@ async function createUser(db: IDatabaseStore, user: UserData): Promise<number> {
   const result = await db
     .prepare('INSERT INTO users (name, email) VALUES (?, ?)')
     .bind(user.name, user.email)
-    .run();
+    .run()
 
-  const meta = result.meta as D1RunMeta;
+  const meta = result.meta as D1RunMeta
   if (!meta.last_row_id) {
-    throw new Error('Failed to create user: no last_row_id returned');
+    throw new Error('Failed to create user: no last_row_id returned')
   }
 
-  return meta.last_row_id;
+  return meta.last_row_id
 }
 ```
 
@@ -52,16 +52,16 @@ async function createUser(db: IDatabaseStore, user: UserData): Promise<number> {
 
 ```typescript
 async function getUsers(db: IDatabaseStore): Promise<User[]> {
-  const { results, meta } = await db.prepare('SELECT * FROM users').all<User>();
+  const { results, meta } = await db.prepare('SELECT * FROM users').all<User>()
 
-  const d1Meta = meta as D1AllMeta;
+  const d1Meta = meta as D1AllMeta
 
   logger.info('Query executed', {
     duration: d1Meta.duration,
-    rowsRead: d1Meta.rows_read,
-  });
+    rowsRead: d1Meta.rows_read
+  })
 
-  return results;
+  return results
 }
 ```
 
@@ -69,8 +69,8 @@ async function getUsers(db: IDatabaseStore): Promise<User[]> {
 
 ```typescript
 interface UserWithStatsRow extends UserRow {
-  total_posts: number;
-  last_active: string;
+  total_posts: number
+  last_active: string
 }
 
 async function getUsersWithStats(db: IDatabaseStore): Promise<UserWithStats[]> {
@@ -79,18 +79,18 @@ async function getUsersWithStats(db: IDatabaseStore): Promise<UserWithStats[]> {
     FROM users u
     LEFT JOIN posts p ON u.id = p.user_id
     GROUP BY u.id
-  `;
+  `
 
-  const { results } = await db.prepare(query).all<UserWithStatsRow>();
+  const { results } = await db.prepare(query).all<UserWithStatsRow>()
 
-  return results.map((row) => ({
+  return results.map(row => ({
     id: row.id,
     name: row.name,
     stats: {
       totalPosts: row.total_posts,
-      lastActive: row.last_active,
-    },
-  }));
+      lastActive: row.last_active
+    }
+  }))
 }
 ```
 
@@ -130,21 +130,21 @@ const userId = await safeDbOperation(
 1. Add imports:
 
    ```typescript
-   import type { D1RunMeta, D1AllMeta } from '@/core/interfaces/storage';
+   import type { D1RunMeta, D1AllMeta } from '@/core/interfaces/storage'
    ```
 
 2. Replace unsafe assertions:
 
    ```typescript
    // Before
-   const id = (result.meta as any).last_row_id;
+   const id = (result.meta as any).last_row_id
 
    // After
-   const meta = result.meta as D1RunMeta;
+   const meta = result.meta as D1RunMeta
    if (!meta.last_row_id) {
-     throw new Error('Failed to get last_row_id');
+     throw new Error('Failed to get last_row_id')
    }
-   const id = meta.last_row_id;
+   const id = meta.last_row_id
    ```
 
 3. Add proper error handling for optional fields

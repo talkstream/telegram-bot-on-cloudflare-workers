@@ -3,18 +3,18 @@
  * These implement the universal middleware interfaces for Telegram platform
  */
 
-export { createAuthMiddleware } from './auth';
-export { createRateLimitMiddleware, TelegramRateLimiter, telegramRateLimits } from './rate-limiter';
-export { createAuditMiddleware, TelegramAuditMiddleware, createTelegramAuditLogger } from './audit';
+export { TelegramAuditMiddleware, createAuditMiddleware, createTelegramAuditLogger } from './audit'
+export { createAuthMiddleware } from './auth'
+export { TelegramRateLimiter, createRateLimitMiddleware, telegramRateLimits } from './rate-limiter'
 
 // Re-export types for convenience
 export type {
-  IAuthMiddleware,
-  IRateLimiter,
-  IAuditMiddleware,
-  MiddlewareContext,
-  AuthResult,
-  RateLimitResult,
   AuditEvent,
   AuditPayload,
-} from '@/core/middleware/interfaces';
+  AuthResult,
+  IAuditMiddleware,
+  IAuthMiddleware,
+  IRateLimiter,
+  MiddlewareContext,
+  RateLimitResult
+} from '@/core/middleware/interfaces'

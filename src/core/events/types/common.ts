@@ -36,5 +36,5 @@ export enum CommonEventType {
   // System events
   SYSTEM_STARTUP = 'common:system:startup',
   SYSTEM_SHUTDOWN = 'common:system:shutdown',
-  SYSTEM_HEALTH_CHECK = 'common:system:health_check',
+  SYSTEM_HEALTH_CHECK = 'common:system:health_check'
 }

@@ -2,14 +2,14 @@
  * Plugin system for extending functionality
  */
 
-import type { Plugin, Bot } from './interfaces';
+import type { Bot, Plugin } from './interfaces'
 
 export interface PluginOptions {
-  name: string;
-  version: string;
-  description?: string;
-  initialize: (bot: Bot) => Promise<void> | void;
-  dispose?: () => Promise<void> | void;
+  name: string
+  version: string
+  description?: string
+  initialize: (bot: Bot) => Promise<void> | void
+  dispose?: () => Promise<void> | void
 }
 
 /**
@@ -20,45 +20,45 @@ export function createPlugin(options: PluginOptions): Plugin {
     name: options.name,
     version: options.version,
     async initialize(bot: Bot): Promise<void> {
-      await Promise.resolve(options.initialize(bot));
+      await Promise.resolve(options.initialize(bot))
     },
     async dispose(): Promise<void> {
       if (options.dispose) {
-        await Promise.resolve(options.dispose());
+        await Promise.resolve(options.dispose())
       }
     }
-  };
+  }
 }
 
 /**
  * Plugin manager
  */
 export class PluginManager {
-  private plugins: Map<string, Plugin> = new Map();
-  private initialized: Set<string> = new Set();
+  private plugins: Map<string, Plugin> = new Map()
+  private initialized: Set<string> = new Set()
 
   /**
    * Add a plugin
    */
   add(plugin: Plugin): void {
     if (this.plugins.has(plugin.name)) {
-      throw new Error(`Plugin ${plugin.name} already exists`);
+      throw new Error(`Plugin ${plugin.name} already exists`)
     }
-    this.plugins.set(plugin.name, plugin);
+    this.plugins.set(plugin.name, plugin)
   }
 
   /**
    * Remove a plugin
    */
   async remove(name: string): Promise<void> {
-    const plugin = this.plugins.get(name);
+    const plugin = this.plugins.get(name)
     if (plugin && this.initialized.has(name)) {
       if (plugin.dispose) {
-        await plugin.dispose();
+        await plugin.dispose()
       }
-      this.initialized.delete(name);
+      this.initialized.delete(name)
     }
-    this.plugins.delete(name);
+    this.plugins.delete(name)
   }
 
   /**
@@ -67,8 +67,8 @@ export class PluginManager {
   async initializeAll(bot: Bot): Promise<void> {
     for (const [name, plugin] of this.plugins) {
       if (!this.initialized.has(name)) {
-        await plugin.initialize(bot);
-        this.initialized.add(name);
+        await plugin.initialize(bot)
+        this.initialized.add(name)
       }
     }
   }
@@ -80,9 +80,9 @@ export class PluginManager {
     for (const [name, plugin] of this.plugins) {
       if (this.initialized.has(name)) {
         if (plugin.dispose) {
-          await plugin.dispose();
+          await plugin.dispose()
         }
-        this.initialized.delete(name);
+        this.initialized.delete(name)
       }
     }
   }
@@ -91,20 +91,20 @@ export class PluginManager {
    * Get a plugin
    */
   get(name: string): Plugin | undefined {
-    return this.plugins.get(name);
+    return this.plugins.get(name)
   }
 
   /**
    * Check if plugin exists
    */
   has(name: string): boolean {
-    return this.plugins.has(name);
+    return this.plugins.has(name)
   }
 
   /**
    * List all plugins
    */
   list(): string[] {
-    return Array.from(this.plugins.keys());
+    return Array.from(this.plugins.keys())
   }
 }

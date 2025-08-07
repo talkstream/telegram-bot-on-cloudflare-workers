@@ -2,4 +2,4 @@
  * Event system exports
  */
 
-export * from './event-bus.js';
+export * from './event-bus.js'

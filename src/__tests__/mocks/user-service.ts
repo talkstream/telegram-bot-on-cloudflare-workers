@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { vi } from 'vitest'
 
 export const mockUserService = {
   createOrUpdateUser: vi.fn().mockResolvedValue({
@@ -11,11 +11,11 @@ export const mockUserService = {
     isPremium: false,
     starsBalance: 0,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }),
   getByTelegramId: vi.fn().mockResolvedValue(null),
   getById: vi.fn().mockResolvedValue(null),
-  updateStarsBalance: vi.fn().mockResolvedValue(undefined),
-};
+  updateStarsBalance: vi.fn().mockResolvedValue(undefined)
+}
 
-export const getUserService = vi.fn(() => mockUserService);
+export const getUserService = vi.fn(() => mockUserService)

@@ -98,13 +98,13 @@ service.send('user.created', { userId: '123', email: 'test@test.com' });
 ```typescript
 // Exponential backoff: 30s, 60s, 120s, 240s...
 // Linear backoff: 30s, 60s, 90s, 120s...
-config.dlqBackoffStrategy = 'exponential' | 'linear';
+config.dlqBackoffStrategy = 'exponential' | 'linear'
 ```
 
 ### DLQ Monitoring
 
 ```typescript
-const stats = await service.getDLQStats();
+const stats = await service.getDLQStats()
 // {
 //   messageCount: 42,
 //   oldestMessage: Date,
@@ -120,9 +120,9 @@ const stats = await service.getDLQStats();
 
 ```typescript
 // Attempt to reprocess DLQ messages
-const result = await service.processDLQ(10);
-console.log(`Reprocessed: ${result.processed}`);
-console.log(`Still failed: ${result.failed}`);
+const result = await service.processDLQ(10)
+console.log(`Reprocessed: ${result.processed}`)
+console.log(`Still failed: ${result.failed}`)
 ```
 
 ## Migration Status
@@ -153,15 +153,15 @@ None - New service can run alongside old service during migration
 ```typescript
 interface AppMessages extends MessageTypeRegistry {
   'user.signup': {
-    userId: string;
-    email: string;
-    plan: 'free' | 'pro';
-  };
+    userId: string
+    email: string
+    plan: 'free' | 'pro'
+  }
   'invoice.generate': {
-    invoiceId: string;
-    amount: number;
-    dueDate: Date;
-  };
+    invoiceId: string
+    amount: number
+    dueDate: Date
+  }
 }
 ```
 
@@ -171,15 +171,15 @@ interface AppMessages extends MessageTypeRegistry {
 service.registerHandler('user.signup', {
   handler: async (data, context) => {
     // TypeScript knows data.userId, data.email, data.plan
-    await createUser(data);
-    await sendWelcomeEmail(data.email);
+    await createUser(data)
+    await sendWelcomeEmail(data.email)
   },
   onError: async (error, data) => {
-    logger.error('Signup failed', { userId: data.userId, error });
+    logger.error('Signup failed', { userId: data.userId, error })
   },
   maxRetries: 3,
-  retryable: true,
-});
+  retryable: true
+})
 ```
 
 ### Send Messages
@@ -206,18 +206,18 @@ export default {
   async queue(batch: MessageBatch, env: Env): Promise<void> {
     const adapter = createCloudflareQueueAdapter({
       queue: env.QUEUE,
-      dlqQueue: env.DLQ,
-    });
+      dlqQueue: env.DLQ
+    })
 
     const service = createTypedQueueService<AppMessages>({
       adapter,
-      enableDLQ: true,
-    });
+      enableDLQ: true
+    })
 
-    await adapter.handleBatch(batch);
-    await service.processMessages();
-  },
-};
+    await adapter.handleBatch(batch)
+    await service.processMessages()
+  }
+}
 ```
 
 ## Next Steps

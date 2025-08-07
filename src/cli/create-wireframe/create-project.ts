@@ -2,49 +2,49 @@
  * Project creation logic
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'fs/promises'
+import path from 'path'
 
-import chalk from 'chalk';
+import chalk from 'chalk'
 
-import type { ProjectOptions, PackageJson } from './types.js';
-import { initGit, installDependencies, generateEnvTemplate } from './utils.js';
-import { generateProjectFiles } from './templates/index.js';
+import { generateProjectFiles } from './templates/index.js'
+import type { PackageJson, ProjectOptions } from './types.js'
+import { generateEnvTemplate, initGit, installDependencies } from './utils.js'
 
 /**
  * Create a new Wireframe project
  */
 export async function createProject(projectPath: string, options: ProjectOptions): Promise<void> {
   // Create project directory
-  await fs.mkdir(projectPath, { recursive: true });
+  await fs.mkdir(projectPath, { recursive: true })
 
   // Generate base files
-  await createBaseStructure(projectPath, options);
+  await createBaseStructure(projectPath, options)
 
   // Generate platform-specific files
-  await generatePlatformFiles(projectPath, options);
+  await generatePlatformFiles(projectPath, options)
 
   // Generate cloud-specific files
-  await generateCloudFiles(projectPath, options);
+  await generateCloudFiles(projectPath, options)
 
   // Generate feature files
-  await generateFeatureFiles(projectPath, options);
+  await generateFeatureFiles(projectPath, options)
 
   // Create package.json
-  await createPackageJson(projectPath, options);
+  await createPackageJson(projectPath, options)
 
   // Create configuration files
-  await createConfigFiles(projectPath, options);
+  await createConfigFiles(projectPath, options)
 
   // Initialize git
   if (options.git) {
-    await initGit(projectPath);
+    await initGit(projectPath)
   }
 
   // Install dependencies
   if (options.install) {
-    console.info(chalk.cyan('\nInstalling dependencies...'));
-    await installDependencies(projectPath);
+    console.info(chalk.cyan('\nInstalling dependencies...'))
+    await installDependencies(projectPath)
   }
 }
 
@@ -60,22 +60,22 @@ async function createBaseStructure(projectPath: string, options: ProjectOptions)
     'src/utils',
     'src/types',
     'tests',
-    'docs',
-  ];
+    'docs'
+  ]
 
   for (const dir of dirs) {
-    await fs.mkdir(path.join(projectPath, dir), { recursive: true });
+    await fs.mkdir(path.join(projectPath, dir), { recursive: true })
   }
 
   // Create base files
-  const files = generateProjectFiles(options);
+  const files = generateProjectFiles(options)
 
   for (const file of files) {
-    const filePath = path.join(projectPath, file.path);
-    const dir = path.dirname(filePath);
+    const filePath = path.join(projectPath, file.path)
+    const dir = path.dirname(filePath)
 
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(filePath, file.content);
+    await fs.mkdir(dir, { recursive: true })
+    await fs.writeFile(filePath, file.content)
   }
 }
 
@@ -83,27 +83,27 @@ async function createBaseStructure(projectPath: string, options: ProjectOptions)
  * Generate platform-specific files
  */
 async function generatePlatformFiles(projectPath: string, options: ProjectOptions): Promise<void> {
-  const platformDir = path.join(projectPath, 'src', 'platform');
-  await fs.mkdir(platformDir, { recursive: true });
+  const platformDir = path.join(projectPath, 'src', 'platform')
+  await fs.mkdir(platformDir, { recursive: true })
 
   // Platform-specific connector setup
-  const connectorContent = generatePlatformConnector(options.platform);
-  await fs.writeFile(path.join(platformDir, 'connector.ts'), connectorContent);
+  const connectorContent = generatePlatformConnector(options.platform)
+  await fs.writeFile(path.join(platformDir, 'connector.ts'), connectorContent)
 }
 
 /**
  * Generate cloud-specific files
  */
 async function generateCloudFiles(projectPath: string, options: ProjectOptions): Promise<void> {
-  const cloudDir = path.join(projectPath, 'src', 'cloud');
-  await fs.mkdir(cloudDir, { recursive: true });
+  const cloudDir = path.join(projectPath, 'src', 'cloud')
+  await fs.mkdir(cloudDir, { recursive: true })
 
   // Cloud-specific setup
-  const cloudContent = generateCloudSetup(options.cloud);
-  await fs.writeFile(path.join(cloudDir, 'setup.ts'), cloudContent);
+  const cloudContent = generateCloudSetup(options.cloud)
+  await fs.writeFile(path.join(cloudDir, 'setup.ts'), cloudContent)
 
   // Deployment configuration
-  await createDeploymentConfig(projectPath, options);
+  await createDeploymentConfig(projectPath, options)
 }
 
 /**
@@ -111,14 +111,14 @@ async function generateCloudFiles(projectPath: string, options: ProjectOptions):
  */
 async function generateFeatureFiles(projectPath: string, options: ProjectOptions): Promise<void> {
   for (const feature of options.features) {
-    const featureDir = path.join(projectPath, 'src', 'features', feature);
-    await fs.mkdir(featureDir, { recursive: true });
+    const featureDir = path.join(projectPath, 'src', 'features', feature)
+    await fs.mkdir(featureDir, { recursive: true })
 
     // Create feature index
     await fs.writeFile(
       path.join(featureDir, 'index.ts'),
-      `// ${feature} feature\nexport * from './${feature}.js';\n`,
-    );
+      `// ${feature} feature\nexport * from './${feature}.js';\n`
+    )
   }
 }
 
@@ -141,17 +141,17 @@ async function createPackageJson(projectPath: string, options: ProjectOptions): 
       typecheck: 'tsc --noEmit',
       lint: 'eslint .',
       'lint:fix': 'eslint . --fix',
-      format: 'prettier --write "**/*.{js,ts,json,md}"',
+      format: 'prettier --write "**/*.{js,ts,json,md}"'
     },
     dependencies: getDependencies(options),
     devDependencies: getDevDependencies(options),
     engines: {
       node: '>=20.0.0',
-      npm: '>=10.0.0',
-    },
-  };
+      npm: '>=10.0.0'
+    }
+  }
 
-  await fs.writeFile(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2));
+  await fs.writeFile(path.join(projectPath, 'package.json'), JSON.stringify(packageJson, null, 2))
 }
 
 /**
@@ -175,14 +175,14 @@ async function createConfigFiles(projectPath: string, options: ProjectOptions): 
       allowImportingTsExtensions: true,
       noEmit: true,
       paths: {
-        '@/*': ['./src/*'],
-      },
+        '@/*': ['./src/*']
+      }
     },
     include: ['src/**/*'],
-    exclude: ['node_modules', 'dist'],
-  };
+    exclude: ['node_modules', 'dist']
+  }
 
-  await fs.writeFile(path.join(projectPath, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));
+  await fs.writeFile(path.join(projectPath, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2))
 
   // ESLint config
   const eslintConfig = `export default {
@@ -202,9 +202,9 @@ async function createConfigFiles(projectPath: string, options: ProjectOptions): 
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': 'error',
   },
-};`;
+};`
 
-  await fs.writeFile(path.join(projectPath, 'eslint.config.js'), eslintConfig);
+  await fs.writeFile(path.join(projectPath, 'eslint.config.js'), eslintConfig)
 
   // Prettier config
   const prettierConfig = {
@@ -212,17 +212,14 @@ async function createConfigFiles(projectPath: string, options: ProjectOptions): 
     trailingComma: 'es5',
     singleQuote: true,
     printWidth: 100,
-    tabWidth: 2,
-  };
+    tabWidth: 2
+  }
 
-  await fs.writeFile(
-    path.join(projectPath, '.prettierrc'),
-    JSON.stringify(prettierConfig, null, 2),
-  );
+  await fs.writeFile(path.join(projectPath, '.prettierrc'), JSON.stringify(prettierConfig, null, 2))
 
   // Environment template
-  const envTemplate = generateEnvTemplate(options);
-  await fs.writeFile(path.join(projectPath, '.env.example'), envTemplate);
+  const envTemplate = generateEnvTemplate(options)
+  await fs.writeFile(path.join(projectPath, '.env.example'), envTemplate)
 }
 
 /**
@@ -242,7 +239,7 @@ export async function setupPlatform(eventBus: EventBus) {
 
   return connector;
 }
-`;
+`
 }
 
 /**
@@ -258,7 +255,7 @@ export async function setupCloud() {
 
   return cloud;
 }
-`;
+`
 }
 
 /**
@@ -267,15 +264,15 @@ export async function setupCloud() {
 function getDevScript(cloud: string): string {
   switch (cloud) {
     case 'cloudflare':
-      return 'wrangler dev';
+      return 'wrangler dev'
     case 'aws':
-      return 'sam local start-api';
+      return 'sam local start-api'
     case 'gcp':
-      return 'functions-framework --target=handler';
+      return 'functions-framework --target=handler'
     case 'azure':
-      return 'func start';
+      return 'func start'
     default:
-      return 'tsx watch src/index.ts';
+      return 'tsx watch src/index.ts'
   }
 }
 
@@ -285,15 +282,15 @@ function getDevScript(cloud: string): string {
 function getDeployScript(cloud: string): string {
   switch (cloud) {
     case 'cloudflare':
-      return 'wrangler deploy';
+      return 'wrangler deploy'
     case 'aws':
-      return 'sam deploy';
+      return 'sam deploy'
     case 'gcp':
-      return 'gcloud functions deploy';
+      return 'gcloud functions deploy'
     case 'azure':
-      return 'func azure functionapp publish';
+      return 'func azure functionapp publish'
     default:
-      return 'echo "Configure deployment for ${cloud}"';
+      return 'echo "Configure deployment for ${cloud}"'
   }
 }
 
@@ -303,45 +300,45 @@ function getDeployScript(cloud: string): string {
 function getDependencies(options: ProjectOptions): Record<string, string> {
   const deps: Record<string, string> = {
     '@wireframe/core': '^1.3.0',
-    '@wireframe/connectors': '^1.3.0',
-  };
+    '@wireframe/connectors': '^1.3.0'
+  }
 
   // Platform-specific
   switch (options.platform) {
     case 'telegram':
-      deps['grammy'] = '^1.31.0';
-      break;
+      deps['grammy'] = '^1.31.0'
+      break
     case 'discord':
-      deps['discord.js'] = '^14.16.0';
-      break;
+      deps['discord.js'] = '^14.16.0'
+      break
     case 'slack':
-      deps['@slack/bolt'] = '^4.0.0';
-      break;
+      deps['@slack/bolt'] = '^4.0.0'
+      break
   }
 
   // AI-specific
   switch (options.ai) {
     case 'openai':
-      deps['openai'] = '^4.77.0';
-      break;
+      deps['openai'] = '^4.77.0'
+      break
     case 'anthropic':
-      deps['@anthropic-ai/sdk'] = '^1.0.0';
-      break;
+      deps['@anthropic-ai/sdk'] = '^1.0.0'
+      break
     case 'google':
-      deps['@google/genai'] = '^1.12.0';
-      break;
+      deps['@google/genai'] = '^1.12.0'
+      break
   }
 
   // Feature-specific
   if (options.features.includes('database')) {
-    deps['drizzle-orm'] = '^0.36.0';
+    deps['drizzle-orm'] = '^0.36.0'
   }
 
   if (options.features.includes('i18n')) {
-    deps['i18next'] = '^25.0.0';
+    deps['i18next'] = '^25.0.0'
   }
 
-  return deps;
+  return deps
 }
 
 /**
@@ -357,22 +354,22 @@ function getDevDependencies(options: ProjectOptions): Record<string, string> {
     '@typescript-eslint/eslint-plugin': '^8.0.0',
     '@typescript-eslint/parser': '^8.0.0',
     prettier: '^3.4.0',
-    'eslint-config-prettier': '^10.0.0',
-  };
+    'eslint-config-prettier': '^10.0.0'
+  }
 
   // Cloud-specific
   switch (options.cloud) {
     case 'cloudflare':
-      devDeps['wrangler'] = '^4.0.0';
-      devDeps['@cloudflare/workers-types'] = '^5.0.0';
-      break;
+      devDeps['wrangler'] = '^4.0.0'
+      devDeps['@cloudflare/workers-types'] = '^5.0.0'
+      break
     case 'aws':
-      devDeps['@types/aws-lambda'] = '^8.10.0';
-      devDeps['aws-sam-cli'] = '^1.0.0';
-      break;
+      devDeps['@types/aws-lambda'] = '^8.10.0'
+      devDeps['aws-sam-cli'] = '^1.0.0'
+      break
   }
 
-  return devDeps;
+  return devDeps
 }
 
 /**
@@ -396,9 +393,9 @@ id = "your_kv_namespace_id"
 binding = "DB"
 database_name = "${options.name}-db"
 database_id = "your_database_id"
-`;
-      await fs.writeFile(path.join(projectPath, 'wrangler.toml'), wranglerConfig);
-      break;
+`
+      await fs.writeFile(path.join(projectPath, 'wrangler.toml'), wranglerConfig)
+      break
     }
 
     case 'aws': {
@@ -417,19 +414,19 @@ database_id = "your_database_id"
                   Type: 'Api',
                   Properties: {
                     Path: '/webhook',
-                    Method: 'POST',
-                  },
-                },
-              },
-            },
-          },
-        },
-      };
+                    Method: 'POST'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       await fs.writeFile(
         path.join(projectPath, 'template.yaml'),
-        JSON.stringify(samTemplate, null, 2),
-      );
-      break;
+        JSON.stringify(samTemplate, null, 2)
+      )
+      break
     }
   }
 }

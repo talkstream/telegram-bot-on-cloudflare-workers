@@ -2,16 +2,16 @@
  * Tests for Monitoring Plugin
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { MonitoringPlugin, createMonitoringPlugin } from '../monitoring-plugin';
+import { MonitoringPlugin, createMonitoringPlugin } from '../monitoring-plugin'
 
-import { EventBus } from '@/core/events/event-bus';
-import { CommonEventType } from '@/core/events/types/common';
-import { UserEventType } from '@/core/events/types/user';
-import { AIEventType } from '@/core/events/types/ai';
-import { PaymentEventType } from '@/core/events/types/payment';
-import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
+import { EventBus } from '@/core/events/event-bus'
+import { AIEventType } from '@/core/events/types/ai'
+import { CommonEventType } from '@/core/events/types/common'
+import { PaymentEventType } from '@/core/events/types/payment'
+import { UserEventType } from '@/core/events/types/user'
+import type { IMonitoringConnector } from '@/core/interfaces/monitoring'
 
 // Mock monitoring connector
 const createMockMonitoring = (): IMonitoringConnector => ({
@@ -24,76 +24,76 @@ const createMockMonitoring = (): IMonitoringConnector => ({
   addBreadcrumb: vi.fn(),
   trackEvent: vi.fn(),
   trackMetric: vi.fn(),
-  flush: vi.fn(async () => true),
-});
+  flush: vi.fn(async () => true)
+})
 
 describe('MonitoringPlugin', () => {
-  let plugin: MonitoringPlugin;
-  let eventBus: EventBus;
-  let monitoring: IMonitoringConnector;
+  let plugin: MonitoringPlugin
+  let eventBus: EventBus
+  let monitoring: IMonitoringConnector
 
   beforeEach(() => {
-    eventBus = new EventBus({ async: false });
-    monitoring = createMockMonitoring();
+    eventBus = new EventBus({ async: false })
+    monitoring = createMockMonitoring()
     plugin = new MonitoringPlugin({
       monitoring,
-      eventBus,
-    });
-  });
+      eventBus
+    })
+  })
 
   afterEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe('plugin lifecycle', () => {
     it('should have correct metadata', () => {
-      expect(plugin.id).toBe('monitoring-plugin');
-      expect(plugin.name).toBe('Monitoring Plugin');
-      expect(plugin.version).toBe('1.0.0');
-      expect(plugin.enabled).toBe(true);
-    });
+      expect(plugin.id).toBe('monitoring-plugin')
+      expect(plugin.name).toBe('Monitoring Plugin')
+      expect(plugin.version).toBe('1.0.0')
+      expect(plugin.enabled).toBe(true)
+    })
 
     it('should install successfully', async () => {
-      await plugin.install({});
-      expect(plugin.enabled).toBe(true);
-    });
+      await plugin.install({})
+      expect(plugin.enabled).toBe(true)
+    })
 
     it('should activate and deactivate', async () => {
-      await plugin.deactivate();
-      expect(plugin.enabled).toBe(false);
+      await plugin.deactivate()
+      expect(plugin.enabled).toBe(false)
 
-      await plugin.activate();
-      expect(plugin.enabled).toBe(true);
-    });
+      await plugin.activate()
+      expect(plugin.enabled).toBe(true)
+    })
 
     it('should uninstall and clear data', async () => {
-      await plugin.install({});
+      await plugin.install({})
 
       // Track some requests
       eventBus.emit(
         CommonEventType.REQUEST_STARTED,
         {
-          requestId: 'test-1',
+          requestId: 'test-1'
         },
-        'test',
-      );
+        'test'
+      )
 
-      const stats = plugin.getPerformanceStats();
-      expect(stats.activeRequests).toBe(1);
+      const stats = plugin.getPerformanceStats()
+      expect(stats.activeRequests).toBe(1)
 
-      await plugin.uninstall();
-      const clearedStats = plugin.getPerformanceStats();
-      expect(clearedStats.activeRequests).toBe(0);
-    });
-  });
+      await plugin.uninstall()
+      const clearedStats = plugin.getPerformanceStats()
+      expect(clearedStats.activeRequests).toBe(0)
+    })
+  })
 
   describe('performance tracking', () => {
     beforeEach(async () => {
-      await plugin.install({});
-    });
+      await plugin.install({})
+    })
 
     it('should track request start and completion', () => {
-      const requestId = 'test-request-1';
+      const requestId = 'test-request-1'
 
       // Start request
       eventBus.emit(
@@ -101,15 +101,15 @@ describe('MonitoringPlugin', () => {
         {
           requestId,
           method: 'GET',
-          path: '/api/test',
+          path: '/api/test'
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackEvent).toHaveBeenCalledWith('request_started', {
         requestId,
-        timestamp: expect.any(Number),
-      });
+        timestamp: expect.any(Number)
+      })
 
       // Complete request
       eventBus.emit(
@@ -119,21 +119,21 @@ describe('MonitoringPlugin', () => {
           method: 'GET',
           path: '/api/test',
           status: 200,
-          duration: 150,
+          duration: 150
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackMetric).toHaveBeenCalledWith('request_duration', expect.any(Number), {
-        requestId,
-      });
+        requestId
+      })
 
       expect(monitoring.trackEvent).toHaveBeenCalledWith('request_completed', {
         requestId,
         duration: expect.any(Number),
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should track AI completion metrics', () => {
       eventBus.emit(
@@ -143,21 +143,21 @@ describe('MonitoringPlugin', () => {
           provider: 'openai',
           model: 'gpt-4',
           latency: 500,
-          tokens: 150,
+          tokens: 150
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackMetric).toHaveBeenCalledWith('ai_completion_latency', 500, {
         provider: 'openai',
-        model: 'gpt-4',
-      });
+        model: 'gpt-4'
+      })
 
       expect(monitoring.trackMetric).toHaveBeenCalledWith('ai_tokens_used', 150, {
         provider: 'openai',
-        model: 'gpt-4',
-      });
-    });
+        model: 'gpt-4'
+      })
+    })
 
     it('should track payment processing time', () => {
       eventBus.emit(
@@ -165,40 +165,40 @@ describe('MonitoringPlugin', () => {
         {
           processingTime: 2500,
           type: 'credit_card',
-          amount: 99.99,
+          amount: 99.99
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackMetric).toHaveBeenCalledWith('payment_processing_time', 2500, {
         paymentType: 'credit_card',
-        amount: '99.99',
-      });
-    });
+        amount: '99.99'
+      })
+    })
 
     it('should handle missing optional fields', () => {
       eventBus.emit(
         AIEventType.COMPLETION_SUCCESS,
         {
-          latency: 300,
+          latency: 300
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackMetric).toHaveBeenCalledWith('ai_completion_latency', 300, {
         provider: 'unknown',
-        model: 'unknown',
-      });
-    });
-  });
+        model: 'unknown'
+      })
+    })
+  })
 
   describe('error tracking', () => {
     beforeEach(async () => {
-      await plugin.install({});
-    });
+      await plugin.install({})
+    })
 
     it('should capture general errors', () => {
-      const error = new Error('Test error');
+      const error = new Error('Test error')
 
       eventBus.emit(
         CommonEventType.ERROR_OCCURRED,
@@ -206,20 +206,20 @@ describe('MonitoringPlugin', () => {
           requestId: 'req-1',
           error,
           context: {
-            userId: '123',
-          },
+            userId: '123'
+          }
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.captureException).toHaveBeenCalledWith(error, {
         context: { userId: '123' },
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should capture AI failures', () => {
-      const error = new Error('AI service unavailable');
+      const error = new Error('AI service unavailable')
 
       eventBus.emit(
         AIEventType.COMPLETION_FAILED,
@@ -227,94 +227,94 @@ describe('MonitoringPlugin', () => {
           requestId: 'ai-req-1',
           provider: 'openai',
           model: 'gpt-4',
-          error,
+          error
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.captureException).toHaveBeenCalledWith(error, {
         provider: 'openai',
         model: 'gpt-4',
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should capture payment failures', () => {
-      const error = new Error('Payment declined');
+      const error = new Error('Payment declined')
 
       eventBus.emit(
         PaymentEventType.PAYMENT_FAILED,
         {
           type: 'credit_card',
           amount: 50.0,
-          error,
+          error
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.captureException).toHaveBeenCalledWith(error, {
         paymentType: 'credit_card',
         amount: 50.0,
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should capture plugin errors', () => {
-      const error = new Error('Plugin initialization failed');
+      const error = new Error('Plugin initialization failed')
 
       eventBus.emit(
         CommonEventType.PLUGIN_ERROR,
         {
           pluginId: 'test-plugin',
-          error,
+          error
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.captureException).toHaveBeenCalledWith(error, {
         pluginId: 'test-plugin',
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should handle non-Error objects', () => {
       eventBus.emit(
         CommonEventType.ERROR_OCCURRED,
         {
           error: 'String error',
-          context: {},
+          context: {}
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.captureException).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'String error',
+          message: 'String error'
         }),
-        expect.any(Object),
-      );
-    });
-  });
+        expect.any(Object)
+      )
+    })
+  })
 
   describe('custom event tracking', () => {
     beforeEach(async () => {
-      await plugin.install({});
-    });
+      await plugin.install({})
+    })
 
     it('should track user registration', () => {
       eventBus.emit(
         UserEventType.USER_REGISTERED,
         {
-          userId: 'user-123',
+          userId: 'user-123'
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackEvent).toHaveBeenCalledWith('user_registered', {
         userId: 'user-123',
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should track user login and set context', () => {
       eventBus.emit(
@@ -322,243 +322,243 @@ describe('MonitoringPlugin', () => {
         {
           userId: 'user-456',
           username: 'testuser',
-          email: 'test@example.com',
+          email: 'test@example.com'
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackEvent).toHaveBeenCalledWith('user_logged_in', {
         userId: 'user-456',
-        timestamp: expect.any(Number),
-      });
+        timestamp: expect.any(Number)
+      })
 
       expect(monitoring.setUserContext).toHaveBeenCalledWith('user-456', {
         username: 'testuser',
-        email: 'test@example.com',
-      });
-    });
+        email: 'test@example.com'
+      })
+    })
 
     it('should track plugin lifecycle events', () => {
       eventBus.emit(
         CommonEventType.PLUGIN_LOADED,
         {
           pluginId: 'test-plugin',
-          version: '1.0.0',
+          version: '1.0.0'
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackEvent).toHaveBeenCalledWith('plugin_loaded', {
         pluginId: 'test-plugin',
         version: '1.0.0',
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should track session creation', () => {
       eventBus.emit(
         CommonEventType.SESSION_CREATED,
         {
           sessionId: 'session-789',
-          userId: 'user-123',
+          userId: 'user-123'
         },
-        'test',
-      );
+        'test'
+      )
 
       expect(monitoring.trackEvent).toHaveBeenCalledWith('session_created', {
         sessionId: 'session-789',
         userId: 'user-123',
-        timestamp: expect.any(Number),
-      });
-    });
+        timestamp: expect.any(Number)
+      })
+    })
 
     it('should track cache performance', () => {
       eventBus.emit(
         CommonEventType.CACHE_HIT,
         {
-          key: 'user:123',
+          key: 'user:123'
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.trackMetric).toHaveBeenCalledWith('cache_hit', 1, { key: 'user:123' });
+      expect(monitoring.trackMetric).toHaveBeenCalledWith('cache_hit', 1, { key: 'user:123' })
 
       eventBus.emit(
         CommonEventType.CACHE_MISS,
         {
-          key: 'user:456',
+          key: 'user:456'
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.trackMetric).toHaveBeenCalledWith('cache_miss', 1, { key: 'user:456' });
-    });
-  });
+      expect(monitoring.trackMetric).toHaveBeenCalledWith('cache_miss', 1, { key: 'user:456' })
+    })
+  })
 
   describe('configuration options', () => {
     it('should respect trackPerformance setting', async () => {
       const customPlugin = new MonitoringPlugin({
         monitoring,
         eventBus,
-        trackPerformance: false,
-      });
+        trackPerformance: false
+      })
 
-      await customPlugin.install({});
+      await customPlugin.install({})
 
       eventBus.emit(
         CommonEventType.REQUEST_STARTED,
         {
-          requestId: 'test-1',
+          requestId: 'test-1'
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.trackEvent).not.toHaveBeenCalled();
-    });
+      expect(monitoring.trackEvent).not.toHaveBeenCalled()
+    })
 
     it('should respect trackErrors setting', async () => {
       const customPlugin = new MonitoringPlugin({
         monitoring,
         eventBus,
-        trackErrors: false,
-      });
+        trackErrors: false
+      })
 
-      await customPlugin.install({});
+      await customPlugin.install({})
 
       eventBus.emit(
         CommonEventType.ERROR_OCCURRED,
         {
-          error: new Error('Test'),
+          error: new Error('Test')
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.captureException).not.toHaveBeenCalled();
-    });
+      expect(monitoring.captureException).not.toHaveBeenCalled()
+    })
 
     it('should respect trackCustomEvents setting', async () => {
       const customPlugin = new MonitoringPlugin({
         monitoring,
         eventBus,
-        trackCustomEvents: false,
-      });
+        trackCustomEvents: false
+      })
 
-      await customPlugin.install({});
+      await customPlugin.install({})
 
       eventBus.emit(
         UserEventType.USER_REGISTERED,
         {
-          userId: 'test-user',
+          userId: 'test-user'
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.trackEvent).not.toHaveBeenCalled();
-    });
+      expect(monitoring.trackEvent).not.toHaveBeenCalled()
+    })
 
     it('should exclude specific events', async () => {
       const customPlugin = new MonitoringPlugin({
         monitoring,
         eventBus,
-        excludeEvents: [UserEventType.USER_REGISTERED],
-      });
+        excludeEvents: [UserEventType.USER_REGISTERED]
+      })
 
-      await customPlugin.install({});
+      await customPlugin.install({})
 
       eventBus.emit(
         UserEventType.USER_REGISTERED,
         {
-          userId: 'test-user',
+          userId: 'test-user'
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.trackEvent).not.toHaveBeenCalled();
+      expect(monitoring.trackEvent).not.toHaveBeenCalled()
 
       eventBus.emit(
         UserEventType.USER_LOGGED_IN,
         {
-          userId: 'test-user',
+          userId: 'test-user'
         },
-        'test',
-      );
+        'test'
+      )
 
-      expect(monitoring.trackEvent).toHaveBeenCalled();
-    });
-  });
+      expect(monitoring.trackEvent).toHaveBeenCalled()
+    })
+  })
 
   describe('factory function', () => {
     it('should create and auto-install plugin', () => {
-      const factoryPlugin = createMonitoringPlugin(monitoring, eventBus);
+      const factoryPlugin = createMonitoringPlugin(monitoring, eventBus)
 
-      expect(factoryPlugin).toBeInstanceOf(MonitoringPlugin);
-      expect(factoryPlugin.enabled).toBe(true);
-    });
+      expect(factoryPlugin).toBeInstanceOf(MonitoringPlugin)
+      expect(factoryPlugin.enabled).toBe(true)
+    })
 
     it('should handle installation errors', () => {
-      const errorMonitoring = createMockMonitoring();
+      const errorMonitoring = createMockMonitoring()
       errorMonitoring.initialize = vi.fn(() => {
-        throw new Error('Init failed');
-      });
+        throw new Error('Init failed')
+      })
 
       // Should not throw
       expect(() => {
-        createMonitoringPlugin(errorMonitoring, eventBus);
-      }).not.toThrow();
-    });
-  });
+        createMonitoringPlugin(errorMonitoring, eventBus)
+      }).not.toThrow()
+    })
+  })
 
   describe('performance statistics', () => {
     beforeEach(async () => {
-      await plugin.install({});
-    });
+      await plugin.install({})
+    })
 
     it('should track active requests', () => {
       eventBus.emit(
         CommonEventType.REQUEST_STARTED,
         {
-          requestId: 'req-1',
+          requestId: 'req-1'
         },
-        'test',
-      );
+        'test'
+      )
 
       eventBus.emit(
         CommonEventType.REQUEST_STARTED,
         {
-          requestId: 'req-2',
+          requestId: 'req-2'
         },
-        'test',
-      );
+        'test'
+      )
 
-      const stats = plugin.getPerformanceStats();
-      expect(stats.activeRequests).toBe(2);
+      const stats = plugin.getPerformanceStats()
+      expect(stats.activeRequests).toBe(2)
 
       eventBus.emit(
         CommonEventType.REQUEST_COMPLETED,
         {
           requestId: 'req-1',
-          duration: 100,
+          duration: 100
         },
-        'test',
-      );
+        'test'
+      )
 
-      const updatedStats = plugin.getPerformanceStats();
-      expect(updatedStats.activeRequests).toBe(1);
-    });
+      const updatedStats = plugin.getPerformanceStats()
+      expect(updatedStats.activeRequests).toBe(1)
+    })
 
     it('should clear performance data', () => {
       eventBus.emit(
         CommonEventType.REQUEST_STARTED,
         {
-          requestId: 'req-1',
+          requestId: 'req-1'
         },
-        'test',
-      );
+        'test'
+      )
 
-      plugin.clearPerformanceData();
+      plugin.clearPerformanceData()
 
-      const stats = plugin.getPerformanceStats();
-      expect(stats.activeRequests).toBe(0);
-    });
-  });
-});
+      const stats = plugin.getPerformanceStats()
+      expect(stats.activeRequests).toBe(0)
+    })
+  })
+})

@@ -7,67 +7,67 @@
  * @module lib/lazy-loader
  */
 
-import type { Bot } from 'grammy';
-import type { z } from 'zod';
+import type { Bot } from 'grammy'
+import type { z } from 'zod'
 
 // Cache for loaded modules
-const moduleCache = new Map<string, unknown>();
+const moduleCache = new Map<string, unknown>()
 
 /**
  * Performance metrics for module loading
  */
 interface LoadMetrics {
-  module: string;
-  loadTime: number;
-  cached: boolean;
+  module: string
+  loadTime: number
+  cached: boolean
 }
 
-const loadMetrics: LoadMetrics[] = [];
+const loadMetrics: LoadMetrics[] = []
 
 /**
  * Load a module lazily with caching
  */
 async function lazyLoad<T>(
   moduleName: string,
-  loader: () => Promise<{ default: T } | T>,
+  loader: () => Promise<{ default: T } | T>
 ): Promise<T> {
   // Check cache first
   if (moduleCache.has(moduleName)) {
     loadMetrics.push({
       module: moduleName,
       loadTime: 0,
-      cached: true,
-    });
-    return moduleCache.get(moduleName) as T;
+      cached: true
+    })
+    return moduleCache.get(moduleName) as T
   }
 
-  const start = performance.now();
+  const start = performance.now()
 
   try {
-    const module = await loader();
+    const module = await loader()
     const result =
       typeof module === 'object' && module !== null && 'default' in module
         ? (module as { default: T }).default
-        : (module as T);
+        : (module as T)
 
     // Cache the loaded module
-    moduleCache.set(moduleName, result);
+    moduleCache.set(moduleName, result)
 
-    const loadTime = performance.now() - start;
+    const loadTime = performance.now() - start
     loadMetrics.push({
       module: moduleName,
       loadTime,
-      cached: false,
-    });
+      cached: false
+    })
 
     if (loadTime > 50) {
-      console.warn(`[LazyLoader] Slow module load: ${moduleName} took ${loadTime.toFixed(2)}ms`);
+      console.warn(`[LazyLoader] Slow module load: ${moduleName} took ${loadTime.toFixed(2)}ms`)
     }
 
-    return result;
+    return result
   } catch (error) {
-    console.error(`[LazyLoader] Failed to load module: ${moduleName}`, error);
-    throw error;
+    console.error(`[LazyLoader] Failed to load module: ${moduleName}`, error)
+    throw error
   }
 }
 
@@ -77,9 +77,9 @@ async function lazyLoad<T>(
  */
 export async function loadGrammy() {
   return lazyLoad('grammy', async () => {
-    const grammy = await import('grammy');
-    return grammy;
-  });
+    const grammy = await import('grammy')
+    return grammy
+  })
 }
 
 /**
@@ -88,9 +88,9 @@ export async function loadGrammy() {
  */
 export async function loadZod() {
   return lazyLoad('zod', async () => {
-    const zod = await import('zod');
-    return zod;
-  });
+    const zod = await import('zod')
+    return zod
+  })
 }
 
 /**
@@ -99,19 +99,19 @@ export async function loadZod() {
  */
 export async function loadDayjs() {
   return lazyLoad('dayjs', async () => {
-    const dayjs = (await import('dayjs')).default;
+    const dayjs = (await import('dayjs')).default
 
     // Load plugins only when needed
-    const utc = (await import('dayjs/plugin/utc')).default;
-    const timezone = (await import('dayjs/plugin/timezone')).default;
-    const customParseFormat = (await import('dayjs/plugin/customParseFormat')).default;
+    const utc = (await import('dayjs/plugin/utc')).default
+    const timezone = (await import('dayjs/plugin/timezone')).default
+    const customParseFormat = (await import('dayjs/plugin/customParseFormat')).default
 
-    dayjs.extend(utc);
-    dayjs.extend(timezone);
-    dayjs.extend(customParseFormat);
+    dayjs.extend(utc)
+    dayjs.extend(timezone)
+    dayjs.extend(customParseFormat)
 
-    return dayjs;
-  });
+    return dayjs
+  })
 }
 
 /**
@@ -122,19 +122,19 @@ export async function loadCloudflareAI() {
   return lazyLoad('@cloudflare/ai', async () => {
     // Check if module exists, otherwise return mock
     try {
-      const module = await import('@cloudflare/ai');
-      return module.Ai;
+      const module = await import('@cloudflare/ai')
+      return module.Ai
     } catch {
       // Return mock implementation for environments without @cloudflare/ai
-      console.warn('[LazyLoader] @cloudflare/ai not available, using mock');
+      console.warn('[LazyLoader] @cloudflare/ai not available, using mock')
       return class MockAi {
         constructor(_binding: unknown) {}
         async run(_model: string, _input: unknown) {
-          return { response: 'Mock AI response' };
+          return { response: 'Mock AI response' }
         }
-      };
+      }
     }
-  });
+  })
 }
 
 /**
@@ -147,64 +147,64 @@ export async function loadGrammyPlugins() {
         import('@grammyjs/menu') as Promise<unknown>,
         import('@grammyjs/conversations') as Promise<unknown>,
         import('@grammyjs/ratelimiter') as Promise<unknown>,
-        import('@grammyjs/session') as Promise<unknown>,
-      ]);
+        import('@grammyjs/session') as Promise<unknown>
+      ])
 
       return {
         menu,
         conversations,
         rateLimit,
-        session,
-      };
+        session
+      }
     } catch {
       // Return mock implementations if plugins not available
-      console.warn('[LazyLoader] Grammy plugins not available, using mocks');
+      console.warn('[LazyLoader] Grammy plugins not available, using mocks')
       return {
         menu: {},
         conversations: {},
         rateLimit: {},
-        session: {},
-      };
+        session: {}
+      }
     }
-  });
+  })
 }
 
 /**
  * Load Telegram bot with optimizations
  */
 export async function createTelegramBot(token: string): Promise<Bot> {
-  const { Bot } = await loadGrammy();
+  const { Bot } = await loadGrammy()
 
   // Create bot with minimal initial setup
   const bot = new Bot(token, {
     // Disable built-in polling to reduce overhead
-    ContextConstructor: undefined,
-  });
+    ContextConstructor: undefined
+  })
 
-  return bot;
+  return bot
 }
 
 /**
  * Load and compile Zod schemas on demand
  */
 export async function compileZodSchema<T>(
-  schemaLoader: () => Promise<z.ZodSchema<T>>,
+  schemaLoader: () => Promise<z.ZodSchema<T>>
 ): Promise<z.ZodSchema<T>> {
-  const cacheKey = schemaLoader.toString();
+  const cacheKey = schemaLoader.toString()
 
   if (moduleCache.has(cacheKey)) {
-    return moduleCache.get(cacheKey) as z.ZodSchema<T>;
+    return moduleCache.get(cacheKey) as z.ZodSchema<T>
   }
 
-  const schema = await schemaLoader();
+  const schema = await schemaLoader()
 
   // Compile and cache the schema (strict() may not be available on all schemas)
-  const schemaWithStrict = schema as z.ZodSchema<T> & { strict?: () => z.ZodSchema<T> };
+  const schemaWithStrict = schema as z.ZodSchema<T> & { strict?: () => z.ZodSchema<T> }
   const compiled =
-    typeof schemaWithStrict.strict === 'function' ? schemaWithStrict.strict() : schema;
-  moduleCache.set(cacheKey, compiled);
+    typeof schemaWithStrict.strict === 'function' ? schemaWithStrict.strict() : schema
+  moduleCache.set(cacheKey, compiled)
 
-  return compiled;
+  return compiled
 }
 
 /**
@@ -213,24 +213,24 @@ export async function compileZodSchema<T>(
  */
 export async function preloadModules() {
   // Don't block - run in background
-  Promise.all([loadGrammy(), loadZod(), loadDayjs()]).catch((error) => {
-    console.error('[LazyLoader] Background preload failed:', error);
-  });
+  Promise.all([loadGrammy(), loadZod(), loadDayjs()]).catch(error => {
+    console.error('[LazyLoader] Background preload failed:', error)
+  })
 }
 
 /**
  * Get module loading metrics
  */
 export function getLoadMetrics(): LoadMetrics[] {
-  return [...loadMetrics];
+  return [...loadMetrics]
 }
 
 /**
  * Clear module cache (useful for testing)
  */
 export function clearModuleCache() {
-  moduleCache.clear();
-  loadMetrics.length = 0;
+  moduleCache.clear()
+  loadMetrics.length = 0
 }
 
 /**
@@ -239,13 +239,13 @@ export function clearModuleCache() {
 export async function lazyLoadWithTimeout<T>(
   name: string,
   loader: () => Promise<T>,
-  timeoutMs = 5000,
+  timeoutMs = 5000
 ): Promise<T> {
   const timeoutPromise = new Promise<never>((_resolve, reject) => {
-    setTimeout(() => reject(new Error(`Module load timeout: ${name}`)), timeoutMs);
-  });
+    setTimeout(() => reject(new Error(`Module load timeout: ${name}`)), timeoutMs)
+  })
 
-  return Promise.race([lazyLoad(name, loader), timeoutPromise]);
+  return Promise.race([lazyLoad(name, loader), timeoutPromise])
 }
 
 /**
@@ -254,25 +254,25 @@ export async function lazyLoadWithTimeout<T>(
 export async function conditionalLoad<T>(
   condition: boolean,
   loader: () => Promise<T>,
-  fallback?: T,
+  fallback?: T
 ): Promise<T | undefined> {
   if (!condition) {
-    return fallback;
+    return fallback
   }
 
-  return loader();
+  return loader()
 }
 
 /**
  * Batch lazy loading for related modules
  */
 export async function batchLoad<T extends Record<string, () => Promise<unknown>>>(
-  loaders: T,
+  loaders: T
 ): Promise<{ [K in keyof T]: Awaited<ReturnType<T[K]>> }> {
-  const entries = Object.entries(loaders);
+  const entries = Object.entries(loaders)
   const results = await Promise.all(
-    entries.map(([key, loader]) => loader().then((result) => [key, result])),
-  );
+    entries.map(([key, loader]) => loader().then(result => [key, result]))
+  )
 
-  return Object.fromEntries(results) as { [K in keyof T]: Awaited<ReturnType<T[K]>> };
+  return Object.fromEntries(results) as { [K in keyof T]: Awaited<ReturnType<T[K]>> }
 }

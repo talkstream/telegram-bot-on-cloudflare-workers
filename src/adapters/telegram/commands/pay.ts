@@ -1,12 +1,12 @@
-import type { CommandHandler } from '@/types';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger'
+import type { CommandHandler } from '@/types'
 
-export const payCommand: CommandHandler = async (ctx) => {
-  const userId = ctx.from?.id;
+export const payCommand: CommandHandler = async ctx => {
+  const userId = ctx.from?.id
 
   if (!userId) {
-    await ctx.reply('❌ Unable to identify user');
-    return;
+    await ctx.reply('❌ Unable to identify user')
+    return
   }
 
   try {
@@ -17,14 +17,14 @@ export const payCommand: CommandHandler = async (ctx) => {
       JSON.stringify({
         userId,
         type: 'premium_subscription',
-        duration: 30,
+        duration: 30
       }),
       'XTR',
       [
         {
           label: 'Premium Subscription (30 days)',
-          amount: 100, // 100 Telegram Stars
-        },
+          amount: 100 // 100 Telegram Stars
+        }
       ],
       {
         max_tip_amount: 500, // Maximum 500 stars as tip
@@ -37,9 +37,9 @@ export const payCommand: CommandHandler = async (ctx) => {
         need_phone_number: false,
         need_email: false,
         need_shipping_address: false,
-        is_flexible: false,
-      },
-    );
+        is_flexible: false
+      }
+    )
 
     // Send additional information
     const infoMessage = `
@@ -54,7 +54,7 @@ You're about to purchase a Premium Subscription for *100 Stars*\\.
 ✅ Early access to new updates
 
 *Note:* Payments are processed securely through Telegram\\.
-`.trim();
+`.trim()
 
     await ctx.reply(infoMessage, {
       parse_mode: 'MarkdownV2',
@@ -63,17 +63,17 @@ You're about to purchase a Premium Subscription for *100 Stars*\\.
           [
             {
               text: '❓ What are Stars?',
-              url: 'https://telegram.org/blog/telegram-stars',
-            },
+              url: 'https://telegram.org/blog/telegram-stars'
+            }
           ],
-          [{ text: '🔙 Back', callback_data: 'main_menu' }],
-        ],
-      },
-    });
+          [{ text: '🔙 Back', callback_data: 'main_menu' }]
+        ]
+      }
+    })
 
-    logger.info('Payment invoice sent', { userId });
+    logger.info('Payment invoice sent', { userId })
   } catch (error) {
-    logger.error('Error sending payment invoice', { error, userId });
-    await ctx.reply('❌ Failed to create payment. Please try again later.');
+    logger.error('Error sending payment invoice', { error, userId })
+    await ctx.reply('❌ Failed to create payment. Please try again later.')
   }
-};
+}

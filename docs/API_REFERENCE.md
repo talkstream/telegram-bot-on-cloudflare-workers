@@ -6,20 +6,20 @@
 
 ```typescript
 interface TelegramUpdate {
-  update_id: number;
-  message?: Message;
-  edited_message?: Message;
-  channel_post?: Message;
-  edited_channel_post?: Message;
-  callback_query?: CallbackQuery;
-  inline_query?: InlineQuery;
-  chosen_inline_result?: ChosenInlineResult;
-  shipping_query?: ShippingQuery;
-  pre_checkout_query?: PreCheckoutQuery;
-  poll?: Poll;
-  poll_answer?: PollAnswer;
-  my_chat_member?: ChatMemberUpdated;
-  chat_member?: ChatMemberUpdated;
+  update_id: number
+  message?: Message
+  edited_message?: Message
+  channel_post?: Message
+  edited_channel_post?: Message
+  callback_query?: CallbackQuery
+  inline_query?: InlineQuery
+  chosen_inline_result?: ChosenInlineResult
+  shipping_query?: ShippingQuery
+  pre_checkout_query?: PreCheckoutQuery
+  poll?: Poll
+  poll_answer?: PollAnswer
+  my_chat_member?: ChatMemberUpdated
+  chat_member?: ChatMemberUpdated
 }
 ```
 
@@ -27,13 +27,13 @@ interface TelegramUpdate {
 
 ```typescript
 interface Message {
-  message_id: number;
-  from?: User;
-  date: number;
-  chat: Chat;
-  text?: string;
-  entities?: MessageEntity[];
-  reply_to_message?: Message;
+  message_id: number
+  from?: User
+  date: number
+  chat: Chat
+  text?: string
+  entities?: MessageEntity[]
+  reply_to_message?: Message
   // ... 40+ more fields
 }
 ```
@@ -95,28 +95,28 @@ Content-Type: application/json
 
 ```typescript
 // In src/adapters/telegram/commands/index.ts
-bot.command('start', startCommand);
-bot.command('help', helpCommand);
-bot.command('settings', settingsCommand);
+bot.command('start', startCommand)
+bot.command('help', helpCommand)
+bot.command('settings', settingsCommand)
 
 // Admin commands
-bot.command('admin', requireAdmin, adminCommand);
-bot.command('stats', requireAdmin, statsCommand);
+bot.command('admin', requireAdmin, adminCommand)
+bot.command('stats', requireAdmin, statsCommand)
 
 // Owner commands
-bot.command('debug', requireOwner, debugCommand);
-bot.command('info', requireOwner, infoCommand);
+bot.command('debug', requireOwner, debugCommand)
+bot.command('info', requireOwner, infoCommand)
 ```
 
 ### Command Handler Interface
 
 ```typescript
-type CommandHandler = (ctx: BotContext) => Promise<void>;
+type CommandHandler = (ctx: BotContext) => Promise<void>
 
 interface BotContext extends Context {
-  env: Env;
-  session: SessionData;
-  i18n: (key: string, params?: Record<string, any>) => string;
+  env: Env
+  session: SessionData
+  i18n: (key: string, params?: Record<string, any>) => string
 }
 ```
 
@@ -127,18 +127,18 @@ interface BotContext extends Context {
 ```typescript
 // Format: "action:subaction:id:params"
 // Examples:
-'menu:main';
-'settings:language:ru';
-'access:approve:123456';
-'page:2:search:telegram';
+'menu:main'
+'settings:language:ru'
+'access:approve:123456'
+'page:2:search:telegram'
 ```
 
 ### Callback Handler
 
 ```typescript
-bot.callbackQuery(/^menu:/, menuCallback);
-bot.callbackQuery(/^settings:/, settingsCallback);
-bot.callbackQuery(/^access:/, accessCallback);
+bot.callbackQuery(/^menu:/, menuCallback)
+bot.callbackQuery(/^settings:/, settingsCallback)
+bot.callbackQuery(/^access:/, accessCallback)
 ```
 
 ## Error Handling
@@ -147,9 +147,9 @@ bot.callbackQuery(/^access:/, accessCallback);
 
 ```typescript
 interface ErrorResponse {
-  ok: false;
-  error_code: number;
-  description: string;
+  ok: false
+  error_code: number
+  description: string
 }
 ```
 
@@ -168,17 +168,17 @@ interface ErrorResponse {
 
 ```typescript
 try {
-  await ctx.reply('Hello!');
+  await ctx.reply('Hello!')
 } catch (error) {
   if (error.error_code === 403) {
     // Bot was blocked by user
-    await markUserAsBlocked(ctx.from.id);
+    await markUserAsBlocked(ctx.from.id)
   } else if (error.error_code === 429) {
     // Rate limited
-    await addToRetryQueue(ctx);
+    await addToRetryQueue(ctx)
   } else {
     // Unknown error
-    throw error;
+    throw error
   }
 }
 ```
@@ -199,10 +199,10 @@ try {
 const limiter = createRateLimiter({
   windowMs: 1000,
   max: 30,
-  keyGenerator: (ctx) => ctx.from?.id || 'anonymous',
-});
+  keyGenerator: ctx => ctx.from?.id || 'anonymous'
+})
 
-bot.use(limiter);
+bot.use(limiter)
 ```
 
 ## Environment Variables
@@ -212,26 +212,26 @@ bot.use(limiter);
 ```typescript
 interface Env {
   // Core
-  TELEGRAM_BOT_TOKEN: string;
-  TELEGRAM_WEBHOOK_SECRET?: string;
-  ENVIRONMENT: 'development' | 'staging' | 'production';
+  TELEGRAM_BOT_TOKEN: string
+  TELEGRAM_WEBHOOK_SECRET?: string
+  ENVIRONMENT: 'development' | 'staging' | 'production'
 
   // Storage
-  SESSIONS: KVNamespace;
-  DB?: D1Database;
-  CACHE?: DurableObjectNamespace;
+  SESSIONS: KVNamespace
+  DB?: D1Database
+  CACHE?: DurableObjectNamespace
 
   // Features
-  TIER?: 'free' | 'paid';
-  SENTRY_DSN?: string;
-  BOT_OWNER_IDS?: string;
-  BOT_ADMIN_IDS?: string;
+  TIER?: 'free' | 'paid'
+  SENTRY_DSN?: string
+  BOT_OWNER_IDS?: string
+  BOT_ADMIN_IDS?: string
 
   // AI Providers
-  GEMINI_API_KEY?: string;
-  OPENAI_API_KEY?: string;
-  XAI_API_KEY?: string;
-  DEEPSEEK_API_KEY?: string;
+  GEMINI_API_KEY?: string
+  OPENAI_API_KEY?: string
+  XAI_API_KEY?: string
+  DEEPSEEK_API_KEY?: string
 }
 ```
 
@@ -241,9 +241,9 @@ interface Env {
 const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   ENVIRONMENT: z.enum(['development', 'staging', 'production']),
-  TIER: z.enum(['free', 'paid']).default('free'),
+  TIER: z.enum(['free', 'paid']).default('free')
   // ... more validations
-});
+})
 ```
 
 ## Database Schema
@@ -291,12 +291,12 @@ CREATE TABLE access_requests (
 
 ```typescript
 interface SessionData {
-  userId?: number;
-  username?: string;
-  languageCode?: string;
-  lastCommand?: string;
-  lastActivity?: number;
-  customData?: Record<string, any>;
+  userId?: number
+  username?: string
+  languageCode?: string
+  lastCommand?: string
+  lastActivity?: number
+  customData?: Record<string, any>
 }
 ```
 
@@ -307,15 +307,15 @@ interface SessionData {
 await ctx.env.SESSIONS.put(
   `session:${userId}`,
   JSON.stringify(sessionData),
-  { expirationTtl: 86400 }, // 24 hours
-);
+  { expirationTtl: 86400 } // 24 hours
+)
 
 // Load session
-const data = await ctx.env.SESSIONS.get(`session:${userId}`);
-const session = data ? JSON.parse(data) : createNewSession();
+const data = await ctx.env.SESSIONS.get(`session:${userId}`)
+const session = data ? JSON.parse(data) : createNewSession()
 
 // Delete session
-await ctx.env.SESSIONS.delete(`session:${userId}`);
+await ctx.env.SESSIONS.delete(`session:${userId}`)
 ```
 
 ## Webhook Security
@@ -324,8 +324,8 @@ await ctx.env.SESSIONS.delete(`session:${userId}`);
 
 ```typescript
 function validateWebhookSecret(request: Request, secret: string): boolean {
-  const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
-  return token === secret;
+  const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+  return token === secret
 }
 ```
 
@@ -334,12 +334,12 @@ function validateWebhookSecret(request: Request, secret: string): boolean {
 ```typescript
 const TELEGRAM_IPS = [
   '149.154.160.0/20',
-  '91.108.4.0/22',
+  '91.108.4.0/22'
   // ... more ranges
-];
+]
 
 function validateTelegramIP(ip: string): boolean {
-  return TELEGRAM_IPS.some((range) => isInRange(ip, range));
+  return TELEGRAM_IPS.some(range => isInRange(ip, range))
 }
 ```
 

@@ -23,34 +23,34 @@ Implement explicit database row types and mapping functions:
 
 // Database row type matching actual DB schema
 export interface ServiceDatabaseRow {
-  id: number;
-  provider_id: number;
-  category_id: string;
-  region_id: string;
-  district_id: string;
-  title: string;
-  description: string;
-  price_from: number;
-  contact_info: string;
-  is_active: number; // 0 or 1 in SQLite
-  created_at: string;
-  updated_at: string;
+  id: number
+  provider_id: number
+  category_id: string
+  region_id: string
+  district_id: string
+  title: string
+  description: string
+  price_from: number
+  contact_info: string
+  is_active: number // 0 or 1 in SQLite
+  created_at: string
+  updated_at: string
 }
 
 // Domain model with camelCase
 export interface Service {
-  id: number;
-  providerId: number;
-  categoryId: string;
-  regionId: string;
-  districtId: string;
-  title: string;
-  description: string;
-  priceFrom: number;
-  contactInfo: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: number
+  providerId: number
+  categoryId: string
+  regionId: string
+  districtId: string
+  title: string
+  description: string
+  priceFrom: number
+  contactInfo: string
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 ```
 
@@ -76,18 +76,18 @@ export class ProviderService {
       contactInfo: row.contact_info,
       isActive: row.is_active === 1,
       createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    };
+      updatedAt: new Date(row.updated_at)
+    }
   }
 
   async getProviderServices(providerId: number): Promise<Service[]> {
     const result = await this.db
       .prepare(`SELECT * FROM services WHERE provider_id = ?`)
       .bind(providerId)
-      .all<ServiceDatabaseRow>(); // Use DB row type
+      .all<ServiceDatabaseRow>() // Use DB row type
 
     // Map each row to domain model
-    return result.results.map((row) => this.mapDatabaseRowToService(row));
+    return result.results.map(row => this.mapDatabaseRowToService(row))
   }
 }
 ```
@@ -113,21 +113,21 @@ For larger projects, consider a generic mapper:
 
 type SnakeToCamelCase<S extends string> = S extends `${infer T}_${infer U}`
   ? `${T}${Capitalize<SnakeToCamelCase<U>>}`
-  : S;
+  : S
 
 type MapSnakeToCamel<T> = {
-  [K in keyof T as SnakeToCamelCase<K & string>]: T[K];
-};
+  [K in keyof T as SnakeToCamelCase<K & string>]: T[K]
+}
 
 export function mapSnakeToCamel<T extends Record<string, any>>(obj: T): MapSnakeToCamel<T> {
-  const result: any = {};
+  const result: any = {}
 
   for (const [key, value] of Object.entries(obj)) {
-    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-    result[camelKey] = value;
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+    result[camelKey] = value
   }
 
-  return result;
+  return result
 }
 ```
 
@@ -170,7 +170,7 @@ Some test databases (like @miniflare/d1) may have quirks with boolean/integer ha
 
 ```typescript
 // In tests, filter results in JavaScript if needed
-const winnerBids = results.filter((b) => b.status === 'won' && b.position >= 1 && b.position <= 3);
+const winnerBids = results.filter(b => b.status === 'won' && b.position >= 1 && b.position <= 3)
 ```
 
 ### Mock Data
@@ -181,9 +181,9 @@ Always use snake_case in test mocks:
 const mockServiceDb = {
   id: 1,
   provider_id: 123,
-  category_id: 'nails',
+  category_id: 'nails'
   // ... other snake_case fields
-};
+}
 ```
 
 ## Why This Matters

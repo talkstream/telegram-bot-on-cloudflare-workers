@@ -64,79 +64,79 @@ export class LazyServiceContainer<T extends Record<string, any>> {
 
 // Define service types
 interface KogotochkiServices {
-  userService: UserService;
-  locationService: LocationService;
-  providerService: ProviderService;
-  auctionService: AuctionService;
-  analyticsService: AnalyticsService;
-  paymentService: PaymentService;
+  userService: UserService
+  locationService: LocationService
+  providerService: ProviderService
+  auctionService: AuctionService
+  analyticsService: AnalyticsService
+  paymentService: PaymentService
 }
 
 // Global container
-const serviceContainer = new LazyServiceContainer<KogotochkiServices>();
+const serviceContainer = new LazyServiceContainer<KogotochkiServices>()
 
 // Configuration holder
 let serviceConfig: {
-  dbStore: IDatabaseStore | null;
-  kvCache: KVNamespace | null;
-  env: Env | null;
+  dbStore: IDatabaseStore | null
+  kvCache: KVNamespace | null
+  env: Env | null
 } = {
   dbStore: null,
   kvCache: null,
-  env: null,
-};
+  env: null
+}
 
 // Initialize container with factories
 export function initializeServiceContainer(dbStore: IDatabaseStore, env: Env): void {
-  serviceConfig.dbStore = dbStore;
-  serviceConfig.kvCache = env.CACHE || null;
-  serviceConfig.env = env;
+  serviceConfig.dbStore = dbStore
+  serviceConfig.kvCache = env.CACHE || null
+  serviceConfig.env = env
 
   // Register lazy factories
   serviceContainer.register('userService', () => {
-    if (!serviceConfig.dbStore) throw new Error('Database not configured');
+    if (!serviceConfig.dbStore) throw new Error('Database not configured')
     return serviceConfig.kvCache
       ? new CachedUserService(serviceConfig.dbStore, serviceConfig.kvCache)
-      : new UserService(serviceConfig.dbStore);
-  });
+      : new UserService(serviceConfig.dbStore)
+  })
 
   serviceContainer.register('locationService', () => {
-    if (!serviceConfig.dbStore) throw new Error('Database not configured');
+    if (!serviceConfig.dbStore) throw new Error('Database not configured')
     return serviceConfig.kvCache
       ? new CachedLocationService(serviceConfig.dbStore, serviceConfig.kvCache)
-      : new LocationService(serviceConfig.dbStore);
-  });
+      : new LocationService(serviceConfig.dbStore)
+  })
 
   serviceContainer.register('providerService', () => {
-    if (!serviceConfig.dbStore) throw new Error('Database not configured');
-    return new ProviderService(serviceConfig.dbStore);
-  });
+    if (!serviceConfig.dbStore) throw new Error('Database not configured')
+    return new ProviderService(serviceConfig.dbStore)
+  })
 
   serviceContainer.register('auctionService', () => {
-    if (!serviceConfig.dbStore) throw new Error('Database not configured');
+    if (!serviceConfig.dbStore) throw new Error('Database not configured')
     return serviceConfig.kvCache
       ? new CachedAuctionService(serviceConfig.dbStore, serviceConfig.kvCache)
-      : new AuctionService(serviceConfig.dbStore);
-  });
+      : new AuctionService(serviceConfig.dbStore)
+  })
 
   serviceContainer.register('analyticsService', () => {
-    if (!serviceConfig.dbStore) throw new Error('Database not configured');
-    return new AnalyticsService(serviceConfig.dbStore);
-  });
+    if (!serviceConfig.dbStore) throw new Error('Database not configured')
+    return new AnalyticsService(serviceConfig.dbStore)
+  })
 
   serviceContainer.register('paymentService', () => {
-    if (!serviceConfig.dbStore) throw new Error('Database not configured');
-    return new PaymentService(serviceConfig.dbStore);
-  });
+    if (!serviceConfig.dbStore) throw new Error('Database not configured')
+    return new PaymentService(serviceConfig.dbStore)
+  })
 }
 
 // Export getters
-export const getUserService = () => serviceContainer.get('userService');
-export const getLocationService = () => serviceContainer.get('locationService');
-export const getProviderService = () => serviceContainer.get('providerService');
-export const getAuctionService = () => serviceContainer.get('auctionService');
-export const getAnalyticsService = () => serviceContainer.get('analyticsService');
-export const getPaymentService = () => serviceContainer.get('paymentService');
+export const getUserService = () => serviceContainer.get('userService')
+export const getLocationService = () => serviceContainer.get('locationService')
+export const getProviderService = () => serviceContainer.get('providerService')
+export const getAuctionService = () => serviceContainer.get('auctionService')
+export const getAnalyticsService = () => serviceContainer.get('analyticsService')
+export const getPaymentService = () => serviceContainer.get('paymentService')
 ```
 
 ## Ultra-Lazy Database Connection
@@ -146,35 +146,35 @@ Even database connection can be lazy:
 ```typescript
 // File: src/core/cloud/lazy-cloud-platform.ts
 
-let dbStore: IDatabaseStore | null = null;
-let env: Env | null = null;
+let dbStore: IDatabaseStore | null = null
+let env: Env | null = null
 
 export function setEnvironment(environment: Env): void {
-  env = environment;
+  env = environment
 }
 
 export function getDatabaseStore(): IDatabaseStore {
   if (!dbStore) {
     if (!env) {
-      throw new Error('Environment not set. Call setEnvironment first.');
+      throw new Error('Environment not set. Call setEnvironment first.')
     }
 
-    const platform = getCloudPlatformConnector(env);
-    dbStore = platform.getDatabaseStore('DB');
+    const platform = getCloudPlatformConnector(env)
+    dbStore = platform.getDatabaseStore('DB')
 
     if (!dbStore) {
-      throw new Error('Database not available');
+      throw new Error('Database not available')
     }
   }
 
-  return dbStore;
+  return dbStore
 }
 
 // In service factory
 serviceContainer.register('userService', () => {
-  const db = getDatabaseStore(); // Lazy DB connection
-  return new UserService(db);
-});
+  const db = getDatabaseStore() // Lazy DB connection
+  return new UserService(db)
+})
 ```
 
 ## Conditional Service Loading
@@ -185,30 +185,30 @@ Load services based on user type:
 // File: src/patterns/conditional-services.ts
 
 interface ConditionalService<T> {
-  condition: () => boolean | Promise<boolean>;
-  factory: () => T;
+  condition: () => boolean | Promise<boolean>
+  factory: () => T
 }
 
 export class ConditionalServiceContainer<
-  T extends Record<string, any>,
+  T extends Record<string, any>
 > extends LazyServiceContainer<T> {
-  private conditions = new Map<keyof T, () => boolean | Promise<boolean>>();
+  private conditions = new Map<keyof T, () => boolean | Promise<boolean>>()
 
   registerConditional<K extends keyof T>(
     name: K,
     factory: () => T[K],
-    condition: () => boolean | Promise<boolean>,
+    condition: () => boolean | Promise<boolean>
   ): void {
-    super.register(name, factory);
-    this.conditions.set(name, condition);
+    super.register(name, factory)
+    this.conditions.set(name, condition)
   }
 
   async get<K extends keyof T>(name: K): Promise<T[K] | null> {
-    const condition = this.conditions.get(name);
+    const condition = this.conditions.get(name)
     if (condition && !(await condition())) {
-      return null;
+      return null
     }
-    return super.get(name);
+    return super.get(name)
   }
 }
 
@@ -217,10 +217,10 @@ container.registerConditional(
   'masterService',
   () => new MasterService(db),
   async () => {
-    const user = await getUserService().getCurrentUser();
-    return user?.isMaster === true;
-  },
-);
+    const user = await getUserService().getCurrentUser()
+    return user?.isMaster === true
+  }
+)
 ```
 
 ## Testing
@@ -228,54 +228,54 @@ container.registerConditional(
 ```typescript
 // File: src/patterns/__tests__/lazy-services.test.ts
 describe('Lazy Service Container', () => {
-  let container: LazyServiceContainer<TestServices>;
-  let factoryCalls: Record<string, number>;
+  let container: LazyServiceContainer<TestServices>
+  let factoryCalls: Record<string, number>
 
   beforeEach(() => {
-    container = new LazyServiceContainer();
-    factoryCalls = { service1: 0, service2: 0 };
+    container = new LazyServiceContainer()
+    factoryCalls = { service1: 0, service2: 0 }
 
     container.register('service1', () => {
-      factoryCalls.service1++;
-      return new TestService1();
-    });
+      factoryCalls.service1++
+      return new TestService1()
+    })
 
     container.register('service2', () => {
-      factoryCalls.service2++;
-      return new TestService2();
-    });
-  });
+      factoryCalls.service2++
+      return new TestService2()
+    })
+  })
 
   it('should not create services until requested', () => {
-    expect(factoryCalls.service1).toBe(0);
-    expect(factoryCalls.service2).toBe(0);
-  });
+    expect(factoryCalls.service1).toBe(0)
+    expect(factoryCalls.service2).toBe(0)
+  })
 
   it('should create service on first access', () => {
-    const service1 = container.get('service1');
+    const service1 = container.get('service1')
 
-    expect(factoryCalls.service1).toBe(1);
-    expect(factoryCalls.service2).toBe(0);
-    expect(service1).toBeInstanceOf(TestService1);
-  });
+    expect(factoryCalls.service1).toBe(1)
+    expect(factoryCalls.service2).toBe(0)
+    expect(service1).toBeInstanceOf(TestService1)
+  })
 
   it('should reuse service instance', () => {
-    const service1a = container.get('service1');
-    const service1b = container.get('service1');
+    const service1a = container.get('service1')
+    const service1b = container.get('service1')
 
-    expect(factoryCalls.service1).toBe(1);
-    expect(service1a).toBe(service1b);
-  });
+    expect(factoryCalls.service1).toBe(1)
+    expect(service1a).toBe(service1b)
+  })
 
   it('should handle reset correctly', () => {
-    const service1a = container.get('service1');
-    container.reset();
-    const service1b = container.get('service1');
+    const service1a = container.get('service1')
+    container.reset()
+    const service1b = container.get('service1')
 
-    expect(factoryCalls.service1).toBe(2);
-    expect(service1a).not.toBe(service1b);
-  });
-});
+    expect(factoryCalls.service1).toBe(2)
+    expect(service1a).not.toBe(service1b)
+  })
+})
 ```
 
 ## Production Impact

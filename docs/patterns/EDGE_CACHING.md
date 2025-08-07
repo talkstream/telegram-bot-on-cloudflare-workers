@@ -32,14 +32,14 @@ Based on 30+ days of production usage with the Kogotochki bot:
 ### Basic Setup
 
 ```typescript
-import { EdgeCacheService } from '@/core/services/cache/edge-cache-service';
-import { edgeCache } from '@/middleware/edge-cache';
+import { EdgeCacheService } from '@/core/services/cache/edge-cache-service'
+import { edgeCache } from '@/middleware/edge-cache'
 
 // Initialize the service
 const cacheService = new EdgeCacheService({
   baseUrl: 'https://cache.yourdomain.com',
-  logger: logger,
-});
+  logger: logger
+})
 
 // Apply middleware to your app
 app.use(
@@ -49,10 +49,10 @@ app.use(
     routeConfig: {
       '/api/users': { ttl: 600, tags: ['users'] },
       '/api/posts': { ttl: 300, tags: ['posts'] },
-      '/webhook': { ttl: 0 }, // Never cache webhooks
-    },
-  }),
-);
+      '/webhook': { ttl: 0 } // Never cache webhooks
+    }
+  })
+)
 ```
 
 ### Multi-Layer Caching Strategy
@@ -62,31 +62,31 @@ class CacheManager {
   constructor(
     private requestCache: RequestCache, // L1: Request-scoped
     private edgeCache: EdgeCacheService, // L2: Edge network
-    private kvCache: KVCache, // L3: Persistent
+    private kvCache: KVCache // L3: Persistent
   ) {}
 
   async get<T>(key: string): Promise<T | null> {
     // Check L1: Request cache (instant, same request)
-    let value = this.requestCache.get<T>(key);
-    if (value) return value;
+    let value = this.requestCache.get<T>(key)
+    if (value) return value
 
     // Check L2: Edge cache (sub-10ms, regional)
-    const edgeResponse = await this.edgeCache.getJSON<T>(key);
+    const edgeResponse = await this.edgeCache.getJSON<T>(key)
     if (edgeResponse) {
-      this.requestCache.set(key, edgeResponse);
-      return edgeResponse;
+      this.requestCache.set(key, edgeResponse)
+      return edgeResponse
     }
 
     // Check L3: KV storage (50-100ms, global)
-    value = await this.kvCache.get<T>(key);
+    value = await this.kvCache.get<T>(key)
     if (value) {
       // Populate higher layers
-      await this.edgeCache.set(key, value, { ttl: 300 });
-      this.requestCache.set(key, value);
-      return value;
+      await this.edgeCache.set(key, value, { ttl: 300 })
+      this.requestCache.set(key, value)
+      return value
     }
 
-    return null;
+    return null
   }
 }
 ```
@@ -99,14 +99,14 @@ class CacheManager {
 // Tag content during caching
 await cacheService.set('user:123', userData, {
   ttl: 3600,
-  tags: ['users', 'user:123', 'premium'],
-});
+  tags: ['users', 'user:123', 'premium']
+})
 
 // Invalidate all user caches
-await cacheService.purgeByTags(['users']);
+await cacheService.purgeByTags(['users'])
 
 // Invalidate specific user
-await cacheService.purgeByTags(['user:123']);
+await cacheService.purgeByTags(['user:123'])
 ```
 
 ### Cache Warming
@@ -118,14 +118,14 @@ await cacheService.warmUp([
   {
     key: 'config:global',
     factory: async () => db.getGlobalConfig(),
-    options: { ttl: 86400, tags: ['config'] },
+    options: { ttl: 86400, tags: ['config'] }
   },
   {
     key: 'users:top',
     factory: async () => db.getTopUsers(100),
-    options: { ttl: 3600, tags: ['users', 'leaderboard'] },
-  },
-]);
+    options: { ttl: 3600, tags: ['users', 'leaderboard'] }
+  }
+])
 ```
 
 ### Conditional Caching
@@ -138,12 +138,12 @@ const cacheMiddleware = edgeCache({
       ttl: 3600,
       tags: ['public'],
       // Cache only successful responses
-      shouldCache: (response) => response.status === 200,
-    },
+      shouldCache: response => response.status === 200
+    }
   },
   // Skip caching for authenticated users
-  skipWhen: (ctx) => ctx.get('authorization') !== undefined,
-});
+  skipWhen: ctx => ctx.get('authorization') !== undefined
+})
 ```
 
 ## Performance Optimization
@@ -165,21 +165,21 @@ const TTL_STRATEGY = {
   REALTIME: 60,
 
   // Never cache
-  NO_CACHE: 0,
-};
+  NO_CACHE: 0
+}
 ```
 
 ### 2. Cache Key Design
 
 ```typescript
-import { generateCacheKey } from '@/core/services/cache/edge-cache-service';
+import { generateCacheKey } from '@/core/services/cache/edge-cache-service'
 
 // Consistent key generation
 const key = generateCacheKey('api:users', {
   page: 1,
   limit: 20,
-  sort: 'created_at',
-});
+  sort: 'created_at'
+})
 // Result: "api:users:limit:20:page:1:sort:created_at"
 ```
 
@@ -190,58 +190,58 @@ class StaleWhileRevalidate {
   async get<T>(
     key: string,
     factory: () => Promise<T>,
-    options: { ttl: number; staleTime: number },
+    options: { ttl: number; staleTime: number }
   ): Promise<T> {
     const cached = await this.edgeCache.getJSON<{
-      data: T;
-      timestamp: number;
-    }>(key);
+      data: T
+      timestamp: number
+    }>(key)
 
     if (cached) {
-      const age = Date.now() - cached.timestamp;
+      const age = Date.now() - cached.timestamp
 
       if (age < options.ttl * 1000) {
         // Fresh - return immediately
-        return cached.data;
+        return cached.data
       }
 
       if (age < options.staleTime * 1000) {
         // Stale but acceptable - return and refresh in background
-        this.refreshInBackground(key, factory, options.ttl);
-        return cached.data;
+        this.refreshInBackground(key, factory, options.ttl)
+        return cached.data
       }
     }
 
     // Miss or too stale - fetch fresh data
-    const fresh = await factory();
+    const fresh = await factory()
     await this.edgeCache.set(
       key,
       {
         data: fresh,
-        timestamp: Date.now(),
+        timestamp: Date.now()
       },
-      { ttl: options.staleTime },
-    );
+      { ttl: options.staleTime }
+    )
 
-    return fresh;
+    return fresh
   }
 
   private refreshInBackground<T>(key: string, factory: () => Promise<T>, ttl: number): void {
     // Fire and forget
     factory()
-      .then((data) => {
+      .then(data => {
         this.edgeCache
           .set(
             key,
             {
               data,
-              timestamp: Date.now(),
+              timestamp: Date.now()
             },
-            { ttl },
+            { ttl }
           )
-          .catch(console.error);
+          .catch(console.error)
       })
-      .catch(console.error);
+      .catch(console.error)
   }
 }
 ```
@@ -252,31 +252,31 @@ class StaleWhileRevalidate {
 
 ```typescript
 class CacheMetrics {
-  private hits = 0;
-  private misses = 0;
+  private hits = 0
+  private misses = 0
 
   async get<T>(key: string): Promise<T | null> {
-    const value = await this.cache.get<T>(key);
+    const value = await this.cache.get<T>(key)
 
     if (value) {
-      this.hits++;
-      analytics.track('cache_hit', { key });
+      this.hits++
+      analytics.track('cache_hit', { key })
     } else {
-      this.misses++;
-      analytics.track('cache_miss', { key });
+      this.misses++
+      analytics.track('cache_miss', { key })
     }
 
     // Report metrics periodically
     if ((this.hits + this.misses) % 100 === 0) {
-      const hitRate = this.hits / (this.hits + this.misses);
+      const hitRate = this.hits / (this.hits + this.misses)
       analytics.track('cache_metrics', {
         hitRate,
         hits: this.hits,
-        misses: this.misses,
-      });
+        misses: this.misses
+      })
     }
 
-    return value;
+    return value
   }
 }
 ```
@@ -326,13 +326,13 @@ class CacheMetrics {
 const cacheService = new EdgeCacheService({
   baseUrl: 'https://cache.yourdomain.com',
   logger: logger,
-  debug: true, // Enable detailed logging
-});
+  debug: true // Enable detailed logging
+})
 
 // Track cache operations
-cacheService.on('hit', (key) => console.log(`Cache HIT: ${key}`));
-cacheService.on('miss', (key) => console.log(`Cache MISS: ${key}`));
-cacheService.on('error', (err) => console.error(`Cache ERROR:`, err));
+cacheService.on('hit', key => console.log(`Cache HIT: ${key}`))
+cacheService.on('miss', key => console.log(`Cache MISS: ${key}`))
+cacheService.on('error', err => console.error(`Cache ERROR:`, err))
 ```
 
 ## Integration with Cloudflare
@@ -341,11 +341,11 @@ cacheService.on('error', (err) => console.error(`Cache ERROR:`, err));
 
 ```javascript
 // wrangler.toml
-name = 'my-app';
-compatibility_date = '2025-08-01'[cache];
-cache_api = true[[kv_namespaces]];
-binding = 'CACHE_KV';
-id = 'your-kv-namespace-id';
+name = 'my-app'
+compatibility_date = '2025-08-01'[cache]
+cache_api = true[[kv_namespaces]]
+binding = 'CACHE_KV'
+id = 'your-kv-namespace-id'
 ```
 
 ### Cache Rules

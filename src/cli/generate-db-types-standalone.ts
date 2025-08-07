@@ -5,36 +5,36 @@
  * Usage: npm run db:types
  */
 
-import { readdir, mkdir, readFile, writeFile as fsWriteFile } from 'fs/promises';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { writeFile as fsWriteFile, mkdir, readdir, readFile } from 'fs/promises'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 
-import chalk from 'chalk';
+import chalk from 'chalk'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const rootDir = join(__dirname, '..', '..');
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const rootDir = join(__dirname, '..', '..')
 
 // Types
 interface ColumnDefinition {
-  name: string;
-  type: string;
-  nullable: boolean;
-  defaultValue?: string;
-  isPrimaryKey: boolean;
-  isUnique: boolean;
-  isAutoIncrement: boolean;
+  name: string
+  type: string
+  nullable: boolean
+  defaultValue?: string
+  isPrimaryKey: boolean
+  isUnique: boolean
+  isAutoIncrement: boolean
 }
 
 interface TableDefinition {
-  name: string;
-  columns: ColumnDefinition[];
+  name: string
+  columns: ColumnDefinition[]
 }
 
 interface GeneratorOptions {
-  booleanPrefixes: string[];
-  booleanSuffixes: string[];
-  datePatterns: string[];
-  optionalForNullable: boolean;
+  booleanPrefixes: string[]
+  booleanSuffixes: string[]
+  datePatterns: string[]
+  optionalForNullable: boolean
 }
 
 const defaultOptions: GeneratorOptions = {
@@ -48,7 +48,7 @@ const defaultOptions: GeneratorOptions = {
     'was_',
     'are_',
     'does_',
-    'do_',
+    'do_'
   ],
   booleanSuffixes: [
     '_enabled',
@@ -58,76 +58,76 @@ const defaultOptions: GeneratorOptions = {
     '_visible',
     '_hidden',
     '_required',
-    '_optional',
+    '_optional'
   ],
   datePatterns: ['_at', '_date', '_time', 'timestamp', 'expires_', 'started_', 'ended_'],
-  optionalForNullable: true,
-};
+  optionalForNullable: true
+}
 
 // SQL Parser
 class SQLParser {
   parse(sqlContent: string): TableDefinition[] {
-    const tables: TableDefinition[] = [];
-    const cleanedSql = this.removeComments(sqlContent);
-    const createTableRegex = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s*\(([\s\S]*?)\);/gi;
-    let match;
+    const tables: TableDefinition[] = []
+    const cleanedSql = this.removeComments(sqlContent)
+    const createTableRegex = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s*\(([\s\S]*?)\);/gi
+    let match
 
     while ((match = createTableRegex.exec(cleanedSql)) !== null) {
-      const tableName = match[1];
-      const tableBody = match[2];
+      const tableName = match[1]
+      const tableBody = match[2]
       if (tableName && tableBody) {
-        const columns = this.parseColumns(tableBody);
+        const columns = this.parseColumns(tableBody)
 
         tables.push({
           name: tableName,
-          columns,
-        });
+          columns
+        })
       }
     }
 
-    return tables;
+    return tables
   }
 
   private removeComments(sql: string): string {
-    sql = sql.replace(/--.*$/gm, '');
-    sql = sql.replace(/\/\*[\s\S]*?\*\//g, '');
-    return sql;
+    sql = sql.replace(/--.*$/gm, '')
+    sql = sql.replace(/\/\*[\s\S]*?\*\//g, '')
+    return sql
   }
 
   private parseColumns(tableBody: string): ColumnDefinition[] {
-    const columns: ColumnDefinition[] = [];
-    const parts = this.splitByComma(tableBody);
+    const columns: ColumnDefinition[] = []
+    const parts = this.splitByComma(tableBody)
 
     for (const part of parts) {
-      const trimmed = part.trim();
-      if (this.isTableConstraint(trimmed)) continue;
+      const trimmed = part.trim()
+      if (this.isTableConstraint(trimmed)) continue
 
-      const column = this.parseColumnDefinition(trimmed);
-      if (column) columns.push(column);
+      const column = this.parseColumnDefinition(trimmed)
+      if (column) columns.push(column)
     }
 
-    return columns;
+    return columns
   }
 
   private splitByComma(str: string): string[] {
-    const parts: string[] = [];
-    let current = '';
-    let depth = 0;
+    const parts: string[] = []
+    let current = ''
+    let depth = 0
 
     for (let i = 0; i < str.length; i++) {
-      const char = str[i];
-      if (char === '(') depth++;
-      else if (char === ')') depth--;
+      const char = str[i]
+      if (char === '(') depth++
+      else if (char === ')') depth--
       else if (char === ',' && depth === 0) {
-        parts.push(current);
-        current = '';
-        continue;
+        parts.push(current)
+        current = ''
+        continue
       }
-      current += char;
+      current += char
     }
 
-    if (current) parts.push(current);
-    return parts;
+    if (current) parts.push(current)
+    return parts
   }
 
   private isTableConstraint(line: string): boolean {
@@ -137,20 +137,20 @@ class SQLParser {
       'UNIQUE\\s*\\(',
       'CHECK\\s*\\(',
       'INDEX',
-      'CONSTRAINT',
-    ];
-    const regex = new RegExp(`^\\s*(${constraintKeywords.join('|')})`, 'i');
-    return regex.test(line);
+      'CONSTRAINT'
+    ]
+    const regex = new RegExp(`^\\s*(${constraintKeywords.join('|')})`, 'i')
+    return regex.test(line)
   }
 
   private parseColumnDefinition(definition: string): ColumnDefinition | null {
-    const match = definition.match(/^\s*(\w+)\s+(\w+(?:\([^)]+\))?)(.*)/);
-    if (!match) return null;
+    const match = definition.match(/^\s*(\w+)\s+(\w+(?:\([^)]+\))?)(.*)/)
+    if (!match) return null
 
-    const [, name, type, constraintsStr] = match;
-    if (!name || !type) return null;
+    const [, name, type, constraintsStr] = match
+    if (!name || !type) return null
 
-    const constraints = (constraintsStr || '').toUpperCase();
+    const constraints = (constraintsStr || '').toUpperCase()
 
     return {
       name,
@@ -159,74 +159,74 @@ class SQLParser {
       defaultValue: this.extractDefault(constraintsStr || ''),
       isPrimaryKey: constraints.includes('PRIMARY KEY'),
       isUnique: constraints.includes('UNIQUE'),
-      isAutoIncrement: constraints.includes('AUTOINCREMENT'),
-    };
+      isAutoIncrement: constraints.includes('AUTOINCREMENT')
+    }
   }
 
   private extractDefault(constraints: string): string | undefined {
-    const match = constraints.match(/DEFAULT\s+([^,\s]+)/i);
+    const match = constraints.match(/DEFAULT\s+([^,\s]+)/i)
     if (match && match[1]) {
-      let value = match[1];
+      let value = match[1]
       if (
         (value.startsWith("'") && value.endsWith("'")) ||
         (value.startsWith('"') && value.endsWith('"'))
       ) {
-        value = value.slice(1, -1);
+        value = value.slice(1, -1)
       }
-      return value;
+      return value
     }
-    return undefined;
+    return undefined
   }
 }
 
 // Main functions
 async function parseSQLFiles(sqlFiles: string[]): Promise<TableDefinition[]> {
-  const parser = new SQLParser();
-  const allTables: TableDefinition[] = [];
+  const parser = new SQLParser()
+  const allTables: TableDefinition[] = []
 
   for (const file of sqlFiles) {
     try {
-      const content = await readFile(file, 'utf-8');
-      const tables = parser.parse(content);
-      allTables.push(...tables);
+      const content = await readFile(file, 'utf-8')
+      const tables = parser.parse(content)
+      allTables.push(...tables)
     } catch (error) {
-      console.error(`Error parsing ${file}:`, error);
+      console.error(`Error parsing ${file}:`, error)
     }
   }
 
-  const uniqueTables = new Map<string, TableDefinition>();
+  const uniqueTables = new Map<string, TableDefinition>()
   for (const table of allTables) {
-    uniqueTables.set(table.name, table);
+    uniqueTables.set(table.name, table)
   }
 
-  return Array.from(uniqueTables.values());
+  return Array.from(uniqueTables.values())
 }
 
 // Helper functions
 function toCamelCase(snakeCase: string): string {
-  return snakeCase.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  return snakeCase.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
 }
 
 function toPascalCase(snakeCase: string): string {
   return snakeCase
     .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('')
 }
 
 // Generate database types
 function generateDatabaseTypes(tables: TableDefinition[]): string {
-  const interfaces: string[] = [];
+  const interfaces: string[] = []
 
   for (const table of tables) {
-    const interfaceName = `${toPascalCase(table.name)}DatabaseRow`;
-    const fields = table.columns.map((col) => {
-      const optional = col.nullable && defaultOptions.optionalForNullable ? '?' : '';
-      const type = sqlTypeToTsType(col.type, false);
-      return `  ${col.name}${optional}: ${type};`;
-    });
+    const interfaceName = `${toPascalCase(table.name)}DatabaseRow`
+    const fields = table.columns.map(col => {
+      const optional = col.nullable && defaultOptions.optionalForNullable ? '?' : ''
+      const type = sqlTypeToTsType(col.type, false)
+      return `  ${col.name}${optional}: ${type};`
+    })
 
-    interfaces.push(`export interface ${interfaceName} {\n${fields.join('\n')}\n}`);
+    interfaces.push(`export interface ${interfaceName} {\n${fields.join('\n')}\n}`)
   }
 
   return `/**
@@ -235,23 +235,23 @@ function generateDatabaseTypes(tables: TableDefinition[]): string {
  */
 
 ${interfaces.join('\n\n')}
-`;
+`
 }
 
 // Generate domain types
 function generateDomainTypes(tables: TableDefinition[]): string {
-  const interfaces: string[] = [];
+  const interfaces: string[] = []
 
   for (const table of tables) {
-    const interfaceName = toPascalCase(table.name).replace(/s$/, '');
-    const fields = table.columns.map((col) => {
-      const fieldName = toCamelCase(col.name);
-      const optional = col.nullable && defaultOptions.optionalForNullable ? '?' : '';
-      const type = getDomainType(col);
-      return `  ${fieldName}${optional}: ${type};`;
-    });
+    const interfaceName = toPascalCase(table.name).replace(/s$/, '')
+    const fields = table.columns.map(col => {
+      const fieldName = toCamelCase(col.name)
+      const optional = col.nullable && defaultOptions.optionalForNullable ? '?' : ''
+      const type = getDomainType(col)
+      return `  ${fieldName}${optional}: ${type};`
+    })
 
-    interfaces.push(`export interface ${interfaceName} {\n${fields.join('\n')}\n}`);
+    interfaces.push(`export interface ${interfaceName} {\n${fields.join('\n')}\n}`)
   }
 
   return `/**
@@ -260,13 +260,13 @@ function generateDomainTypes(tables: TableDefinition[]): string {
  */
 
 ${interfaces.join('\n\n')}
-`;
+`
 }
 
 // SQL to TypeScript type conversion
 function sqlTypeToTsType(sqlType: string, forDomain: boolean): string {
-  const upperType = sqlType.toUpperCase();
-  const baseType = upperType.replace(/\([^)]+\)/, '');
+  const upperType = sqlType.toUpperCase()
+  const baseType = upperType.replace(/\([^)]+\)/, '')
 
   switch (baseType) {
     case 'INTEGER':
@@ -278,86 +278,86 @@ function sqlTypeToTsType(sqlType: string, forDomain: boolean): string {
     case 'REAL':
     case 'DOUBLE':
     case 'FLOAT':
-      return 'number';
+      return 'number'
     case 'TEXT':
     case 'VARCHAR':
     case 'CHAR':
     case 'BLOB':
     case 'CLOB':
-      return 'string';
+      return 'string'
     case 'BOOLEAN':
     case 'BOOL':
-      return forDomain ? 'boolean' : 'number';
+      return forDomain ? 'boolean' : 'number'
     case 'DATE':
     case 'DATETIME':
     case 'TIMESTAMP':
-      return forDomain ? 'Date' : 'string';
+      return forDomain ? 'Date' : 'string'
     case 'JSON':
     case 'JSONB':
-      return 'any';
+      return 'any'
     default:
-      return 'any';
+      return 'any'
   }
 }
 
 // Get domain type for column
 function getDomainType(column: ColumnDefinition): string {
-  if (isBooleanField(column.name)) return 'boolean';
-  if (isDateField(column.name) || isDateType(column.type)) return 'Date';
-  return sqlTypeToTsType(column.type, true);
+  if (isBooleanField(column.name)) return 'boolean'
+  if (isDateField(column.name) || isDateType(column.type)) return 'Date'
+  return sqlTypeToTsType(column.type, true)
 }
 
 // Check field patterns
 function isBooleanField(fieldName: string): boolean {
-  const lower = fieldName.toLowerCase();
+  const lower = fieldName.toLowerCase()
   return (
-    defaultOptions.booleanPrefixes.some((p) => lower.startsWith(p)) ||
-    defaultOptions.booleanSuffixes.some((s) => lower.endsWith(s))
-  );
+    defaultOptions.booleanPrefixes.some(p => lower.startsWith(p)) ||
+    defaultOptions.booleanSuffixes.some(s => lower.endsWith(s))
+  )
 }
 
 function isDateField(fieldName: string): boolean {
-  const lower = fieldName.toLowerCase();
-  return defaultOptions.datePatterns.some((p) => lower.includes(p));
+  const lower = fieldName.toLowerCase()
+  return defaultOptions.datePatterns.some(p => lower.includes(p))
 }
 
 function isDateType(sqlType: string): boolean {
-  const dateTypes = ['DATE', 'DATETIME', 'TIMESTAMP'];
-  return dateTypes.includes(sqlType.toUpperCase().replace(/\([^)]+\)/, ''));
+  const dateTypes = ['DATE', 'DATETIME', 'TIMESTAMP']
+  return dateTypes.includes(sqlType.toUpperCase().replace(/\([^)]+\)/, ''))
 }
 
 // Generate mapper configurations
 function generateMappers(tables: TableDefinition[]): string {
   const mappers = tables
-    .map((table) => {
-      const dbTypeName = `${toPascalCase(table.name)}DatabaseRow`;
-      const domainTypeName = toPascalCase(table.name).replace(/s$/, '');
-      const mapperName = `${domainTypeName.charAt(0).toLowerCase()}${domainTypeName.slice(1)}Mapper`;
+    .map(table => {
+      const dbTypeName = `${toPascalCase(table.name)}DatabaseRow`
+      const domainTypeName = toPascalCase(table.name).replace(/s$/, '')
+      const mapperName = `${domainTypeName.charAt(0).toLowerCase()}${domainTypeName.slice(1)}Mapper`
 
       const mappings = table.columns
-        .map((col) => {
-          const dbField = col.name;
-          const domainField = toCamelCase(dbField);
-          let transformer = null;
+        .map(col => {
+          const dbField = col.name
+          const domainField = toCamelCase(dbField)
+          let transformer = null
 
           if (isBooleanField(col.name)) {
-            transformer = 'CommonTransformers.sqliteBoolean';
+            transformer = 'CommonTransformers.sqliteBoolean'
           } else if (isDateField(col.name) || isDateType(col.type)) {
-            transformer = 'CommonTransformers.isoDate';
+            transformer = 'CommonTransformers.isoDate'
           } else if (col.type.toUpperCase().startsWith('JSON')) {
-            transformer = 'CommonTransformers.json()';
+            transformer = 'CommonTransformers.json()'
           }
 
           if (transformer) {
-            return `  {\n    dbField: '${dbField}',\n    domainField: '${domainField}',\n    ...${transformer}\n  }`;
+            return `  {\n    dbField: '${dbField}',\n    domainField: '${domainField}',\n    ...${transformer}\n  }`
           }
-          return `  { dbField: '${dbField}', domainField: '${domainField}' }`;
+          return `  { dbField: '${dbField}', domainField: '${domainField}' }`
         })
-        .join(',\n');
+        .join(',\n')
 
-      return `export const ${mapperName} = new FieldMapper<DB.${dbTypeName}, Domain.${domainTypeName}>([\n${mappings}\n]);`;
+      return `export const ${mapperName} = new FieldMapper<DB.${dbTypeName}, Domain.${domainTypeName}>([\n${mappings}\n]);`
     })
-    .join('\n\n');
+    .join('\n\n')
 
   return `/**
  * Generated FieldMapper configurations from SQL schema
@@ -369,51 +369,51 @@ import type * as DB from '../types/generated/database';
 import type * as Domain from '../types/generated/models';
 
 ${mappers}
-`;
+`
 }
 
 // CLI interface
 interface CLIOptions {
-  input: string;
-  output: string;
-  tables?: string[];
-  watch: boolean;
-  dryRun: boolean;
+  input: string
+  output: string
+  tables?: string[]
+  watch: boolean
+  dryRun: boolean
 }
 
 function parseArgs(): CLIOptions {
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(2)
   const options: CLIOptions = {
     input: './migrations',
     output: './src/types/generated',
     watch: false,
-    dryRun: false,
-  };
+    dryRun: false
+  }
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+    const arg = args[i]
     if (arg === '--input' && args[i + 1]) {
-      const inputArg = args[++i];
-      if (inputArg) options.input = inputArg;
+      const inputArg = args[++i]
+      if (inputArg) options.input = inputArg
     } else if (arg === '--output' && args[i + 1]) {
-      const outputArg = args[++i];
-      if (outputArg) options.output = outputArg;
+      const outputArg = args[++i]
+      if (outputArg) options.output = outputArg
     } else if (arg === '--tables' && args[i + 1]) {
-      const tableArg = args[++i];
+      const tableArg = args[++i]
       if (tableArg) {
-        options.tables = tableArg.split(',');
+        options.tables = tableArg.split(',')
       }
     } else if (arg === '--watch') {
-      options.watch = true;
+      options.watch = true
     } else if (arg === '--dry-run') {
-      options.dryRun = true;
+      options.dryRun = true
     } else if (arg === '--help' || arg === '-h') {
-      printHelp();
-      process.exit(0);
+      printHelp()
+      process.exit(0)
     }
   }
 
-  return options;
+  return options
 }
 
 function printHelp() {
@@ -437,117 +437,117 @@ ${chalk.bold('Examples:')}
   npm run db:types
   npm run db:types -- --input=./schema --output=./src/types
   npm run db:types -- --tables=users,posts --watch
-`);
+`)
 }
 
 async function findSQLFiles(dir: string): Promise<string[]> {
-  const fullPath = join(rootDir, dir);
-  const entries = await readdir(fullPath, { withFileTypes: true });
+  const fullPath = join(rootDir, dir)
+  const entries = await readdir(fullPath, { withFileTypes: true })
 
   const sqlFiles = entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.sql'))
-    .map((entry) => join(fullPath, entry.name))
-    .sort();
+    .filter(entry => entry.isFile() && entry.name.endsWith('.sql'))
+    .map(entry => join(fullPath, entry.name))
+    .sort()
 
-  return sqlFiles;
+  return sqlFiles
 }
 
 async function writeFile(path: string, content: string, dryRun: boolean) {
-  const fullPath = join(rootDir, path);
+  const fullPath = join(rootDir, path)
 
   if (dryRun) {
-    console.info(chalk.yellow(`[DRY RUN] Would write to: ${path}`));
-    console.info(chalk.gray('Content preview:'));
-    console.info(content.split('\n').slice(0, 10).join('\n'));
-    console.info(chalk.gray('...'));
-    return;
+    console.info(chalk.yellow(`[DRY RUN] Would write to: ${path}`))
+    console.info(chalk.gray('Content preview:'))
+    console.info(content.split('\n').slice(0, 10).join('\n'))
+    console.info(chalk.gray('...'))
+    return
   }
 
-  await mkdir(dirname(fullPath), { recursive: true });
-  await fsWriteFile(fullPath, content, 'utf-8');
-  console.info(chalk.green(`✓ Generated: ${path}`));
+  await mkdir(dirname(fullPath), { recursive: true })
+  await fsWriteFile(fullPath, content, 'utf-8')
+  console.info(chalk.green(`✓ Generated: ${path}`))
 }
 
 async function generate(options: CLIOptions) {
-  console.info(chalk.bold('\n🔧 Generating TypeScript types from SQL schema...\n'));
+  console.info(chalk.bold('\n🔧 Generating TypeScript types from SQL schema...\n'))
 
   try {
     // Find SQL files
-    const sqlFiles = await findSQLFiles(options.input);
+    const sqlFiles = await findSQLFiles(options.input)
     if (sqlFiles.length === 0) {
-      console.error(chalk.red(`No SQL files found in ${options.input}`));
-      process.exit(1);
+      console.error(chalk.red(`No SQL files found in ${options.input}`))
+      process.exit(1)
     }
 
-    console.info(chalk.blue(`Found ${sqlFiles.length} SQL files:`));
-    sqlFiles.forEach((file) => {
-      console.info(chalk.gray(`  - ${file.replace(rootDir, '.')}`));
-    });
+    console.info(chalk.blue(`Found ${sqlFiles.length} SQL files:`))
+    sqlFiles.forEach(file => {
+      console.info(chalk.gray(`  - ${file.replace(rootDir, '.')}`))
+    })
 
     // Parse SQL files
-    console.info(chalk.blue('\nParsing SQL files...'));
-    let tables = await parseSQLFiles(sqlFiles);
+    console.info(chalk.blue('\nParsing SQL files...'))
+    let tables = await parseSQLFiles(sqlFiles)
 
     // Filter tables if specified
     if (options.tables) {
-      tables = tables.filter((table) => options.tables?.includes(table.name) ?? false);
-      console.info(chalk.blue(`Filtering to tables: ${options.tables.join(', ')}`));
+      tables = tables.filter(table => options.tables?.includes(table.name) ?? false)
+      console.info(chalk.blue(`Filtering to tables: ${options.tables.join(', ')}`))
     }
 
     if (tables.length === 0) {
-      console.error(chalk.red('No tables found to generate types for'));
-      process.exit(1);
+      console.error(chalk.red('No tables found to generate types for'))
+      process.exit(1)
     }
 
-    console.info(chalk.green(`✓ Found ${tables.length} tables:`));
-    tables.forEach((table) => {
-      console.info(chalk.gray(`  - ${table.name} (${table.columns.length} columns)`));
-    });
+    console.info(chalk.green(`✓ Found ${tables.length} tables:`))
+    tables.forEach(table => {
+      console.info(chalk.gray(`  - ${table.name} (${table.columns.length} columns)`))
+    })
 
     // Generate types
-    console.info(chalk.blue('\nGenerating types...'));
+    console.info(chalk.blue('\nGenerating types...'))
 
-    const dbTypes = generateDatabaseTypes(tables);
-    await writeFile(join(options.output, 'database.ts'), dbTypes, options.dryRun);
+    const dbTypes = generateDatabaseTypes(tables)
+    await writeFile(join(options.output, 'database.ts'), dbTypes, options.dryRun)
 
-    const domainTypes = generateDomainTypes(tables);
-    await writeFile(join(options.output, 'models.ts'), domainTypes, options.dryRun);
+    const domainTypes = generateDomainTypes(tables)
+    await writeFile(join(options.output, 'models.ts'), domainTypes, options.dryRun)
 
-    const mappers = generateMappers(tables);
+    const mappers = generateMappers(tables)
     await writeFile(
       join(options.output, '..', '..', 'database', 'mappers', 'generated', 'index.ts'),
       mappers,
-      options.dryRun,
-    );
+      options.dryRun
+    )
 
     if (!options.dryRun) {
-      console.info(chalk.bold.green('\n✅ Type generation completed successfully!\n'));
-      console.info(chalk.gray('Generated files:'));
-      console.info(chalk.gray(`  - ${options.output}/database.ts`));
-      console.info(chalk.gray(`  - ${options.output}/models.ts`));
-      console.info(chalk.gray(`  - src/database/mappers/generated/index.ts`));
+      console.info(chalk.bold.green('\n✅ Type generation completed successfully!\n'))
+      console.info(chalk.gray('Generated files:'))
+      console.info(chalk.gray(`  - ${options.output}/database.ts`))
+      console.info(chalk.gray(`  - ${options.output}/models.ts`))
+      console.info(chalk.gray(`  - src/database/mappers/generated/index.ts`))
     }
   } catch (error) {
-    console.error(chalk.red('\n❌ Error generating types:'), error);
-    process.exit(1);
+    console.error(chalk.red('\n❌ Error generating types:'), error)
+    process.exit(1)
   }
 }
 
 async function main() {
-  const options = parseArgs();
+  const options = parseArgs()
 
   if (options.watch) {
-    console.info(chalk.yellow('\n👀 Watch mode not implemented yet\n'));
-    await generate(options);
+    console.info(chalk.yellow('\n👀 Watch mode not implemented yet\n'))
+    await generate(options)
   } else {
-    await generate(options);
+    await generate(options)
   }
 }
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
-    console.error(chalk.red('Fatal error:'), error);
-    process.exit(1);
-  });
+  main().catch(error => {
+    console.error(chalk.red('Fatal error:'), error)
+    process.exit(1)
+  })
 }

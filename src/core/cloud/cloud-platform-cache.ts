@@ -7,13 +7,13 @@
  * - Critical for Cloudflare Workers free tier (10ms CPU limit)
  */
 
-import type { ICloudPlatformConnector } from '../interfaces/cloud-platform';
-import type { Env } from '../../config/env';
+import type { Env } from '../../config/env'
+import type { ICloudPlatformConnector } from '../interfaces/cloud-platform'
 
-import { CloudPlatformFactory } from './platform-factory';
+import { CloudPlatformFactory } from './platform-factory'
 
 // Cache for platform connectors
-const connectorCache = new Map<string, ICloudPlatformConnector>();
+const connectorCache = new Map<string, ICloudPlatformConnector>()
 
 /**
  * Generate unique cache key based on environment
@@ -21,9 +21,9 @@ const connectorCache = new Map<string, ICloudPlatformConnector>();
 function getCacheKey(env: Env): string {
   // Create unique key based on platform and environment
   // This ensures different instances for dev/staging/prod
-  const platform = env.CLOUD_PLATFORM || 'cloudflare';
-  const environment = env.ENVIRONMENT || 'production';
-  return `${platform}_${environment}`;
+  const platform = env.CLOUD_PLATFORM || 'cloudflare'
+  const environment = env.ENVIRONMENT || 'production'
+  return `${platform}_${environment}`
 }
 
 /**
@@ -33,19 +33,19 @@ function getCacheKey(env: Env): string {
  * @returns Cached or new CloudPlatform connector instance
  */
 export function getCloudPlatformConnector(env: Env): ICloudPlatformConnector {
-  const key = getCacheKey(env);
+  const key = getCacheKey(env)
 
   // Return cached instance if available
-  const cached = connectorCache.get(key);
+  const cached = connectorCache.get(key)
   if (cached) {
-    return cached;
+    return cached
   }
 
   // Create new instance and cache it
-  const connector = CloudPlatformFactory.createFromTypedEnv(env);
-  connectorCache.set(key, connector);
+  const connector = CloudPlatformFactory.createFromTypedEnv(env)
+  connectorCache.set(key, connector)
 
-  return connector;
+  return connector
 }
 
 /**
@@ -53,18 +53,18 @@ export function getCloudPlatformConnector(env: Env): ICloudPlatformConnector {
  * Useful for testing and memory management
  */
 export function clearCloudPlatformCache(): void {
-  connectorCache.clear();
+  connectorCache.clear()
 }
 
 /**
  * Get cache statistics for monitoring
  */
 export function getCloudPlatformCacheStats(): {
-  size: number;
-  keys: string[];
+  size: number
+  keys: string[]
 } {
   return {
     size: connectorCache.size,
-    keys: Array.from(connectorCache.keys()),
-  };
+    keys: Array.from(connectorCache.keys())
+  }
 }

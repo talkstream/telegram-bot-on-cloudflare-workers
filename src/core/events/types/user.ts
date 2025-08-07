@@ -29,5 +29,5 @@ export enum UserEventType {
   // Preference events
   USER_PREFERENCE_SET = 'user:preference_set',
   USER_LANGUAGE_CHANGED = 'user:language_changed',
-  USER_SETTINGS_UPDATED = 'user:settings_updated',
+  USER_SETTINGS_UPDATED = 'user:settings_updated'
 }

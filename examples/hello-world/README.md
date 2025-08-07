@@ -13,11 +13,13 @@ A simple example demonstrating the power and simplicity of Wireframe v2.0 ecosys
 ## Setup
 
 1. **Install dependencies:**
+
 ```bash
 npm install
 ```
 
 2. **Configure environment:**
+
 ```bash
 cp .env.example .env
 # Edit .env with your credentials
@@ -28,6 +30,7 @@ cp .env.example .env
    - OpenAI: Get API key from [OpenAI Platform](https://platform.openai.com)
 
 4. **Run the bot:**
+
 ```bash
 npm run dev
 ```
@@ -47,7 +50,7 @@ const bot = await Wireframe.create({
   }
 })
 
-bot.on('message', async (message) => {
+bot.on('message', async message => {
   const response = await bot.ai.complete(message.text!)
   await message.reply(response)
 })

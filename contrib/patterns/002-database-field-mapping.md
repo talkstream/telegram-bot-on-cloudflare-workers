@@ -19,40 +19,40 @@ Explicit database row types with manual mapping:
 
 // Database row types match exact DB schema
 export interface UserDatabaseRow {
-  id: number;
-  telegram_id: number;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  region_id?: string;
-  district_id?: string;
-  is_active: number; // D1 stores boolean as 0/1
-  is_master: number;
-  created_at: string;
-  updated_at: string;
+  id: number
+  telegram_id: number
+  username?: string
+  first_name?: string
+  last_name?: string
+  region_id?: string
+  district_id?: string
+  is_active: number // D1 stores boolean as 0/1
+  is_master: number
+  created_at: string
+  updated_at: string
 }
 
 export interface RegionDatabaseRow {
-  id: string;
-  name: string;
-  slug: string;
-  is_active: number;
-  display_order: number;
+  id: string
+  name: string
+  slug: string
+  is_active: number
+  display_order: number
 }
 
 // Domain types use camelCase
 export interface User {
-  id: number;
-  telegramId: number;
-  username?: string;
-  firstName?: string;
-  lastName?: string;
-  regionId?: string;
-  districtId?: string;
-  isActive: boolean;
-  isMaster: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: number
+  telegramId: number
+  username?: string
+  firstName?: string
+  lastName?: string
+  regionId?: string
+  districtId?: string
+  isActive: boolean
+  isMaster: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 ```
 
@@ -67,12 +67,12 @@ export class UserService {
     const result = await this.db
       .prepare('SELECT * FROM users WHERE telegram_id = ?')
       .bind(telegramId)
-      .first<UserDatabaseRow>();
+      .first<UserDatabaseRow>()
 
-    if (!result) return null;
+    if (!result) return null
 
     // Explicit mapping - compiler catches typos
-    return this.mapDatabaseRowToUser(result);
+    return this.mapDatabaseRowToUser(result)
   }
 
   private mapDatabaseRowToUser(row: UserDatabaseRow): User {
@@ -87,39 +87,39 @@ export class UserService {
       isActive: row.is_active === 1,
       isMaster: row.is_master === 1,
       createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    };
+      updatedAt: new Date(row.updated_at)
+    }
   }
 
   private mapUserToDatabaseRow(user: Partial<User>): Partial<UserDatabaseRow> {
-    const row: Partial<UserDatabaseRow> = {};
+    const row: Partial<UserDatabaseRow> = {}
 
-    if (user.telegramId !== undefined) row.telegram_id = user.telegramId;
-    if (user.username !== undefined) row.username = user.username;
-    if (user.firstName !== undefined) row.first_name = user.firstName;
-    if (user.lastName !== undefined) row.last_name = user.lastName;
-    if (user.regionId !== undefined) row.region_id = user.regionId;
-    if (user.districtId !== undefined) row.district_id = user.districtId;
-    if (user.isActive !== undefined) row.is_active = user.isActive ? 1 : 0;
-    if (user.isMaster !== undefined) row.is_master = user.isMaster ? 1 : 0;
+    if (user.telegramId !== undefined) row.telegram_id = user.telegramId
+    if (user.username !== undefined) row.username = user.username
+    if (user.firstName !== undefined) row.first_name = user.firstName
+    if (user.lastName !== undefined) row.last_name = user.lastName
+    if (user.regionId !== undefined) row.region_id = user.regionId
+    if (user.districtId !== undefined) row.district_id = user.districtId
+    if (user.isActive !== undefined) row.is_active = user.isActive ? 1 : 0
+    if (user.isMaster !== undefined) row.is_master = user.isMaster ? 1 : 0
 
-    return row;
+    return row
   }
 
   async updateUser(telegramId: number, updates: Partial<User>): Promise<void> {
-    const dbUpdates = this.mapUserToDatabaseRow(updates);
+    const dbUpdates = this.mapUserToDatabaseRow(updates)
 
     const setClause = Object.keys(dbUpdates)
-      .map((key) => `${key} = ?`)
-      .join(', ');
+      .map(key => `${key} = ?`)
+      .join(', ')
 
-    const values = Object.values(dbUpdates);
-    values.push(telegramId); // for WHERE clause
+    const values = Object.values(dbUpdates)
+    values.push(telegramId) // for WHERE clause
 
     await this.db
       .prepare(`UPDATE users SET ${setClause}, updated_at = datetime('now') WHERE telegram_id = ?`)
       .bind(...values)
-      .run();
+      .run()
   }
 }
 ```
@@ -131,39 +131,39 @@ export class UserService {
 export class FieldMapper<TDatabase, TDomain> {
   constructor(
     private mappings: Array<{
-      dbField: keyof TDatabase;
-      domainField: keyof TDomain;
-      toDb?: (value: any) => any;
-      toDomain?: (value: any) => any;
-    }>,
+      dbField: keyof TDatabase
+      domainField: keyof TDomain
+      toDb?: (value: any) => any
+      toDomain?: (value: any) => any
+    }>
   ) {}
 
   toDomain(dbRow: TDatabase): TDomain {
-    const result = {} as TDomain;
+    const result = {} as TDomain
 
     for (const mapping of this.mappings) {
-      const dbValue = dbRow[mapping.dbField];
+      const dbValue = dbRow[mapping.dbField]
       if (dbValue !== undefined) {
-        const value = mapping.toDomain ? mapping.toDomain(dbValue) : dbValue;
-        (result as any)[mapping.domainField] = value;
+        const value = mapping.toDomain ? mapping.toDomain(dbValue) : dbValue
+        ;(result as any)[mapping.domainField] = value
       }
     }
 
-    return result;
+    return result
   }
 
   toDatabase(domain: Partial<TDomain>): Partial<TDatabase> {
-    const result = {} as Partial<TDatabase>;
+    const result = {} as Partial<TDatabase>
 
     for (const mapping of this.mappings) {
-      const domainValue = domain[mapping.domainField];
+      const domainValue = domain[mapping.domainField]
       if (domainValue !== undefined) {
-        const value = mapping.toDb ? mapping.toDb(domainValue) : domainValue;
-        (result as any)[mapping.dbField] = value;
+        const value = mapping.toDb ? mapping.toDb(domainValue) : domainValue
+        ;(result as any)[mapping.dbField] = value
       }
     }
 
-    return result;
+    return result
   }
 }
 
@@ -175,16 +175,16 @@ const userMapper = new FieldMapper<UserDatabaseRow, User>([
   {
     dbField: 'is_active',
     domainField: 'isActive',
-    toDomain: (v) => v === 1,
-    toDb: (v) => (v ? 1 : 0),
+    toDomain: v => v === 1,
+    toDb: v => (v ? 1 : 0)
   },
   {
     dbField: 'created_at',
     domainField: 'createdAt',
-    toDomain: (v) => new Date(v),
-    toDb: (v) => v.toISOString(),
-  },
-]);
+    toDomain: v => new Date(v),
+    toDb: v => v.toISOString()
+  }
+])
 ```
 
 ## Testing
@@ -201,17 +201,17 @@ describe('Database Field Mapping', () => {
       is_active: 1,
       is_master: 0,
       created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
-    };
+      updated_at: '2024-01-01T00:00:00Z'
+    }
 
-    const user = mapDatabaseRowToUser(dbRow);
+    const user = mapDatabaseRowToUser(dbRow)
 
-    expect(user.telegramId).toBe(123456);
-    expect(user.firstName).toBe('John');
-    expect(user.regionId).toBe('us-west');
-    expect(user.isActive).toBe(true);
-    expect(user.isMaster).toBe(false);
-  });
+    expect(user.telegramId).toBe(123456)
+    expect(user.firstName).toBe('John')
+    expect(user.regionId).toBe('us-west')
+    expect(user.isActive).toBe(true)
+    expect(user.isMaster).toBe(false)
+  })
 
   it('should handle undefined fields correctly', () => {
     const dbRow: UserDatabaseRow = {
@@ -220,27 +220,27 @@ describe('Database Field Mapping', () => {
       is_active: 1,
       is_master: 0,
       created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
-    };
+      updated_at: '2024-01-01T00:00:00Z'
+    }
 
-    const user = mapDatabaseRowToUser(dbRow);
+    const user = mapDatabaseRowToUser(dbRow)
 
-    expect(user.firstName).toBeUndefined();
-    expect(user.regionId).toBeUndefined();
-  });
+    expect(user.firstName).toBeUndefined()
+    expect(user.regionId).toBeUndefined()
+  })
 
   it('should convert booleans to 0/1 for database', () => {
     const updates: Partial<User> = {
       isActive: false,
-      isMaster: true,
-    };
+      isMaster: true
+    }
 
-    const dbUpdates = mapUserToDatabaseRow(updates);
+    const dbUpdates = mapUserToDatabaseRow(updates)
 
-    expect(dbUpdates.is_active).toBe(0);
-    expect(dbUpdates.is_master).toBe(1);
-  });
-});
+    expect(dbUpdates.is_active).toBe(0)
+    expect(dbUpdates.is_master).toBe(1)
+  })
+})
 ```
 
 ## Common Pitfalls to Avoid
@@ -249,10 +249,10 @@ describe('Database Field Mapping', () => {
 
    ```typescript
    // ❌ BAD - hides field name mismatches
-   const user = dbRow as User;
+   const user = dbRow as User
 
    // ✅ GOOD - explicit mapping
-   const user = mapDatabaseRowToUser(dbRow);
+   const user = mapDatabaseRowToUser(dbRow)
    ```
 
 2. **Handle NULL vs undefined**:

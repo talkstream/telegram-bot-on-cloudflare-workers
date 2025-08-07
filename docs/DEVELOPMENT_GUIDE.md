@@ -111,11 +111,11 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     // Route handling
     if (url.pathname === '/webhook') {
-      return handleWebhook(request, env, ctx);
+      return handleWebhook(request, env, ctx)
     }
     // ... other routes
-  },
-};
+  }
+}
 ```
 
 #### `src/core/telegram-adapter.ts` - Main Logic
@@ -123,9 +123,9 @@ export default {
 ```typescript
 export class TelegramAdapter {
   constructor(bot: Bot<BotContext>, env: Env) {
-    this.setupMiddleware();
-    this.registerCommands();
-    this.registerCallbacks();
+    this.setupMiddleware()
+    this.registerCommands()
+    this.registerCallbacks()
   }
 }
 ```
@@ -136,13 +136,13 @@ export class TelegramAdapter {
 
 ```typescript
 // src/adapters/telegram/commands/weather.ts
-import type { CommandHandler } from '@/types';
+import type { CommandHandler } from '@/types'
 
-export const weatherCommand: CommandHandler = async (ctx) => {
-  const city = ctx.match || 'London';
+export const weatherCommand: CommandHandler = async ctx => {
+  const city = ctx.match || 'London'
 
   // Fetch weather data
-  const weather = await getWeather(city);
+  const weather = await getWeather(city)
 
   // Send response
   await ctx.reply(`Weather in ${city}: ${weather.temp}°C`, {
@@ -150,38 +150,38 @@ export const weatherCommand: CommandHandler = async (ctx) => {
       inline_keyboard: [
         [
           { text: '🔄 Refresh', callback_data: `weather:refresh:${city}` },
-          { text: '📍 Change City', callback_data: 'weather:change' },
-        ],
-      ],
-    },
-  });
-};
+          { text: '📍 Change City', callback_data: 'weather:change' }
+        ]
+      ]
+    }
+  })
+}
 ```
 
 2. Register in `src/adapters/telegram/commands/index.ts`:
 
 ```typescript
-bot.command('weather', weatherCommand);
+bot.command('weather', weatherCommand)
 ```
 
 ### Adding Callback Handlers
 
 ```typescript
 // src/adapters/telegram/callbacks/weather.ts
-bot.callbackQuery(/^weather:/, async (ctx) => {
-  const [, action, city] = ctx.callbackQuery.data.split(':');
+bot.callbackQuery(/^weather:/, async ctx => {
+  const [, action, city] = ctx.callbackQuery.data.split(':')
 
   switch (action) {
     case 'refresh':
-      await updateWeather(ctx, city);
-      break;
+      await updateWeather(ctx, city)
+      break
     case 'change':
-      await askForCity(ctx);
-      break;
+      await askForCity(ctx)
+      break
   }
 
-  await ctx.answerCallbackQuery();
-});
+  await ctx.answerCallbackQuery()
+})
 ```
 
 ## Testing
@@ -203,23 +203,23 @@ npm run test:coverage
 
 ```typescript
 // src/__tests__/commands/weather.test.ts
-import { describe, it, expect, vi } from 'vitest';
-import { weatherCommand } from '@/adapters/telegram/commands/weather';
-import { createMockContext } from '../utils/mock-context';
+import { describe, it, expect, vi } from 'vitest'
+import { weatherCommand } from '@/adapters/telegram/commands/weather'
+import { createMockContext } from '../utils/mock-context'
 
 describe('Weather Command', () => {
   it('should return weather for specified city', async () => {
-    const ctx = createMockContext();
-    ctx.match = 'Paris';
+    const ctx = createMockContext()
+    ctx.match = 'Paris'
 
-    await weatherCommand(ctx);
+    await weatherCommand(ctx)
 
     expect(ctx.reply).toHaveBeenCalledWith(
       expect.stringContaining('Weather in Paris'),
-      expect.any(Object),
-    );
-  });
-});
+      expect.any(Object)
+    )
+  })
+})
 ```
 
 ### Integration Testing
@@ -232,18 +232,18 @@ const testUpdate = {
     message_id: 1,
     from: { id: 123, first_name: 'Test' },
     chat: { id: 123, type: 'private' },
-    text: '/weather Moscow',
-  },
-};
+    text: '/weather Moscow'
+  }
+}
 
 const response = await fetch('http://localhost:8787/webhook', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'X-Telegram-Bot-Api-Secret-Token': 'test-secret',
+    'X-Telegram-Bot-Api-Secret-Token': 'test-secret'
   },
-  body: JSON.stringify(testUpdate),
-});
+  body: JSON.stringify(testUpdate)
+})
 ```
 
 ## Debugging
@@ -263,7 +263,7 @@ npm run tail:staging
 1. **Console Logs**: Appear in terminal
 
 ```typescript
-console.log('Update received:', update);
+console.log('Update received:', update)
 ```
 
 2. **Breakpoints**: Use VS Code debugger
@@ -287,8 +287,8 @@ console.log('Update received:', update);
 ```typescript
 Sentry.captureException(error, {
   tags: { command: 'weather' },
-  user: { id: ctx.from?.id },
-});
+  user: { id: ctx.from?.id }
+})
 ```
 
 ### Common Issues
@@ -309,12 +309,12 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 ```typescript
 // Ensure KV namespace is bound
-console.log('KV available:', !!ctx.env.SESSIONS);
+console.log('KV available:', !!ctx.env.SESSIONS)
 
 // Check TTL
 await ctx.env.SESSIONS.put(key, value, {
-  expirationTtl: 86400, // 24 hours
-});
+  expirationTtl: 86400 // 24 hours
+})
 ```
 
 #### Database Queries Failing
@@ -330,7 +330,7 @@ wrangler d1 execute DB --local --command "SELECT * FROM users LIMIT 1"
 
 ```typescript
 // Lazy load heavy dependencies
-const getAIService = lazy(() => import('./services/ai-service'));
+const getAIService = lazy(() => import('./services/ai-service'))
 ```
 
 ### 2. Batch Operations
@@ -338,22 +338,22 @@ const getAIService = lazy(() => import('./services/ai-service'));
 ```typescript
 // Bad: Multiple API calls
 for (const user of users) {
-  await sendMessage(user.id, text);
+  await sendMessage(user.id, text)
 }
 
 // Good: Batch API calls
-await Promise.all(users.map((user) => sendMessage(user.id, text)));
+await Promise.all(users.map(user => sendMessage(user.id, text)))
 ```
 
 ### 3. Cache Strategically
 
 ```typescript
-const cached = await cache.get(key);
-if (cached) return cached;
+const cached = await cache.get(key)
+if (cached) return cached
 
-const result = await expensiveOperation();
-await cache.put(key, result, { expirationTtl: 3600 });
-return result;
+const result = await expensiveOperation()
+await cache.put(key, result, { expirationTtl: 3600 })
+return result
 ```
 
 ### 4. Use Lightweight Adapter for Free Tier
@@ -361,7 +361,7 @@ return result;
 ```typescript
 if (env.TIER === 'free') {
   // Skip non-essential features
-  return new LightweightAdapter(bot, env);
+  return new LightweightAdapter(bot, env)
 }
 ```
 
@@ -372,9 +372,9 @@ if (env.TIER === 'free') {
 ```typescript
 // Define custom types
 interface WeatherData {
-  temp: number;
-  description: string;
-  humidity: number;
+  temp: number
+  description: string
+  humidity: number
 }
 
 // Use throughout
@@ -387,10 +387,10 @@ async function getWeather(city: string): Promise<WeatherData> {
 
 ```typescript
 try {
-  await riskyOperation();
+  await riskyOperation()
 } catch (error) {
-  logger.error('Operation failed', { error });
-  await ctx.reply('Sorry, something went wrong. Please try again.');
+  logger.error('Operation failed', { error })
+  await ctx.reply('Sorry, something went wrong. Please try again.')
 }
 ```
 
@@ -399,25 +399,25 @@ try {
 ```typescript
 const schema = z.object({
   city: z.string().min(1).max(100),
-  units: z.enum(['celsius', 'fahrenheit']).optional(),
-});
+  units: z.enum(['celsius', 'fahrenheit']).optional()
+})
 
-const input = schema.parse(userInput);
+const input = schema.parse(userInput)
 ```
 
 ### 4. Use Middleware
 
 ```typescript
 // Rate limiting
-bot.use(rateLimiter);
+bot.use(rateLimiter)
 
 // Logging
 bot.use(async (ctx, next) => {
-  const start = Date.now();
-  await next();
-  const ms = Date.now() - start;
-  logger.info(`${ctx.updateType} processed in ${ms}ms`);
-});
+  const start = Date.now()
+  await next()
+  const ms = Date.now() - start
+  logger.info(`${ctx.updateType} processed in ${ms}ms`)
+})
 ```
 
 ## Deployment Preparation
@@ -462,7 +462,7 @@ const keyboard = new InlineKeyboard()
   .row()
   .url('Visit Website', 'https://example.com')
   .row()
-  .text('« Back', 'back');
+  .text('« Back', 'back')
 ```
 
 ### Conversation Flows
@@ -470,20 +470,20 @@ const keyboard = new InlineKeyboard()
 ```typescript
 // Using grammY conversations plugin
 async function askName(conversation: Conversation, ctx: Context) {
-  await ctx.reply('What is your name?');
-  const { message } = await conversation.wait();
-  return message?.text;
+  await ctx.reply('What is your name?')
+  const { message } = await conversation.wait()
+  return message?.text
 }
 ```
 
 ### File Handling
 
 ```typescript
-bot.on('message:document', async (ctx) => {
-  const file = await ctx.getFile();
-  const url = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+bot.on('message:document', async ctx => {
+  const file = await ctx.getFile()
+  const url = `https://api.telegram.org/file/bot${token}/${file.file_path}`
   // Process file
-});
+})
 ```
 
 ## Resources

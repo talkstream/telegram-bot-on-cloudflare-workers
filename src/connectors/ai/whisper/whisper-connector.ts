@@ -6,183 +6,183 @@
  * @module connectors/ai/whisper/whisper-connector
  */
 
-import { BaseConnector } from '@/connectors/base/base-connector';
+import { BaseConnector } from '@/connectors/base/base-connector'
+import { EventBus } from '@/core/events/event-bus'
 import type {
+  AICapabilities,
   AIConnector,
   AudioInput,
   AudioOptions,
   AudioResponse,
   CompletionRequest,
   CompletionResponse,
-  Usage,
   Cost,
   ModelInfo,
-  AICapabilities,
-} from '@/core/interfaces/ai';
+  Usage
+} from '@/core/interfaces/ai'
 import type {
-  ConnectorConfig,
-  ValidationResult,
   ConnectorCapabilities,
+  ConnectorConfig,
   HealthStatus,
-} from '@/core/interfaces/connector';
-import { ConnectorType } from '@/core/interfaces/connector';
-import { EventBus } from '@/core/events/event-bus';
-import { logger } from '@/lib/logger';
+  ValidationResult
+} from '@/core/interfaces/connector'
+import { ConnectorType } from '@/core/interfaces/connector'
+import { logger } from '@/lib/logger'
 
 export interface WhisperConfig extends ConnectorConfig {
-  accountId: string;
-  apiToken?: string;
-  baseUrl?: string;
-  model?: 'whisper-large-v3-turbo' | 'whisper-small' | 'whisper-tiny';
-  language?: string;
-  eventBus?: EventBus;
+  accountId: string
+  apiToken?: string
+  baseUrl?: string
+  model?: 'whisper-large-v3-turbo' | 'whisper-small' | 'whisper-tiny'
+  language?: string
+  eventBus?: EventBus
 }
 
 export interface TranscriptionOptions extends AudioOptions {
-  language?: string;
-  task?: 'transcribe' | 'translate';
-  temperature?: number;
-  prompt?: string;
-  response_format?: 'json' | 'text' | 'srt' | 'vtt' | 'verbose_json';
-  timestamp_granularities?: ('word' | 'segment')[];
+  language?: string
+  task?: 'transcribe' | 'translate'
+  temperature?: number
+  prompt?: string
+  response_format?: 'json' | 'text' | 'srt' | 'vtt' | 'verbose_json'
+  timestamp_granularities?: ('word' | 'segment')[]
 }
 
 export interface TranscriptionResponse extends AudioResponse {
-  text: string;
-  language?: string;
-  duration?: number;
+  text: string
+  language?: string
+  duration?: number
   words?: Array<{
-    word: string;
-    start: number;
-    end: number;
-    confidence?: number;
-  }>;
+    word: string
+    start: number
+    end: number
+    confidence?: number
+  }>
   segments?: Array<{
-    id: number;
-    text: string;
-    start: number;
-    end: number;
-    confidence?: number;
-  }>;
+    id: number
+    text: string
+    start: number
+    end: number
+    confidence?: number
+  }>
 }
 
 export class WhisperConnector extends BaseConnector implements AIConnector {
-  id = 'whisper-connector';
-  name = 'Whisper Speech-to-Text Connector';
-  version = '1.0.0';
-  type = ConnectorType.AI;
+  id = 'whisper-connector'
+  name = 'Whisper Speech-to-Text Connector'
+  version = '1.0.0'
+  type = ConnectorType.AI
 
-  private accountId!: string;
-  private apiToken?: string;
-  private baseUrl: string;
-  private model: string;
-  private defaultLanguage?: string;
+  private accountId!: string
+  private apiToken?: string
+  private baseUrl: string
+  private model: string
+  private defaultLanguage?: string
 
   constructor(config?: WhisperConfig) {
-    super();
+    super()
     if (config) {
-      this.accountId = config.accountId;
-      this.apiToken = config.apiToken;
-      this.baseUrl = config.baseUrl || 'https://api.cloudflare.com/client/v4';
-      this.model = config.model || 'whisper-large-v3-turbo';
-      this.defaultLanguage = config.language;
+      this.accountId = config.accountId
+      this.apiToken = config.apiToken
+      this.baseUrl = config.baseUrl || 'https://api.cloudflare.com/client/v4'
+      this.model = config.model || 'whisper-large-v3-turbo'
+      this.defaultLanguage = config.language
       if (config.eventBus) {
-        this.eventBus = config.eventBus;
+        this.eventBus = config.eventBus
       }
     } else {
-      this.baseUrl = 'https://api.cloudflare.com/client/v4';
-      this.model = 'whisper-large-v3-turbo';
+      this.baseUrl = 'https://api.cloudflare.com/client/v4'
+      this.model = 'whisper-large-v3-turbo'
     }
   }
 
   protected async doInitialize(config: ConnectorConfig): Promise<void> {
-    const whisperConfig = config as WhisperConfig;
+    const whisperConfig = config as WhisperConfig
 
-    this.accountId = whisperConfig.accountId;
-    this.apiToken = whisperConfig.apiToken;
-    this.baseUrl = whisperConfig.baseUrl || this.baseUrl;
-    this.model = whisperConfig.model || this.model;
-    this.defaultLanguage = whisperConfig.language;
+    this.accountId = whisperConfig.accountId
+    this.apiToken = whisperConfig.apiToken
+    this.baseUrl = whisperConfig.baseUrl || this.baseUrl
+    this.model = whisperConfig.model || this.model
+    this.defaultLanguage = whisperConfig.language
 
     logger.info('[WhisperConnector] Initializing Whisper connector', {
       accountId: this.accountId,
       model: this.model,
-      language: this.defaultLanguage || 'auto-detect',
-    });
+      language: this.defaultLanguage || 'auto-detect'
+    })
 
     // Validate credentials if available
     if (this.apiToken) {
-      const valid = await this.validateCredentials();
+      const valid = await this.validateCredentials()
       if (!valid) {
-        throw new Error('Invalid API credentials for Whisper');
+        throw new Error('Invalid API credentials for Whisper')
       }
     }
 
     this.emitEvent('ai:audio:connector:initialized', {
       connector: this.id,
       model: this.model,
-      capabilities: this.getAICapabilities(),
-    });
+      capabilities: this.getAICapabilities()
+    })
   }
 
   protected doValidateConfig(config: ConnectorConfig): ValidationResult['errors'] {
-    const errors: ValidationResult['errors'] = [];
-    const whisperConfig = config as WhisperConfig;
+    const errors: ValidationResult['errors'] = []
+    const whisperConfig = config as WhisperConfig
 
     if (!whisperConfig.accountId) {
       errors?.push({
         field: 'accountId',
         message: 'Cloudflare account ID is required',
-        code: 'REQUIRED_FIELD',
-      });
+        code: 'REQUIRED_FIELD'
+      })
     }
 
-    const validModels = ['whisper-large-v3-turbo', 'whisper-small', 'whisper-tiny'];
+    const validModels = ['whisper-large-v3-turbo', 'whisper-small', 'whisper-tiny']
     if (whisperConfig.model && !validModels.includes(whisperConfig.model)) {
       errors?.push({
         field: 'model',
         message: `Model must be one of: ${validModels.join(', ')}`,
-        code: 'INVALID_VALUE',
-      });
+        code: 'INVALID_VALUE'
+      })
     }
 
-    return errors;
+    return errors
   }
 
   protected checkReadiness(): boolean {
-    return !!this.accountId;
+    return !!this.accountId
   }
 
   protected async checkHealth(): Promise<Partial<HealthStatus>> {
     try {
       // Check if the model is available
-      const modelInfo = await this.getModelInfo(this.model);
+      const modelInfo = await this.getModelInfo(this.model)
 
       return {
         status: modelInfo ? 'healthy' : 'degraded',
         message: modelInfo ? 'Whisper connector is operational' : 'Model unavailable',
         details: {
           model: this.model,
-          available: !!modelInfo,
-        },
-      };
+          available: !!modelInfo
+        }
+      }
     } catch (error) {
       return {
         status: 'unhealthy',
         message: 'Failed to check model availability',
         details: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      };
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      }
     }
   }
 
   protected async doDestroy(): Promise<void> {
-    logger.info('[WhisperConnector] Destroying Whisper connector');
+    logger.info('[WhisperConnector] Destroying Whisper connector')
 
     this.emitEvent('ai:audio:connector:destroyed', {
-      connector: this.id,
-    });
+      connector: this.id
+    })
   }
 
   getCapabilities(): ConnectorCapabilities {
@@ -199,9 +199,9 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
         'translation',
         'multi-language',
         'timestamps',
-        'word-level-timestamps',
-      ],
-    };
+        'word-level-timestamps'
+      ]
+    }
   }
 
   getAICapabilities(): AICapabilities {
@@ -220,10 +220,10 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
           audioTranscription: true,
           audioTranslation: true,
           multiLanguage: true,
-          timestamps: true,
-        },
-      },
-    };
+          timestamps: true
+        }
+      }
+    }
   }
 
   async audio(audio: AudioInput, options?: TranscriptionOptions): Promise<TranscriptionResponse> {
@@ -232,13 +232,13 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
         model: this.model,
         language: options?.language || this.defaultLanguage || 'auto',
         task: options?.task || 'transcribe',
-        format: options?.response_format || 'json',
-      });
+        format: options?.response_format || 'json'
+      })
 
-      const startTime = Date.now();
+      const startTime = Date.now()
 
       // Convert audio input to base64 if needed
-      const audioData = await this.prepareAudioData(audio);
+      const audioData = await this.prepareAudioData(audio)
 
       // Prepare the request payload
       const payload = {
@@ -249,27 +249,27 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
         temperature: options?.temperature || 0,
         prompt: options?.prompt,
         response_format: options?.response_format || 'verbose_json',
-        timestamp_granularities: options?.timestamp_granularities || ['segment'],
-      };
+        timestamp_granularities: options?.timestamp_granularities || ['segment']
+      }
 
       // Make API call to Cloudflare Workers AI
-      const response = await this.callAPI(payload);
-      const latency = Date.now() - startTime;
+      const response = await this.callAPI(payload)
+      const latency = Date.now() - startTime
 
       // Parse and format the response
       const result = response as {
-        text?: string;
-        language?: string;
-        duration?: number;
-        words?: Array<{ word: string; start: number; end: number; confidence: number }>;
+        text?: string
+        language?: string
+        duration?: number
+        words?: Array<{ word: string; start: number; end: number; confidence: number }>
         segments?: Array<{
-          id: number;
-          start: number;
-          end: number;
-          text: string;
-          confidence?: number;
-        }>;
-      };
+          id: number
+          start: number
+          end: number
+          text: string
+          confidence?: number
+        }>
+      }
 
       const transcriptionResponse: TranscriptionResponse = {
         text: result.text || '',
@@ -281,44 +281,44 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
           latency,
           model: this.model,
           task: options?.task || 'transcribe',
-          provider: 'cloudflare',
-        },
-      };
+          provider: 'cloudflare'
+        }
+      }
 
       logger.info('[WhisperConnector] Transcription successful', {
         duration: result.duration,
         language: result.language,
         latency,
         wordCount: result.words?.length || 0,
-        segmentCount: result.segments?.length || 0,
-      });
+        segmentCount: result.segments?.length || 0
+      })
 
       this.emitEvent('ai:audio:transcription:success', {
         connector: this.id,
         model: this.model,
         duration: result.duration,
         language: result.language,
-        latency,
-      });
+        latency
+      })
 
-      return transcriptionResponse;
+      return transcriptionResponse
     } catch (error) {
-      logger.error('[WhisperConnector] Transcription failed', error);
+      logger.error('[WhisperConnector] Transcription failed', error)
 
       this.emitEvent('ai:audio:transcription:error', {
         connector: this.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
 
-      throw error;
+      throw error
     }
   }
 
   // Implement required AIConnector methods (not used for audio-only connector)
   async complete(_request: CompletionRequest): Promise<CompletionResponse> {
     throw new Error(
-      'Whisper connector does not support text completion. Use audio() method for transcription.',
-    );
+      'Whisper connector does not support text completion. Use audio() method for transcription.'
+    )
   }
 
   async getModelInfo(modelId: string): Promise<ModelInfo> {
@@ -340,10 +340,10 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
           audio: true,
           function_calling: false,
           json_mode: true,
-          streaming: false,
+          streaming: false
         },
         version: 'v3-turbo',
-        languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh'],
+        languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh']
       },
       'whisper-small': {
         id: 'whisper-small',
@@ -362,10 +362,10 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
           audio: true,
           function_calling: false,
           json_mode: true,
-          streaming: false,
+          streaming: false
         },
         version: 'small',
-        languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh'],
+        languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'zh']
       },
       'whisper-tiny': {
         id: 'whisper-tiny',
@@ -384,36 +384,36 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
           audio: true,
           function_calling: false,
           json_mode: true,
-          streaming: false,
+          streaming: false
         },
         version: 'tiny',
-        languages: ['en', 'es', 'fr', 'de', 'it'],
-      },
-    };
-
-    const model = models[modelId];
-    if (!model) {
-      throw new Error(`Model ${modelId} not supported by Whisper connector`);
+        languages: ['en', 'es', 'fr', 'de', 'it']
+      }
     }
 
-    return model;
+    const model = models[modelId]
+    if (!model) {
+      throw new Error(`Model ${modelId} not supported by Whisper connector`)
+    }
+
+    return model
   }
 
   calculateCost(usage: Usage): Cost {
     // Whisper pricing is based on audio duration, not tokens
     // Estimate 1 hour of audio = 30,000 tokens
-    const hours = usage.total_tokens / 30000;
+    const hours = usage.total_tokens / 30000
     const costPerHour =
-      this.model === 'whisper-large-v3-turbo' ? 0.06 : this.model === 'whisper-small' ? 0.03 : 0.01;
+      this.model === 'whisper-large-v3-turbo' ? 0.06 : this.model === 'whisper-small' ? 0.03 : 0.01
 
     return {
       total: hours * costPerHour,
       currency: 'USD',
       breakdown: {
         prompt: hours * costPerHour,
-        completion: 0,
-      },
-    };
+        completion: 0
+      }
+    }
   }
 
   async validateCredentials(): Promise<boolean> {
@@ -422,50 +422,50 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
       const response = await fetch(`${this.baseUrl}/accounts/${this.accountId}/ai/models`, {
         headers: {
           Authorization: `Bearer ${this.apiToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+          'Content-Type': 'application/json'
+        }
+      })
 
-      return response.ok;
+      return response.ok
     } catch (error) {
-      logger.error('[WhisperConnector] Credential validation failed', error);
-      return false;
+      logger.error('[WhisperConnector] Credential validation failed', error)
+      return false
     }
   }
 
   private async prepareAudioData(audio: AudioInput): Promise<string> {
     if (audio.type === 'base64') {
-      return audio.data as string;
+      return audio.data as string
     } else if (audio.type === 'buffer') {
-      return Buffer.from(audio.data as Buffer).toString('base64');
+      return Buffer.from(audio.data as Buffer).toString('base64')
     } else if (audio.type === 'url') {
       // Fetch audio from URL and convert to base64
-      const response = await fetch(audio.data as string);
-      const buffer = await response.arrayBuffer();
-      return Buffer.from(buffer).toString('base64');
+      const response = await fetch(audio.data as string)
+      const buffer = await response.arrayBuffer()
+      return Buffer.from(buffer).toString('base64')
     } else {
-      throw new Error(`Unsupported audio input type: ${audio.type}`);
+      throw new Error(`Unsupported audio input type: ${audio.type}`)
     }
   }
 
   private async callAPI(payload: Record<string, unknown>): Promise<unknown> {
-    const modelPath = this.model.replace(/-/g, '_');
-    const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/openai/${modelPath}`;
+    const modelPath = this.model.replace(/-/g, '_')
+    const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/openai/${modelPath}`
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: this.apiToken ? `Bearer ${this.apiToken}` : '',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload),
-    });
+      body: JSON.stringify(payload)
+    })
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Whisper API error: ${response.status} - ${error}`);
+      const error = await response.text()
+      throw new Error(`Whisper API error: ${response.status} - ${error}`)
     }
 
-    return response.json();
+    return response.json()
   }
 }

@@ -109,7 +109,7 @@ The tool is optimized for AI-assisted development:
 // When you write code like this
 export const rateLimitOptimization = {
   // ... your optimization
-};
+}
 
 // Just tell Claude: "contribute this optimization"
 // Claude will run: npm run contribute:auto
@@ -149,10 +149,10 @@ You discovered a way to reduce CPU time:
 
 ```typescript
 // Before: 9ms average
-const result = await heavyOperation();
+const result = await heavyOperation()
 
 // After: 3ms average
-const result = useMemo(() => heavyOperation(), [deps]);
+const result = useMemo(() => heavyOperation(), [deps])
 ```
 
 Run: `npm run contribute:perf`
@@ -171,12 +171,12 @@ You implemented graceful degradation:
 ```typescript
 async function withFallback(ctx, operation, fallback) {
   try {
-    return await operation();
+    return await operation()
   } catch (error) {
     if (ctx.env.TIER === 'free' && error.name === 'TimeoutError') {
-      return fallback();
+      return fallback()
     }
-    throw error;
+    throw error
   }
 }
 ```

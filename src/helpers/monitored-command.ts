@@ -4,64 +4,64 @@
  * Automatically tracks command execution with monitoring
  */
 
-import type { BotContext } from '@/types/telegram';
-import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
-import type { EventBus } from '@/core/events/event-bus';
+import type { EventBus } from '@/core/events/event-bus'
+import type { IMonitoringConnector } from '@/core/interfaces/monitoring'
+import type { BotContext } from '@/types/telegram'
 
 // Command types (local definitions to avoid import errors)
 export interface CommandModule<T = object> {
-  command: string;
-  describe: string;
-  handler: (ctx: BotContext & T) => Promise<void>;
+  command: string
+  describe: string
+  handler: (ctx: BotContext & T) => Promise<void>
 }
 
 export interface CommandBuilder {
   command: (cmd: string) => {
     describe: (desc: string) => {
-      handler: <T = object>(handler: (ctx: BotContext & T) => Promise<void>) => CommandModule<T>;
-    };
-  };
+      handler: <T = object>(handler: (ctx: BotContext & T) => Promise<void>) => CommandModule<T>
+    }
+  }
 }
 
-export type CommandContext<T = object> = BotContext & T;
+export type CommandContext<T = object> = BotContext & T
 
 export interface MonitoredCommandOptions<T = object> {
   /**
    * The base command module
    */
-  command: CommandModule<T>;
+  command: CommandModule<T>
 
   /**
    * Monitoring connector
    */
-  monitoring?: IMonitoringConnector;
+  monitoring?: IMonitoringConnector
 
   /**
    * Event bus for event emission
    */
-  eventBus?: EventBus;
+  eventBus?: EventBus
 
   /**
    * Track performance metrics
    */
-  trackPerformance?: boolean;
+  trackPerformance?: boolean
 
   /**
    * Track user context
    */
-  trackUserContext?: boolean;
+  trackUserContext?: boolean
 
   /**
    * Custom metadata to include
    */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown>
 }
 
 /**
  * Create a monitored command that automatically tracks execution
  */
 export function createMonitoredCommand<T = object>(
-  options: MonitoredCommandOptions<T>,
+  options: MonitoredCommandOptions<T>
 ): CommandModule<T> {
   const {
     command,
@@ -69,32 +69,32 @@ export function createMonitoredCommand<T = object>(
     eventBus,
     trackPerformance = true,
     trackUserContext = true,
-    metadata = {},
-  } = options;
+    metadata = {}
+  } = options
 
   // Return original command if no monitoring
   if (!monitoring && !eventBus) {
-    return command;
+    return command
   }
 
   return {
     ...command,
     handler: async (ctx: CommandContext<T>) => {
-      const commandName = command.command;
-      const startTime = Date.now();
-      const requestId = crypto.randomUUID();
+      const commandName = command.command
+      const startTime = Date.now()
+      const requestId = crypto.randomUUID()
 
       // Extract user info from context
-      const userId = ctx.from?.id?.toString();
-      const username = ctx.from?.username;
+      const userId = ctx.from?.id?.toString()
+      const username = ctx.from?.username
 
       // Set user context in monitoring
       if (trackUserContext && monitoring && userId) {
         monitoring.setUserContext(userId, {
           username,
           firstName: ctx.from?.first_name,
-          lastName: ctx.from?.last_name,
-        });
+          lastName: ctx.from?.last_name
+        })
       }
 
       // Add breadcrumb for command start
@@ -105,9 +105,9 @@ export function createMonitoredCommand<T = object>(
         data: {
           userId,
           username,
-          ...metadata,
-        },
-      });
+          ...metadata
+        }
+      })
 
       // Emit command start event
       if (eventBus) {
@@ -118,25 +118,25 @@ export function createMonitoredCommand<T = object>(
             userId,
             username,
             requestId,
-            timestamp: startTime,
+            timestamp: startTime
           },
-          'MonitoredCommand',
-        );
+          'MonitoredCommand'
+        )
       }
 
       // Track command execution
       try {
         // Execute the original handler
-        const result = await command.handler(ctx);
+        const result = await command.handler(ctx)
 
-        const duration = Date.now() - startTime;
+        const duration = Date.now() - startTime
 
         // Track success metrics
         if (trackPerformance && monitoring) {
           monitoring.trackMetric('command_duration', duration, {
             command: commandName,
-            status: 'success',
-          });
+            status: 'success'
+          })
 
           monitoring.trackEvent('command_completed', {
             command: commandName,
@@ -144,8 +144,8 @@ export function createMonitoredCommand<T = object>(
             username,
             duration,
             requestId,
-            ...metadata,
-          });
+            ...metadata
+          })
         }
 
         // Add success breadcrumb
@@ -155,14 +155,14 @@ export function createMonitoredCommand<T = object>(
           level: 'info',
           data: {
             duration,
-            requestId,
-          },
-        });
+            requestId
+          }
+        })
 
-        return result;
+        return result
       } catch (error) {
-        const duration = Date.now() - startTime;
-        const errorObj = error instanceof Error ? error : new Error(String(error));
+        const duration = Date.now() - startTime
+        const errorObj = error instanceof Error ? error : new Error(String(error))
 
         // Capture exception in monitoring
         monitoring?.captureException(errorObj, {
@@ -171,15 +171,15 @@ export function createMonitoredCommand<T = object>(
           username,
           duration,
           requestId,
-          ...metadata,
-        });
+          ...metadata
+        })
 
         // Track error metrics
         if (trackPerformance && monitoring) {
           monitoring.trackMetric('command_duration', duration, {
             command: commandName,
-            status: 'error',
-          });
+            status: 'error'
+          })
 
           monitoring.trackEvent('command_failed', {
             command: commandName,
@@ -188,8 +188,8 @@ export function createMonitoredCommand<T = object>(
             duration,
             error: errorObj.message,
             requestId,
-            ...metadata,
-          });
+            ...metadata
+          })
         }
 
         // Emit error event
@@ -202,17 +202,17 @@ export function createMonitoredCommand<T = object>(
               userId,
               username,
               duration,
-              requestId,
+              requestId
             },
-            'MonitoredCommand',
-          );
+            'MonitoredCommand'
+          )
         }
 
         // Re-throw the error
-        throw error;
+        throw error
       }
-    },
-  };
+    }
+  }
 }
 
 /**
@@ -220,7 +220,7 @@ export function createMonitoredCommand<T = object>(
  */
 export function createMonitoredCommandBuilder(
   monitoring?: IMonitoringConnector,
-  eventBus?: EventBus,
+  eventBus?: EventBus
 ): CommandBuilder {
   return {
     command: (cmd: string) => ({
@@ -229,18 +229,18 @@ export function createMonitoredCommandBuilder(
           const command: CommandModule<T> = {
             command: cmd,
             describe: desc,
-            handler,
-          };
+            handler
+          }
 
           return createMonitoredCommand({
             command,
             monitoring,
-            eventBus,
-          });
-        },
-      }),
-    }),
-  };
+            eventBus
+          })
+        }
+      })
+    })
+  }
 }
 
 /**
@@ -249,56 +249,56 @@ export function createMonitoredCommandBuilder(
 export function MonitorCommand(commandName?: string) {
   return function (target: object, propertyKey: string | symbol, descriptor?: PropertyDescriptor) {
     if (!descriptor) {
-      return;
+      return
     }
 
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value
 
     if (typeof originalMethod !== 'function') {
-      throw new Error('MonitorCommand can only be applied to methods');
+      throw new Error('MonitorCommand can only be applied to methods')
     }
 
-    const className = target.constructor?.name || 'UnknownClass';
-    const methodName = String(propertyKey);
-    const command = commandName || `${className}.${methodName}`;
+    const className = target.constructor?.name || 'UnknownClass'
+    const methodName = String(propertyKey)
+    const command = commandName || `${className}.${methodName}`
 
     descriptor.value = async function (this: unknown, ctx: CommandContext) {
       // Get monitoring from context or global
-      const monitoring = (ctx as { monitoring?: IMonitoringConnector }).monitoring;
+      const monitoring = (ctx as { monitoring?: IMonitoringConnector }).monitoring
 
       if (!monitoring) {
         // No monitoring available, run original method
-        return originalMethod.apply(this, [ctx]);
+        return originalMethod.apply(this, [ctx])
       }
 
-      const startTime = Date.now();
-      const userId = ctx.from?.id?.toString();
+      const startTime = Date.now()
+      const userId = ctx.from?.id?.toString()
 
       try {
-        const result = await originalMethod.apply(this, [ctx]);
+        const result = await originalMethod.apply(this, [ctx])
 
-        const duration = Date.now() - startTime;
+        const duration = Date.now() - startTime
 
         monitoring.trackMetric('command_duration', duration, {
           command,
-          status: 'success',
-        });
+          status: 'success'
+        })
 
-        return result;
+        return result
       } catch (error) {
-        const duration = Date.now() - startTime;
-        const errorObj = error instanceof Error ? error : new Error(String(error));
+        const duration = Date.now() - startTime
+        const errorObj = error instanceof Error ? error : new Error(String(error))
 
         monitoring.captureException(errorObj, {
           command,
           userId,
-          duration,
-        });
+          duration
+        })
 
-        throw error;
+        throw error
       }
-    };
+    }
 
-    return descriptor;
-  };
+    return descriptor
+  }
 }

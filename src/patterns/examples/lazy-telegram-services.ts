@@ -5,80 +5,80 @@
  * Telegram bot services to optimize memory usage
  */
 
-import type { IDatabaseStore } from '@/core/interfaces/storage';
+import type { IDatabaseStore } from '@/core/interfaces/storage'
 
-import { LazyServiceContainer } from '@/patterns/lazy-services';
-import { getDatabaseStore, getKVCache } from '@/core/services/service-container';
+import { getDatabaseStore, getKVCache } from '@/core/services/service-container'
+import { LazyServiceContainer } from '@/patterns/lazy-services'
 
 // Example service interfaces
 interface UserService {
-  getUser(telegramId: number): Promise<any>;
-  createUser(data: any): Promise<any>;
+  getUser(telegramId: number): Promise<any>
+  createUser(data: any): Promise<any>
 }
 
 interface LocationService {
-  getNearbyLocations(lat: number, lng: number): Promise<any[]>;
+  getNearbyLocations(lat: number, lng: number): Promise<any[]>
 }
 
 interface NotificationService {
-  sendNotification(userId: number, message: string): Promise<void>;
+  sendNotification(userId: number, message: string): Promise<void>
 }
 
 interface AnalyticsService {
-  trackEvent(event: string, data: any): Promise<void>;
+  trackEvent(event: string, data: any): Promise<void>
 }
 
 /**
  * Telegram bot services
  */
 interface TelegramBotServices extends Record<string, unknown> {
-  userService: UserService;
-  locationService: LocationService;
-  notificationService: NotificationService;
-  analyticsService: AnalyticsService;
+  userService: UserService
+  locationService: LocationService
+  notificationService: NotificationService
+  analyticsService: AnalyticsService
 }
 
 /**
  * Create service container for Telegram bot
  */
 export function createTelegramServiceContainer(): LazyServiceContainer<TelegramBotServices> {
-  const container = new LazyServiceContainer<TelegramBotServices>();
+  const container = new LazyServiceContainer<TelegramBotServices>()
 
   // Register user service
   container.register('userService', () => {
-    console.log('[Lazy] Initializing UserService...');
-    const db = getDatabaseStore();
-    const cache = getKVCache();
+    console.log('[Lazy] Initializing UserService...')
+    const db = getDatabaseStore()
+    const cache = getKVCache()
 
     // Return cached version if cache is available
     if (cache) {
-      return createCachedUserService(db!, cache);
+      return createCachedUserService(db!, cache)
     }
 
-    return createUserService(db!);
-  });
+    return createUserService(db!)
+  })
 
   // Register location service
   container.register('locationService', () => {
-    console.log('[Lazy] Initializing LocationService...');
-    const db = getDatabaseStore();
-    return createLocationService(db!);
-  });
+    console.log('[Lazy] Initializing LocationService...')
+    const db = getDatabaseStore()
+    return createLocationService(db!)
+  })
 
   // Register notification service
   container.register('notificationService', () => {
-    console.log('[Lazy] Initializing NotificationService...');
-    return createNotificationService();
-  });
+    console.log('[Lazy] Initializing NotificationService...')
+    return createNotificationService()
+  })
 
   // Register analytics service
   container.register('analyticsService', () => {
-    console.log('[Lazy] Initializing AnalyticsService...');
-    const db = getDatabaseStore();
-    return createAnalyticsService(db!);
-  });
+    console.log('[Lazy] Initializing AnalyticsService...')
+    const db = getDatabaseStore()
+    return createAnalyticsService(db!)
+  })
 
-  return container;
+  return container
 }
 
 /**
@@ -90,43 +90,43 @@ function createUserService(db: IDatabaseStore): UserService {
       const result = await db
         .prepare('SELECT * FROM users WHERE telegram_id = ?')
         .bind(telegramId)
-        .first();
-      return result;
+        .first()
+      return result
     },
     async createUser(data: any) {
       const result = await db
         .prepare('INSERT INTO users (telegram_id, username) VALUES (?, ?) RETURNING *')
         .bind(data.telegram_id, data.username)
-        .first();
-      return result;
-    },
-  };
+        .first()
+      return result
+    }
+  }
 }
 
 function createCachedUserService(db: IDatabaseStore, cache: any): UserService {
-  const baseService = createUserService(db);
+  const baseService = createUserService(db)
 
   return {
     async getUser(telegramId: number) {
       return cache.getOrSet(
         `user:${telegramId}`,
         () => baseService.getUser(telegramId),
-        { ttl: 300 }, // 5 minutes
-      );
+        { ttl: 300 } // 5 minutes
+      )
     },
     async createUser(data: any) {
-      const user = await baseService.createUser(data);
-      await cache.set(`user:${user.telegram_id}`, user, { ttl: 300 });
-      return user;
-    },
-  };
+      const user = await baseService.createUser(data)
+      await cache.set(`user:${user.telegram_id}`, user, { ttl: 300 })
+      return user
+    }
+  }
 }
 
 function createLocationService(db: IDatabaseStore): LocationService {
   return {
     async getNearbyLocations(lat: number, lng: number) {
       // Simple distance calculation
-      const radius = 10; // km
+      const radius = 10 // km
       const results = await db
         .prepare(
           `
@@ -134,22 +134,22 @@ function createLocationService(db: IDatabaseStore): LocationService {
           WHERE ABS(latitude - ?) < ? AND ABS(longitude - ?) < ?
           ORDER BY (latitude - ?) * (latitude - ?) + (longitude - ?) * (longitude - ?)
           LIMIT 10
-        `,
+        `
         )
         .bind(lat, radius / 111, lng, radius / 111, lat, lat, lng, lng)
-        .all();
-      return results.results || [];
-    },
-  };
+        .all()
+      return results.results || []
+    }
+  }
 }
 
 function createNotificationService(): NotificationService {
   return {
     async sendNotification(userId: number, message: string) {
-      console.log(`[Notification] To user ${userId}: ${message}`);
+      console.log(`[Notification] To user ${userId}: ${message}`)
       // In real implementation, would use messaging connector
-    },
-  };
+    }
+  }
 }
 
 function createAnalyticsService(db: IDatabaseStore): AnalyticsService {
@@ -158,61 +158,61 @@ function createAnalyticsService(db: IDatabaseStore): AnalyticsService {
       await db
         .prepare('INSERT INTO analytics_events (event, data, timestamp) VALUES (?, ?, ?)')
         .bind(event, JSON.stringify(data), Date.now())
-        .run();
-    },
-  };
+        .run()
+    }
+  }
 }
 
 /**
  * Usage example in command handler
  */
 export class LazyCommandHandler {
-  private services: LazyServiceContainer<TelegramBotServices>;
+  private services: LazyServiceContainer<TelegramBotServices>
 
   constructor() {
-    this.services = createTelegramServiceContainer();
+    this.services = createTelegramServiceContainer()
   }
 
   async handleStartCommand(userId: number, username?: string) {
     // Only UserService is initialized here
-    const userService = this.services.get('userService');
+    const userService = this.services.get('userService')
 
-    let user = await userService.getUser(userId);
+    let user = await userService.getUser(userId)
     if (!user) {
       user = await userService.createUser({
         telegram_id: userId,
-        username,
-      });
+        username
+      })
     }
 
     // Analytics service NOT initialized if we don't use it
     if (process.env.TRACK_ANALYTICS === 'true') {
-      const analytics = this.services.get('analyticsService');
-      await analytics.trackEvent('user_start', { userId });
+      const analytics = this.services.get('analyticsService')
+      await analytics.trackEvent('user_start', { userId })
     }
 
-    return user;
+    return user
   }
 
   async handleLocationCommand(userId: number, lat: number, lng: number) {
     // LocationService initialized only when needed
-    const locationService = this.services.get('locationService');
-    const locations = await locationService.getNearbyLocations(lat, lng);
+    const locationService = this.services.get('locationService')
+    const locations = await locationService.getNearbyLocations(lat, lng)
 
     // NotificationService also lazy
     if (locations.length > 0) {
-      const notificationService = this.services.get('notificationService');
+      const notificationService = this.services.get('notificationService')
       await notificationService.sendNotification(
         userId,
-        `Found ${locations.length} locations nearby!`,
-      );
+        `Found ${locations.length} locations nearby!`
+      )
     }
 
-    return locations;
+    return locations
   }
 
   getStats() {
-    return this.services.getStats();
+    return this.services.getStats()
   }
 }
 

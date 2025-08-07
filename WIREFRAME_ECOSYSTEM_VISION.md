@@ -28,10 +28,10 @@ The core NEVER contains vendor-specific code. Everything vendor-related lives in
 
 ```typescript
 // ❌ BAD - Direct vendor import in core
-import * as Sentry from '@sentry/cloudflare';
+import * as Sentry from '@sentry/cloudflare'
 
 // ✅ GOOD - Through connector abstraction
-const monitoring = await registry.get('monitoring');
+const monitoring = await registry.get('monitoring')
 ```
 
 ### 2. **Package-First Development**
@@ -52,8 +52,8 @@ All extensions discovered and loaded through registry, not imports.
 ```typescript
 const bot = await Wireframe.create({
   connectors: ['telegram', 'openai', 'cloudflare'],
-  plugins: ['analytics', 'admin-panel'],
-});
+  plugins: ['analytics', 'admin-panel']
+})
 ```
 
 ## 📦 Ecosystem Components
@@ -161,7 +161,7 @@ wireframe publish --private  # For enterprise registry
 ### SDK for Package Development
 
 ```typescript
-import { createConnector } from '@wireframe/sdk';
+import { createConnector } from '@wireframe/sdk'
 
 export default createConnector({
   name: 'my-service',
@@ -174,8 +174,8 @@ export default createConnector({
 
   async sendMessage(message) {
     // Implementation
-  },
-});
+  }
+})
 ```
 
 ## 💰 Business Model

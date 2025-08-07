@@ -1,18 +1,18 @@
-import { vi } from 'vitest';
-import type { User, Chat, Message, CallbackQuery } from 'grammy/types';
+import type { CallbackQuery, Chat, Message, User } from 'grammy/types'
+import { vi } from 'vitest'
 
-import { createMockEnv } from './mock-env';
+import { createMockEnv } from './mock-env'
 
-import type { BotContext } from '@/types';
-import type { Env } from '@/types/env';
+import type { BotContext } from '@/types'
+import type { Env } from '@/types/env'
 
 export interface MockContextOptions {
-  from?: User;
-  chat?: Chat;
-  message?: Message;
-  callbackQuery?: CallbackQuery;
-  me?: User;
-  env?: Env;
+  from?: User
+  chat?: Chat
+  message?: Message
+  callbackQuery?: CallbackQuery
+  me?: User
+  env?: Env
 }
 
 export function createMockContext(options: MockContextOptions = {}): BotContext {
@@ -22,8 +22,8 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
     languageCode: undefined,
     lastCommand: undefined,
     lastActivity: undefined,
-    customData: {},
-  };
+    customData: {}
+  }
 
   // Mock i18n object with new interface
   const mockI18n = {
@@ -65,16 +65,16 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
           'messages.admin_only': 'This command is only available to administrators.',
           'messages.access_only': 'You do not have access to this bot.',
           'messages.unauthorized': 'You do not have access to this bot.',
-          'messages.use_start_to_request': 'Use /start to request access.',
-        };
+          'messages.use_start_to_request': 'Use /start to request access.'
+        }
         if (key in accessMessages) {
-          let message = accessMessages[key];
+          let message = accessMessages[key]
           if (message && options?.params) {
             for (const [placeholder, value] of Object.entries(options.params)) {
-              message = message.replace(new RegExp(`\\{${placeholder}\\}`, 'g'), String(value));
+              message = message.replace(new RegExp(`\\{${placeholder}\\}`, 'g'), String(value))
             }
           }
-          return message || key;
+          return message || key
         }
       }
 
@@ -200,18 +200,18 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
         'ai.general.not_available_free_tier': 'AI service is not available on free tier',
         'ai.general.prompt_needed': 'Please provide a prompt',
         'ai.general.powered_by': 'Powered by {provider}',
-        'ai.general.error': 'Error processing AI request',
-      };
+        'ai.general.error': 'Error processing AI request'
+      }
 
       // Handle template replacements
-      let message = messages[key] || key;
+      let message = messages[key] || key
       if (options?.params) {
         for (const [placeholder, value] of Object.entries(options.params)) {
-          message = message.replace(new RegExp(`\\{${placeholder}\\}`, 'g'), String(value));
+          message = message.replace(new RegExp(`\\{${placeholder}\\}`, 'g'), String(value))
         }
       }
 
-      return message;
+      return message
     }),
     setLanguage: vi.fn().mockResolvedValue(undefined),
     getLanguage: vi.fn().mockReturnValue('en'),
@@ -221,8 +221,8 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
     unloadNamespace: vi.fn(),
     getTranslations: vi.fn().mockReturnValue({}),
     formatMessage: vi.fn((message: string) => message),
-    onMissingTranslation: vi.fn(),
-  };
+    onMissingTranslation: vi.fn()
+  }
 
   const mockContext = {
     // Basic context properties
@@ -233,12 +233,12 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
             id: 123456,
             is_bot: false,
             first_name: 'Test',
-            username: 'testuser',
+            username: 'testuser'
           },
 
     chat: options.chat || {
       id: 123456,
-      type: 'private',
+      type: 'private'
     },
 
     message: options.message || {
@@ -246,7 +246,7 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
       date: Date.now(),
       chat: options.chat || { id: 123456, type: 'private' },
       from: 'from' in options ? options.from : { id: 123456, is_bot: false },
-      text: '/start',
+      text: '/start'
     },
 
     callbackQuery: options.callbackQuery,
@@ -255,7 +255,7 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
       id: 987654,
       is_bot: true,
       first_name: 'Test Bot',
-      username: 'testbot',
+      username: 'testbot'
     },
 
     // Session
@@ -275,7 +275,7 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
       param: vi.fn(),
       header: vi.fn(),
       query: vi.fn(),
-      json: vi.fn(),
+      json: vi.fn()
     },
 
     // Response helpers
@@ -297,29 +297,29 @@ export function createMockContext(options: MockContextOptions = {}): BotContext 
         { command: 'help', description: 'Show help' },
         { command: 'profile', description: 'View profile' },
         { command: 'settings', description: 'Bot settings' },
-        { command: 'balance', description: 'Check balance' },
+        { command: 'balance', description: 'Check balance' }
       ]),
       sendMessage: vi.fn().mockResolvedValue({ ok: true }),
-      sendInvoice: vi.fn().mockResolvedValue({ ok: true }),
+      sendInvoice: vi.fn().mockResolvedValue({ ok: true })
     },
 
     // Response
     res: {
-      status: 200,
+      status: 200
     },
 
     // Services
     services: {
-      ai: null,
-    },
-  } as unknown as BotContext;
+      ai: null
+    }
+  } as unknown as BotContext
 
-  return mockContext;
+  return mockContext
 }
 
 export function createMockCallbackContext(
   data: string,
-  options: MockContextOptions = {},
+  options: MockContextOptions = {}
 ): BotContext {
   return createMockContext({
     ...options,
@@ -329,15 +329,15 @@ export function createMockCallbackContext(
         id: 123456,
         is_bot: false,
         first_name: 'Test',
-        username: 'testuser',
+        username: 'testuser'
       },
       data,
       message: options.message || {
         message_id: 1,
         date: Date.now(),
-        chat: { id: 123456, type: 'private' as const, first_name: 'Test' },
+        chat: { id: 123456, type: 'private' as const, first_name: 'Test' }
       },
-      chat_instance: '1234567890',
-    },
-  });
+      chat_instance: '1234567890'
+    }
+  })
 }

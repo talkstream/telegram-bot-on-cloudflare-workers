@@ -82,22 +82,22 @@ npm test
 
 ```typescript
 // ❌ Bad: Platform-specific
-import { TelegramSpecificType } from 'telegram-library';
+import { TelegramSpecificType } from 'telegram-library'
 
 // ✅ Good: Platform-agnostic
-import type { MessageContext } from '@/core/interfaces';
+import type { MessageContext } from '@/core/interfaces'
 ```
 
 ### 2. Type Safety
 
 ```typescript
 // ❌ Bad: Using any
-const result = (meta as any).last_row_id;
+const result = (meta as any).last_row_id
 
 // ✅ Good: Proper types
-const meta = result.meta as D1RunMeta;
+const meta = result.meta as D1RunMeta
 if (!meta.last_row_id) {
-  throw new Error('No last_row_id returned');
+  throw new Error('No last_row_id returned')
 }
 ```
 
@@ -106,17 +106,17 @@ if (!meta.last_row_id) {
 ```typescript
 // ❌ Bad: Silent failures
 try {
-  await operation();
+  await operation()
 } catch {
   // Silent fail
 }
 
 // ✅ Good: Proper handling
 try {
-  await operation();
+  await operation()
 } catch (error) {
-  logger.error('Operation failed', { error });
-  throw new Error('Meaningful error message');
+  logger.error('Operation failed', { error })
+  throw new Error('Meaningful error message')
 }
 ```
 

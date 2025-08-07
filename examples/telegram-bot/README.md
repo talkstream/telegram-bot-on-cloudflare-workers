@@ -105,25 +105,25 @@ telegram-bot/
 Create a new command in `commands/weather.ts`:
 
 ```typescript
-import { CommandContext } from '../../src/types';
+import { CommandContext } from '../../src/types'
 
 export async function handleWeatherCommand(ctx: CommandContext) {
-  const city = ctx.args.join(' ') || 'London';
+  const city = ctx.args.join(' ') || 'London'
 
   // Use AI to generate weather info
   const response = await ctx.ai.complete({
     prompt: `What's the weather like in ${city}? Be brief and friendly.`,
-    maxTokens: 100,
-  });
+    maxTokens: 100
+  })
 
-  await ctx.reply(response.content || "Sorry, I couldn't get the weather.");
+  await ctx.reply(response.content || "Sorry, I couldn't get the weather.")
 }
 ```
 
 Register it in `bot.ts`:
 
 ```typescript
-bot.command('weather', handleWeatherCommand);
+bot.command('weather', handleWeatherCommand)
 ```
 
 ### Using Plugins
@@ -131,10 +131,10 @@ bot.command('weather', handleWeatherCommand);
 Add a reminder plugin:
 
 ```typescript
-import { ReminderPlugin } from './plugins/reminder-plugin';
+import { ReminderPlugin } from './plugins/reminder-plugin'
 
 // Install plugin
-bot.use(new ReminderPlugin());
+bot.use(new ReminderPlugin())
 ```
 
 ### Multi-Platform Support

@@ -1,59 +1,56 @@
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints'
+import { hasAICapabilities, isConstrainedEnvironment } from '@/core/interfaces/resource-constraints'
+import { CostTracker as CostTrackerImpl } from '@/lib/ai/cost-tracking'
+import { getProviderRegistry } from '@/lib/ai/registry'
 import type {
-  AIProvider,
   AIOptions,
+  AIProvider,
   AIResponse,
-  CompletionRequest,
-  ProviderRegistry,
   AIServiceConfig,
+  CompletionRequest,
   Message,
-} from '@/lib/ai/types';
-import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
-import {
-  hasAICapabilities,
-  isConstrainedEnvironment,
-} from '@/core/interfaces/resource-constraints';
-import { AIProviderError } from '@/lib/ai/types';
-import { getProviderRegistry } from '@/lib/ai/registry';
-import { CostTracker as CostTrackerImpl } from '@/lib/ai/cost-tracking';
-import { logger } from '@/lib/logger';
+  ProviderRegistry
+} from '@/lib/ai/types'
+import { AIProviderError } from '@/lib/ai/types'
+import { logger } from '@/lib/logger'
 
 export class AIService {
-  private registry: ProviderRegistry;
-  private costTracker?: CostTrackerImpl;
-  private fallbackProviders: string[];
+  private registry: ProviderRegistry
+  private costTracker?: CostTrackerImpl
+  private fallbackProviders: string[]
 
   constructor(config: AIServiceConfig = {}, constraints?: ResourceConstraints) {
-    this.registry = getProviderRegistry();
+    this.registry = getProviderRegistry()
 
     // Configure based on resource constraints
     if (constraints) {
       // Check if AI capabilities are available
       if (!hasAICapabilities(constraints)) {
-        logger.warn('AI capabilities may be limited with current resource constraints');
+        logger.warn('AI capabilities may be limited with current resource constraints')
       }
 
       // Adjust settings based on constraints
-      const isConstrained = isConstrainedEnvironment(constraints);
+      const isConstrained = isConstrainedEnvironment(constraints)
 
       // Setup fallback providers (limited in constrained environments)
       if (isConstrained) {
         // In constrained environments, limit fallback attempts
-        this.fallbackProviders = (config.fallbackProviders || []).slice(0, 1);
+        this.fallbackProviders = (config.fallbackProviders || []).slice(0, 1)
       } else {
-        this.fallbackProviders = config.fallbackProviders || [];
+        this.fallbackProviders = config.fallbackProviders || []
       }
     } else {
-      this.fallbackProviders = config.fallbackProviders || [];
+      this.fallbackProviders = config.fallbackProviders || []
     }
 
     // Set default provider if specified
     if (config.defaultProvider) {
-      this.registry.setDefault(config.defaultProvider);
+      this.registry.setDefault(config.defaultProvider)
     }
 
     // Setup cost tracking if enabled
     if (config.costTracking?.enabled && config.costTracking.calculator) {
-      this.costTracker = new CostTrackerImpl(config.costTracking.calculator);
+      this.costTracker = new CostTrackerImpl(config.costTracking.calculator)
     }
   }
 
@@ -63,41 +60,41 @@ export class AIService {
   async complete(prompt: string | Message[], options: AIOptions = {}): Promise<AIResponse> {
     // Convert string prompt to messages if needed
     const messages: Message[] =
-      typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+      typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt
 
     const request: CompletionRequest = {
       messages,
-      options,
-    };
+      options
+    }
 
     // Get the provider to use
-    const providerId = options.provider || this.registry.getDefault();
+    const providerId = options.provider || this.registry.getDefault()
     if (!providerId) {
-      throw new AIProviderError('No AI provider available', 'PROVIDER_ERROR', 'unknown', false);
+      throw new AIProviderError('No AI provider available', 'PROVIDER_ERROR', 'unknown', false)
     }
 
     // Try primary provider first
     try {
-      return await this.completeWithProvider(providerId, request, options);
+      return await this.completeWithProvider(providerId, request, options)
     } catch (error) {
-      logger.error(`Primary provider ${providerId} failed:`, error);
+      logger.error(`Primary provider ${providerId} failed:`, error)
 
       // Try fallback providers if allowed
       if (options.allowFallback !== false && this.fallbackProviders.length > 0) {
         for (const fallbackId of this.fallbackProviders) {
           if (fallbackId !== providerId && this.registry.exists(fallbackId)) {
             try {
-              logger.info(`Trying fallback provider: ${fallbackId}`);
-              return await this.completeWithProvider(fallbackId, request, options);
+              logger.info(`Trying fallback provider: ${fallbackId}`)
+              return await this.completeWithProvider(fallbackId, request, options)
             } catch (fallbackError) {
-              logger.error(`Fallback provider ${fallbackId} failed:`, fallbackError);
+              logger.error(`Fallback provider ${fallbackId} failed:`, fallbackError)
             }
           }
         }
       }
 
       // Re-throw the original error if all providers failed
-      throw error;
+      throw error
     }
   }
 
@@ -107,64 +104,64 @@ export class AIService {
   private async completeWithProvider(
     providerId: string,
     request: CompletionRequest,
-    options: AIOptions,
+    options: AIOptions
   ): Promise<AIResponse> {
-    const provider = this.registry.get(providerId);
+    const provider = this.registry.get(providerId)
     if (!provider) {
       throw new AIProviderError(
         `Provider ${providerId} not found`,
         'PROVIDER_ERROR',
         providerId,
-        false,
-      );
+        false
+      )
     }
 
     // Execute the completion
-    const response = await provider.complete(request);
+    const response = await provider.complete(request)
 
     // Track costs if enabled
-    let cost;
+    let cost
     if (options.trackCost !== false && this.costTracker && response.usage) {
-      cost = await this.costTracker.trackUsage(providerId, response.usage);
+      cost = await this.costTracker.trackUsage(providerId, response.usage)
     }
 
     const result: AIResponse = {
       content: response.content,
-      provider: providerId,
-    };
+      provider: providerId
+    }
 
     if (response.usage) {
-      result.usage = response.usage;
+      result.usage = response.usage
     }
 
     if (cost) {
-      result.cost = cost;
+      result.cost = cost
     }
 
     if (response.metadata) {
-      result.metadata = response.metadata;
+      result.metadata = response.metadata
     }
 
-    return result;
+    return result
   }
 
   /**
    * Stream a completion (if provider supports it)
    */
   async *stream(prompt: string | Message[], options: AIOptions = {}): AsyncIterator<string> {
-    const providerId = options.provider || this.registry.getDefault();
+    const providerId = options.provider || this.registry.getDefault()
     if (!providerId) {
-      throw new AIProviderError('No AI provider available', 'PROVIDER_ERROR', 'unknown', false);
+      throw new AIProviderError('No AI provider available', 'PROVIDER_ERROR', 'unknown', false)
     }
 
-    const provider = this.registry.get(providerId);
+    const provider = this.registry.get(providerId)
     if (!provider) {
       throw new AIProviderError(
         `Provider ${providerId} not found`,
         'PROVIDER_ERROR',
         providerId,
-        false,
-      );
+        false
+      )
     }
 
     if (!provider.stream) {
@@ -172,18 +169,18 @@ export class AIService {
         `Provider ${providerId} does not support streaming`,
         'UNSUPPORTED_FEATURE',
         providerId,
-        false,
-      );
+        false
+      )
     }
 
     // Convert string prompt to messages if needed
     const messages: Message[] =
-      typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt;
+      typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt
 
     const request: CompletionRequest = {
       messages,
-      options,
-    };
+      options
+    }
 
     // Stream from provider
     // Create an async generator that properly iterates
@@ -192,24 +189,24 @@ export class AIService {
         `Provider ${providerId} does not support streaming`,
         'UNSUPPORTED_FEATURE',
         providerId,
-        false,
-      );
+        false
+      )
     }
-    const generator = provider.stream(request);
+    const generator = provider.stream(request)
 
     // Manual iteration to avoid AsyncIterator type issues
     try {
       while (true) {
-        const { value, done } = await generator.next();
-        if (done) break;
+        const { value, done } = await generator.next()
+        if (done) break
         if (value) {
-          yield value.content;
+          yield value.content
         }
       }
     } finally {
       // Ensure generator is properly closed
       if (generator.return) {
-        await generator.return();
+        await generator.return()
       }
     }
   }
@@ -219,51 +216,51 @@ export class AIService {
    */
   async switchProvider(providerId: string): Promise<void> {
     if (!this.registry.exists(providerId)) {
-      throw new Error(`Provider ${providerId} is not registered`);
+      throw new Error(`Provider ${providerId} is not registered`)
     }
 
     // Validate provider health before switching
-    const provider = this.registry.get(providerId);
+    const provider = this.registry.get(providerId)
     if (provider) {
-      const health = await provider.getHealthStatus();
+      const health = await provider.getHealthStatus()
       if (!health.healthy) {
-        throw new Error(`Provider ${providerId} is not healthy: ${health.error}`);
+        throw new Error(`Provider ${providerId} is not healthy: ${health.error}`)
       }
     }
 
-    this.registry.setDefault(providerId);
-    logger.info(`Switched active AI provider to: ${providerId}`);
+    this.registry.setDefault(providerId)
+    logger.info(`Switched active AI provider to: ${providerId}`)
   }
 
   /**
    * Get the active provider info
    */
   getActiveProvider(): string | null {
-    return this.registry.getDefault();
+    return this.registry.getDefault()
   }
 
   /**
    * List all available providers
    */
   listProviders() {
-    return this.registry.list();
+    return this.registry.list()
   }
 
   /**
    * Get provider health status
    */
   async getProviderHealth(providerId?: string) {
-    const id = providerId || this.registry.getDefault();
+    const id = providerId || this.registry.getDefault()
     if (!id) {
-      return null;
+      return null
     }
 
-    const provider = this.registry.get(id);
+    const provider = this.registry.get(id)
     if (!provider) {
-      return null;
+      return null
     }
 
-    return provider.getHealthStatus();
+    return provider.getHealthStatus()
   }
 
   /**
@@ -271,14 +268,14 @@ export class AIService {
    */
   getCostInfo() {
     if (!this.costTracker) {
-      return null;
+      return null
     }
 
     return {
       usage: this.costTracker.getUsage(),
       costs: this.costTracker.getCosts(),
-      total: this.costTracker.getTotalCost(),
-    };
+      total: this.costTracker.getTotalCost()
+    }
   }
 
   /**
@@ -286,7 +283,7 @@ export class AIService {
    */
   resetCostTracking(providerId?: string) {
     if (this.costTracker) {
-      this.costTracker.reset(providerId);
+      this.costTracker.reset(providerId)
     }
   }
 
@@ -294,14 +291,14 @@ export class AIService {
    * Register a new provider
    */
   registerProvider(provider: AIProvider) {
-    this.registry.register(provider);
+    this.registry.register(provider)
   }
 
   /**
    * Helper method for backward compatibility with GeminiService
    */
   async generateText(prompt: string): Promise<string> {
-    const response = await this.complete(prompt);
-    return response.content;
+    const response = await this.complete(prompt)
+    return response.content
   }
 }

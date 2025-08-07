@@ -5,100 +5,100 @@
  * instead of creating new ones for each request.
  */
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger'
 
 export interface PoolConfig {
   /**
    * Maximum number of connections in the pool
    */
-  maxSize: number;
+  maxSize: number
 
   /**
    * Minimum number of connections to maintain
    */
-  minSize?: number;
+  minSize?: number
 
   /**
    * Maximum time to wait for a connection (ms)
    */
-  acquireTimeout?: number;
+  acquireTimeout?: number
 
   /**
    * Time before idle connection is destroyed (ms)
    */
-  idleTimeout?: number;
+  idleTimeout?: number
 
   /**
    * Time between connection validation checks (ms)
    */
-  validationInterval?: number;
+  validationInterval?: number
 
   /**
    * Enable connection warming on startup
    */
-  warmOnStartup?: boolean;
+  warmOnStartup?: boolean
 }
 
 export interface PooledConnection<T> {
   /**
    * The actual connection instance
    */
-  connection: T;
+  connection: T
 
   /**
    * Unique identifier for this connection
    */
-  id: string;
+  id: string
 
   /**
    * Whether connection is currently in use
    */
-  inUse: boolean;
+  inUse: boolean
 
   /**
    * Last time connection was used
    */
-  lastUsed: number;
+  lastUsed: number
 
   /**
    * Creation timestamp
    */
-  createdAt: number;
+  createdAt: number
 
   /**
    * Number of times this connection has been used
    */
-  useCount: number;
+  useCount: number
 }
 
 export interface ConnectionFactory<T> {
   /**
    * Create a new connection
    */
-  create(): Promise<T>;
+  create(): Promise<T>
 
   /**
    * Validate if connection is still healthy
    */
-  validate(connection: T): Promise<boolean>;
+  validate(connection: T): Promise<boolean>
 
   /**
    * Destroy a connection
    */
-  destroy(connection: T): Promise<void>;
+  destroy(connection: T): Promise<void>
 }
 
 export class ConnectionPool<T> {
-  private connections: Map<string, PooledConnection<T>> = new Map();
-  private waitQueue: Array<(connection: T) => void> = [];
-  private config: Required<PoolConfig>;
-  private validationTimer?: NodeJS.Timeout | number;
-  private idleCheckTimer?: NodeJS.Timeout | number;
-  private isShuttingDown = false;
+  private connections: Map<string, PooledConnection<T>> = new Map()
+  private waitQueue: Array<(connection: T) => void> = []
+  private config: Required<PoolConfig>
+  private validationTimer?: NodeJS.Timeout | number
+  private idleCheckTimer?: NodeJS.Timeout | number
+  private isShuttingDown = false
 
   constructor(
     private factory: ConnectionFactory<T>,
-    config: PoolConfig,
+    config: PoolConfig
   ) {
     this.config = {
       maxSize: config.maxSize,
@@ -106,16 +106,16 @@ export class ConnectionPool<T> {
       acquireTimeout: config.acquireTimeout ?? 10000,
       idleTimeout: config.idleTimeout ?? 60000,
       validationInterval: config.validationInterval ?? 30000,
-      warmOnStartup: config.warmOnStartup ?? false,
-    };
-
-    if (this.config.warmOnStartup) {
-      this.warmPool().catch((error) => {
-        logger.error('Failed to warm connection pool', { error });
-      });
+      warmOnStartup: config.warmOnStartup ?? false
     }
 
-    this.startMaintenanceTasks();
+    if (this.config.warmOnStartup) {
+      this.warmPool().catch(error => {
+        logger.error('Failed to warm connection pool', { error })
+      })
+    }
+
+    this.startMaintenanceTasks()
   }
 
   /**
@@ -123,48 +123,48 @@ export class ConnectionPool<T> {
    */
   async acquire(): Promise<T> {
     if (this.isShuttingDown) {
-      throw new Error('Connection pool is shutting down');
+      throw new Error('Connection pool is shutting down')
     }
 
     // Try to find an available connection
-    const available = this.findAvailableConnection();
+    const available = this.findAvailableConnection()
     if (available) {
-      available.inUse = true;
-      available.lastUsed = Date.now();
-      available.useCount++;
-      return available.connection;
+      available.inUse = true
+      available.lastUsed = Date.now()
+      available.useCount++
+      return available.connection
     }
 
     // Create new connection if pool not at max size
     if (this.connections.size < this.config.maxSize) {
-      const connection = await this.createConnection();
-      return connection;
+      const connection = await this.createConnection()
+      return connection
     }
 
     // Wait for a connection to become available
-    return this.waitForConnection();
+    return this.waitForConnection()
   }
 
   /**
    * Release a connection back to the pool
    */
   release(connection: T): void {
-    const pooled = this.findConnectionByInstance(connection);
+    const pooled = this.findConnectionByInstance(connection)
     if (!pooled) {
-      logger.warn('Attempted to release unknown connection');
-      return;
+      logger.warn('Attempted to release unknown connection')
+      return
     }
 
-    pooled.inUse = false;
-    pooled.lastUsed = Date.now();
+    pooled.inUse = false
+    pooled.lastUsed = Date.now()
 
     // Process wait queue if any
     if (this.waitQueue.length > 0) {
-      const waiter = this.waitQueue.shift();
+      const waiter = this.waitQueue.shift()
       if (waiter) {
-        pooled.inUse = true;
-        pooled.useCount++;
-        waiter(connection);
+        pooled.inUse = true
+        pooled.useCount++
+        waiter(connection)
       }
     }
   }
@@ -173,63 +173,63 @@ export class ConnectionPool<T> {
    * Get pool statistics
    */
   getStats(): {
-    total: number;
-    inUse: number;
-    available: number;
-    waitQueueLength: number;
-    averageUseCount: number;
+    total: number
+    inUse: number
+    available: number
+    waitQueueLength: number
+    averageUseCount: number
   } {
-    let totalUseCount = 0;
-    let inUse = 0;
+    let totalUseCount = 0
+    let inUse = 0
 
     for (const pooled of this.connections.values()) {
-      totalUseCount += pooled.useCount;
+      totalUseCount += pooled.useCount
       if (pooled.inUse) {
-        inUse++;
+        inUse++
       }
     }
 
-    const total = this.connections.size;
+    const total = this.connections.size
 
     return {
       total,
       inUse,
       available: total - inUse,
       waitQueueLength: this.waitQueue.length,
-      averageUseCount: total > 0 ? totalUseCount / total : 0,
-    };
+      averageUseCount: total > 0 ? totalUseCount / total : 0
+    }
   }
 
   /**
    * Shutdown the pool and destroy all connections
    */
   async shutdown(): Promise<void> {
-    this.isShuttingDown = true;
+    this.isShuttingDown = true
 
     // Clear timers
     if (this.validationTimer) {
-      clearInterval(this.validationTimer as NodeJS.Timeout);
+      clearInterval(this.validationTimer as NodeJS.Timeout)
     }
     if (this.idleCheckTimer) {
-      clearInterval(this.idleCheckTimer as NodeJS.Timeout);
+      clearInterval(this.idleCheckTimer as NodeJS.Timeout)
     }
 
     // Reject all waiters
     for (const waiter of this.waitQueue) {
-      waiter(null as unknown as T); // Force rejection
+      waiter(null as unknown as T) // Force rejection
     }
-    this.waitQueue = [];
+    this.waitQueue = []
 
     // Destroy all connections
-    const destroyPromises: Promise<void>[] = [];
+    const destroyPromises: Promise<void>[] = []
     for (const pooled of this.connections.values()) {
-      destroyPromises.push(this.factory.destroy(pooled.connection));
+      destroyPromises.push(this.factory.destroy(pooled.connection))
     }
 
-    await Promise.all(destroyPromises);
-    this.connections.clear();
+    await Promise.all(destroyPromises)
+    this.connections.clear()
 
-    logger.info('Connection pool shut down', { stats: this.getStats() });
+    logger.info('Connection pool shut down', { stats: this.getStats() })
   }
 
   /**
@@ -238,10 +238,10 @@ export class ConnectionPool<T> {
   private findAvailableConnection(): PooledConnection<T> | null {
     for (const pooled of this.connections.values()) {
       if (!pooled.inUse) {
-        return pooled;
+        return pooled
       }
     }
-    return null;
+    return null
   }
 
   /**
@@ -250,18 +250,18 @@ export class ConnectionPool<T> {
   private findConnectionByInstance(connection: T): PooledConnection<T> | null {
     for (const pooled of this.connections.values()) {
       if (pooled.connection === connection) {
-        return pooled;
+        return pooled
       }
     }
-    return null;
+    return null
   }
 
   /**
    * Create a new connection
    */
   private async createConnection(): Promise<T> {
-    const connection = await this.factory.create();
-    const id = crypto.randomUUID();
+    const connection = await this.factory.create()
+    const id = crypto.randomUUID()
 
     const pooled: PooledConnection<T> = {
       connection,
@@ -269,17 +269,17 @@ export class ConnectionPool<T> {
       inUse: true,
       lastUsed: Date.now(),
       createdAt: Date.now(),
-      useCount: 1,
-    };
+      useCount: 1
+    }
 
-    this.connections.set(id, pooled);
+    this.connections.set(id, pooled)
 
     logger.debug('Created new connection', {
       id,
-      poolSize: this.connections.size,
-    });
+      poolSize: this.connections.size
+    })
 
-    return connection;
+    return connection
   }
 
   /**
@@ -288,51 +288,51 @@ export class ConnectionPool<T> {
   private waitForConnection(): Promise<T> {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        const index = this.waitQueue.indexOf(resolve);
+        const index = this.waitQueue.indexOf(resolve)
         if (index !== -1) {
-          this.waitQueue.splice(index, 1);
+          this.waitQueue.splice(index, 1)
         }
-        reject(new Error('Connection acquire timeout'));
-      }, this.config.acquireTimeout);
+        reject(new Error('Connection acquire timeout'))
+      }, this.config.acquireTimeout)
 
       const wrappedResolve = (connection: T) => {
-        clearTimeout(timeout);
-        resolve(connection);
-      };
+        clearTimeout(timeout)
+        resolve(connection)
+      }
 
-      this.waitQueue.push(wrappedResolve);
-    });
+      this.waitQueue.push(wrappedResolve)
+    })
   }
 
   /**
    * Warm the pool by creating minimum connections
    */
   private async warmPool(): Promise<void> {
-    const promises: Promise<void>[] = [];
+    const promises: Promise<void>[] = []
 
     for (let i = 0; i < this.config.minSize; i++) {
       promises.push(
-        this.factory.create().then((connection) => {
-          const id = crypto.randomUUID();
+        this.factory.create().then(connection => {
+          const id = crypto.randomUUID()
           const pooled: PooledConnection<T> = {
             connection,
             id,
             inUse: false,
             lastUsed: Date.now(),
             createdAt: Date.now(),
-            useCount: 0,
-          };
-          this.connections.set(id, pooled);
-          return;
-        }),
-      );
+            useCount: 0
+          }
+          this.connections.set(id, pooled)
+          return
+        })
+      )
     }
 
-    await Promise.all(promises);
+    await Promise.all(promises)
 
     logger.info('Connection pool warmed', {
-      size: this.connections.size,
-    });
+      size: this.connections.size
+    })
   }
 
   /**
@@ -341,55 +341,55 @@ export class ConnectionPool<T> {
   private startMaintenanceTasks(): void {
     // Validation task
     this.validationTimer = setInterval(() => {
-      this.validateConnections().catch((error) => {
-        logger.error('Connection validation failed', { error });
-      });
-    }, this.config.validationInterval);
+      this.validateConnections().catch(error => {
+        logger.error('Connection validation failed', { error })
+      })
+    }, this.config.validationInterval)
 
     // Idle cleanup task
     this.idleCheckTimer = setInterval(() => {
-      this.cleanupIdleConnections().catch((error) => {
-        logger.error('Idle connection cleanup failed', { error });
-      });
-    }, this.config.idleTimeout / 2);
+      this.cleanupIdleConnections().catch(error => {
+        logger.error('Idle connection cleanup failed', { error })
+      })
+    }, this.config.idleTimeout / 2)
   }
 
   /**
    * Validate all connections
    */
   private async validateConnections(): Promise<void> {
-    const validationPromises: Promise<void>[] = [];
+    const validationPromises: Promise<void>[] = []
 
     for (const [id, pooled] of this.connections) {
       if (!pooled.inUse) {
         validationPromises.push(
-          this.factory.validate(pooled.connection).then((isValid) => {
+          this.factory.validate(pooled.connection).then(isValid => {
             if (!isValid) {
-              logger.warn('Invalid connection detected, removing', { id });
-              this.connections.delete(id);
-              return this.factory.destroy(pooled.connection);
+              logger.warn('Invalid connection detected, removing', { id })
+              this.connections.delete(id)
+              return this.factory.destroy(pooled.connection)
             }
-            return;
-          }),
-        );
+            return
+          })
+        )
       }
     }
 
-    await Promise.all(validationPromises);
+    await Promise.all(validationPromises)
   }
 
   /**
    * Clean up idle connections
    */
   private async cleanupIdleConnections(): Promise<void> {
-    const now = Date.now();
-    const toDestroy: Array<[string, PooledConnection<T>]> = [];
+    const now = Date.now()
+    const toDestroy: Array<[string, PooledConnection<T>]> = []
 
     // Keep at least minSize connections
-    let availableCount = 0;
+    let availableCount = 0
     for (const pooled of this.connections.values()) {
       if (!pooled.inUse) {
-        availableCount++;
+        availableCount++
       }
     }
 
@@ -399,20 +399,20 @@ export class ConnectionPool<T> {
         availableCount > this.config.minSize &&
         now - pooled.lastUsed > this.config.idleTimeout
       ) {
-        toDestroy.push([id, pooled]);
-        availableCount--;
+        toDestroy.push([id, pooled])
+        availableCount--
       }
     }
 
     // Destroy idle connections
     for (const [id, pooled] of toDestroy) {
-      this.connections.delete(id);
-      await this.factory.destroy(pooled.connection);
+      this.connections.delete(id)
+      await this.factory.destroy(pooled.connection)
 
       logger.debug('Destroyed idle connection', {
         id,
-        idleTime: now - pooled.lastUsed,
-      });
+        idleTime: now - pooled.lastUsed
+      })
     }
   }
 }

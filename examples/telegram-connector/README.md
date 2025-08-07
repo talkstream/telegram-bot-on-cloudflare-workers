@@ -50,12 +50,12 @@ const myCommand: PluginCommand = {
   name: 'mycommand',
   description: 'My custom command',
   handler: async (args, ctx) => {
-    await ctx.reply('Hello from my command!');
-  },
-};
+    await ctx.reply('Hello from my command!')
+  }
+}
 
 // Register with command handler
-commandHandler.commands.set('mycommand', myCommand);
+commandHandler.commands.set('mycommand', myCommand)
 ```
 
 ## Handling Events
@@ -63,10 +63,10 @@ commandHandler.commands.set('mycommand', myCommand);
 Use the EventBus to handle various events:
 
 ```typescript
-eventBus.on(CommonEventType.MESSAGE_RECEIVED, (event) => {
-  const message = event.payload.message as UnifiedMessage;
-  console.log('Received message:', message.content.text);
-});
+eventBus.on(CommonEventType.MESSAGE_RECEIVED, event => {
+  const message = event.payload.message as UnifiedMessage
+  console.log('Received message:', message.content.text)
+})
 ```
 
 ## Deployment

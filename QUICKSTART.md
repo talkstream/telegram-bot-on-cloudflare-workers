@@ -72,8 +72,8 @@ Edit `src/adapters/telegram/commands/` to add your own commands:
 ```typescript
 // src/adapters/telegram/commands/mycommand.ts
 export const myCommand = async (ctx: Context) => {
-  await ctx.reply('Your custom response!');
-};
+  await ctx.reply('Your custom response!')
+}
 ```
 
 ### 2. Enable AI Features (Optional)
@@ -105,12 +105,12 @@ await ctx.reply('Premium feature! 💎', {
       [
         {
           text: 'Pay 100 Stars ⭐',
-          callback_data: 'pay_100_stars',
-        },
-      ],
-    ],
-  },
-});
+          callback_data: 'pay_100_stars'
+        }
+      ]
+    ]
+  }
+})
 ```
 
 ## Deploy Updates

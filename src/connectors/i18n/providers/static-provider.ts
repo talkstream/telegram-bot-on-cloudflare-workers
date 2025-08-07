@@ -4,18 +4,18 @@
  */
 
 import type {
-  TranslationProvider,
   LanguageCode,
   Namespace,
   TranslationDictionary,
-} from '../../../core/interfaces/i18n';
+  TranslationProvider
+} from '../../../core/interfaces/i18n'
 
 export class StaticTranslationProvider implements TranslationProvider {
-  name = 'static-provider';
+  name = 'static-provider'
 
-  private translations: Map<string, TranslationDictionary> = new Map();
-  private languages: Set<LanguageCode> = new Set();
-  private namespaces: Set<Namespace> = new Set();
+  private translations: Map<string, TranslationDictionary> = new Map()
+  private languages: Set<LanguageCode> = new Set()
+  private namespaces: Set<Namespace> = new Set()
 
   /**
    * Add static translations
@@ -23,12 +23,12 @@ export class StaticTranslationProvider implements TranslationProvider {
   addTranslations(
     language: LanguageCode,
     namespace: Namespace,
-    translations: TranslationDictionary,
+    translations: TranslationDictionary
   ): void {
-    const key = `${language}:${namespace}`;
-    this.translations.set(key, translations);
-    this.languages.add(language);
-    this.namespaces.add(namespace);
+    const key = `${language}:${namespace}`
+    this.translations.set(key, translations)
+    this.languages.add(language)
+    this.namespaces.add(namespace)
   }
 
   /**
@@ -36,47 +36,47 @@ export class StaticTranslationProvider implements TranslationProvider {
    */
   async loadTranslations(
     language: LanguageCode,
-    namespace: Namespace,
+    namespace: Namespace
   ): Promise<TranslationDictionary | null> {
-    const key = `${language}:${namespace}`;
-    return this.translations.get(key) || null;
+    const key = `${language}:${namespace}`
+    return this.translations.get(key) || null
   }
 
   /**
    * Check if translations exist
    */
   async hasTranslations(language: LanguageCode, namespace: Namespace): Promise<boolean> {
-    const key = `${language}:${namespace}`;
-    return this.translations.has(key);
+    const key = `${language}:${namespace}`
+    return this.translations.has(key)
   }
 
   /**
    * Get available languages
    */
   async getAvailableLanguages(): Promise<LanguageCode[]> {
-    return Array.from(this.languages);
+    return Array.from(this.languages)
   }
 
   /**
    * Get available namespaces
    */
   async getAvailableNamespaces(): Promise<Namespace[]> {
-    return Array.from(this.namespaces);
+    return Array.from(this.namespaces)
   }
 
   /**
    * Clear all translations
    */
   clear(): void {
-    this.translations.clear();
-    this.languages.clear();
-    this.namespaces.clear();
+    this.translations.clear()
+    this.languages.clear()
+    this.namespaces.clear()
   }
 
   /**
    * Get translation count
    */
   getTranslationCount(): number {
-    return this.translations.size;
+    return this.translations.size
   }
 }

@@ -1,28 +1,28 @@
-import { RuleTester } from 'eslint';
-import rule from '../require-boolean-conversion.js';
+import { RuleTester } from 'eslint'
+import rule from '../require-boolean-conversion.js'
 
 const ruleTester = new RuleTester({
   parserOptions: {
     ecmaVersion: 2022,
-    sourceType: 'module',
-  },
-});
+    sourceType: 'module'
+  }
+})
 
 ruleTester.run('require-boolean-conversion', rule, {
   valid: [
     // Proper boolean conversion
     {
-      code: 'const isActive = row.is_active === 1;',
+      code: 'const isActive = row.is_active === 1;'
     },
     {
-      code: 'const isDisabled = row.is_active === 0;',
+      code: 'const isDisabled = row.is_active === 0;'
     },
     {
-      code: 'if (row.has_access === 1) { }',
+      code: 'if (row.has_access === 1) { }'
     },
     // Boolean field in non-database context
     {
-      code: 'const isReady = config.is_ready;',
+      code: 'const isReady = config.is_ready;'
     },
     // Inside mapper transformation
     {
@@ -34,8 +34,8 @@ ruleTester.run('require-boolean-conversion', rule, {
             toDomain: (v) => v === 1,
           }
         ]);
-      `,
-    },
+      `
+    }
   ],
 
   invalid: [
@@ -45,10 +45,10 @@ ruleTester.run('require-boolean-conversion', rule, {
       errors: [
         {
           messageId: 'missingBooleanConversion',
-          data: { field: 'is_active' },
-        },
+          data: { field: 'is_active' }
+        }
       ],
-      output: 'const isActive = row.is_active === 1;',
+      output: 'const isActive = row.is_active === 1;'
     },
     // Boolean field in condition without conversion
     {
@@ -56,10 +56,10 @@ ruleTester.run('require-boolean-conversion', rule, {
       errors: [
         {
           messageId: 'missingBooleanConversion',
-          data: { field: 'has_access' },
-        },
+          data: { field: 'has_access' }
+        }
       ],
-      output: 'if (row.has_access === 1) { }',
+      output: 'if (row.has_access === 1) { }'
     },
     // Using loose equality
     {
@@ -67,10 +67,10 @@ ruleTester.run('require-boolean-conversion', rule, {
       errors: [
         {
           messageId: 'useStrictEquality',
-          data: { operator: '==' },
-        },
+          data: { operator: '==' }
+        }
       ],
-      output: 'const isActive = row.is_active === 1;',
+      output: 'const isActive = row.is_active === 1;'
     },
     // Assignment without conversion
     {
@@ -78,10 +78,10 @@ ruleTester.run('require-boolean-conversion', rule, {
       errors: [
         {
           messageId: 'missingBooleanConversion',
-          data: { field: 'is_blocked' },
-        },
+          data: { field: 'is_blocked' }
+        }
       ],
-      output: 'user.isBlocked = dbRow.is_blocked === 1;',
+      output: 'user.isBlocked = dbRow.is_blocked === 1;'
     },
     // Multiple boolean fields
     {
@@ -89,13 +89,13 @@ ruleTester.run('require-boolean-conversion', rule, {
       errors: [
         {
           messageId: 'missingBooleanConversion',
-          data: { field: 'is_active' },
+          data: { field: 'is_active' }
         },
         {
           messageId: 'missingBooleanConversion',
-          data: { field: 'is_visible' },
-        },
-      ],
-    },
-  ],
-});
+          data: { field: 'is_visible' }
+        }
+      ]
+    }
+  ]
+})

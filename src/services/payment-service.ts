@@ -2,54 +2,54 @@
  * Payment service for handling Telegram payments
  */
 
-import { PaymentRepository } from '../domain/payments/repository';
-import type { TelegramPayment, PendingInvoice } from '../domain/payments/repository';
-import { logger } from '../lib/logger';
+import type { PendingInvoice, TelegramPayment } from '../domain/payments/repository'
+import { PaymentRepository } from '../domain/payments/repository'
+import { logger } from '../lib/logger'
 
-import type { IDatabaseStore } from '@/core/interfaces/storage';
-import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
-import { hasFeature, isConstrainedEnvironment } from '@/core/interfaces/resource-constraints';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints'
+import { hasFeature, isConstrainedEnvironment } from '@/core/interfaces/resource-constraints'
+import type { IDatabaseStore } from '@/core/interfaces/storage'
 
 export interface PaymentServiceConfig {
-  db: IDatabaseStore;
-  constraints?: ResourceConstraints;
+  db: IDatabaseStore
+  constraints?: ResourceConstraints
 }
 
 export interface CreateInvoiceOptions {
-  amount: number;
-  currency?: string;
-  title: string;
-  description: string;
-  payload: string;
-  providerToken?: string;
-  startParameter?: string;
-  photoUrl?: string;
-  photoSize?: number;
-  photoWidth?: number;
-  photoHeight?: number;
-  needName?: boolean;
-  needPhoneNumber?: boolean;
-  needEmail?: boolean;
-  needShippingAddress?: boolean;
-  sendPhoneNumberToProvider?: boolean;
-  sendEmailToProvider?: boolean;
-  isFlexible?: boolean;
+  amount: number
+  currency?: string
+  title: string
+  description: string
+  payload: string
+  providerToken?: string
+  startParameter?: string
+  photoUrl?: string
+  photoSize?: number
+  photoWidth?: number
+  photoHeight?: number
+  needName?: boolean
+  needPhoneNumber?: boolean
+  needEmail?: boolean
+  needShippingAddress?: boolean
+  sendPhoneNumberToProvider?: boolean
+  sendEmailToProvider?: boolean
+  isFlexible?: boolean
 }
 
 export interface PaymentResult {
-  success: boolean;
-  paymentId?: number;
-  error?: string;
+  success: boolean
+  paymentId?: number
+  error?: string
 }
 
 export class PaymentService {
-  private repository: PaymentRepository;
-  private paymentsEnabled: boolean;
-  private maxPaymentAmount: number;
-  private minPaymentAmount: number;
+  private repository: PaymentRepository
+  private paymentsEnabled: boolean
+  private maxPaymentAmount: number
+  private minPaymentAmount: number
 
   constructor(config: PaymentServiceConfig) {
-    this.repository = new PaymentRepository(config.db);
+    this.repository = new PaymentRepository(config.db)
 
     // Configure based on resource constraints
     if (config.constraints) {
@@ -57,21 +57,21 @@ export class PaymentService {
       this.paymentsEnabled =
         hasFeature(config.constraints, 'payments') ||
         (hasFeature(config.constraints, 'database') &&
-          config.constraints.storage.maxDBWritesPerDay > 1000);
+          config.constraints.storage.maxDBWritesPerDay > 1000)
 
       // In constrained environments, limit payment amounts
       if (isConstrainedEnvironment(config.constraints)) {
-        this.maxPaymentAmount = 100;
-        this.minPaymentAmount = 10;
+        this.maxPaymentAmount = 100
+        this.minPaymentAmount = 10
       } else {
-        this.maxPaymentAmount = 10000;
-        this.minPaymentAmount = 1;
+        this.maxPaymentAmount = 10000
+        this.minPaymentAmount = 1
       }
     } else {
       // Default values when no constraints provided
-      this.paymentsEnabled = false;
-      this.maxPaymentAmount = 100;
-      this.minPaymentAmount = 10;
+      this.paymentsEnabled = false
+      this.maxPaymentAmount = 100
+      this.minPaymentAmount = 10
     }
   }
 
@@ -83,34 +83,34 @@ export class PaymentService {
     invoiceType: 'faction_change' | 'direct_message',
     starsAmount: number,
     additionalData?: {
-      targetMaskedId?: string;
-      targetFaction?: string;
-    },
+      targetMaskedId?: string
+      targetFaction?: string
+    }
   ): Promise<PendingInvoice> {
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 24) // 24 hour expiration
 
     const invoice: PendingInvoice = {
       player_id: playerId,
       invoice_type: invoiceType,
       stars_amount: starsAmount,
       expires_at: expiresAt.toISOString(),
-      ...additionalData,
-    };
+      ...additionalData
+    }
 
-    const invoiceId = await this.repository.savePendingInvoice(invoice);
+    const invoiceId = await this.repository.savePendingInvoice(invoice)
 
     logger.info('Created pending invoice', {
       invoiceId,
       playerId,
       invoiceType,
-      starsAmount,
-    });
+      starsAmount
+    })
 
     return {
       ...invoice,
-      id: invoiceId,
-    };
+      id: invoiceId
+    }
   }
 
   /**
@@ -122,7 +122,7 @@ export class PaymentService {
     invoicePayload: string,
     paymentType: 'faction_change' | 'direct_message',
     starsAmount: number,
-    relatedEntityId?: string,
+    relatedEntityId?: string
   ): Promise<PaymentResult> {
     try {
       const payment: TelegramPayment = {
@@ -132,36 +132,36 @@ export class PaymentService {
         payment_type: paymentType,
         stars_amount: starsAmount,
         status: 'completed',
-        related_entity_id: relatedEntityId,
-      };
+        related_entity_id: relatedEntityId
+      }
 
-      const paymentId = await this.repository.recordPayment(payment);
+      const paymentId = await this.repository.recordPayment(payment)
 
       // Delete pending invoice if exists
-      await this.repository.deletePendingInvoice(playerId, paymentType);
+      await this.repository.deletePendingInvoice(playerId, paymentType)
 
       logger.info('Payment processed successfully', {
         paymentId,
         playerId,
         chargeId,
-        starsAmount,
-      });
+        starsAmount
+      })
 
       return {
         success: true,
-        paymentId,
-      };
+        paymentId
+      }
     } catch (error) {
       logger.error('Failed to process payment', {
         error,
         playerId,
-        chargeId,
-      });
+        chargeId
+      })
 
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Payment processing failed',
-      };
+        error: error instanceof Error ? error.message : 'Payment processing failed'
+      }
     }
   }
 
@@ -169,19 +169,19 @@ export class PaymentService {
    * Get pending invoice for a player
    */
   async getPendingInvoice(playerId: number, invoiceType: string): Promise<PendingInvoice | null> {
-    return this.repository.getPendingInvoice(playerId, invoiceType);
+    return this.repository.getPendingInvoice(playerId, invoiceType)
   }
 
   /**
    * Cancel a pending invoice
    */
   async cancelInvoice(playerId: number, invoiceType: string): Promise<void> {
-    await this.repository.deletePendingInvoice(playerId, invoiceType);
+    await this.repository.deletePendingInvoice(playerId, invoiceType)
 
     logger.info('Invoice cancelled', {
       playerId,
-      invoiceType,
-    });
+      invoiceType
+    })
   }
 
   /**
@@ -190,31 +190,31 @@ export class PaymentService {
   isPaymentAllowed(): boolean {
     // Payments might be restricted based on configuration
     if (!this.paymentsEnabled) {
-      logger.warn('Payment attempted but payments are disabled');
-      return false;
+      logger.warn('Payment attempted but payments are disabled')
+      return false
     }
-    return true;
+    return true
   }
 
   /**
    * Validate payment amount
    */
   validateAmount(starsAmount: number): boolean {
-    return starsAmount >= this.minPaymentAmount && starsAmount <= this.maxPaymentAmount;
+    return starsAmount >= this.minPaymentAmount && starsAmount <= this.maxPaymentAmount
   }
 
   /**
    * Get payment statistics
    */
   async getPaymentStats(_playerId: number): Promise<{
-    totalPayments: number;
-    totalStars: number;
+    totalPayments: number
+    totalStars: number
   }> {
     // This would require additional repository methods
     // For now, return placeholder
     return {
       totalPayments: 0,
-      totalStars: 0,
-    };
+      totalStars: 0
+    }
   }
 }

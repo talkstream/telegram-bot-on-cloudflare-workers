@@ -11,12 +11,12 @@ In complex request handlers, the same data is often needed in multiple places:
 ```typescript
 // Without request cache - multiple identical queries
 async function handleRequest(userId: string) {
-  const user = await db.getUser(userId); // Query 1
-  const permissions = await getPermissions(userId);
+  const user = await db.getUser(userId) // Query 1
+  const permissions = await getPermissions(userId)
   // ... inside getPermissions:
   //   const user = await db.getUser(userId);    // Query 2 (duplicate!)
 
-  const profile = await buildProfile(userId);
+  const profile = await buildProfile(userId)
   // ... inside buildProfile:
   //   const user = await db.getUser(userId);    // Query 3 (duplicate!)
 
@@ -29,19 +29,19 @@ async function handleRequest(userId: string) {
 Request-scoped caching ensures each unique query is executed only once per request:
 
 ```typescript
-import { RequestCache } from '@/lib/cache/request-cache';
+import { RequestCache } from '@/lib/cache/request-cache'
 
 async function handleRequest(userId: string) {
-  const cache = new RequestCache();
+  const cache = new RequestCache()
 
   // First call executes the query
-  const user1 = await cache.getOrCompute('user:' + userId, () => db.getUser(userId));
+  const user1 = await cache.getOrCompute('user:' + userId, () => db.getUser(userId))
 
   // Subsequent calls return cached value
   const user2 = await cache.getOrCompute(
     'user:' + userId,
-    () => db.getUser(userId), // This won't execute!
-  );
+    () => db.getUser(userId) // This won't execute!
+  )
 
   // Only 1 database query executed
 }
@@ -52,22 +52,22 @@ async function handleRequest(userId: string) {
 ### Basic Usage
 
 ```typescript
-import { RequestCache, RequestCacheFactory } from '@/lib/cache/request-cache';
+import { RequestCache, RequestCacheFactory } from '@/lib/cache/request-cache'
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     // Create cache for this request
-    const cache = RequestCacheFactory.create();
+    const cache = RequestCacheFactory.create()
 
     // Use throughout request handling
     const user = await cache.getOrCompute('user:123', () =>
-      env.DB.prepare('SELECT * FROM users WHERE id = ?').bind('123').first(),
-    );
+      env.DB.prepare('SELECT * FROM users WHERE id = ?').bind('123').first()
+    )
 
     // Cache automatically cleaned up when request ends
-    return new Response(JSON.stringify(user));
-  },
-};
+    return new Response(JSON.stringify(user))
+  }
+}
 ```
 
 ### Service Integration
@@ -76,13 +76,13 @@ export default {
 class UserService {
   constructor(
     private db: D1Database,
-    private cache: RequestCache,
+    private cache: RequestCache
   ) {}
 
   async getUser(id: string) {
     return this.cache.getOrCompute(`user:${id}`, () =>
-      this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first(),
-    );
+      this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()
+    )
   }
 
   async getUserWithPosts(id: string) {
@@ -90,11 +90,11 @@ class UserService {
     const [user, posts] = await Promise.all([
       this.getUser(id), // Might be cached
       this.cache.getOrCompute(`posts:user:${id}`, () =>
-        this.db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(id).all(),
-      ),
-    ]);
+        this.db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(id).all()
+      )
+    ])
 
-    return { ...user, posts };
+    return { ...user, posts }
   }
 }
 ```
@@ -102,17 +102,17 @@ class UserService {
 ### Decorator Pattern
 
 ```typescript
-import { Cached } from '@/lib/cache/request-cache';
+import { Cached } from '@/lib/cache/request-cache'
 
 class UserRepository {
   @Cached('users')
   async findById(id: string) {
-    return this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
+    return this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()
   }
 
   @Cached('users')
   async findByEmail(email: string) {
-    return this.db.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+    return this.db.prepare('SELECT * FROM users WHERE email = ?').bind(email).first()
   }
 }
 ```
@@ -128,8 +128,8 @@ Prevents duplicate operations even when called concurrently:
 const [user1, user2, user3] = await Promise.all([
   cache.getOrCompute('user:123', fetchUser),
   cache.getOrCompute('user:123', fetchUser),
-  cache.getOrCompute('user:123', fetchUser),
-]);
+  cache.getOrCompute('user:123', fetchUser)
+])
 
 // Only ONE database query executed!
 ```
@@ -139,12 +139,12 @@ const [user1, user2, user3] = await Promise.all([
 Prevent key collisions between different domains:
 
 ```typescript
-const userCache = RequestCacheFactory.createNamespaced('users');
-const postCache = RequestCacheFactory.createNamespaced('posts');
+const userCache = RequestCacheFactory.createNamespaced('users')
+const postCache = RequestCacheFactory.createNamespaced('posts')
 
 // These won't conflict even with same ID
-await userCache.getOrCompute('123', fetchUser);
-await postCache.getOrCompute('123', fetchPost);
+await userCache.getOrCompute('123', fetchUser)
+await postCache.getOrCompute('123', fetchPost)
 ```
 
 ### TTL Support
@@ -156,8 +156,8 @@ For time-sensitive data:
 const rate = await cache.getOrCompute(
   'usd:eur',
   fetchExchangeRate,
-  5 * 60 * 1000, // TTL in milliseconds
-);
+  5 * 60 * 1000 // TTL in milliseconds
+)
 ```
 
 ### Performance Metrics
@@ -165,13 +165,13 @@ const rate = await cache.getOrCompute(
 Track cache effectiveness:
 
 ```typescript
-const stats = cache.getStats();
+const stats = cache.getStats()
 console.log('Cache performance:', {
   hits: stats.hits,
   misses: stats.misses,
   hitRate: `${(stats.hitRate * 100).toFixed(1)}%`,
-  queriesSaved: stats.hits,
-});
+  queriesSaved: stats.hits
+})
 ```
 
 ## Production Results
@@ -223,38 +223,38 @@ async handleUpdate(update: TelegramUpdate) {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     // Create cache at request entry point
-    const cache = new RequestCache();
+    const cache = new RequestCache()
 
     // Pass to all services
-    const userService = new UserService(env.DB, cache);
-    const authService = new AuthService(env.DB, cache);
+    const userService = new UserService(env.DB, cache)
+    const authService = new AuthService(env.DB, cache)
 
     // Handle request...
-  },
-};
+  }
+}
 ```
 
 ### 2. Consistent Key Patterns
 
 ```typescript
 class CacheKeys {
-  static user = (id: string) => `user:${id}`;
-  static userByEmail = (email: string) => `user:email:${email}`;
-  static userPosts = (userId: string) => `posts:user:${userId}`;
-  static userPermissions = (userId: string) => `permissions:user:${userId}`;
+  static user = (id: string) => `user:${id}`
+  static userByEmail = (email: string) => `user:email:${email}`
+  static userPosts = (userId: string) => `posts:user:${userId}`
+  static userPermissions = (userId: string) => `permissions:user:${userId}`
 }
 
 // Usage
-await cache.getOrCompute(CacheKeys.user(userId), () => fetchUser(userId));
+await cache.getOrCompute(CacheKeys.user(userId), () => fetchUser(userId))
 ```
 
 ### 3. Separate Caches for Different Concerns
 
 ```typescript
 class RequestContext {
-  readonly entityCache = RequestCacheFactory.createNamespaced('entities');
-  readonly permissionCache = RequestCacheFactory.createNamespaced('permissions');
-  readonly configCache = RequestCacheFactory.createNamespaced('config');
+  readonly entityCache = RequestCacheFactory.createNamespaced('entities')
+  readonly permissionCache = RequestCacheFactory.createNamespaced('permissions')
+  readonly configCache = RequestCacheFactory.createNamespaced('config')
 }
 ```
 
@@ -262,16 +262,16 @@ class RequestContext {
 
 ```typescript
 // ❌ Don't cache write operations
-await cache.getOrCompute('update', () => db.prepare('UPDATE users SET ...').run());
+await cache.getOrCompute('update', () => db.prepare('UPDATE users SET ...').run())
 
 // ✅ Only cache reads
 await cache.getOrCompute('user:123', () =>
-  db.prepare('SELECT * FROM users WHERE id = ?').bind('123').first(),
-);
+  db.prepare('SELECT * FROM users WHERE id = ?').bind('123').first()
+)
 
 // ✅ Clear cache after mutations
-await updateUser(userId, data);
-cache.delete(`user:${userId}`);
+await updateUser(userId, data)
+cache.delete(`user:${userId}`)
 ```
 
 ## When to Use
@@ -295,30 +295,30 @@ cache.delete(`user:${userId}`);
 ## Testing
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { RequestCache } from '@/lib/cache/request-cache';
+import { describe, it, expect, vi } from 'vitest'
+import { RequestCache } from '@/lib/cache/request-cache'
 
 describe('UserService with caching', () => {
   it('should cache database queries', async () => {
     const mockDb = {
       prepare: vi.fn().mockReturnValue({
         bind: vi.fn().mockReturnValue({
-          first: vi.fn().mockResolvedValue({ id: '123', name: 'Test' }),
-        }),
-      }),
-    };
+          first: vi.fn().mockResolvedValue({ id: '123', name: 'Test' })
+        })
+      })
+    }
 
-    const cache = new RequestCache();
-    const service = new UserService(mockDb, cache);
+    const cache = new RequestCache()
+    const service = new UserService(mockDb, cache)
 
     // Call twice
-    await service.getUser('123');
-    await service.getUser('123');
+    await service.getUser('123')
+    await service.getUser('123')
 
     // Database should only be queried once
-    expect(mockDb.prepare).toHaveBeenCalledTimes(1);
-  });
-});
+    expect(mockDb.prepare).toHaveBeenCalledTimes(1)
+  })
+})
 ```
 
 ## Migration Guide
@@ -329,7 +329,7 @@ describe('UserService with caching', () => {
 // Before
 class UserService {
   async getUser(id: string) {
-    return this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
+    return this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()
   }
 }
 
@@ -337,13 +337,13 @@ class UserService {
 class UserService {
   constructor(
     private db: D1Database,
-    private cache: RequestCache,
+    private cache: RequestCache
   ) {}
 
   async getUser(id: string) {
     return this.cache.getOrCompute(`user:${id}`, () =>
-      this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first(),
-    );
+      this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()
+    )
   }
 }
 ```
@@ -352,15 +352,15 @@ class UserService {
 
 ```typescript
 // Before - global cache persists between requests
-const globalCache = new Map();
+const globalCache = new Map()
 
 // After - request-scoped cache
 export default {
   async fetch(request: Request, env: Env) {
-    const cache = new RequestCache(); // Fresh for each request
+    const cache = new RequestCache() // Fresh for each request
     // ...
-  },
-};
+  }
+}
 ```
 
 ## Performance Tips

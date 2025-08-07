@@ -88,23 +88,23 @@ Every Wireframe package follows this structure:
 ```typescript
 interface PackageRegistry {
   // Discovery
-  search(query: PackageQuery): Promise<PackageInfo[]>;
-  getPackage(name: string): Promise<PackageInfo>;
-  getVersions(name: string): Promise<Version[]>;
+  search(query: PackageQuery): Promise<PackageInfo[]>
+  getPackage(name: string): Promise<PackageInfo>
+  getVersions(name: string): Promise<Version[]>
 
   // Installation
-  install(name: string, version?: string): Promise<void>;
-  uninstall(name: string): Promise<void>;
-  update(name: string): Promise<void>;
+  install(name: string, version?: string): Promise<void>
+  uninstall(name: string): Promise<void>
+  update(name: string): Promise<void>
 
   // Management
-  list(): Promise<InstalledPackage[]>;
-  verify(name: string): Promise<VerificationResult>;
+  list(): Promise<InstalledPackage[]>
+  verify(name: string): Promise<VerificationResult>
 
   // Registry sources
-  addSource(url: string, options?: SourceOptions): void;
-  removeSource(url: string): void;
-  listSources(): RegistrySource[];
+  addSource(url: string, options?: SourceOptions): void
+  removeSource(url: string): void
+  listSources(): RegistrySource[]
 }
 ```
 
@@ -112,19 +112,19 @@ interface PackageRegistry {
 
 ```typescript
 interface RegistrySource {
-  url: string;
-  type: 'npm' | 'github' | 'private' | 'local';
-  priority: number;
-  auth?: AuthConfig;
-  cache?: CacheConfig;
+  url: string
+  type: 'npm' | 'github' | 'private' | 'local'
+  priority: number
+  auth?: AuthConfig
+  cache?: CacheConfig
 }
 
 // Default sources
 const DEFAULT_SOURCES = [
   { url: 'https://registry.npmjs.org', type: 'npm', priority: 1 },
   { url: 'https://npm.pkg.github.com', type: 'github', priority: 2 },
-  { url: 'https://registry.wireframe.dev', type: 'private', priority: 0 },
-];
+  { url: 'https://registry.wireframe.dev', type: 'private', priority: 0 }
+]
 ```
 
 ## Connector Architecture
@@ -133,19 +133,19 @@ const DEFAULT_SOURCES = [
 
 ```typescript
 interface IConnector<TConfig = any> {
-  readonly type: ConnectorType;
-  readonly name: string;
-  readonly version: string;
+  readonly type: ConnectorType
+  readonly name: string
+  readonly version: string
 
   // Lifecycle
-  initialize(config: TConfig): Promise<void>;
-  shutdown(): Promise<void>;
-  healthCheck(): Promise<HealthStatus>;
+  initialize(config: TConfig): Promise<void>
+  shutdown(): Promise<void>
+  healthCheck(): Promise<HealthStatus>
 
   // Events
-  on(event: string, handler: EventHandler): void;
-  off(event: string, handler: EventHandler): void;
-  emit(event: string, data: any): void;
+  on(event: string, handler: EventHandler): void
+  off(event: string, handler: EventHandler): void
+  emit(event: string, data: any): void
 }
 ```
 
@@ -154,33 +154,33 @@ interface IConnector<TConfig = any> {
 ```typescript
 // Messaging Connectors
 interface IMessagingConnector extends IConnector {
-  sendMessage(recipient: string, message: Message): Promise<void>;
-  editMessage(messageId: string, content: string): Promise<void>;
-  deleteMessage(messageId: string): Promise<void>;
-  onMessage(handler: MessageHandler): void;
+  sendMessage(recipient: string, message: Message): Promise<void>
+  editMessage(messageId: string, content: string): Promise<void>
+  deleteMessage(messageId: string): Promise<void>
+  onMessage(handler: MessageHandler): void
 }
 
 // AI Provider Connectors
 interface IAIConnector extends IConnector {
-  complete(prompt: string, options?: CompletionOptions): Promise<string>;
-  stream(prompt: string, options?: StreamOptions): AsyncGenerator<string>;
-  embed(text: string): Promise<number[]>;
+  complete(prompt: string, options?: CompletionOptions): Promise<string>
+  stream(prompt: string, options?: StreamOptions): AsyncGenerator<string>
+  embed(text: string): Promise<number[]>
 }
 
 // Cloud Platform Connectors
 interface ICloudConnector extends IConnector {
-  storage: IStorageService;
-  compute: IComputeService;
-  network: INetworkService;
-  monitoring: IMonitoringService;
+  storage: IStorageService
+  compute: IComputeService
+  network: INetworkService
+  monitoring: IMonitoringService
 }
 
 // Monitoring Connectors
 interface IMonitoringConnector extends IConnector {
-  captureException(error: Error, context?: any): void;
-  captureMessage(message: string, level: LogLevel): void;
-  captureMetric(name: string, value: number, tags?: Tags): void;
-  startTransaction(name: string): Transaction;
+  captureException(error: Error, context?: any): void
+  captureMessage(message: string, level: LogLevel): void
+  captureMetric(name: string, value: number, tags?: Tags): void
+  startTransaction(name: string): Transaction
 }
 ```
 
@@ -190,26 +190,26 @@ interface IMonitoringConnector extends IConnector {
 
 ```typescript
 interface IPlugin {
-  readonly name: string;
-  readonly version: string;
-  readonly priority: number;
+  readonly name: string
+  readonly version: string
+  readonly priority: number
 
   // Lifecycle hooks
-  onInstall?(context: PluginContext): Promise<void>;
-  onEnable?(context: PluginContext): Promise<void>;
-  onDisable?(context: PluginContext): Promise<void>;
-  onUninstall?(context: PluginContext): Promise<void>;
+  onInstall?(context: PluginContext): Promise<void>
+  onEnable?(context: PluginContext): Promise<void>
+  onDisable?(context: PluginContext): Promise<void>
+  onUninstall?(context: PluginContext): Promise<void>
 
   // Runtime hooks
-  beforeRequest?(request: Request): Promise<Request | void>;
-  afterRequest?(request: Request, response: Response): Promise<void>;
-  onError?(error: Error): Promise<void>;
+  beforeRequest?(request: Request): Promise<Request | void>
+  afterRequest?(request: Request, response: Response): Promise<void>
+  onError?(error: Error): Promise<void>
 
   // Extension points
-  registerCommands?(): Command[];
-  registerMiddleware?(): Middleware[];
-  registerServices?(): Service[];
-  registerUI?(): UIComponent[];
+  registerCommands?(): Command[]
+  registerMiddleware?(): Middleware[]
+  registerServices?(): Service[]
+  registerUI?(): UIComponent[]
 }
 ```
 
@@ -218,32 +218,32 @@ interface IPlugin {
 ```typescript
 interface PluginContext {
   // Core services
-  readonly eventBus: EventBus;
-  readonly registry: PackageRegistry;
-  readonly config: ConfigService;
-  readonly logger: Logger;
+  readonly eventBus: EventBus
+  readonly registry: PackageRegistry
+  readonly config: ConfigService
+  readonly logger: Logger
 
   // Storage
   readonly storage: {
-    get<T>(key: string): Promise<T | null>;
-    set<T>(key: string, value: T): Promise<void>;
-    delete(key: string): Promise<void>;
-    list(prefix?: string): Promise<string[]>;
-  };
+    get<T>(key: string): Promise<T | null>
+    set<T>(key: string, value: T): Promise<void>
+    delete(key: string): Promise<void>
+    list(prefix?: string): Promise<string[]>
+  }
 
   // API access
   readonly api: {
-    registerEndpoint(path: string, handler: RequestHandler): void;
-    unregisterEndpoint(path: string): void;
-    callEndpoint(path: string, data: any): Promise<any>;
-  };
+    registerEndpoint(path: string, handler: RequestHandler): void
+    unregisterEndpoint(path: string): void
+    callEndpoint(path: string, data: any): Promise<any>
+  }
 
   // Inter-plugin communication
   readonly plugins: {
-    get(name: string): IPlugin | null;
-    call(name: string, method: string, ...args: any[]): Promise<any>;
-    emit(event: string, data: any): void;
-  };
+    get(name: string): IPlugin | null
+    call(name: string, method: string, ...args: any[]): Promise<any>
+    emit(event: string, data: any): void
+  }
 }
 ```
 
@@ -289,24 +289,24 @@ system:error:uncaught
 ```typescript
 interface ConfigService {
   // Loading
-  load(source: ConfigSource): Promise<void>;
-  reload(): Promise<void>;
+  load(source: ConfigSource): Promise<void>
+  reload(): Promise<void>
 
   // Getting values
-  get<T>(path: string, defaultValue?: T): T;
-  getRequired<T>(path: string): T;
-  has(path: string): boolean;
+  get<T>(path: string, defaultValue?: T): T
+  getRequired<T>(path: string): T
+  has(path: string): boolean
 
   // Setting values
-  set(path: string, value: any): void;
-  merge(config: Partial<Config>): void;
+  set(path: string, value: any): void
+  merge(config: Partial<Config>): void
 
   // Validation
-  validate(schema: Schema): ValidationResult;
+  validate(schema: Schema): ValidationResult
 
   // Watching
-  watch(path: string, callback: ConfigChangeHandler): void;
-  unwatch(path: string, callback?: ConfigChangeHandler): void;
+  watch(path: string, callback: ConfigChangeHandler): void
+  unwatch(path: string, callback?: ConfigChangeHandler): void
 }
 ```
 
@@ -326,34 +326,34 @@ interface ConfigService {
 ```typescript
 class ServiceContainer {
   // Registration
-  register<T>(token: Token<T>, provider: Provider<T>): void;
-  registerSingleton<T>(token: Token<T>, instance: T): void;
-  registerFactory<T>(token: Token<T>, factory: Factory<T>): void;
+  register<T>(token: Token<T>, provider: Provider<T>): void
+  registerSingleton<T>(token: Token<T>, instance: T): void
+  registerFactory<T>(token: Token<T>, factory: Factory<T>): void
 
   // Resolution
-  resolve<T>(token: Token<T>): T;
-  resolveAsync<T>(token: Token<T>): Promise<T>;
-  tryResolve<T>(token: Token<T>): T | null;
+  resolve<T>(token: Token<T>): T
+  resolveAsync<T>(token: Token<T>): Promise<T>
+  tryResolve<T>(token: Token<T>): T | null
 
   // Scoping
-  createScope(): ServiceContainer;
+  createScope(): ServiceContainer
 
   // Lifecycle
-  dispose(): Promise<void>;
+  dispose(): Promise<void>
 }
 
 // Usage
-const container = new ServiceContainer();
+const container = new ServiceContainer()
 
 // Register services
-container.register(TOKENS.Logger, ConsoleLogger);
+container.register(TOKENS.Logger, ConsoleLogger)
 container.register(TOKENS.Database, {
   useFactory: (logger: Logger) => new Database(logger),
-  deps: [TOKENS.Logger],
-});
+  deps: [TOKENS.Logger]
+})
 
 // Resolve
-const logger = container.resolve(TOKENS.Logger);
+const logger = container.resolve(TOKENS.Logger)
 ```
 
 ## Security Model
@@ -363,19 +363,19 @@ const logger = container.resolve(TOKENS.Logger);
 ```typescript
 interface PackageVerification {
   // Signature verification
-  verifySignature(package: Package): Promise<boolean>;
+  verifySignature(package: Package): Promise<boolean>
 
   // Checksum validation
-  validateChecksum(package: Package): Promise<boolean>;
+  validateChecksum(package: Package): Promise<boolean>
 
   // Dependency scanning
-  scanDependencies(package: Package): Promise<SecurityReport>;
+  scanDependencies(package: Package): Promise<SecurityReport>
 
   // Permission checking
-  checkPermissions(package: Package): Promise<PermissionReport>;
+  checkPermissions(package: Package): Promise<PermissionReport>
 
   // License compliance
-  checkLicense(package: Package): Promise<LicenseReport>;
+  checkLicense(package: Package): Promise<LicenseReport>
 }
 ```
 
@@ -397,14 +397,14 @@ enum Permission {
 
   // Inter-package
   PACKAGE_CALL = 'package:call',
-  PACKAGE_EVENT = 'package:event',
+  PACKAGE_EVENT = 'package:event'
 }
 
 interface PermissionManager {
-  request(permissions: Permission[]): Promise<boolean>;
-  check(permission: Permission): boolean;
-  grant(packageName: string, permissions: Permission[]): void;
-  revoke(packageName: string, permissions: Permission[]): void;
+  request(permissions: Permission[]): Promise<boolean>
+  check(permission: Permission): boolean
+  grant(packageName: string, permissions: Permission[]): void
+  revoke(packageName: string, permissions: Permission[]): void
 }
 ```
 
@@ -414,29 +414,29 @@ interface PermissionManager {
 
 ```typescript
 class LazyLoader {
-  private loaded = new Map<string, any>();
-  private loading = new Map<string, Promise<any>>();
+  private loaded = new Map<string, any>()
+  private loading = new Map<string, Promise<any>>()
 
   async load<T>(name: string, loader: () => Promise<T>): Promise<T> {
     // Return cached if available
     if (this.loaded.has(name)) {
-      return this.loaded.get(name);
+      return this.loaded.get(name)
     }
 
     // Wait for in-progress loading
     if (this.loading.has(name)) {
-      return this.loading.get(name);
+      return this.loading.get(name)
     }
 
     // Start loading
-    const promise = loader().then((result) => {
-      this.loaded.set(name, result);
-      this.loading.delete(name);
-      return result;
-    });
+    const promise = loader().then(result => {
+      this.loaded.set(name, result)
+      this.loading.delete(name)
+      return result
+    })
 
-    this.loading.set(name, promise);
-    return promise;
+    this.loading.set(name, promise)
+    return promise
   }
 }
 ```
@@ -448,18 +448,18 @@ class LazyLoader {
 const loadConnector = async (name: string) => {
   switch (name) {
     case 'telegram':
-      return import('@wireframe/connector-telegram');
+      return import('@wireframe/connector-telegram')
     case 'discord':
-      return import('@wireframe/connector-discord');
+      return import('@wireframe/connector-discord')
     default:
-      throw new Error(`Unknown connector: ${name}`);
+      throw new Error(`Unknown connector: ${name}`)
   }
-};
+}
 
 // Tree-shaking friendly exports
-export { EventBus } from './event-bus';
-export { Registry } from './registry';
-export type { IConnector, IPlugin } from './interfaces';
+export { EventBus } from './event-bus'
+export { Registry } from './registry'
+export type { IConnector, IPlugin } from './interfaces'
 ```
 
 ## Testing Strategy
@@ -470,28 +470,28 @@ export type { IConnector, IPlugin } from './interfaces';
 interface PackageTestSuite {
   // Unit tests
   unit: {
-    test(name: string, fn: TestFunction): void;
-    describe(name: string, fn: SuiteFunction): void;
-  };
+    test(name: string, fn: TestFunction): void
+    describe(name: string, fn: SuiteFunction): void
+  }
 
   // Integration tests
   integration: {
-    withCore(version: string): TestEnvironment;
-    withConnectors(...connectors: string[]): TestEnvironment;
-    withPlugins(...plugins: string[]): TestEnvironment;
-  };
+    withCore(version: string): TestEnvironment
+    withConnectors(...connectors: string[]): TestEnvironment
+    withPlugins(...plugins: string[]): TestEnvironment
+  }
 
   // E2E tests
   e2e: {
-    scenario(name: string, steps: TestStep[]): void;
-    withFixture(fixture: Fixture): TestEnvironment;
-  };
+    scenario(name: string, steps: TestStep[]): void
+    withFixture(fixture: Fixture): TestEnvironment
+  }
 
   // Performance tests
   performance: {
-    benchmark(name: string, fn: BenchmarkFunction): void;
-    profile(name: string, fn: ProfileFunction): void;
-  };
+    benchmark(name: string, fn: BenchmarkFunction): void
+    profile(name: string, fn: ProfileFunction): void
+  }
 }
 ```
 
@@ -501,15 +501,15 @@ interface PackageTestSuite {
 
 ```typescript
 // v1.x (monolithic)
-import { TelegramBot } from 'wireframe';
-const bot = new TelegramBot(config);
+import { TelegramBot } from 'wireframe'
+const bot = new TelegramBot(config)
 
 // v2.0 (ecosystem)
-import { Wireframe } from '@wireframe/core';
+import { Wireframe } from '@wireframe/core'
 const bot = await Wireframe.create({
   connectors: ['telegram'],
-  config,
-});
+  config
+})
 ```
 
 ### Compatibility Layer
@@ -582,18 +582,18 @@ CMD ["node", "dist/index.js"]
 ```typescript
 interface Telemetry {
   // Metrics
-  counter(name: string, value?: number, tags?: Tags): void;
-  gauge(name: string, value: number, tags?: Tags): void;
-  histogram(name: string, value: number, tags?: Tags): void;
+  counter(name: string, value?: number, tags?: Tags): void
+  gauge(name: string, value: number, tags?: Tags): void
+  histogram(name: string, value: number, tags?: Tags): void
 
   // Tracing
-  startSpan(name: string, options?: SpanOptions): Span;
+  startSpan(name: string, options?: SpanOptions): Span
 
   // Logging
-  log(level: LogLevel, message: string, context?: any): void;
+  log(level: LogLevel, message: string, context?: any): void
 
   // Events
-  track(event: string, properties?: any): void;
+  track(event: string, properties?: any): void
 }
 ```
 

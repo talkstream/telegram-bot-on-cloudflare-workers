@@ -1,28 +1,28 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from '@google/genai'
 
+import { logger } from '../../logger'
 import type {
   CompletionRequest,
   CompletionResponse,
   ProviderCapabilities,
   ProviderConfig,
-  UsageMetrics,
-} from '../types';
-import { AIProviderError } from '../types';
-import { logger } from '../../logger';
+  UsageMetrics
+} from '../types'
+import { AIProviderError } from '../types'
 
-import { BaseAIProvider } from './base';
+import { BaseAIProvider } from './base'
 
 export interface GoogleAIConfig {
-  apiKey: string;
-  model?: string;
+  apiKey: string
+  model?: string
 }
 
 /**
  * Adapter for Google Gemini AI
  */
 export class GoogleAIProvider extends BaseAIProvider {
-  private genAI: GoogleGenAI;
-  private modelName: string;
+  private genAI: GoogleGenAI
+  private modelName: string
 
   constructor(config: GoogleAIConfig, tier?: 'free' | 'paid') {
     super({
@@ -30,17 +30,17 @@ export class GoogleAIProvider extends BaseAIProvider {
       displayName: 'Google Gemini',
       type: 'google-ai',
       config: { ...config } as Record<string, unknown>,
-      tier: tier || 'free',
-    });
+      tier: tier || 'free'
+    })
 
-    this.modelName = config.model || 'gemini-2.5-flash';
-    this.genAI = new GoogleGenAI({ apiKey: config.apiKey });
+    this.modelName = config.model || 'gemini-2.5-flash'
+    this.genAI = new GoogleGenAI({ apiKey: config.apiKey })
   }
 
   async doComplete(request: CompletionRequest): Promise<CompletionResponse> {
     try {
       // Convert messages to Gemini format
-      const prompt = this.messagesToPrompt(request.messages);
+      const prompt = this.messagesToPrompt(request.messages)
 
       // Generate content using new API
       const response = await this.genAI.models.generateContent({
@@ -48,17 +48,17 @@ export class GoogleAIProvider extends BaseAIProvider {
         contents: prompt,
         config: {
           maxOutputTokens: request.options?.maxTokens || 1000,
-          temperature: request.options?.temperature || 0.7,
-        },
-      });
+          temperature: request.options?.temperature || 0.7
+        }
+      })
 
-      const text = response.text || '';
+      const text = response.text || ''
 
       // Extract usage if available
       const usage: UsageMetrics = {
         inputUnits: 0, // Gemini doesn't provide token counts in the same way
-        outputUnits: 0,
-      };
+        outputUnits: 0
+      }
 
       // Note: @google/genai v1.12.0 has a known issue where usageMetadata
       // is not available in generateContent responses.
@@ -70,7 +70,7 @@ export class GoogleAIProvider extends BaseAIProvider {
       // usage.outputUnits = response.usageMetadata?.candidatesTokenCount || 0;
       // usage.totalUnits = response.usageMetadata?.totalTokenCount || 0;
 
-      logger.info('Google AI call successful');
+      logger.info('Google AI call successful')
 
       return {
         content: text,
@@ -78,27 +78,27 @@ export class GoogleAIProvider extends BaseAIProvider {
         metadata: {
           model: this.modelName,
           providerId: this.id,
-          processingTimeMs: Date.now(),
-        },
-      };
+          processingTimeMs: Date.now()
+        }
+      }
     } catch (error) {
-      logger.error('Error calling Google AI:', error);
-      throw this.normalizeError(error);
+      logger.error('Error calling Google AI:', error)
+      throw this.normalizeError(error)
     }
   }
 
   async doValidateConfig(config: ProviderConfig): Promise<boolean> {
     if (!config.config?.apiKey) {
-      return false;
+      return false
     }
 
     try {
       // Validate by attempting to create a client
-      const testAI = new GoogleGenAI({ apiKey: config.config.apiKey as string });
+      const testAI = new GoogleGenAI({ apiKey: config.config.apiKey as string })
       // Just check if the client was created successfully
-      return !!testAI.models;
+      return !!testAI.models
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -112,9 +112,9 @@ export class GoogleAIProvider extends BaseAIProvider {
       customFeatures: {
         multimodal: true,
         codeExecution: true,
-        functionCalling: true,
-      },
-    };
+        functionCalling: true
+      }
+    }
   }
 
   /**
@@ -122,23 +122,23 @@ export class GoogleAIProvider extends BaseAIProvider {
    */
   private messagesToPrompt(messages: CompletionRequest['messages']): string {
     return messages
-      .map((msg) => {
+      .map(msg => {
         switch (msg.role) {
           case 'system':
-            return `System: ${msg.content}`;
+            return `System: ${msg.content}`
           case 'user':
-            return `User: ${msg.content}`;
+            return `User: ${msg.content}`
           case 'assistant':
-            return `Assistant: ${msg.content}`;
+            return `Assistant: ${msg.content}`
           default:
-            return msg.content;
+            return msg.content
         }
       })
-      .join('\n\n');
+      .join('\n\n')
   }
 
   protected override normalizeError(error: unknown): AIProviderError {
-    const baseError = super.normalizeError(error);
+    const baseError = super.normalizeError(error)
 
     // Check for specific Gemini error patterns
     if (error instanceof Error) {
@@ -146,19 +146,19 @@ export class GoogleAIProvider extends BaseAIProvider {
         return {
           ...baseError,
           code: 'QUOTA_EXCEEDED',
-          retryable: false,
-        };
+          retryable: false
+        }
       }
       if (error.message.includes('API key')) {
         return {
           ...baseError,
           code: 'AUTHENTICATION_ERROR',
-          retryable: false,
-        };
+          retryable: false
+        }
       }
     }
 
-    return baseError;
+    return baseError
   }
 }
 
@@ -167,14 +167,14 @@ export class GoogleAIProvider extends BaseAIProvider {
  */
 export class GeminiServiceAdapter extends GoogleAIProvider {
   constructor(apiKey: string, tier?: 'free' | 'paid') {
-    super({ apiKey }, tier);
+    super({ apiKey }, tier)
   }
 
   // Compatibility method for existing code
   async generateText(prompt: string): Promise<string> {
     const response = await this.complete({
-      messages: [{ role: 'user', content: prompt }],
-    });
-    return response.content;
+      messages: [{ role: 'user', content: prompt }]
+    })
+    return response.content
   }
 }

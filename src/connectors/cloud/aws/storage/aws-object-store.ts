@@ -2,51 +2,51 @@
  * AWS S3 implementation of IObjectStore
  */
 
-import type { IObjectStore } from '../../../../core/interfaces/storage';
+import type { IObjectStore } from '../../../../core/interfaces/storage'
 
 export class AWSS3ObjectStore implements IObjectStore {
   constructor(
     private bucketName: string,
-    private region?: string,
+    private region?: string
   ) {}
 
   async put(
     key: string,
     value: ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob,
     _options?: {
-      httpMetadata?: Record<string, string>;
-      customMetadata?: Record<string, string>;
-    },
+      httpMetadata?: Record<string, string>
+      customMetadata?: Record<string, string>
+    }
   ): Promise<void> {
     // Convert value to appropriate format for S3
-    let body: Buffer | Uint8Array | string;
+    let body: Buffer | Uint8Array | string
 
     if (typeof value === 'string') {
-      body = value;
+      body = value
     } else if (value instanceof ArrayBuffer) {
-      body = Buffer.from(value);
+      body = Buffer.from(value)
     } else if (ArrayBuffer.isView(value)) {
-      body = Buffer.from(value.buffer, value.byteOffset, value.byteLength);
+      body = Buffer.from(value.buffer, value.byteOffset, value.byteLength)
     } else if (value instanceof Blob) {
-      body = Buffer.from(await value.arrayBuffer());
+      body = Buffer.from(await value.arrayBuffer())
     } else if (value instanceof ReadableStream) {
       // Handle stream conversion
-      const chunks: Uint8Array[] = [];
-      const reader = value.getReader();
+      const chunks: Uint8Array[] = []
+      const reader = value.getReader()
 
       try {
         while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
+          const { done, value } = await reader.read()
+          if (done) break
+          chunks.push(value)
         }
       } finally {
-        reader.releaseLock();
+        reader.releaseLock()
       }
 
-      body = Buffer.concat(chunks);
+      body = Buffer.concat(chunks)
     } else {
-      throw new Error('Unsupported value type for S3 upload');
+      throw new Error('Unsupported value type for S3 upload')
     }
 
     // In a real implementation, this would use AWS SDK v3
@@ -60,15 +60,15 @@ export class AWSS3ObjectStore implements IObjectStore {
     // }));
 
     // For now, mock the operation
-    console.info(`[Mock] S3 PUT: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 PUT: ${this.bucketName}/${key}`)
     // Body would be used in real implementation above
-    void body;
+    void body
   }
 
   async get(key: string): Promise<{
-    body: ReadableStream;
-    httpMetadata?: Record<string, string>;
-    customMetadata?: Record<string, string>;
+    body: ReadableStream
+    httpMetadata?: Record<string, string>
+    customMetadata?: Record<string, string>
   } | null> {
     // In a real implementation:
     // const response = await s3Client.send(new GetObjectCommand({
@@ -77,32 +77,32 @@ export class AWSS3ObjectStore implements IObjectStore {
     // }));
 
     // Mock response
-    console.info(`[Mock] S3 GET: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 GET: ${this.bucketName}/${key}`)
 
     // Return mock stream
-    const mockData = new TextEncoder().encode(`Mock content for ${key}`);
+    const mockData = new TextEncoder().encode(`Mock content for ${key}`)
     const stream = new ReadableStream({
       start(controller) {
-        controller.enqueue(mockData);
-        controller.close();
-      },
-    });
+        controller.enqueue(mockData)
+        controller.close()
+      }
+    })
 
     return {
       body: stream,
       httpMetadata: {
         'content-type': 'text/plain',
-        'content-length': mockData.length.toString(),
+        'content-length': mockData.length.toString()
       },
       customMetadata: {
-        'x-mock': 'true',
-      },
-    };
+        'x-mock': 'true'
+      }
+    }
   }
 
   async head(key: string): Promise<{
-    httpMetadata?: Record<string, string>;
-    customMetadata?: Record<string, string>;
+    httpMetadata?: Record<string, string>
+    customMetadata?: Record<string, string>
   } | null> {
     // In a real implementation:
     // const response = await s3Client.send(new HeadObjectCommand({
@@ -110,18 +110,18 @@ export class AWSS3ObjectStore implements IObjectStore {
     //   Key: key,
     // }));
 
-    console.info(`[Mock] S3 HEAD: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 HEAD: ${this.bucketName}/${key}`)
 
     return {
       httpMetadata: {
         'content-type': 'text/plain',
         'content-length': '1024',
-        'last-modified': new Date().toISOString(),
+        'last-modified': new Date().toISOString()
       },
       customMetadata: {
-        'x-mock': 'true',
-      },
-    };
+        'x-mock': 'true'
+      }
+    }
   }
 
   async delete(key: string): Promise<void> {
@@ -131,17 +131,17 @@ export class AWSS3ObjectStore implements IObjectStore {
     //   Key: key,
     // }));
 
-    console.info(`[Mock] S3 DELETE: ${this.bucketName}/${key}`);
+    console.info(`[Mock] S3 DELETE: ${this.bucketName}/${key}`)
   }
 
   async list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{
     objects: Array<{
-      key: string;
-      size: number;
-      uploaded: Date;
-    }>;
-    truncated: boolean;
-    cursor?: string;
+      key: string
+      size: number
+      uploaded: Date
+    }>
+    truncated: boolean
+    cursor?: string
   }> {
     // In a real implementation:
     // const response = await s3Client.send(new ListObjectsV2Command({
@@ -151,27 +151,27 @@ export class AWSS3ObjectStore implements IObjectStore {
     //   ContinuationToken: options?.cursor,
     // }));
 
-    console.info(`[Mock] S3 LIST: ${this.bucketName}`, options);
+    console.info(`[Mock] S3 LIST: ${this.bucketName}`, options)
 
     // Mock response
     const mockObjects = [
       {
         key: `${options?.prefix || ''}file1.txt`,
         size: 1024,
-        uploaded: new Date(Date.now() - 86400000), // 1 day ago
+        uploaded: new Date(Date.now() - 86400000) // 1 day ago
       },
       {
         key: `${options?.prefix || ''}file2.jpg`,
         size: 2048576,
-        uploaded: new Date(Date.now() - 172800000), // 2 days ago
-      },
-    ];
+        uploaded: new Date(Date.now() - 172800000) // 2 days ago
+      }
+    ]
 
     return {
       objects: mockObjects.slice(0, options?.limit || mockObjects.length),
       truncated: false,
-      cursor: undefined,
-    };
+      cursor: undefined
+    }
   }
 
   /**
@@ -180,7 +180,7 @@ export class AWSS3ObjectStore implements IObjectStore {
   async getPresignedUrl(
     key: string,
     _operation: 'get' | 'put',
-    expiresIn: number = 3600,
+    expiresIn: number = 3600
   ): Promise<string> {
     // In a real implementation:
     // const command = operation === 'get'
@@ -189,8 +189,8 @@ export class AWSS3ObjectStore implements IObjectStore {
     //
     // return await getSignedUrl(s3Client, command, { expiresIn });
 
-    const region = this.region || 'us-east-1';
-    return `https://${this.bucketName}.s3.${region}.amazonaws.com/${key}?X-Amz-Expires=${expiresIn}&X-Mock=true`;
+    const region = this.region || 'us-east-1'
+    return `https://${this.bucketName}.s3.${region}.amazonaws.com/${key}?X-Amz-Expires=${expiresIn}&X-Mock=true`
   }
 
   /**
@@ -204,6 +204,6 @@ export class AWSS3ObjectStore implements IObjectStore {
     // }));
     // return response.UploadId!;
 
-    return `mock-upload-id-${Date.now()}`;
+    return `mock-upload-id-${Date.now()}`
   }
 }

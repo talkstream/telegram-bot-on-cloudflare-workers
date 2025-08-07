@@ -19,15 +19,15 @@
 
 ```typescript
 // Before: Silent failure
-const services = await db.query<Service>(`SELECT * FROM services`);
-console.log(services[0].providerId); // undefined!
+const services = await db.query<Service>(`SELECT * FROM services`)
+console.log(services[0].providerId) // undefined!
 
 // After: Type-safe mapping
-const services = await db.query<ServiceDatabaseRow>(`SELECT * FROM services`);
-return services.map((row) => ({
-  providerId: row.provider_id,
+const services = await db.query<ServiceDatabaseRow>(`SELECT * FROM services`)
+return services.map(row => ({
+  providerId: row.provider_id
   // ... explicit mapping
-}));
+}))
 ```
 
 **Impact**: Fixed critical user-facing bug and prevented entire class of runtime errors.
@@ -42,20 +42,20 @@ return services.map((row) => ({
 
 ```typescript
 // src/core/cloud/cloud-platform-cache.ts
-const connectorCache = new Map<string, ICloudPlatformConnector>();
+const connectorCache = new Map<string, ICloudPlatformConnector>()
 
 export function getCloudPlatformConnector(env: Env): ICloudPlatformConnector {
-  const key = getCacheKey(env);
+  const key = getCacheKey(env)
 
-  const cached = connectorCache.get(key);
+  const cached = connectorCache.get(key)
   if (cached) {
-    return cached;
+    return cached
   }
 
-  const connector = CloudPlatformFactory.createFromTypedEnv(env);
-  connectorCache.set(key, connector);
+  const connector = CloudPlatformFactory.createFromTypedEnv(env)
+  connectorCache.set(key, connector)
 
-  return connector;
+  return connector
 }
 ```
 
@@ -74,12 +74,12 @@ export function getCloudPlatformConnector(env: Env): ICloudPlatformConnector {
 ```typescript
 export class KVCache {
   async getOrSet<T>(key: string, factory: () => Promise<T>, options?: CacheOptions): Promise<T> {
-    const cached = await this.get<T>(key, options?.namespace);
-    if (cached !== null) return cached;
+    const cached = await this.get<T>(key, options?.namespace)
+    if (cached !== null) return cached
 
-    const value = await factory();
-    await this.set(key, value, options);
-    return value;
+    const value = await factory()
+    await this.set(key, value, options)
+    return value
   }
 }
 
@@ -89,8 +89,8 @@ export class CachedUserService extends UserService {
     return this.cache.getOrSet(
       CacheKeys.user(telegramId),
       () => super.getUserByTelegramId(telegramId),
-      { ttl: 300 }, // 5 minutes
-    );
+      { ttl: 300 } // 5 minutes
+    )
   }
 }
 ```
@@ -98,10 +98,10 @@ export class CachedUserService extends UserService {
 **Smart TTL for daily data**:
 
 ```typescript
-const now = new Date();
-const endOfDay = new Date(now);
-endOfDay.setHours(23, 59, 59, 999);
-const ttl = Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
+const now = new Date()
+const endOfDay = new Date(now)
+endOfDay.setHours(23, 59, 59, 999)
+const ttl = Math.floor((endOfDay.getTime() - now.getTime()) / 1000)
 ```
 
 **Impact**:
@@ -160,26 +160,26 @@ async getUserByTelegramId(telegramId: number): Promise<User | null> {
 ```typescript
 const services: ServiceInstances = {
   userService: null,
-  locationService: null,
+  locationService: null
   // ...
-};
+}
 
 function ensureServicesInitialized(): void {
   if (!services.userService) {
-    const kvCache = services.env?.CACHE;
+    const kvCache = services.env?.CACHE
     services.userService = kvCache
       ? new CachedUserService(services.dbStore, kvCache)
-      : new UserService(services.dbStore);
+      : new UserService(services.dbStore)
   }
   // ... other services
 }
 
 export function getUserService(): UserService {
-  ensureServicesInitialized();
+  ensureServicesInitialized()
   if (!services.userService) {
-    throw new Error('UserService not initialized');
+    throw new Error('UserService not initialized')
   }
-  return services.userService;
+  return services.userService
 }
 ```
 
@@ -198,7 +198,7 @@ The singleton pattern should be built into the framework:
 ```typescript
 // Proposed addition to core/cloud/index.ts
 export function getCachedCloudPlatform(env: Env): ICloudPlatformConnector {
-  return getCloudPlatformConnector(env);
+  return getCloudPlatformConnector(env)
 }
 ```
 

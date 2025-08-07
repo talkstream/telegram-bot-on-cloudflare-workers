@@ -162,8 +162,9 @@ wireframe publish
 ```
 
 **Core Package Size**: Only **4.1KB** minified! 🚀
+
 - EventBus: 909 bytes
-- Registry: 765 bytes  
+- Registry: 765 bytes
 - Plugins: 857 bytes
 - Zero vendor dependencies
 
@@ -203,19 +204,19 @@ wireframe publish
 
 ```typescript
 // wireframe.config.ts
-import { defineConfig } from '@wireframe/core';
+import { defineConfig } from '@wireframe/core'
 
 export default defineConfig({
   connectors: {
     messaging: 'telegram',
     ai: 'openai',
-    cloud: 'cloudflare',
+    cloud: 'cloudflare'
   },
   plugins: ['analytics', 'admin-panel'],
   config: {
     // Your configuration
-  },
-});
+  }
+})
 ```
 
 ### Package Management
@@ -239,15 +240,15 @@ export default defineConfig({
 1. **Use the SDK**:
 
 ```typescript
-import { createConnector } from '@wireframe/sdk';
+import { createConnector } from '@wireframe/sdk'
 
 export default createConnector({
   name: 'my-service',
   version: '1.0.0',
   async initialize(config) {
     // Your implementation
-  },
-});
+  }
+})
 ```
 
 2. **Follow standards**:
@@ -353,19 +354,19 @@ npm run dev
 ### Example Bot
 
 ```typescript
-import { Wireframe } from '@wireframe/core';
+import { Wireframe } from '@wireframe/core'
 
 const bot = await Wireframe.create({
   connectors: ['telegram', 'openai'],
-  plugins: ['analytics'],
-});
+  plugins: ['analytics']
+})
 
-bot.on('message', async (message) => {
-  const response = await bot.ai.complete(message.text);
-  await message.reply(response);
-});
+bot.on('message', async message => {
+  const response = await bot.ai.complete(message.text)
+  await message.reply(response)
+})
 
-await bot.start();
+await bot.start()
 ```
 
 ## 💬 Community

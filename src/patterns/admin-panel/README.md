@@ -37,47 +37,47 @@ src/admin/
 #### 1. Route Handler (`routes.ts`)
 
 ```typescript
-import type { ExecutionContext } from '@cloudflare/workers-types';
-import type { Env } from '@/types/env';
+import type { ExecutionContext } from '@cloudflare/workers-types'
+import type { Env } from '@/types/env'
 
 export interface AdminRequest extends Request {
-  adminId?: number;
-  isAuthenticated?: boolean;
+  adminId?: number
+  isAuthenticated?: boolean
 }
 
 export async function handleAdminRoutes(
   request: Request,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ): Promise<Response> {
-  const url = new URL(request.url);
-  const path = url.pathname;
+  const url = new URL(request.url)
+  const path = url.pathname
 
   // Public routes
   if (path === '/admin' || path === '/admin/') {
-    return handleAdminAuth(request, env);
+    return handleAdminAuth(request, env)
   }
 
   // Check authentication
-  const authResult = await requireAdminAuth(request, env);
+  const authResult = await requireAdminAuth(request, env)
   if (authResult instanceof Response) {
-    return authResult; // Redirect to login
+    return authResult // Redirect to login
   }
 
   // Authenticated routes
-  const authenticatedRequest = request as AdminRequest;
-  authenticatedRequest.adminId = authResult.adminId;
-  authenticatedRequest.isAuthenticated = true;
+  const authenticatedRequest = request as AdminRequest
+  authenticatedRequest.adminId = authResult.adminId
+  authenticatedRequest.isAuthenticated = true
 
   // Route to handlers
   switch (path) {
     case '/admin/dashboard':
-      return handleAdminDashboard(authenticatedRequest, env);
+      return handleAdminDashboard(authenticatedRequest, env)
     case '/admin/users':
-      return handleAdminUsers(authenticatedRequest, env);
+      return handleAdminUsers(authenticatedRequest, env)
     // ... other routes
     default:
-      return new Response('Not Found', { status: 404 });
+      return new Response('Not Found', { status: 404 })
   }
 }
 ```
@@ -89,34 +89,34 @@ export async function handleAdminRoutes(
 ```typescript
 export async function handleAdminAuth(request: Request, env: Env): Promise<Response> {
   if (request.method === 'POST') {
-    const formData = await request.formData();
-    const adminId = parseInt(formData.get('admin_id') as string);
-    const authCode = formData.get('auth_code') as string;
+    const formData = await request.formData()
+    const adminId = parseInt(formData.get('admin_id') as string)
+    const authCode = formData.get('auth_code') as string
 
     if (env.SESSIONS) {
-      const storedAuth = await env.SESSIONS.get(`auth:${adminId}`);
+      const storedAuth = await env.SESSIONS.get(`auth:${adminId}`)
       if (storedAuth) {
-        const authState = JSON.parse(storedAuth) as AuthState;
+        const authState = JSON.parse(storedAuth) as AuthState
         if (authState.token === authCode && Date.now() < authState.expiresAt) {
           // Create session
-          const sessionId = generateSessionId();
+          const sessionId = generateSessionId()
           const session = {
             adminId,
             createdAt: Date.now(),
-            expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-          };
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+          }
 
           await env.SESSIONS.put(`session:${sessionId}`, JSON.stringify(session), {
-            expirationTtl: 86400,
-          });
+            expirationTtl: 86400
+          })
 
           return new Response('Authenticated', {
             status: 302,
             headers: {
               Location: '/admin/dashboard',
-              'Set-Cookie': `admin_session=${sessionId}; Path=/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`,
-            },
-          });
+              'Set-Cookie': `admin_session=${sessionId}; Path=/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`
+            }
+          })
         }
       }
     }
@@ -125,8 +125,8 @@ export async function handleAdminAuth(request: Request, env: Env): Promise<Respo
 
   // Show login form
   return new Response(renderLoginForm(), {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  });
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  })
 }
 ```
 
@@ -135,30 +135,30 @@ export async function handleAdminAuth(request: Request, env: Env): Promise<Respo
 ```typescript
 export async function requireAdminAuth(
   request: Request,
-  env: Env,
+  env: Env
 ): Promise<{ adminId: number } | Response> {
-  const cookieHeader = request.headers.get('Cookie');
+  const cookieHeader = request.headers.get('Cookie')
   if (!cookieHeader) {
-    return redirectToLogin();
+    return redirectToLogin()
   }
 
-  const sessionId = parseSessionCookie(cookieHeader);
+  const sessionId = parseSessionCookie(cookieHeader)
   if (!sessionId || !env.SESSIONS) {
-    return redirectToLogin();
+    return redirectToLogin()
   }
 
-  const sessionData = await env.SESSIONS.get(`session:${sessionId}`);
+  const sessionData = await env.SESSIONS.get(`session:${sessionId}`)
   if (!sessionData) {
-    return redirectToLogin();
+    return redirectToLogin()
   }
 
-  const session = JSON.parse(sessionData) as Session;
+  const session = JSON.parse(sessionData) as Session
   if (Date.now() > session.expiresAt) {
-    await env.SESSIONS.delete(`session:${sessionId}`);
-    return redirectToLogin();
+    await env.SESSIONS.delete(`session:${sessionId}`)
+    return redirectToLogin()
   }
 
-  return { adminId: session.adminId };
+  return { adminId: session.adminId }
 }
 ```
 
@@ -168,14 +168,14 @@ export async function requireAdminAuth(
 
 ```typescript
 export interface LayoutOptions {
-  title: string;
-  content: string;
-  activeMenu?: string;
-  adminId?: number;
+  title: string
+  content: string
+  activeMenu?: string
+  adminId?: number
 }
 
 export function renderAdminLayout(options: LayoutOptions): string {
-  const { title, content, activeMenu = 'dashboard', adminId } = options;
+  const { title, content, activeMenu = 'dashboard', adminId } = options
 
   return `
 <!DOCTYPE html>
@@ -198,7 +198,7 @@ export function renderAdminLayout(options: LayoutOptions): string {
     </div>
 </body>
 </html>
-  `;
+  `
 }
 ```
 
@@ -206,63 +206,63 @@ export function renderAdminLayout(options: LayoutOptions): string {
 
 ```typescript
 export async function handleAdminUsers(request: AdminRequest, env: Env): Promise<Response> {
-  const url = new URL(request.url);
+  const url = new URL(request.url)
 
   // Handle POST actions
   if (request.method === 'POST') {
-    const formData = await request.formData();
-    const action = formData.get('action');
-    const userId = formData.get('user_id');
+    const formData = await request.formData()
+    const action = formData.get('action')
+    const userId = formData.get('user_id')
 
     if (action && userId && env.DB) {
       switch (action) {
         case 'block':
           await env.DB.prepare('UPDATE users SET is_blocked = 1 WHERE id = ?')
             .bind(parseInt(userId as string))
-            .run();
-          break;
+            .run()
+          break
         // ... other actions
       }
-      return Response.redirect(url.toString(), 302);
+      return Response.redirect(url.toString(), 302)
     }
   }
 
   // Get users with pagination
-  const page = parseInt(url.searchParams.get('page') || '1');
-  const limit = 50;
-  const offset = (page - 1) * limit;
+  const page = parseInt(url.searchParams.get('page') || '1')
+  const limit = 50
+  const offset = (page - 1) * limit
 
-  let users = [];
-  let total = 0;
+  let users = []
+  let total = 0
 
   if (env.DB) {
-    const countResult = await env.DB.prepare('SELECT COUNT(*) as total FROM users').first();
-    total = (countResult?.total as number) || 0;
+    const countResult = await env.DB.prepare('SELECT COUNT(*) as total FROM users').first()
+    total = (countResult?.total as number) || 0
 
     const result = await env.DB.prepare(
       `
       SELECT * FROM users 
       ORDER BY created_at DESC 
       LIMIT ? OFFSET ?
-    `,
+    `
     )
       .bind(limit, offset)
-      .all();
+      .all()
 
-    users = result.results;
+    users = result.results
   }
 
-  const content = renderUsersTable(users, total, page, limit);
+  const content = renderUsersTable(users, total, page, limit)
 
   return new Response(
     renderAdminLayout({
       title: 'User Management',
       content,
       activeMenu: 'users',
-      adminId: request.adminId,
+      adminId: request.adminId
     }),
-    { headers: { 'Content-Type': 'text/html; charset=utf-8' } },
-  );
+    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  )
 }
 ```
 
@@ -294,81 +294,81 @@ export async function handleAdminUsers(request: AdminRequest, env: Env): Promise
 ```typescript
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const url = new URL(request.url);
+    const url = new URL(request.url)
 
     // Admin panel routes
     if (url.pathname.startsWith('/admin')) {
-      return handleAdminRoutes(request, env, ctx);
+      return handleAdminRoutes(request, env, ctx)
     }
 
     // Telegram webhook
     if (url.pathname === '/webhook') {
-      return handleTelegramWebhook(request, env, ctx);
+      return handleTelegramWebhook(request, env, ctx)
     }
 
-    return new Response('Not Found', { status: 404 });
-  },
-};
+    return new Response('Not Found', { status: 404 })
+  }
+}
 ```
 
 2. **Admin Command in Bot**:
 
 ```typescript
-bot.command('admin', async (ctx) => {
-  if (!isOwner(ctx)) return;
+bot.command('admin', async ctx => {
+  if (!isOwner(ctx)) return
 
   // Generate auth code
-  const authCode = generateAuthCode();
+  const authCode = generateAuthCode()
   await env.SESSIONS.put(
     `auth:${ctx.from.id}`,
     JSON.stringify({ token: authCode, expiresAt: Date.now() + 300000 }),
-    { expirationTtl: 300 },
-  );
+    { expirationTtl: 300 }
+  )
 
   await ctx.reply(
     `Admin Panel Access:\n\n` +
       `URL: ${BOT_URL}/admin\n` +
       `ID: ${ctx.from.id}\n` +
       `Code: ${authCode}\n\n` +
-      `Code expires in 5 minutes.`,
-  );
-});
+      `Code expires in 5 minutes.`
+  )
+})
 ```
 
 ## Testing
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest'
 
 describe('Admin Panel', () => {
   it('should require authentication', async () => {
-    const request = new Request('https://bot.example.com/admin/dashboard');
-    const response = await handleAdminRoutes(request, mockEnv, mockCtx);
+    const request = new Request('https://bot.example.com/admin/dashboard')
+    const response = await handleAdminRoutes(request, mockEnv, mockCtx)
 
-    expect(response.status).toBe(302);
-    expect(response.headers.get('Location')).toBe('/admin');
-  });
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Location')).toBe('/admin')
+  })
 
   it('should authenticate with valid code', async () => {
-    const formData = new FormData();
-    formData.append('admin_id', '123456');
-    formData.append('auth_code', 'validcode');
+    const formData = new FormData()
+    formData.append('admin_id', '123456')
+    formData.append('auth_code', 'validcode')
 
     mockEnv.SESSIONS.get.mockResolvedValue(
-      JSON.stringify({ token: 'validcode', expiresAt: Date.now() + 60000 }),
-    );
+      JSON.stringify({ token: 'validcode', expiresAt: Date.now() + 60000 })
+    )
 
     const request = new Request('https://bot.example.com/admin', {
       method: 'POST',
-      body: formData,
-    });
+      body: formData
+    })
 
-    const response = await handleAdminAuth(request, mockEnv);
+    const response = await handleAdminAuth(request, mockEnv)
 
-    expect(response.status).toBe(302);
-    expect(response.headers.get('Location')).toBe('/admin/dashboard');
-  });
-});
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Location')).toBe('/admin/dashboard')
+  })
+})
 ```
 
 ## Benefits

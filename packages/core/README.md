@@ -21,19 +21,19 @@ npm install @wireframe/core
 ## Quick Start
 
 ```typescript
-import { Wireframe } from '@wireframe/core';
+import { Wireframe } from '@wireframe/core'
 
 const bot = await Wireframe.create({
   connectors: ['telegram', 'openai'],
-  plugins: ['analytics'],
-});
+  plugins: ['analytics']
+})
 
-bot.on('message', async (message) => {
-  const response = await bot.ai.complete(message.text);
-  await message.reply(response);
-});
+bot.on('message', async message => {
+  const response = await bot.ai.complete(message.text)
+  await message.reply(response)
+})
 
-await bot.start();
+await bot.start()
 ```
 
 ## Core Components
@@ -43,7 +43,7 @@ await bot.start();
 Universal contracts for all extensions:
 
 ```typescript
-import { Connector, Plugin, MessageHandler } from '@wireframe/core/interfaces';
+import { Connector, Plugin, MessageHandler } from '@wireframe/core/interfaces'
 ```
 
 ### EventBus
@@ -51,12 +51,12 @@ import { Connector, Plugin, MessageHandler } from '@wireframe/core/interfaces';
 Event-driven communication:
 
 ```typescript
-import { EventBus } from '@wireframe/core/events';
+import { EventBus } from '@wireframe/core/events'
 
-const bus = new EventBus();
-bus.on('user.created', (data) => {
-  console.log('User created:', data);
-});
+const bus = new EventBus()
+bus.on('user.created', data => {
+  console.log('User created:', data)
+})
 ```
 
 ### Registry
@@ -64,11 +64,11 @@ bus.on('user.created', (data) => {
 Package discovery and loading:
 
 ```typescript
-import { Registry } from '@wireframe/core/registry';
+import { Registry } from '@wireframe/core/registry'
 
-const registry = new Registry();
-await registry.load('telegram');
-const connector = await registry.get('messaging');
+const registry = new Registry()
+await registry.load('telegram')
+const connector = await registry.get('messaging')
 ```
 
 ### Plugin System
@@ -76,15 +76,15 @@ const connector = await registry.get('messaging');
 Extend functionality:
 
 ```typescript
-import { createPlugin } from '@wireframe/core/plugins';
+import { createPlugin } from '@wireframe/core/plugins'
 
 export default createPlugin({
   name: 'my-plugin',
   version: '1.0.0',
   initialize(bot) {
-    bot.on('message', handler);
-  },
-});
+    bot.on('message', handler)
+  }
+})
 ```
 
 ## API Reference

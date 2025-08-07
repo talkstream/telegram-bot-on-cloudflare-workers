@@ -52,11 +52,11 @@ These optimizations were discovered and tested during the development of Kogotoc
 **Solution**: Global singleton cache
 
 ```typescript
-import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
+import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache'
 
 // Before: const platform = CloudPlatformFactory.createFromTypedEnv(env);
 // After:
-const platform = getCloudPlatformConnector(env);
+const platform = getCloudPlatformConnector(env)
 ```
 
 **Impact**:
@@ -73,15 +73,15 @@ const platform = getCloudPlatformConnector(env);
 **Solution**: Universal caching layer with smart TTL
 
 ```typescript
-import { KVCache } from '@/lib/cache';
+import { KVCache } from '@/lib/cache'
 
-const cache = new KVCache(env.CACHE);
+const cache = new KVCache(env.CACHE)
 
 // Cache user data for 30 minutes
 const user = await cache.getOrSet(`user:${telegramId}`, () => db.getUserByTelegramId(telegramId), {
   ttl: 1800,
-  namespace: 'users',
-});
+  namespace: 'users'
+})
 ```
 
 **Impact**:
@@ -98,17 +98,17 @@ const user = await cache.getOrSet(`user:${telegramId}`, () => db.getUserByTelegr
 **Solution**: Initialize services only on first use
 
 ```typescript
-import { LazyServiceContainer } from '@/patterns/lazy-services';
-import { getRoleService, getAIConnector } from '@/core/services/service-container';
+import { LazyServiceContainer } from '@/patterns/lazy-services'
+import { getRoleService, getAIConnector } from '@/core/services/service-container'
 
 // Using the global container
-const roleService = getRoleService(); // Created only now
-const aiConnector = getAIConnector(); // Created only now
+const roleService = getRoleService() // Created only now
+const aiConnector = getAIConnector() // Created only now
 
 // Or create your own container
-const container = new LazyServiceContainer<MyServices>();
-container.register('analytics', () => new AnalyticsService(db));
-const analytics = container.get('analytics'); // Lazy init
+const container = new LazyServiceContainer<MyServices>()
+container.register('analytics', () => new AnalyticsService(db))
+const analytics = container.get('analytics') // Lazy init
 ```
 
 **Impact**:
@@ -128,20 +128,20 @@ const analytics = container.get('analytics'); // Lazy init
 
 ```typescript
 interface UserRow {
-  telegram_id: number;
-  created_at: string;
+  telegram_id: number
+  created_at: string
 }
 
 interface User {
-  telegramId: number;
-  createdAt: Date;
+  telegramId: number
+  createdAt: Date
 }
 
 function mapUser(row: UserRow): User {
   return {
     telegramId: row.telegram_id,
-    createdAt: new Date(row.created_at),
-  };
+    createdAt: new Date(row.created_at)
+  }
 }
 ```
 
@@ -155,12 +155,12 @@ Combine multiple operations into single requests:
 
 ```typescript
 // Bad: Multiple sequential calls
-const user = await getUser(id);
-const settings = await getSettings(id);
-const stats = await getStats(id);
+const user = await getUser(id)
+const settings = await getSettings(id)
+const stats = await getStats(id)
 
 // Good: Batch operation
-const [user, settings, stats] = await Promise.all([getUser(id), getSettings(id), getStats(id)]);
+const [user, settings, stats] = await Promise.all([getUser(id), getSettings(id), getStats(id)])
 ```
 
 ### 2. Smart TTL Strategies
@@ -168,16 +168,16 @@ const [user, settings, stats] = await Promise.all([getUser(id), getSettings(id),
 Different data types need different cache durations:
 
 ```typescript
-import { getTTLUntilEndOfDay, getShortTTL, getLongTTL } from '@/lib/cache';
+import { getTTLUntilEndOfDay, getShortTTL, getLongTTL } from '@/lib/cache'
 
 // Daily data - cache until midnight
-await cache.set('daily-winners', data, { ttl: getTTLUntilEndOfDay() });
+await cache.set('daily-winners', data, { ttl: getTTLUntilEndOfDay() })
 
 // User sessions - medium TTL (30 min)
-await cache.set(`session:${id}`, session, { ttl: 1800 });
+await cache.set(`session:${id}`, session, { ttl: 1800 })
 
 // Static config - long TTL (24 hours)
-await cache.set('app-config', config, { ttl: getLongTTL() });
+await cache.set('app-config', config, { ttl: getLongTTL() })
 ```
 
 ### 3. Conditional Loading
@@ -186,12 +186,12 @@ Load heavy dependencies only when needed:
 
 ```typescript
 // Bad: Always import heavy library
-import { heavyLibrary } from 'heavy-library';
+import { heavyLibrary } from 'heavy-library'
 
 // Good: Dynamic import when needed
 async function processComplexData(data: any) {
-  const { heavyLibrary } = await import('heavy-library');
-  return heavyLibrary.process(data);
+  const { heavyLibrary } = await import('heavy-library')
+  return heavyLibrary.process(data)
 }
 ```
 
@@ -220,10 +220,10 @@ async function processComplexData(data: any) {
 Always measure before optimizing:
 
 ```typescript
-const start = performance.now();
+const start = performance.now()
 // ... operation ...
-const duration = performance.now() - start;
-console.log(`Operation took ${duration}ms`);
+const duration = performance.now() - start
+console.log(`Operation took ${duration}ms`)
 ```
 
 ### 2. Cache Invalidation
@@ -232,8 +232,8 @@ Always invalidate cache after updates:
 
 ```typescript
 async function updateUser(id: number, data: Partial<User>) {
-  await db.updateUser(id, data);
-  await cache.delete(`user:${id}`);
+  await db.updateUser(id, data)
+  await cache.delete(`user:${id}`)
 }
 ```
 
@@ -244,12 +244,12 @@ Cache failures should not break functionality:
 ```typescript
 async function getWithFallback<T>(key: string, fallback: () => Promise<T>): Promise<T> {
   try {
-    const cached = await cache.get<T>(key);
-    if (cached) return cached;
+    const cached = await cache.get<T>(key)
+    if (cached) return cached
   } catch (error) {
-    console.error('Cache error:', error);
+    console.error('Cache error:', error)
   }
-  return fallback();
+  return fallback()
 }
 ```
 
@@ -258,8 +258,8 @@ async function getWithFallback<T>(key: string, fallback: () => Promise<T>): Prom
 Track cache hit rates:
 
 ```typescript
-const stats = cache.getStats();
-console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(2)}%`);
+const stats = cache.getStats()
+console.log(`Cache hit rate: ${(stats.hitRate * 100).toFixed(2)}%`)
 ```
 
 ## Monitoring
@@ -295,8 +295,8 @@ logger.info('request_complete', {
   cpu_time: env.CF?.cpu_time,
   cache_hits: cacheStats.hits,
   cache_misses: cacheStats.misses,
-  db_queries: queryCount,
-});
+  db_queries: queryCount
+})
 ```
 
 ## Free Tier Optimization Checklist

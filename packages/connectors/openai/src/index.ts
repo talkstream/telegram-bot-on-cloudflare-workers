@@ -1,6 +1,6 @@
 /**
  * @wireframe/connector-openai
- * 
+ *
  * OpenAI API connector for Wireframe
  */
 
@@ -33,7 +33,7 @@ export class OpenAIConnector implements Connector {
 
   async initialize(config: unknown): Promise<void> {
     this.config = { ...this.config, ...(config as OpenAIConfig) }
-    
+
     if (!this.config.apiKey) {
       throw new Error('OpenAI API key is required')
     }
@@ -70,7 +70,10 @@ export class OpenAIConnector implements Connector {
   /**
    * Chat with conversation history
    */
-  async chat(messages: Array<{ role: 'user' | 'assistant' | 'system', content: string }>, options?: Partial<OpenAIConfig>): Promise<string> {
+  async chat(
+    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+    options?: Partial<OpenAIConfig>
+  ): Promise<string> {
     if (!this.client) {
       throw new Error('Connector not initialized')
     }
@@ -104,7 +107,10 @@ export class OpenAIConnector implements Connector {
   /**
    * Generate image
    */
-  async generateImage(prompt: string, options?: { size?: '256x256' | '512x512' | '1024x1024', n?: number }): Promise<string[]> {
+  async generateImage(
+    prompt: string,
+    options?: { size?: '256x256' | '512x512' | '1024x1024'; n?: number }
+  ): Promise<string[]> {
     if (!this.client) {
       throw new Error('Connector not initialized')
     }
@@ -121,7 +127,9 @@ export class OpenAIConnector implements Connector {
   /**
    * Moderate content
    */
-  async moderate(text: string): Promise<{ flagged: boolean, categories: Record<string, boolean | null> }> {
+  async moderate(
+    text: string
+  ): Promise<{ flagged: boolean; categories: Record<string, boolean | null> }> {
     if (!this.client) {
       throw new Error('Connector not initialized')
     }

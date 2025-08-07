@@ -1,12 +1,12 @@
-import type { CommandHandler } from '@/types';
-import { escapeMarkdown } from '@/lib/telegram-formatter';
+import { escapeMarkdown } from '@/lib/telegram-formatter'
+import type { CommandHandler } from '@/types'
 
-export const settingsCommand: CommandHandler = async (ctx) => {
-  const userId = ctx.from?.id;
+export const settingsCommand: CommandHandler = async ctx => {
+  const userId = ctx.from?.id
 
   if (!userId) {
-    await ctx.reply('❌ Unable to identify user');
-    return;
+    await ctx.reply('❌ Unable to identify user')
+    return
   }
 
   const settingsMessage = `
@@ -19,7 +19,7 @@ Configure your bot preferences:
 🎨 *Theme:* Default
 
 Choose what you'd like to configure:
-`.trim();
+`.trim()
 
   await ctx.reply(settingsMessage, {
     parse_mode: 'MarkdownV2',
@@ -27,18 +27,18 @@ Choose what you'd like to configure:
       inline_keyboard: [
         [
           { text: '🌐 Language', callback_data: 'settings:language' },
-          { text: '🔔 Notifications', callback_data: 'settings:notifications' },
+          { text: '🔔 Notifications', callback_data: 'settings:notifications' }
         ],
         [
           { text: '🎨 Theme', callback_data: 'settings:theme' },
-          { text: '🔐 Privacy', callback_data: 'settings:privacy' },
+          { text: '🔐 Privacy', callback_data: 'settings:privacy' }
         ],
         [{ text: '🗑️ Clear Data', callback_data: 'settings:clear_data' }],
-        [{ text: '🔙 Back', callback_data: 'main_menu' }],
-      ],
-    },
-  });
+        [{ text: '🔙 Back', callback_data: 'main_menu' }]
+      ]
+    }
+  })
 
-  ctx.session.lastCommand = 'settings';
-  ctx.session.lastActivity = Date.now();
-};
+  ctx.session.lastCommand = 'settings'
+  ctx.session.lastActivity = Date.now()
+}

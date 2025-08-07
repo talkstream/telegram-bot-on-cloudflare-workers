@@ -1,6 +1,6 @@
-import type { MiddlewareHandler, Context } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono'
 
-import type { Env } from '@/types';
+import type { Env } from '@/types'
 
 /**
  * Development-only middleware for hot reload support
@@ -82,13 +82,13 @@ const HOT_RELOAD_SCRIPT = `
     };
   })();
 </script>
-`;
+`
 
 /**
  * Checks if the response is HTML
  */
 function isHtmlResponse(contentType?: string | null): boolean {
-  return contentType ? contentType.includes('text/html') : false;
+  return contentType ? contentType.includes('text/html') : false
 }
 
 /**
@@ -97,41 +97,41 @@ function isHtmlResponse(contentType?: string | null): boolean {
  */
 export const devReloadMiddleware = (): MiddlewareHandler<{ Bindings: Env }> => {
   return async (c: Context<{ Bindings: Env }>, next) => {
-    const env = c.env;
+    const env = c.env
 
     // Only active in development mode
     if (env.ENVIRONMENT !== 'development') {
-      await next();
-      return;
+      await next()
+      return
     }
 
     // Process the request
-    await next();
+    await next()
 
     // Check if response is HTML
-    const contentType = c.res.headers.get('content-type');
+    const contentType = c.res.headers.get('content-type')
     if (!isHtmlResponse(contentType)) {
-      return;
+      return
     }
 
     // Get the response body
-    const originalBody = await c.res.text();
+    const originalBody = await c.res.text()
 
     // Inject script before closing body tag or at the end
-    let modifiedBody: string;
+    let modifiedBody: string
     if (originalBody.includes('</body>')) {
-      modifiedBody = originalBody.replace('</body>', `${HOT_RELOAD_SCRIPT}</body>`);
+      modifiedBody = originalBody.replace('</body>', `${HOT_RELOAD_SCRIPT}</body>`)
     } else if (originalBody.includes('</html>')) {
-      modifiedBody = originalBody.replace('</html>', `${HOT_RELOAD_SCRIPT}</html>`);
+      modifiedBody = originalBody.replace('</html>', `${HOT_RELOAD_SCRIPT}</html>`)
     } else {
       // Append at the end if no body/html tags found
-      modifiedBody = originalBody + HOT_RELOAD_SCRIPT;
+      modifiedBody = originalBody + HOT_RELOAD_SCRIPT
     }
 
     // Return modified response
-    return c.html(modifiedBody);
-  };
-};
+    return c.html(modifiedBody)
+  }
+}
 
 /**
  * WebSocket endpoint for hot reload
@@ -139,19 +139,19 @@ export const devReloadMiddleware = (): MiddlewareHandler<{ Bindings: Env }> => {
  */
 export const createHotReloadEndpoint = () => {
   return async (c: Context<{ Bindings: Env }>) => {
-    const upgradeHeader = c.req.header('Upgrade');
+    const upgradeHeader = c.req.header('Upgrade')
 
     if (upgradeHeader !== 'websocket') {
-      return c.text('Expected WebSocket connection', 426);
+      return c.text('Expected WebSocket connection', 426)
     }
 
     // Note: Cloudflare Workers don't support WebSocket servers directly
     // This is just for documentation purposes
     // The actual WebSocket server runs in the dev-hot-reload.js script
 
-    return c.text('WebSocket server runs separately on port 3001', 200);
-  };
-};
+    return c.text('WebSocket server runs separately on port 3001', 200)
+  }
+}
 
 /**
  * Helper to inject reload script manually into templates
@@ -159,23 +159,23 @@ export const createHotReloadEndpoint = () => {
  */
 export function injectHotReloadScript(html: string, isDevelopment = false): string {
   if (!isDevelopment) {
-    return html;
+    return html
   }
 
   if (html.includes('</body>')) {
-    return html.replace('</body>', `${HOT_RELOAD_SCRIPT}</body>`);
+    return html.replace('</body>', `${HOT_RELOAD_SCRIPT}</body>`)
   }
 
   if (html.includes('</html>')) {
-    return html.replace('</html>', `${HOT_RELOAD_SCRIPT}</html>`);
+    return html.replace('</html>', `${HOT_RELOAD_SCRIPT}</html>`)
   }
 
-  return html + HOT_RELOAD_SCRIPT;
+  return html + HOT_RELOAD_SCRIPT
 }
 
 /**
  * Environment check helper
  */
 export function isHotReloadEnabled(env: Env): boolean {
-  return env.ENVIRONMENT === 'development' && env.HOT_RELOAD !== 'false';
+  return env.ENVIRONMENT === 'development' && env.HOT_RELOAD !== 'false'
 }

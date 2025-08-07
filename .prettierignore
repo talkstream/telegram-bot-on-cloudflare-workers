@@ -1,0 +1,27 @@
+# Build output
+dist/
+.wrangler/
+coverage/
+website/
+
+# Dependencies
+node_modules/
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Generated files
+*.min.js
+*.min.css
+
+# Backup
+backup/
+
+# Migrations
+migrations/
+
+# Data
+*.sqlite
+*.db

@@ -5,38 +5,38 @@
  * duplicate database queries and API calls
  */
 
-import { RequestCache, RequestCacheFactory } from '../request-cache';
+import { RequestCache, RequestCacheFactory } from '../request-cache'
 // Cached decorator can be imported when decorators are configured
 // import { Cached } from '../request-cache';
-import type { ExecutionContext } from '@cloudflare/workers-types';
+import type { ExecutionContext } from '@cloudflare/workers-types'
 
 /**
  * Example 1: Basic usage in a request handler
  */
 export async function handleRequest(_request: Request, env: any, _ctx: ExecutionContext) {
   // Create a cache that lives for this request only
-  const cache = RequestCacheFactory.create({ debug: true });
+  const cache = RequestCacheFactory.create({ debug: true })
 
   // Multiple calls to get user - only one database query
   const user1 = await cache.getOrCompute('user:123', async () => {
-    console.log('Fetching user from database...');
-    return env.DB.prepare('SELECT * FROM users WHERE id = ?').bind('123').first();
-  });
+    console.log('Fetching user from database...')
+    return env.DB.prepare('SELECT * FROM users WHERE id = ?').bind('123').first()
+  })
 
   // This returns cached value - no database query
   const user2 = await cache.getOrCompute('user:123', async () => {
-    console.log('This will not be called!');
-    return env.DB.prepare('SELECT * FROM users WHERE id = ?').bind('123').first();
-  });
+    console.log('This will not be called!')
+    return env.DB.prepare('SELECT * FROM users WHERE id = ?').bind('123').first()
+  })
 
-  console.log('Same user?', user1 === user2); // true
+  console.log('Same user?', user1 === user2) // true
 
   // Get cache statistics
-  const stats = cache.getStats();
-  console.log('Cache stats:', stats);
+  const stats = cache.getStats()
+  console.log('Cache stats:', stats)
   // Output: { hits: 1, misses: 1, total: 2, hitRate: 0.5, size: 1, pending: 0 }
 
-  return new Response(JSON.stringify(user1));
+  return new Response(JSON.stringify(user1))
 }
 
 /**
@@ -45,32 +45,32 @@ export async function handleRequest(_request: Request, env: any, _ctx: Execution
 export class UserService {
   constructor(
     private db: any,
-    private cache: RequestCache,
+    private cache: RequestCache
   ) {}
 
   // @Cached('users') - Decorator example, uncomment if decorators are configured
   async getUser(id: string) {
-    console.log(`Fetching user ${id} from database...`);
-    return this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
+    console.log(`Fetching user ${id} from database...`)
+    return this.db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first()
   }
 
   // @Cached('users') - Decorator example, uncomment if decorators are configured
   async getUsersByRole(role: string) {
-    console.log(`Fetching users with role ${role}...`);
-    return this.db.prepare('SELECT * FROM users WHERE role = ?').bind(role).all();
+    console.log(`Fetching users with role ${role}...`)
+    return this.db.prepare('SELECT * FROM users WHERE role = ?').bind(role).all()
   }
 
   async getUserWithPosts(userId: string) {
     // These will use cache if called multiple times
-    const user = await this.getUser(userId);
+    const user = await this.getUser(userId)
 
     // Posts use different cache key, so they're cached separately
     const posts = await this.cache.getOrCompute(`posts:user:${userId}`, async () => {
-      console.log(`Fetching posts for user ${userId}...`);
-      return this.db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(userId).all();
-    });
+      console.log(`Fetching posts for user ${userId}...`)
+      return this.db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(userId).all()
+    })
 
-    return { ...user, posts };
+    return { ...user, posts }
   }
 }
 
@@ -85,27 +85,27 @@ export async function fetchDashboardData(userId: string, cache: RequestCache, db
     posts,
     comments,
     _postsAgain, // This will wait for the first posts query
-    notifications,
+    notifications
   ] = await Promise.all([
     cache.getOrCompute(`user:${userId}`, () =>
-      db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first(),
+      db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first()
     ),
     cache.getOrCompute(`user:${userId}`, () =>
-      db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first(),
+      db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first()
     ),
     cache.getOrCompute(`posts:${userId}`, () =>
-      db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(userId).all(),
+      db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(userId).all()
     ),
     cache.getOrCompute(`comments:${userId}`, () =>
-      db.prepare('SELECT * FROM comments WHERE user_id = ?').bind(userId).all(),
+      db.prepare('SELECT * FROM comments WHERE user_id = ?').bind(userId).all()
     ),
     cache.getOrCompute(`posts:${userId}`, () =>
-      db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(userId).all(),
+      db.prepare('SELECT * FROM posts WHERE user_id = ?').bind(userId).all()
     ),
     cache.getOrCompute(`notifications:${userId}`, () =>
-      db.prepare('SELECT * FROM notifications WHERE user_id = ?').bind(userId).all(),
-    ),
-  ]);
+      db.prepare('SELECT * FROM notifications WHERE user_id = ?').bind(userId).all()
+    )
+  ])
 
   // Only 4 database queries executed (user, posts, comments, notifications)
   // Not 6, because duplicates were deduplicated
@@ -114,35 +114,35 @@ export async function fetchDashboardData(userId: string, cache: RequestCache, db
     user,
     posts,
     comments,
-    notifications,
-  };
+    notifications
+  }
 }
 
 /**
  * Example 4: Namespaced caches for different domains
  */
 export class ApplicationContext {
-  readonly userCache: RequestCache;
-  readonly settingsCache: RequestCache;
-  readonly permissionsCache: RequestCache;
+  readonly userCache: RequestCache
+  readonly settingsCache: RequestCache
+  readonly permissionsCache: RequestCache
 
   constructor() {
     // Different namespaces prevent key collisions
-    this.userCache = RequestCacheFactory.createNamespaced('users');
-    this.settingsCache = RequestCacheFactory.createNamespaced('settings');
-    this.permissionsCache = RequestCacheFactory.createNamespaced('permissions');
+    this.userCache = RequestCacheFactory.createNamespaced('users')
+    this.settingsCache = RequestCacheFactory.createNamespaced('settings')
+    this.permissionsCache = RequestCacheFactory.createNamespaced('permissions')
   }
 
   async getUserWithPermissions(userId: string, db: any) {
     const user = await this.userCache.getOrCompute(userId, () =>
-      db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first(),
-    );
+      db.prepare('SELECT * FROM users WHERE id = ?').bind(userId).first()
+    )
 
     const permissions = await this.permissionsCache.getOrCompute(userId, () =>
-      db.prepare('SELECT * FROM user_permissions WHERE user_id = ?').bind(userId).all(),
-    );
+      db.prepare('SELECT * FROM user_permissions WHERE user_id = ?').bind(userId).all()
+    )
 
-    return { ...(user as any), permissions };
+    return { ...(user as any), permissions }
   }
 }
 
@@ -152,21 +152,21 @@ export class ApplicationContext {
 export async function getCachedExchangeRate(
   from: string,
   to: string,
-  cache: RequestCache,
+  cache: RequestCache
 ): Promise<number> {
   // Cache exchange rates for 5 minutes
-  const ttl = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const ttl = 5 * 60 * 1000 // 5 minutes in milliseconds
 
   return cache.getOrCompute(
     `exchange:${from}:${to}`,
     async () => {
-      console.log(`Fetching exchange rate ${from} -> ${to}...`);
-      const response = await fetch(`https://api.exchangerate.host/convert?from=${from}&to=${to}`);
-      const data = (await response.json()) as { result: number };
-      return data.result;
+      console.log(`Fetching exchange rate ${from} -> ${to}...`)
+      const response = await fetch(`https://api.exchangerate.host/convert?from=${from}&to=${to}`)
+      const data = (await response.json()) as { result: number }
+      return data.result
     },
-    ttl,
-  );
+    ttl
+  )
 }
 
 /**
@@ -176,38 +176,38 @@ export async function handleTelegramUpdate(update: any, env: any, _ctx: Executio
   // Create request-scoped cache
   const cache = new RequestCache({
     namespace: `request:${update.update_id}`,
-    debug: env.DEBUG === 'true',
-  });
+    debug: env.DEBUG === 'true'
+  })
 
   // User data might be needed multiple times in different parts of the handler
   const getUserData = (userId: string) =>
     cache.getOrCompute(`user:${userId}`, () =>
-      env.DB.prepare('SELECT * FROM users WHERE telegram_id = ?').bind(userId).first(),
-    );
+      env.DB.prepare('SELECT * FROM users WHERE telegram_id = ?').bind(userId).first()
+    )
 
   // Process the update
   if (update.message) {
-    await getUserData(update.message.from.id); // Cache user data
+    await getUserData(update.message.from.id) // Cache user data
 
     if (update.message.text === '/start') {
       // User data already cached, no additional query
-      await getUserData(update.message.from.id);
+      await getUserData(update.message.from.id)
       // Handle start command...
     }
 
     if (update.message.text === '/profile') {
       // User data already cached, no additional query
-      await getUserData(update.message.from.id);
+      await getUserData(update.message.from.id)
       // Handle profile command...
     }
   }
 
   // Log cache performance
-  const stats = cache.getStats();
+  const stats = cache.getStats()
   console.log(`Request ${update.update_id} cache stats:`, {
     ...stats,
-    savings: `${((stats.hits / stats.total) * 100).toFixed(1)}% queries saved`,
-  });
+    savings: `${((stats.hits / stats.total) * 100).toFixed(1)}% queries saved`
+  })
 
   // Cache is automatically garbage collected when request ends
 }

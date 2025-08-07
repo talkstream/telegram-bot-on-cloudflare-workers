@@ -64,8 +64,8 @@ The same code works on any platform:
 
 ```typescript
 // Your code doesn't change!
-const db = ctx.cloudConnector.getDatabaseStore('DB');
-const kv = ctx.cloudConnector.getKeyValueStore('SESSIONS');
+const db = ctx.cloudConnector.getDatabaseStore('DB')
+const kv = ctx.cloudConnector.getKeyValueStore('SESSIONS')
 ```
 
 ## 🏗️ Architecture
@@ -75,15 +75,15 @@ const kv = ctx.cloudConnector.getKeyValueStore('SESSIONS');
 ```typescript
 interface ICloudPlatformConnector {
   // Storage abstractions
-  getKeyValueStore(namespace: string): IKeyValueStore;
-  getDatabaseStore(name: string): IDatabaseStore;
-  getObjectStore(bucket: string): IObjectStore;
-  getCacheStore(): ICacheStore;
+  getKeyValueStore(namespace: string): IKeyValueStore
+  getDatabaseStore(name: string): IDatabaseStore
+  getObjectStore(bucket: string): IObjectStore
+  getCacheStore(): ICacheStore
 
   // Platform info
-  readonly platform: string;
-  getEnv(): Record<string, string | undefined>;
-  getFeatures(): PlatformFeatures;
+  readonly platform: string
+  getEnv(): Record<string, string | undefined>
+  getFeatures(): PlatformFeatures
 }
 ```
 
@@ -93,10 +93,10 @@ interface ICloudPlatformConnector {
 
 ```typescript
 interface IKeyValueStore {
-  get<T>(key: string): Promise<T | null>;
-  put(key: string, value: any, options?: PutOptions): Promise<void>;
-  delete(key: string): Promise<void>;
-  list(options?: ListOptions): Promise<ListResult>;
+  get<T>(key: string): Promise<T | null>
+  put(key: string, value: any, options?: PutOptions): Promise<void>
+  delete(key: string): Promise<void>
+  list(options?: ListOptions): Promise<ListResult>
 }
 ```
 
@@ -104,9 +104,9 @@ interface IKeyValueStore {
 
 ```typescript
 interface IDatabaseStore {
-  prepare(query: string): IPreparedStatement;
-  exec(query: string): Promise<void>;
-  batch(statements: IPreparedStatement[]): Promise<unknown[]>;
+  prepare(query: string): IPreparedStatement
+  exec(query: string): Promise<void>
+  batch(statements: IPreparedStatement[]): Promise<unknown[]>
 }
 ```
 
@@ -117,10 +117,10 @@ interface IDatabaseStore {
 ```typescript
 // src/connectors/cloud/myplatform/myplatform-connector.ts
 export class MyPlatformConnector implements ICloudPlatformConnector {
-  readonly platform = 'myplatform';
+  readonly platform = 'myplatform'
 
   getKeyValueStore(namespace: string): IKeyValueStore {
-    return new MyPlatformKVStore(/* ... */);
+    return new MyPlatformKVStore(/* ... */)
   }
 
   // Implement other methods...
@@ -131,9 +131,9 @@ export class MyPlatformConnector implements ICloudPlatformConnector {
 
 ```typescript
 // src/connectors/cloud/index.ts
-import { MyPlatformConnector } from './myplatform';
+import { MyPlatformConnector } from './myplatform'
 
-cloudPlatformRegistry.register('myplatform', MyPlatformConnector);
+cloudPlatformRegistry.register('myplatform', MyPlatformConnector)
 ```
 
 ### 3. Configure Environment
@@ -152,24 +152,24 @@ MYPLATFORM_REGION=us-east-1
 Before (v1.1):
 
 ```typescript
-import { KVNamespace, D1Database } from '@cloudflare/workers-types';
+import { KVNamespace, D1Database } from '@cloudflare/workers-types'
 
-const sessions = env.SESSIONS as KVNamespace;
-await sessions.put(key, value);
+const sessions = env.SESSIONS as KVNamespace
+await sessions.put(key, value)
 ```
 
 After (v1.2):
 
 ```typescript
 // Works on ANY platform!
-const kv = ctx.cloudConnector.getKeyValueStore('SESSIONS');
-await kv.put(key, value);
+const kv = ctx.cloudConnector.getKeyValueStore('SESSIONS')
+await kv.put(key, value)
 ```
 
 ### Platform-Specific Features
 
 ```typescript
-const features = ctx.cloudConnector.getFeatures();
+const features = ctx.cloudConnector.getFeatures()
 
 if (features.hasEdgeCache) {
   // Use edge caching
@@ -200,10 +200,10 @@ Always use the platform interfaces:
 
 ```typescript
 // ✅ Good
-const db = ctx.cloudConnector.getDatabaseStore('DB');
+const db = ctx.cloudConnector.getDatabaseStore('DB')
 
 // ❌ Bad - platform specific
-const db = env.DB as D1Database;
+const db = env.DB as D1Database
 ```
 
 ### 2. Check Features
@@ -211,12 +211,12 @@ const db = env.DB as D1Database;
 Adapt to platform capabilities:
 
 ```typescript
-const features = ctx.cloudConnector.getFeatures();
+const features = ctx.cloudConnector.getFeatures()
 
 const timeout = Math.min(
   30000, // Your desired timeout
-  features.maxRequestDuration,
-);
+  features.maxRequestDuration
+)
 ```
 
 ### 3. Environment Variables
@@ -225,8 +225,8 @@ Use platform-agnostic naming:
 
 ```typescript
 // Platform determines actual resource
-const db = cloudConnector.getDatabaseStore('MAIN_DB');
-const cache = cloudConnector.getKeyValueStore('CACHE');
+const db = cloudConnector.getDatabaseStore('MAIN_DB')
+const cache = cloudConnector.getKeyValueStore('CACHE')
 ```
 
 ## 🚨 Common Issues
@@ -237,7 +237,7 @@ If you see type errors with platform-specific types:
 
 ```typescript
 // Add type assertion for platform types
-const env = context.env as CloudflareEnv;
+const env = context.env as CloudflareEnv
 ```
 
 ### Missing Bindings

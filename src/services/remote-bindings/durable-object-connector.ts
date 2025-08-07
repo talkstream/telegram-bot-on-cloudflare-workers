@@ -7,51 +7,51 @@
  * @module services/remote-bindings/durable-object-connector
  */
 
-import type { ILogger } from '../../core/interfaces/logger';
+import type { ILogger } from '../../core/interfaces/logger'
 
+import { ServiceHandler } from './service-handler'
 import type {
-  ServiceMethodRegistry,
   DurableObjectBinding,
-  DurableObjectStub,
   DurableObjectId,
-  ServiceDefinition,
-  RpcRequest,
-  RpcResponse,
+  DurableObjectStub,
   MethodParams,
   MethodResult,
-} from './types';
-import { ServiceHandler } from './service-handler';
+  RpcRequest,
+  RpcResponse,
+  ServiceDefinition,
+  ServiceMethodRegistry
+} from './types'
 
 /**
  * Base Durable Object class with RPC support
  */
 export abstract class TypedDurableObject<T extends ServiceMethodRegistry = ServiceMethodRegistry> {
-  protected state: DurableObjectState;
-  protected env: Record<string, unknown>;
-  protected logger?: ILogger;
-  protected serviceHandler: ServiceHandler<T>;
-  protected websockets = new Set<WebSocket>();
+  protected state: DurableObjectState
+  protected env: Record<string, unknown>
+  protected logger?: ILogger
+  protected serviceHandler: ServiceHandler<T>
+  protected websockets = new Set<WebSocket>()
 
   constructor(state: DurableObjectState, env: Record<string, unknown>) {
-    this.state = state;
-    this.env = env;
+    this.state = state
+    this.env = env
 
     // Initialize service handler with object's methods
     this.serviceHandler = new ServiceHandler<T>(this.getServiceDefinition(), {
       env,
-      logger: this.logger,
-    });
+      logger: this.logger
+    })
 
     // Block concurrency for consistency
     state.blockConcurrencyWhile(async () => {
-      await this.initialize();
-    });
+      await this.initialize()
+    })
   }
 
   /**
    * Get service definition for RPC handling
    */
-  protected abstract getServiceDefinition(): ServiceDefinition<T>;
+  protected abstract getServiceDefinition(): ServiceDefinition<T>
 
   /**
    * Initialize the Durable Object
@@ -64,51 +64,51 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
    * Handle HTTP requests
    */
   async fetch(request: Request): Promise<Response> {
-    const url = new URL(request.url);
+    const url = new URL(request.url)
 
     // Handle WebSocket upgrade
     if (request.headers.get('Upgrade') === 'websocket') {
-      return this.handleWebSocketUpgrade(request);
+      return this.handleWebSocketUpgrade(request)
     }
 
     // Handle RPC calls
     if (url.pathname === '/rpc' || url.pathname === '/call') {
-      return this.serviceHandler.handleRequest(request);
+      return this.serviceHandler.handleRequest(request)
     }
 
     // Handle custom routes
-    return this.handleCustomRequest(request);
+    return this.handleCustomRequest(request)
   }
 
   /**
    * Handle custom HTTP requests
    */
   protected async handleCustomRequest(_request: Request): Promise<Response> {
-    return new Response('Not found', { status: 404 });
+    return new Response('Not found', { status: 404 })
   }
 
   /**
    * Handle WebSocket upgrade
    */
   protected handleWebSocketUpgrade(_request: Request): Response {
-    const pair = new WebSocketPair();
-    const [client, server] = Object.values(pair);
+    const pair = new WebSocketPair()
+    const [client, server] = Object.values(pair)
 
-    this.state.acceptWebSocket(server);
-    this.websockets.add(server);
+    this.state.acceptWebSocket(server)
+    this.websockets.add(server)
 
     server.addEventListener('message', (event: MessageEvent) => {
-      this.handleWebSocketMessage(server, event);
-    });
+      this.handleWebSocketMessage(server, event)
+    })
 
     server.addEventListener('close', () => {
-      this.websockets.delete(server);
-    });
+      this.websockets.delete(server)
+    })
 
     return new Response(null, {
       status: 101,
-      webSocket: client,
-    });
+      webSocket: client
+    })
   }
 
   /**
@@ -116,7 +116,7 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
    */
   protected async handleWebSocketMessage(ws: WebSocket, event: MessageEvent): Promise<void> {
     try {
-      const message = JSON.parse(event.data as string);
+      const message = JSON.parse(event.data as string)
 
       // Handle as RPC request
       if (message.method && message.params) {
@@ -124,24 +124,24 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
           id: message.id ?? this.generateId(),
           method: message.method,
           params: message.params,
-          timestamp: Date.now(),
-        };
+          timestamp: Date.now()
+        }
 
-        const response = await this.serviceHandler.handleRpcRequest(request);
-        ws.send(JSON.stringify(response));
+        const response = await this.serviceHandler.handleRpcRequest(request)
+        ws.send(JSON.stringify(response))
       }
     } catch (error) {
-      const err = error as Error;
-      this.logger?.error('WebSocket message error', { error: err.message });
+      const err = error as Error
+      this.logger?.error('WebSocket message error', { error: err.message })
 
       ws.send(
         JSON.stringify({
           error: {
             code: -32700,
-            message: 'Parse error',
-          },
-        }),
-      );
+            message: 'Parse error'
+          }
+        })
+      )
     }
   }
 
@@ -149,14 +149,14 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
    * Broadcast to all connected WebSockets
    */
   protected broadcast(message: unknown): void {
-    const data = JSON.stringify(message);
+    const data = JSON.stringify(message)
 
     for (const ws of this.websockets) {
       try {
-        ws.send(data);
+        ws.send(data)
       } catch (error) {
-        this.logger?.error('Broadcast error', { error });
-        this.websockets.delete(ws);
+        this.logger?.error('Broadcast error', { error })
+        this.websockets.delete(ws)
       }
     }
   }
@@ -165,27 +165,27 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
    * Get persistent storage
    */
   protected get storage(): DurableObjectStorage {
-    return this.state.storage;
+    return this.state.storage
   }
 
   /**
    * Store state with automatic serialization
    */
   protected async setState<K extends string>(key: K, value: unknown): Promise<void> {
-    await this.storage.put(key, JSON.stringify(value));
+    await this.storage.put(key, JSON.stringify(value))
   }
 
   /**
    * Get state with automatic deserialization
    */
   protected async getState<V = unknown>(key: string): Promise<V | undefined> {
-    const value = await this.storage.get(key);
-    if (value === undefined) return undefined;
+    const value = await this.storage.get(key)
+    if (value === undefined) return undefined
 
     try {
-      return JSON.parse(value as string) as V;
+      return JSON.parse(value as string) as V
     } catch {
-      return value as V;
+      return value as V
     }
   }
 
@@ -193,29 +193,29 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
    * Delete state
    */
   protected async deleteState(key: string): Promise<void> {
-    await this.storage.delete(key);
+    await this.storage.delete(key)
   }
 
   /**
    * List all state keys
    */
   protected async listStateKeys(options?: { prefix?: string; limit?: number }): Promise<string[]> {
-    const keys: string[] = [];
-    const list = await this.storage.list(options);
+    const keys: string[] = []
+    const list = await this.storage.list(options)
 
     for (const [key] of list) {
-      keys.push(key);
+      keys.push(key)
     }
 
-    return keys;
+    return keys
   }
 
   /**
    * Set alarm for scheduled tasks
    */
   protected async setAlarm(delayMs: number): Promise<void> {
-    const alarmTime = Date.now() + delayMs;
-    await this.storage.setAlarm(alarmTime);
+    const alarmTime = Date.now() + delayMs
+    await this.storage.setAlarm(alarmTime)
   }
 
   /**
@@ -223,14 +223,14 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
    */
   async alarm(): Promise<void> {
     // Override in subclass
-    this.logger?.debug('Alarm triggered');
+    this.logger?.debug('Alarm triggered')
   }
 
   /**
    * Generate unique ID
    */
   private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   }
 }
 
@@ -238,12 +238,12 @@ export abstract class TypedDurableObject<T extends ServiceMethodRegistry = Servi
  * Durable Object client for type-safe interaction
  */
 export class DurableObjectClient<T extends ServiceMethodRegistry = ServiceMethodRegistry> {
-  private stub: DurableObjectStub<T>;
-  private logger?: ILogger;
+  private stub: DurableObjectStub<T>
+  private logger?: ILogger
 
   constructor(stub: DurableObjectStub<T>, logger?: ILogger) {
-    this.stub = stub;
-    this.logger = logger;
+    this.stub = stub
+    this.logger = logger
   }
 
   /**
@@ -251,44 +251,44 @@ export class DurableObjectClient<T extends ServiceMethodRegistry = ServiceMethod
    */
   async call<M extends keyof T>(
     method: M,
-    params: MethodParams<T, M>,
+    params: MethodParams<T, M>
   ): Promise<MethodResult<T, M>> {
     const request: RpcRequest = {
       id: this.generateRequestId(),
       method: method as string,
       params,
-      timestamp: Date.now(),
-    };
+      timestamp: Date.now()
+    }
 
     const httpRequest = new Request('https://do.internal/rpc', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(request),
-    });
+      body: JSON.stringify(request)
+    })
 
     try {
-      const httpResponse = await this.stub.fetch(httpRequest);
+      const httpResponse = await this.stub.fetch(httpRequest)
 
       if (!httpResponse.ok) {
-        throw new Error(`HTTP ${httpResponse.status}: ${httpResponse.statusText}`);
+        throw new Error(`HTTP ${httpResponse.status}: ${httpResponse.statusText}`)
       }
 
-      const response: RpcResponse = await httpResponse.json();
+      const response: RpcResponse = await httpResponse.json()
 
       if (response.error) {
-        throw new Error(response.error.message);
+        throw new Error(response.error.message)
       }
 
-      return response.result as MethodResult<T, M>;
+      return response.result as MethodResult<T, M>
     } catch (error) {
-      const err = error as Error;
+      const err = error as Error
       this.logger?.error('Durable Object call failed', {
         method: method as string,
-        error: err.message,
-      });
-      throw err;
+        error: err.message
+      })
+      throw err
     }
   }
 
@@ -299,31 +299,31 @@ export class DurableObjectClient<T extends ServiceMethodRegistry = ServiceMethod
     const response = await this.stub.fetch(
       new Request('https://do.internal/ws', {
         headers: {
-          Upgrade: 'websocket',
-        },
-      }),
-    );
+          Upgrade: 'websocket'
+        }
+      })
+    )
 
-    const ws = response.webSocket;
+    const ws = response.webSocket
     if (!ws) {
-      throw new Error('WebSocket upgrade failed');
+      throw new Error('WebSocket upgrade failed')
     }
 
-    return new DurableObjectWebSocket<T>(ws, this.logger);
+    return new DurableObjectWebSocket<T>(ws, this.logger)
   }
 
   /**
    * Get the Durable Object ID
    */
   getId(): DurableObjectId {
-    return this.stub.id;
+    return this.stub.id
   }
 
   /**
    * Generate request ID
    */
   private generateRequestId(): string {
-    return `do-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `do-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   }
 }
 
@@ -331,22 +331,22 @@ export class DurableObjectClient<T extends ServiceMethodRegistry = ServiceMethod
  * WebSocket wrapper for Durable Object communication
  */
 export class DurableObjectWebSocket<T extends ServiceMethodRegistry = ServiceMethodRegistry> {
-  private ws: WebSocket;
-  private logger?: ILogger;
-  private listeners = new Map<string, (response: RpcResponse) => void>();
-  private eventHandlers = new Map<string, Set<(data: unknown) => void>>();
+  private ws: WebSocket
+  private logger?: ILogger
+  private listeners = new Map<string, (response: RpcResponse) => void>()
+  private eventHandlers = new Map<string, Set<(data: unknown) => void>>()
 
   constructor(ws: WebSocket, logger?: ILogger) {
-    this.ws = ws;
-    this.logger = logger;
+    this.ws = ws
+    this.logger = logger
 
-    ws.addEventListener('message', (event) => {
-      this.handleMessage(event);
-    });
+    ws.addEventListener('message', event => {
+      this.handleMessage(event)
+    })
 
-    ws.addEventListener('error', (event) => {
-      this.logger?.error('WebSocket error', { error: event });
-    });
+    ws.addEventListener('error', event => {
+      this.logger?.error('WebSocket error', { error: event })
+    })
   }
 
   /**
@@ -354,36 +354,36 @@ export class DurableObjectWebSocket<T extends ServiceMethodRegistry = ServiceMet
    */
   async call<M extends keyof T>(
     method: M,
-    params: MethodParams<T, M>,
+    params: MethodParams<T, M>
   ): Promise<MethodResult<T, M>> {
     return new Promise((resolve, reject) => {
-      const id = this.generateId();
+      const id = this.generateId()
 
       const timeout = setTimeout(() => {
-        this.listeners.delete(id);
-        reject(new Error('Request timeout'));
-      }, 30000);
+        this.listeners.delete(id)
+        reject(new Error('Request timeout'))
+      }, 30000)
 
       this.listeners.set(id, (response: RpcResponse) => {
-        clearTimeout(timeout);
-        this.listeners.delete(id);
+        clearTimeout(timeout)
+        this.listeners.delete(id)
 
         if (response.error) {
-          reject(new Error(response.error.message));
+          reject(new Error(response.error.message))
         } else {
-          resolve(response.result as MethodResult<T, M>);
+          resolve(response.result as MethodResult<T, M>)
         }
-      });
+      })
 
       const request: RpcRequest = {
         id,
         method: method as string,
         params,
-        timestamp: Date.now(),
-      };
+        timestamp: Date.now()
+      }
 
-      this.ws.send(JSON.stringify(request));
-    });
+      this.ws.send(JSON.stringify(request))
+    })
   }
 
   /**
@@ -391,23 +391,23 @@ export class DurableObjectWebSocket<T extends ServiceMethodRegistry = ServiceMet
    */
   on(event: string, handler: (data: unknown) => void): void {
     if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, new Set());
+      this.eventHandlers.set(event, new Set())
     }
-    this.eventHandlers.get(event)?.add(handler);
+    this.eventHandlers.get(event)?.add(handler)
   }
 
   /**
    * Unsubscribe from events
    */
   off(event: string, handler: (data: unknown) => void): void {
-    this.eventHandlers.get(event)?.delete(handler);
+    this.eventHandlers.get(event)?.delete(handler)
   }
 
   /**
    * Close the WebSocket connection
    */
   close(): void {
-    this.ws.close();
+    this.ws.close()
   }
 
   /**
@@ -415,24 +415,24 @@ export class DurableObjectWebSocket<T extends ServiceMethodRegistry = ServiceMet
    */
   private handleMessage(event: MessageEvent): void {
     try {
-      const data = JSON.parse(event.data as string);
+      const data = JSON.parse(event.data as string)
 
       // Handle RPC response
       if (data.id && this.listeners.has(data.id)) {
-        const listener = this.listeners.get(data.id);
-        listener?.(data as RpcResponse);
+        const listener = this.listeners.get(data.id)
+        listener?.(data as RpcResponse)
       }
       // Handle broadcast event
       else if (data.event && data.data) {
-        const handlers = this.eventHandlers.get(data.event);
+        const handlers = this.eventHandlers.get(data.event)
         if (handlers) {
           for (const handler of handlers) {
-            handler(data.data);
+            handler(data.data)
           }
         }
       }
     } catch (error) {
-      this.logger?.error('Failed to parse WebSocket message', { error });
+      this.logger?.error('Failed to parse WebSocket message', { error })
     }
   }
 
@@ -440,7 +440,7 @@ export class DurableObjectWebSocket<T extends ServiceMethodRegistry = ServiceMet
    * Generate unique ID
    */
   private generateId(): string {
-    return `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   }
 }
 
@@ -448,34 +448,34 @@ export class DurableObjectWebSocket<T extends ServiceMethodRegistry = ServiceMet
  * Durable Object storage interface
  */
 interface DurableObjectStorage {
-  get(key: string): Promise<unknown>;
-  put(key: string, value: unknown): Promise<void>;
-  delete(key: string): Promise<boolean>;
+  get(key: string): Promise<unknown>
+  put(key: string, value: unknown): Promise<void>
+  delete(key: string): Promise<boolean>
   list(options?: {
-    prefix?: string;
-    limit?: number;
-    reverse?: boolean;
-  }): Promise<Map<string, unknown>>;
-  setAlarm(scheduledTime: number): Promise<void>;
-  deleteAlarm(): Promise<void>;
+    prefix?: string
+    limit?: number
+    reverse?: boolean
+  }): Promise<Map<string, unknown>>
+  setAlarm(scheduledTime: number): Promise<void>
+  deleteAlarm(): Promise<void>
 }
 
 /**
  * Durable Object state interface
  */
 interface DurableObjectState {
-  id: DurableObjectId;
-  storage: DurableObjectStorage;
-  blockConcurrencyWhile<T>(fn: () => Promise<T>): Promise<T>;
-  acceptWebSocket(ws: WebSocket): void;
+  id: DurableObjectId
+  storage: DurableObjectStorage
+  blockConcurrencyWhile<T>(fn: () => Promise<T>): Promise<T>
+  acceptWebSocket(ws: WebSocket): void
 }
 
 /**
  * WebSocket pair for upgrade
  */
 declare class WebSocketPair {
-  0: WebSocket;
-  1: WebSocket;
+  0: WebSocket
+  1: WebSocket
 }
 
 /**
@@ -484,10 +484,10 @@ declare class WebSocketPair {
 export function createDurableObjectClient<T extends ServiceMethodRegistry>(
   binding: DurableObjectBinding<T>,
   id: string | DurableObjectId,
-  logger?: ILogger,
+  logger?: ILogger
 ): DurableObjectClient<T> {
-  const objectId = typeof id === 'string' ? binding.idFromName(id) : id;
+  const objectId = typeof id === 'string' ? binding.idFromName(id) : id
 
-  const stub = binding.get(objectId);
-  return new DurableObjectClient<T>(stub, logger);
+  const stub = binding.get(objectId)
+  return new DurableObjectClient<T>(stub, logger)
 }

@@ -44,15 +44,15 @@ The provider is automatically loaded when `ANTHROPIC_API_KEY` is set:
 
 ```typescript
 // Automatically uses Anthropic if it's the default
-const response = await aiService.complete('Explain quantum computing');
+const response = await aiService.complete('Explain quantum computing')
 ```
 
 ### Explicit Provider Selection
 
 ```typescript
 const response = await aiService.complete('Write a haiku', {
-  provider: 'anthropic',
-});
+  provider: 'anthropic'
+})
 ```
 
 ### With System Prompt
@@ -60,19 +60,19 @@ const response = await aiService.complete('Write a haiku', {
 ```typescript
 const response = await aiService.complete([
   { role: 'system', content: 'You are a helpful coding assistant.' },
-  { role: 'user', content: 'Write a TypeScript function to sort an array' },
-]);
+  { role: 'user', content: 'Write a TypeScript function to sort an array' }
+])
 ```
 
 ### Streaming Responses
 
 ```typescript
 const stream = aiService.stream('Tell me a story', {
-  provider: 'anthropic',
-});
+  provider: 'anthropic'
+})
 
 for await (const chunk of stream) {
-  console.log(chunk);
+  console.log(chunk)
 }
 ```
 
@@ -136,8 +136,8 @@ AI_PROVIDERS_CONFIG='{
 ```typescript
 const response = await aiService.complete('Be creative', {
   provider: 'anthropic',
-  temperature: 0.9, // 0-1, higher = more creative
-});
+  temperature: 0.9 // 0-1, higher = more creative
+})
 ```
 
 ### Max Tokens
@@ -145,8 +145,8 @@ const response = await aiService.complete('Be creative', {
 ```typescript
 const response = await aiService.complete('Write a summary', {
   provider: 'anthropic',
-  maxTokens: 500, // Limit response length
-});
+  maxTokens: 500 // Limit response length
+})
 ```
 
 ### Top-P Sampling
@@ -154,8 +154,8 @@ const response = await aiService.complete('Write a summary', {
 ```typescript
 const response = await aiService.complete('Generate ideas', {
   provider: 'anthropic',
-  topP: 0.95, // Nucleus sampling parameter
-});
+  topP: 0.95 // Nucleus sampling parameter
+})
 ```
 
 ### Stop Sequences
@@ -163,8 +163,8 @@ const response = await aiService.complete('Generate ideas', {
 ```typescript
 const response = await aiService.complete('List items', {
   provider: 'anthropic',
-  stopSequences: ['\n\n', 'END'],
-});
+  stopSequences: ['\n\n', 'END']
+})
 ```
 
 ## Error Handling
@@ -193,8 +193,8 @@ Claude 4 models support extended thinking for complex problems:
 // to reason through complex problems
 const response = await aiService.complete('Solve this complex algorithm problem...', {
   provider: 'anthropic',
-  model: 'claude-opus-4-20250514',
-});
+  model: 'claude-opus-4-20250514'
+})
 ```
 
 ## Cost Considerations
@@ -255,18 +255,18 @@ const response = await aiService.complete(
   [
     {
       role: 'system',
-      content: 'You are an expert TypeScript developer.',
+      content: 'You are an expert TypeScript developer.'
     },
     {
       role: 'user',
-      content: 'Write a React hook for debouncing input',
-    },
+      content: 'Write a React hook for debouncing input'
+    }
   ],
   {
     provider: 'anthropic',
-    temperature: 0.2,
-  },
-);
+    temperature: 0.2
+  }
+)
 ```
 
 ### Data Analysis
@@ -276,14 +276,14 @@ const response = await aiService.complete(
   [
     {
       role: 'user',
-      content: `Analyze this data: ${JSON.stringify(data)}`,
-    },
+      content: `Analyze this data: ${JSON.stringify(data)}`
+    }
   ],
   {
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
-  },
-);
+    model: 'claude-sonnet-4-20250514'
+  }
+)
 ```
 
 ### Complex Problem Solving
@@ -293,8 +293,8 @@ const response = await aiService.complete(
 const response = await aiService.complete('Design a distributed system architecture...', {
   provider: 'anthropic',
   model: 'claude-opus-4-20250514',
-  temperature: 0.2,
-});
+  temperature: 0.2
+})
 ```
 
 ### Large Output Generation
@@ -303,8 +303,8 @@ const response = await aiService.complete('Design a distributed system architect
 // Generate extensive documentation or code
 const response = await aiService.complete('Generate comprehensive API documentation...', {
   provider: 'anthropic',
-  maxTokens: 50000, // Up to 64K tokens supported
-});
+  maxTokens: 50000 // Up to 64K tokens supported
+})
 ```
 
 ## Support

@@ -1,8 +1,8 @@
-export { VectorizeConnector } from './vectorize-connector';
+export { VectorizeConnector } from './vectorize-connector'
 export type {
-  VectorizeConfig,
   Vector,
-  VectorSearchQuery,
   VectorMatch,
-  VectorizeIndex,
-} from './vectorize-connector';
+  VectorSearchQuery,
+  VectorizeConfig,
+  VectorizeIndex
+} from './vectorize-connector'

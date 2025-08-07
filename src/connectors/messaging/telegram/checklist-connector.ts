@@ -5,90 +5,90 @@
  * @module connectors/messaging/telegram/checklist-connector
  */
 
-import type { Bot } from 'grammy';
+import type { Bot } from 'grammy'
 
-import type { InputChecklist, Checklist, InputChecklistTask } from '@/lib/telegram-types';
-import { BaseConnector } from '@/connectors/base/base-connector';
-import type { ILogger } from '@/core/interfaces/logger';
-import { EventBus } from '@/core/events/event-bus';
-import { ConnectorType } from '@/core/interfaces/connector';
+import { BaseConnector } from '@/connectors/base/base-connector'
+import { EventBus } from '@/core/events/event-bus'
 import type {
-  ConnectorConfig,
   ConnectorCapabilities,
+  ConnectorConfig,
   HealthStatus,
-  ValidationResult,
-} from '@/core/interfaces/connector';
+  ValidationResult
+} from '@/core/interfaces/connector'
+import { ConnectorType } from '@/core/interfaces/connector'
+import type { ILogger } from '@/core/interfaces/logger'
+import type { Checklist, InputChecklist, InputChecklistTask } from '@/lib/telegram-types'
 
 export interface ChecklistOptions {
-  business_connection_id?: string;
-  disable_notification?: boolean;
-  protect_content?: boolean;
-  message_effect_id?: string;
+  business_connection_id?: string
+  disable_notification?: boolean
+  protect_content?: boolean
+  message_effect_id?: string
   reply_parameters?: {
-    message_id: number;
-    chat_id?: number | string;
-    allow_sending_without_reply?: boolean;
-    quote?: string;
-    quote_parse_mode?: string;
-    quote_entities?: Array<unknown>;
-    quote_position?: number;
-  };
-  reply_markup?: unknown;
+    message_id: number
+    chat_id?: number | string
+    allow_sending_without_reply?: boolean
+    quote?: string
+    quote_parse_mode?: string
+    quote_entities?: Array<unknown>
+    quote_position?: number
+  }
+  reply_markup?: unknown
 }
 
 export interface EditChecklistOptions {
-  business_connection_id?: string;
-  reply_markup?: unknown;
+  business_connection_id?: string
+  reply_markup?: unknown
 }
 
 export class ChecklistConnector extends BaseConnector {
-  id = 'checklist-connector';
-  name = 'Telegram Checklist Connector';
-  version = '1.0.0';
-  type = ConnectorType.MESSAGING;
+  id = 'checklist-connector'
+  name = 'Telegram Checklist Connector'
+  version = '1.0.0'
+  type = ConnectorType.MESSAGING
 
-  private bot: Bot;
-  private logger: ILogger;
-  private localEventBus: EventBus;
+  private bot: Bot
+  private logger: ILogger
+  private localEventBus: EventBus
 
   constructor(bot: Bot, logger: ILogger, eventBus: EventBus) {
-    super();
-    this.bot = bot;
-    this.logger = logger;
-    this.localEventBus = eventBus;
+    super()
+    this.bot = bot
+    this.logger = logger
+    this.localEventBus = eventBus
   }
 
   protected async doInitialize(_config: ConnectorConfig): Promise<void> {
-    this.logger.info('[ChecklistConnector] Initializing Bot API 9.1 checklist support');
+    this.logger.info('[ChecklistConnector] Initializing Bot API 9.1 checklist support')
 
     // Emit initialization event
     this.localEventBus.emit(
       'connector:checklist:initialized',
       {
         connectorId: this.id,
-        version: this.version,
+        version: this.version
       },
-      this.id,
-    );
+      this.id
+    )
   }
 
   protected doValidateConfig(_config: ConnectorConfig): ValidationResult['errors'] {
-    return [];
+    return []
   }
 
   protected checkReadiness(): boolean {
-    return !!this.bot;
+    return !!this.bot
   }
 
   protected async checkHealth(): Promise<Partial<HealthStatus>> {
     return {
       status: 'healthy',
-      message: 'Checklist connector is operational',
-    };
+      message: 'Checklist connector is operational'
+    }
   }
 
   protected async doDestroy(): Promise<void> {
-    this.logger.info('[ChecklistConnector] Destroying connector');
+    this.logger.info('[ChecklistConnector] Destroying connector')
   }
 
   getCapabilities(): ConnectorCapabilities {
@@ -99,13 +99,13 @@ export class ChecklistConnector extends BaseConnector {
       supportsStreaming: false,
       maxBatchSize: 1,
       maxConcurrent: 10,
-      features: ['checklist', 'tasks', 'bot-api-9.1'],
-    };
+      features: ['checklist', 'tasks', 'bot-api-9.1']
+    }
   }
 
   // Public initialization method for backward compatibility
   override async initialize(): Promise<void> {
-    await this.doInitialize({});
+    await this.doInitialize({})
   }
 
   /**
@@ -115,30 +115,30 @@ export class ChecklistConnector extends BaseConnector {
   async sendChecklist(
     chatId: number | string,
     checklist: InputChecklist,
-    options?: ChecklistOptions,
+    options?: ChecklistOptions
   ): Promise<Record<string, unknown>> {
     try {
       this.logger.info('[ChecklistConnector] Sending checklist', {
         chatId,
         taskCount: checklist.tasks.length,
-        title: checklist.title,
-      });
+        title: checklist.title
+      })
 
       // Type assertion for Bot API 9.1 methods not yet in Grammy types
       const api = this.bot.api.raw as unknown as {
-        sendChecklist: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
-      };
+        sendChecklist: (params: Record<string, unknown>) => Promise<Record<string, unknown>>
+      }
       const result = await api.sendChecklist({
         chat_id: typeof chatId === 'number' ? chatId : parseInt(chatId, 10),
         checklist: {
           title: checklist.title || 'Checklist',
-          tasks: checklist.tasks.map((task) => ({
+          tasks: checklist.tasks.map(task => ({
             text: task.text,
-            is_done: task.is_done || false,
-          })),
+            is_done: task.is_done || false
+          }))
         },
-        ...options,
-      });
+        ...options
+      })
 
       // Emit event for analytics
       this.localEventBus.emit(
@@ -146,25 +146,25 @@ export class ChecklistConnector extends BaseConnector {
         {
           chatId,
           checklistId: result.message_id,
-          taskCount: checklist.tasks.length,
+          taskCount: checklist.tasks.length
         },
-        this.id,
-      );
+        this.id
+      )
 
-      return result;
+      return result
     } catch (error) {
-      this.logger.error('[ChecklistConnector] Failed to send checklist', { error });
+      this.logger.error('[ChecklistConnector] Failed to send checklist', { error })
 
       this.localEventBus.emit(
         'checklist:error',
         {
           chatId,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : 'Unknown error'
         },
-        this.id,
-      );
+        this.id
+      )
 
-      throw error;
+      throw error
     }
   }
 
@@ -176,31 +176,31 @@ export class ChecklistConnector extends BaseConnector {
     chatId: number | string,
     messageId: number,
     checklist: InputChecklist,
-    options?: EditChecklistOptions,
+    options?: EditChecklistOptions
   ): Promise<Record<string, unknown>> {
     try {
       this.logger.info('[ChecklistConnector] Editing checklist', {
         chatId,
         messageId,
-        taskCount: checklist.tasks.length,
-      });
+        taskCount: checklist.tasks.length
+      })
 
       // Type assertion for Bot API 9.1 methods not yet in Grammy types
       const api = this.bot.api.raw as unknown as {
-        editMessageChecklist: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
-      };
+        editMessageChecklist: (params: Record<string, unknown>) => Promise<Record<string, unknown>>
+      }
       const result = await api.editMessageChecklist({
         chat_id: typeof chatId === 'number' ? chatId : parseInt(chatId, 10),
         message_id: messageId,
         checklist: {
           title: checklist.title || 'Checklist',
-          tasks: checklist.tasks.map((task) => ({
+          tasks: checklist.tasks.map(task => ({
             text: task.text,
-            is_done: task.is_done || false,
-          })),
+            is_done: task.is_done || false
+          }))
         },
-        ...options,
-      });
+        ...options
+      })
 
       // Emit event for analytics
       this.localEventBus.emit(
@@ -208,26 +208,26 @@ export class ChecklistConnector extends BaseConnector {
         {
           chatId,
           messageId,
-          taskCount: checklist.tasks.length,
+          taskCount: checklist.tasks.length
         },
-        this.id,
-      );
+        this.id
+      )
 
-      return result;
+      return result
     } catch (error) {
-      this.logger.error('[ChecklistConnector] Failed to edit checklist', { error });
+      this.logger.error('[ChecklistConnector] Failed to edit checklist', { error })
 
       this.localEventBus.emit(
         'checklist:error',
         {
           chatId,
           messageId,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : 'Unknown error'
         },
-        this.id,
-      );
+        this.id
+      )
 
-      throw error;
+      throw error
     }
   }
 
@@ -236,44 +236,44 @@ export class ChecklistConnector extends BaseConnector {
    */
   parseChecklist(message: { checklist?: unknown }): Checklist | null {
     if (!message.checklist || typeof message.checklist !== 'object') {
-      return null;
+      return null
     }
 
     const checklistData = message.checklist as {
-      title?: string;
-      tasks?: Array<{ text: string; done?: boolean; is_done?: boolean }>;
-      task_count?: number;
-      done_task_count?: number;
-    };
+      title?: string
+      tasks?: Array<{ text: string; done?: boolean; is_done?: boolean }>
+      task_count?: number
+      done_task_count?: number
+    }
 
     return {
       title: checklistData.title || 'Untitled',
-      tasks: (checklistData.tasks || []).map((task) => ({
+      tasks: (checklistData.tasks || []).map(task => ({
         text: task.text,
-        is_done: task.is_done ?? task.done ?? false,
+        is_done: task.is_done ?? task.done ?? false
       })),
       task_count: checklistData.task_count || 0,
-      done_task_count: checklistData.done_task_count || 0,
-    };
+      done_task_count: checklistData.done_task_count || 0
+    }
   }
 
   /**
    * Create a checklist builder for easy construction
    */
   createChecklistBuilder(): ChecklistBuilder {
-    return new ChecklistBuilder();
+    return new ChecklistBuilder()
   }
 
   async cleanup(): Promise<void> {
-    this.logger.info('[ChecklistConnector] Cleaning up');
+    this.logger.info('[ChecklistConnector] Cleaning up')
 
     this.localEventBus.emit(
       'connector:checklist:cleanup',
       {
-        connectorId: this.id,
+        connectorId: this.id
       },
-      this.id,
-    );
+      this.id
+    )
   }
 }
 
@@ -281,66 +281,66 @@ export class ChecklistConnector extends BaseConnector {
  * Helper class for building checklists
  */
 export class ChecklistBuilder {
-  private title?: string;
-  private tasks: InputChecklistTask[] = [];
+  private title?: string
+  private tasks: InputChecklistTask[] = []
 
   setTitle(title: string): this {
-    this.title = title;
-    return this;
+    this.title = title
+    return this
   }
 
   addTask(text: string, isDone = false): this {
-    this.tasks.push({ text, is_done: isDone });
-    return this;
+    this.tasks.push({ text, is_done: isDone })
+    return this
   }
 
   addTasks(tasks: InputChecklistTask[]): this {
-    this.tasks.push(...tasks);
-    return this;
+    this.tasks.push(...tasks)
+    return this
   }
 
   markTaskDone(index: number): this {
     if (this.tasks[index]) {
-      this.tasks[index].is_done = true;
+      this.tasks[index].is_done = true
     }
-    return this;
+    return this
   }
 
   markTaskUndone(index: number): this {
     if (this.tasks[index]) {
-      this.tasks[index].is_done = false;
+      this.tasks[index].is_done = false
     }
-    return this;
+    return this
   }
 
   toggleTask(index: number): this {
     if (this.tasks[index]) {
-      this.tasks[index].is_done = !this.tasks[index].is_done;
+      this.tasks[index].is_done = !this.tasks[index].is_done
     }
-    return this;
+    return this
   }
 
   clearTasks(): this {
-    this.tasks = [];
-    return this;
+    this.tasks = []
+    return this
   }
 
   build(): InputChecklist {
     return {
       title: this.title,
-      tasks: this.tasks,
-    };
+      tasks: this.tasks
+    }
   }
 
   /**
    * Get statistics about the checklist
    */
   getStats(): { total: number; done: number; pending: number; progress: number } {
-    const total = this.tasks.length;
-    const done = this.tasks.filter((t) => t.is_done).length;
-    const pending = total - done;
-    const progress = total > 0 ? (done / total) * 100 : 0;
+    const total = this.tasks.length
+    const done = this.tasks.filter(t => t.is_done).length
+    const pending = total - done
+    const progress = total > 0 ? (done / total) * 100 : 0
 
-    return { total, done, pending, progress };
+    return { total, done, pending, progress }
   }
 }

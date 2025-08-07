@@ -42,12 +42,12 @@ This contribution solved a critical type safety issue discovered in production:
 
 ```typescript
 // Before: Unsafe and error-prone
-const id = (result.meta as any).last_row_id;
+const id = (result.meta as any).last_row_id
 
 // After: Type-safe with proper error handling
-const meta = result.meta as D1RunMeta;
+const meta = result.meta as D1RunMeta
 if (!meta.last_row_id) {
-  throw new Error('Failed to get last_row_id');
+  throw new Error('Failed to get last_row_id')
 }
 ```
 

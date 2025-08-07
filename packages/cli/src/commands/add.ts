@@ -1,10 +1,10 @@
-import path from 'path'
 import { execSync } from 'child_process'
+import path from 'path'
 
-import { Command } from 'commander'
 import chalk from 'chalk'
-import ora from 'ora'
+import { Command } from 'commander'
 import fs from 'fs-extra'
+import ora from 'ora'
 
 export const addCommand = new Command('add')
   .description('Add a package to your bot')
@@ -20,7 +20,7 @@ export const addCommand = new Command('add')
     }
 
     const packageJson = await fs.readJson(packageJsonPath)
-    
+
     // Check if it's a Wireframe project
     if (!packageJson.dependencies?.['@wireframe/core']) {
       console.log(chalk.red('Error: This is not a Wireframe project'))
@@ -50,19 +50,25 @@ export const addCommand = new Command('add')
       // Update wireframe.config if needed
       const configFiles = ['wireframe.config.ts', 'wireframe.config.js']
       const configFile = configFiles.find(f => fs.existsSync(path.join(process.cwd(), f)))
-      
+
       if (configFile && !options.dev) {
-        console.log(chalk.yellow('\n⚠️  Remember to update your wireframe.config to use the new packages'))
+        console.log(
+          chalk.yellow('\n⚠️  Remember to update your wireframe.config to use the new packages')
+        )
         console.log(chalk.dim('Example:'))
-        console.log(chalk.dim(`
+        console.log(
+          chalk.dim(`
 export default defineConfig({
-  connectors: [${packages.filter((_p: string) => !options.plugin).map((p: string) => `'${p}'`).join(', ')}],
+  connectors: [${packages
+    .filter((_p: string) => !options.plugin)
+    .map((p: string) => `'${p}'`)
+    .join(', ')}],
   plugins: [${options.plugin ? packages.map((p: string) => `'${p}'`).join(', ') : ''}]
-})`))
+})`)
+        )
       }
 
       console.log(chalk.green('\n✨ Done!\n'))
-
     } catch (error) {
       spinner.fail('Failed to add packages')
       console.error(error)

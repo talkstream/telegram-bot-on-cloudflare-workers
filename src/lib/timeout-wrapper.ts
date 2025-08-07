@@ -1,9 +1,9 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger'
 
 export interface TimeoutOptions {
-  timeoutMs: number;
-  errorMessage?: string;
-  operation?: string;
+  timeoutMs: number
+  errorMessage?: string
+  operation?: string
 }
 
 /**
@@ -13,10 +13,10 @@ export class TimeoutError extends Error {
   constructor(
     message: string,
     public readonly timeoutMs: number,
-    public readonly operation?: string,
+    public readonly operation?: string
   ) {
-    super(message);
-    this.name = 'TimeoutError';
+    super(message)
+    this.name = 'TimeoutError'
   }
 }
 
@@ -28,31 +28,31 @@ export class TimeoutError extends Error {
  */
 export async function withTimeout<T>(
   promise: Promise<T>,
-  options: TimeoutOptions | number,
+  options: TimeoutOptions | number
 ): Promise<T> {
-  const config: TimeoutOptions = typeof options === 'number' ? { timeoutMs: options } : options;
+  const config: TimeoutOptions = typeof options === 'number' ? { timeoutMs: options } : options
 
-  const { timeoutMs, errorMessage, operation } = config;
+  const { timeoutMs, errorMessage, operation } = config
 
   const timeoutPromise = new Promise<never>((_resolve, reject) => {
     setTimeout(() => {
-      const message = errorMessage || `Operation timed out after ${timeoutMs}ms`;
-      reject(new TimeoutError(message, timeoutMs, operation));
-    }, timeoutMs);
-  });
+      const message = errorMessage || `Operation timed out after ${timeoutMs}ms`
+      reject(new TimeoutError(message, timeoutMs, operation))
+    }, timeoutMs)
+  })
 
   try {
-    const result = await Promise.race([promise, timeoutPromise]);
-    return result;
+    const result = await Promise.race([promise, timeoutPromise])
+    return result
   } catch (error) {
     if (error instanceof TimeoutError) {
       logger.error('Operation timeout', {
         operation: error.operation,
         timeoutMs: error.timeoutMs,
-        message: error.message,
-      });
+        message: error.message
+      })
     }
-    throw error;
+    throw error
   }
 }
 
@@ -66,10 +66,10 @@ export function createTimeoutWrapper(defaultTimeoutMs: number) {
     const config: TimeoutOptions =
       typeof options === 'number'
         ? { timeoutMs: options }
-        : { timeoutMs: defaultTimeoutMs, ...options };
+        : { timeoutMs: defaultTimeoutMs, ...options }
 
-    return withTimeout(promise, config);
-  };
+    return withTimeout(promise, config)
+  }
 }
 
 /**
@@ -80,15 +80,15 @@ export const TIMEOUT_CONFIGS = {
     api: 2000, // 2s for API calls
     database: 1000, // 1s for database
     cache: 500, // 500ms for cache
-    default: 1500, // 1.5s default
+    default: 1500 // 1.5s default
   },
   paid: {
     api: 10000, // 10s for API calls
     database: 5000, // 5s for database
     cache: 2000, // 2s for cache
-    default: 7500, // 7.5s default
-  },
-} as const;
+    default: 7500 // 7.5s default
+  }
+} as const
 
 /**
  * Gets timeout configuration based on tier
@@ -96,7 +96,7 @@ export const TIMEOUT_CONFIGS = {
  * @returns Timeout configuration
  */
 export function getTimeoutConfig(tier: 'free' | 'paid' = 'free') {
-  return TIMEOUT_CONFIGS[tier];
+  return TIMEOUT_CONFIGS[tier]
 }
 
 /**
@@ -108,42 +108,42 @@ export function getTimeoutConfig(tier: 'free' | 'paid' = 'free') {
 export async function retryWithTimeout<T>(
   fn: () => Promise<T>,
   options: {
-    maxRetries?: number;
-    retryDelayMs?: number;
-    backoffMultiplier?: number;
-    timeoutMs?: number;
-    operation?: string;
-  } = {},
+    maxRetries?: number
+    retryDelayMs?: number
+    backoffMultiplier?: number
+    timeoutMs?: number
+    operation?: string
+  } = {}
 ): Promise<T> {
   const {
     maxRetries = 3,
     retryDelayMs = 100,
     backoffMultiplier = 2,
     timeoutMs = 5000,
-    operation = 'unknown',
-  } = options;
+    operation = 'unknown'
+  } = options
 
-  let lastError: Error | unknown;
-  let delay = retryDelayMs;
+  let lastError: Error | unknown
+  let delay = retryDelayMs
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const result = await withTimeout(fn(), {
         timeoutMs,
-        operation: `${operation} (attempt ${attempt}/${maxRetries})`,
-      });
+        operation: `${operation} (attempt ${attempt}/${maxRetries})`
+      })
 
       if (attempt > 1) {
         logger.info('Retry successful', {
           operation,
           attempt,
-          totalAttempts: maxRetries,
-        });
+          totalAttempts: maxRetries
+        })
       }
 
-      return result;
+      return result
     } catch (error) {
-      lastError = error;
+      lastError = error
 
       if (attempt < maxRetries) {
         logger.warn('Operation failed, retrying', {
@@ -151,11 +151,11 @@ export async function retryWithTimeout<T>(
           attempt,
           maxRetries,
           error: error instanceof Error ? error.message : 'Unknown error',
-          nextDelayMs: delay,
-        });
+          nextDelayMs: delay
+        })
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        delay *= backoffMultiplier;
+        await new Promise(resolve => setTimeout(resolve, delay))
+        delay *= backoffMultiplier
       }
     }
   }
@@ -163,10 +163,10 @@ export async function retryWithTimeout<T>(
   logger.error('All retry attempts failed', {
     operation,
     maxRetries,
-    lastError: lastError instanceof Error ? lastError.message : 'Unknown error',
-  });
+    lastError: lastError instanceof Error ? lastError.message : 'Unknown error'
+  })
 
-  throw lastError;
+  throw lastError
 }
 
 /**
@@ -178,43 +178,43 @@ export async function retryWithTimeout<T>(
 export async function batchWithTimeout<T>(
   operations: Array<() => Promise<T>>,
   options: {
-    timeoutMs?: number;
-    concurrency?: number;
-    continueOnError?: boolean;
-  } = {},
+    timeoutMs?: number
+    concurrency?: number
+    continueOnError?: boolean
+  } = {}
 ): Promise<Array<{ success: boolean; value?: T; error?: Error }>> {
-  const { timeoutMs = 5000, concurrency = 10, continueOnError = true } = options;
+  const { timeoutMs = 5000, concurrency = 10, continueOnError = true } = options
 
-  const results: Array<{ success: boolean; value?: T; error?: Error }> = [];
-  const executing: Array<Promise<void>> = [];
+  const results: Array<{ success: boolean; value?: T; error?: Error }> = []
+  const executing: Array<Promise<void>> = []
 
   for (let i = 0; i < operations.length; i++) {
-    const operation = operations[i];
+    const operation = operations[i]
 
     const promise = withTimeout(
       operation?.() || Promise.reject(new Error('Invalid operation')),
-      timeoutMs,
+      timeoutMs
     )
-      .then((value) => {
-        results[i] = { success: true, value };
-        return value;
+      .then(value => {
+        results[i] = { success: true, value }
+        return value
       })
-      .catch((error) => {
-        results[i] = { success: false, error };
-        if (!continueOnError) throw error;
-      });
+      .catch(error => {
+        results[i] = { success: false, error }
+        if (!continueOnError) throw error
+      })
 
-    executing.push(promise as Promise<void>);
+    executing.push(promise as Promise<void>)
 
     if (executing.length >= concurrency) {
-      await Promise.race(executing);
-      const completedIndex = executing.findIndex(() => true);
+      await Promise.race(executing)
+      const completedIndex = executing.findIndex(() => true)
       if (completedIndex !== -1) {
-        executing.splice(completedIndex, 1);
+        executing.splice(completedIndex, 1)
       }
     }
   }
 
-  await Promise.all(executing);
-  return results;
+  await Promise.all(executing)
+  return results
 }

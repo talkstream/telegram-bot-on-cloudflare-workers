@@ -1,6 +1,6 @@
 /**
  * @wireframe/connector-telegram
- * 
+ *
  * Telegram Bot API connector for Wireframe
  */
 
@@ -26,7 +26,7 @@ export class TelegramConnector implements Connector {
 
   async initialize(config: unknown): Promise<void> {
     this.config = config as TelegramConfig
-    
+
     if (!this.config.token) {
       throw new Error('Telegram bot token is required')
     }
@@ -83,7 +83,7 @@ export class TelegramConnector implements Connector {
    */
   private convertMessage(ctx: any): Message {
     const msg = ctx.message || ctx.editedMessage || ctx.channelPost || ctx.editedChannelPost
-    
+
     return {
       id: String(msg.message_id),
       text: msg.text,
@@ -103,7 +103,9 @@ export class TelegramConnector implements Connector {
       reply: async (text, options) => {
         await ctx.reply(text, {
           parse_mode: options?.parseMode,
-          reply_to_message_id: options?.replyToMessageId ? Number(options.replyToMessageId) : undefined
+          reply_to_message_id: options?.replyToMessageId
+            ? Number(options.replyToMessageId)
+            : undefined
         })
       }
     }
@@ -117,7 +119,7 @@ export class TelegramConnector implements Connector {
       throw new Error('Connector not initialized')
     }
 
-    this.bot.on('message', async (ctx) => {
+    this.bot.on('message', async ctx => {
       const message = this.convertMessage(ctx)
       await handler(message)
     })

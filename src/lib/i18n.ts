@@ -5,4 +5,4 @@
  */
 
 // Export empty to prevent import errors during migration
-export {};
+export {}

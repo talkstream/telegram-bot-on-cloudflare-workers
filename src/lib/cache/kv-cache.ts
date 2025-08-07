@@ -9,26 +9,26 @@
  * @module lib/cache/kv-cache
  */
 
-import type { IKeyValueStore } from '@/core/interfaces/storage';
+import type { IKeyValueStore } from '@/core/interfaces/storage'
 
 export interface CacheOptions {
-  ttl?: number; // seconds
-  namespace?: string;
+  ttl?: number // seconds
+  namespace?: string
 }
 
 export interface CacheMetadata {
-  cachedAt: number;
-  expiresAt: number;
-  version?: string;
+  cachedAt: number
+  expiresAt: number
+  version?: string
 }
 
 export interface CacheStats {
-  hits: number;
-  misses: number;
-  sets: number;
-  deletes: number;
-  errors: number;
-  hitRate: number;
+  hits: number
+  misses: number
+  sets: number
+  deletes: number
+  errors: number
+  hitRate: number
 }
 
 /**
@@ -40,20 +40,20 @@ export class KVCache {
     misses: 0,
     sets: 0,
     deletes: 0,
-    errors: 0,
-  };
+    errors: 0
+  }
 
   constructor(
     private kv: IKeyValueStore,
-    private defaultOptions: CacheOptions = { ttl: 300, namespace: 'cache' },
+    private defaultOptions: CacheOptions = { ttl: 300, namespace: 'cache' }
   ) {}
 
   /**
    * Generate namespaced cache key
    */
   private getKey(key: string, namespace?: string): string {
-    const ns = namespace || this.defaultOptions.namespace || 'cache';
-    return `${ns}:${key}`;
+    const ns = namespace || this.defaultOptions.namespace || 'cache'
+    return `${ns}:${key}`
   }
 
   /**
@@ -61,28 +61,28 @@ export class KVCache {
    */
   async get<T>(key: string, namespace?: string): Promise<T | null> {
     try {
-      const fullKey = this.getKey(key, namespace);
-      const result = await this.kv.get(fullKey);
+      const fullKey = this.getKey(key, namespace)
+      const result = await this.kv.get(fullKey)
 
       if (result === null) {
-        this.stats.misses++;
-        return null;
+        this.stats.misses++
+        return null
       }
 
-      this.stats.hits++;
+      this.stats.hits++
       // Parse JSON if it's a string
       if (typeof result === 'string') {
         try {
-          return JSON.parse(result) as T;
+          return JSON.parse(result) as T
         } catch {
-          return result as T;
+          return result as T
         }
       }
-      return result as T;
+      return result as T
     } catch (error) {
-      this.stats.errors++;
-      console.error('Cache get error:', error);
-      return null;
+      this.stats.errors++
+      console.error('Cache get error:', error)
+      return null
     }
   }
 
@@ -91,14 +91,14 @@ export class KVCache {
    */
   async set<T>(key: string, value: T, options?: CacheOptions): Promise<void> {
     try {
-      const ttl = options?.ttl || this.defaultOptions.ttl || 300;
-      const fullKey = this.getKey(key, options?.namespace);
+      const ttl = options?.ttl || this.defaultOptions.ttl || 300
+      const fullKey = this.getKey(key, options?.namespace)
 
       const metadata: CacheMetadata = {
         cachedAt: Date.now(),
         expiresAt: Date.now() + ttl * 1000,
-        version: '1.0',
-      };
+        version: '1.0'
+      }
 
       // Handle different KV implementations
       if ('putWithMetadata' in this.kv) {
@@ -107,21 +107,21 @@ export class KVCache {
             key: string,
             value: string,
             metadata: unknown,
-            options?: { expirationTtl: number },
-          ): Promise<void>;
-        };
+            options?: { expirationTtl: number }
+          ): Promise<void>
+        }
         await kvWithMetadata.putWithMetadata(fullKey, JSON.stringify(value), metadata, {
-          expirationTtl: ttl,
-        });
+          expirationTtl: ttl
+        })
       } else {
         // Fallback for stores without metadata support
-        await this.kv.put(fullKey, JSON.stringify(value));
+        await this.kv.put(fullKey, JSON.stringify(value))
       }
 
-      this.stats.sets++;
+      this.stats.sets++
     } catch (error) {
-      this.stats.errors++;
-      console.error('Cache set error:', error);
+      this.stats.errors++
+      console.error('Cache set error:', error)
       // Don't throw - cache failures should not break functionality
     }
   }
@@ -131,12 +131,12 @@ export class KVCache {
    */
   async delete(key: string, namespace?: string): Promise<void> {
     try {
-      const fullKey = this.getKey(key, namespace);
-      await this.kv.delete(fullKey);
-      this.stats.deletes++;
+      const fullKey = this.getKey(key, namespace)
+      await this.kv.delete(fullKey)
+      this.stats.deletes++
     } catch (error) {
-      this.stats.errors++;
-      console.error('Cache delete error:', error);
+      this.stats.errors++
+      console.error('Cache delete error:', error)
     }
   }
 
@@ -144,14 +144,14 @@ export class KVCache {
    * Get or set pattern - fetch from cache or execute factory
    */
   async getOrSet<T>(key: string, factory: () => Promise<T>, options?: CacheOptions): Promise<T> {
-    const cached = await this.get<T>(key, options?.namespace);
+    const cached = await this.get<T>(key, options?.namespace)
     if (cached !== null) {
-      return cached;
+      return cached
     }
 
-    const value = await factory();
-    await this.set(key, value, options);
-    return value;
+    const value = await factory()
+    await this.set(key, value, options)
+    return value
   }
 
   /**
@@ -160,18 +160,18 @@ export class KVCache {
   async clearNamespace(_namespace: string): Promise<void> {
     // This is a simplified implementation
     // In production, you might want to use KV list operations
-    console.warn('clearNamespace is not implemented for all KV stores');
+    console.warn('clearNamespace is not implemented for all KV stores')
   }
 
   /**
    * Get cache statistics
    */
   getStats(): CacheStats {
-    const total = this.stats.hits + this.stats.misses;
+    const total = this.stats.hits + this.stats.misses
     return {
       ...this.stats,
-      hitRate: total > 0 ? this.stats.hits / total : 0,
-    };
+      hitRate: total > 0 ? this.stats.hits / total : 0
+    }
   }
 
   /**
@@ -183,8 +183,8 @@ export class KVCache {
       misses: 0,
       sets: 0,
       deletes: 0,
-      errors: 0,
-    };
+      errors: 0
+    }
   }
 }
 
@@ -196,36 +196,36 @@ export class KVCache {
  * Calculate TTL until end of current day
  */
 export function getTTLUntilEndOfDay(): number {
-  const now = new Date();
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
-  return Math.floor((endOfDay.getTime() - now.getTime()) / 1000);
+  const now = new Date()
+  const endOfDay = new Date(now)
+  endOfDay.setHours(23, 59, 59, 999)
+  return Math.floor((endOfDay.getTime() - now.getTime()) / 1000)
 }
 
 /**
  * Calculate exponential backoff TTL
  */
 export function getExponentialTTL(attemptNumber: number, baseSeconds = 60): number {
-  return Math.min(baseSeconds * Math.pow(2, attemptNumber), 3600); // Max 1 hour
+  return Math.min(baseSeconds * Math.pow(2, attemptNumber), 3600) // Max 1 hour
 }
 
 /**
  * Calculate TTL for short-lived data (e.g., rate limiting)
  */
 export function getShortTTL(seconds = 60): number {
-  return seconds;
+  return seconds
 }
 
 /**
  * Calculate TTL for medium-lived data (e.g., user sessions)
  */
 export function getMediumTTL(minutes = 30): number {
-  return minutes * 60;
+  return minutes * 60
 }
 
 /**
  * Calculate TTL for long-lived data (e.g., configuration)
  */
 export function getLongTTL(hours = 24): number {
-  return hours * 60 * 60;
+  return hours * 60 * 60
 }

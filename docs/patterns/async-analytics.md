@@ -11,18 +11,18 @@ Traditional analytics implementation blocks the response:
 ```typescript
 // ❌ Bad: Analytics blocks response
 async function handleRequest(request: Request) {
-  const start = Date.now();
+  const start = Date.now()
 
   // Process request...
-  const result = await processRequest(request);
+  const result = await processRequest(request)
 
   // This blocks the response!
   await sendAnalytics({
     event: 'request_processed',
-    duration: Date.now() - start,
-  }); // Adds 30-50ms to response time
+    duration: Date.now() - start
+  }) // Adds 30-50ms to response time
 
-  return new Response(result);
+  return new Response(result)
 }
 ```
 
@@ -41,19 +41,19 @@ Use `ExecutionContext.waitUntil()` to defer analytics after the response:
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const analytics = new AsyncAnalytics(ctx, {
-      endpoint: env.ANALYTICS_ENDPOINT,
-    });
+      endpoint: env.ANALYTICS_ENDPOINT
+    })
 
     // Track event without blocking
-    analytics.track('request_received');
+    analytics.track('request_received')
 
-    const result = await processRequest(request);
+    const result = await processRequest(request)
 
     // Return response immediately
-    return new Response(result);
+    return new Response(result)
     // Analytics sent in background via waitUntil()
-  },
-};
+  }
+}
 ```
 
 ## Implementation
@@ -61,32 +61,32 @@ export default {
 ### Basic Usage
 
 ```typescript
-import { AsyncAnalytics, AnalyticsFactory } from '@/lib/analytics/async-analytics';
+import { AsyncAnalytics, AnalyticsFactory } from '@/lib/analytics/async-analytics'
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     // Create analytics for this request
-    const analytics = AnalyticsFactory.create(ctx, env);
+    const analytics = AnalyticsFactory.create(ctx, env)
 
     // Track events without blocking
     analytics.track('page_view', {
       path: new URL(request.url).pathname,
-      method: request.method,
-    });
+      method: request.method
+    })
 
     // Process request
-    const response = await handleRequest(request);
+    const response = await handleRequest(request)
 
     // Track completion
     analytics.track('request_complete', {
-      status: response.status,
-    });
+      status: response.status
+    })
 
     // Response returned immediately
     // Analytics continues in background
-    return response;
-  },
-};
+    return response
+  }
+}
 ```
 
 ### Telegram Bot Integration
@@ -95,32 +95,32 @@ export default {
 async function handleTelegramUpdate(update: TelegramUpdate, env: Env, ctx: ExecutionContext) {
   const analytics = new AsyncAnalytics(ctx, {
     endpoint: env.ANALYTICS_URL,
-    batching: true,
-  });
+    batching: true
+  })
 
   // For callbacks - acknowledge IMMEDIATELY
   if (update.callback_query) {
     // This MUST happen first for good UX
-    await answerCallbackQuery(update.callback_query.id);
+    await answerCallbackQuery(update.callback_query.id)
 
     // Track after acknowledgment (non-blocking)
     analytics.track('callback_clicked', {
-      data: update.callback_query.data,
-    });
+      data: update.callback_query.data
+    })
   }
 
   // Process update
-  const result = await processUpdate(update);
+  const result = await processUpdate(update)
 
   // Track completion
   analytics.track('update_processed', {
-    type: getUpdateType(update),
-  });
+    type: getUpdateType(update)
+  })
 
   // Flush any batched events
-  analytics.flush();
+  analytics.flush()
 
-  return new Response('OK');
+  return new Response('OK')
 }
 ```
 
@@ -128,23 +128,23 @@ async function handleTelegramUpdate(update: TelegramUpdate, env: Env, ctx: Execu
 
 ```typescript
 try {
-  const result = await riskyOperation();
+  const result = await riskyOperation()
 
   // Track success (non-blocking)
-  analytics.track('operation_success');
+  analytics.track('operation_success')
 
-  return result;
+  return result
 } catch (error) {
   // Track error (non-blocking)
   analytics.trackError(error, {
     operation: 'risky_operation',
     context: {
       /* additional data */
-    },
-  });
+    }
+  })
 
   // Still return response quickly
-  return new Response('Error', { status: 500 });
+  return new Response('Error', { status: 500 })
 }
 ```
 
@@ -158,16 +158,16 @@ Reduce network overhead by batching events:
 const analytics = new AsyncAnalytics(ctx, {
   batching: true,
   batchSize: 20, // Send after 20 events
-  flushInterval: 1000, // Or after 1 second
-});
+  flushInterval: 1000 // Or after 1 second
+})
 
 // Events are automatically batched
 for (const item of items) {
-  analytics.track('item_processed', { id: item.id });
+  analytics.track('item_processed', { id: item.id })
 }
 
 // Manual flush at end
-analytics.flush();
+analytics.flush()
 ```
 
 ### Performance Tracking
@@ -175,11 +175,11 @@ analytics.flush();
 Built-in performance measurement:
 
 ```typescript
-const start = Date.now();
+const start = Date.now()
 
 // Do work...
 
-analytics.trackPerformance('operation_name', Date.now() - start);
+analytics.trackPerformance('operation_name', Date.now() - start)
 ```
 
 ### User Context
@@ -189,8 +189,8 @@ Track events with user information:
 ```typescript
 analytics.trackUser(userId, 'action_performed', {
   feature: 'checkout',
-  value: 99.99,
-});
+  value: 99.99
+})
 ```
 
 ### Cloudflare Analytics Engine
@@ -199,7 +199,7 @@ Native integration with Cloudflare Analytics Engine:
 
 ```typescript
 // Automatically uses Analytics Engine if available
-const analytics = AnalyticsFactory.create(ctx, env);
+const analytics = AnalyticsFactory.create(ctx, env)
 
 // Falls back to HTTP endpoint if not available
 ```
@@ -250,12 +250,12 @@ async function handleCallback(callback: CallbackQuery) {
 
 ```typescript
 // ✅ Correct order
-await answerCallbackQuery(id); // First - instant feedback
-analytics.track('callback'); // Second - non-blocking
+await answerCallbackQuery(id) // First - instant feedback
+analytics.track('callback') // Second - non-blocking
 
 // ❌ Wrong order
-analytics.track('callback'); // Don't block UI
-await answerCallbackQuery(id); // Too late!
+analytics.track('callback') // Don't block UI
+await answerCallbackQuery(id) // Too late!
 ```
 
 ### 2. Batch Related Events
@@ -263,16 +263,16 @@ await answerCallbackQuery(id); // Too late!
 ```typescript
 const analytics = new AsyncAnalytics(ctx, {
   batching: true,
-  batchSize: 50,
-});
+  batchSize: 50
+})
 
 // Track multiple events efficiently
-analytics.track('step_1_complete');
-analytics.track('step_2_complete');
-analytics.track('step_3_complete');
+analytics.track('step_1_complete')
+analytics.track('step_2_complete')
+analytics.track('step_3_complete')
 
 // Single network call for all events
-analytics.flush();
+analytics.flush()
 ```
 
 ### 3. Always Flush at Request End
@@ -282,7 +282,7 @@ try {
   // Handle request...
 } finally {
   // Always flush, even on error
-  analytics.flush();
+  analytics.flush()
 }
 ```
 
@@ -291,8 +291,8 @@ try {
 ```typescript
 analytics.trackError(error, {
   fatal: false,
-  recovered: true,
-});
+  recovered: true
+})
 
 // Continue processing despite error
 ```
@@ -303,47 +303,47 @@ analytics.trackError(error, {
 // High-volume endpoint
 const analytics = new AsyncAnalytics(ctx, {
   batchSize: 100, // Larger batches
-  flushInterval: 5000, // Less frequent
-});
+  flushInterval: 5000 // Less frequent
+})
 
 // Low-volume endpoint
 const analytics = new AsyncAnalytics(ctx, {
   batchSize: 10, // Smaller batches
-  flushInterval: 1000, // More frequent
-});
+  flushInterval: 1000 // More frequent
+})
 ```
 
 ## Testing
 
 ```typescript
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest'
 
 describe('Async Analytics', () => {
   it('should not block response', async () => {
     const mockCtx = {
-      waitUntil: vi.fn(),
-    };
+      waitUntil: vi.fn()
+    }
 
     const analytics = new AsyncAnalytics(mockCtx, {
-      endpoint: 'https://analytics.test',
-    });
+      endpoint: 'https://analytics.test'
+    })
 
-    const start = Date.now();
+    const start = Date.now()
 
     // Track 100 events
     for (let i = 0; i < 100; i++) {
-      analytics.track('event', { i });
+      analytics.track('event', { i })
     }
 
-    const duration = Date.now() - start;
+    const duration = Date.now() - start
 
     // Should complete instantly
-    expect(duration).toBeLessThan(10);
+    expect(duration).toBeLessThan(10)
 
     // Events queued for background processing
-    expect(mockCtx.waitUntil).toHaveBeenCalled();
-  });
-});
+    expect(mockCtx.waitUntil).toHaveBeenCalled()
+  })
+})
 ```
 
 ## Migration Guide
@@ -353,15 +353,15 @@ describe('Async Analytics', () => {
 ```typescript
 // Before
 async function handle(request: Request) {
-  await analytics.send('event', data); // Blocking
-  return response;
+  await analytics.send('event', data) // Blocking
+  return response
 }
 
 // After
 function handle(request: Request, env: Env, ctx: ExecutionContext) {
-  const analytics = new AsyncAnalytics(ctx);
-  analytics.track('event', data); // Non-blocking
-  return response;
+  const analytics = new AsyncAnalytics(ctx)
+  analytics.track('event', data) // Non-blocking
+  return response
 }
 ```
 
@@ -369,10 +369,10 @@ function handle(request: Request, env: Env, ctx: ExecutionContext) {
 
 ```typescript
 // Before
-Sentry.captureException(error); // Partially blocking
+Sentry.captureException(error) // Partially blocking
 
 // After
-analytics.trackError(error); // Fully non-blocking
+analytics.trackError(error) // Fully non-blocking
 ```
 
 ## Performance Comparison
@@ -391,14 +391,14 @@ analytics.trackError(error); // Fully non-blocking
 
 ```typescript
 // Wrong - defeats the purpose
-await analytics.track('event');
+await analytics.track('event')
 ```
 
 ### ❌ Don't forget ExecutionContext
 
 ```typescript
 // Wrong - won't work without context
-const analytics = new AsyncAnalytics(null);
+const analytics = new AsyncAnalytics(null)
 ```
 
 ### ❌ Don't track sensitive data
@@ -407,8 +407,8 @@ const analytics = new AsyncAnalytics(null);
 // Wrong - PII in analytics
 analytics.track('user_data', {
   password: user.password, // Never!
-  creditCard: user.card, // Never!
-});
+  creditCard: user.card // Never!
+})
 ```
 
 ### ✅ Do track aggregated metrics
@@ -418,8 +418,8 @@ analytics.track('user_data', {
 analytics.track('checkout_complete', {
   amount: order.total,
   items_count: order.items.length,
-  payment_method: 'card', // Type, not details
-});
+  payment_method: 'card' // Type, not details
+})
 ```
 
 ## Summary

@@ -10,9 +10,9 @@
  * TODO: Reimplement resilient wrappers for new connector interfaces
  */
 
-import type { CircuitBreakerConfig } from './circuit-breaker';
+import type { CircuitBreakerConfig } from './circuit-breaker'
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger'
 
 /**
  * Placeholder for ResilientAIConnector
@@ -20,7 +20,7 @@ import { logger } from '@/lib/logger';
  */
 export class ResilientAIConnector {
   constructor(_connector: unknown, _config?: Partial<CircuitBreakerConfig>) {
-    logger.warn('ResilientAIConnector is temporarily disabled - needs update for new interface');
+    logger.warn('ResilientAIConnector is temporarily disabled - needs update for new interface')
   }
 }
 
@@ -31,8 +31,8 @@ export class ResilientAIConnector {
 export class ResilientMessagingConnector {
   constructor(_connector: unknown, _config?: Partial<CircuitBreakerConfig>) {
     logger.warn(
-      'ResilientMessagingConnector is temporarily disabled - needs update for new interface',
-    );
+      'ResilientMessagingConnector is temporarily disabled - needs update for new interface'
+    )
   }
 }
 
@@ -41,6 +41,6 @@ export class ResilientMessagingConnector {
  * Currently returns connector without wrapping
  */
 export function withResilience<T>(connector: T, _config?: Partial<CircuitBreakerConfig>): T {
-  logger.warn('withResilience is temporarily bypassed - resilient wrappers need update');
-  return connector;
+  logger.warn('withResilience is temporarily bypassed - resilient wrappers need update')
+  return connector
 }

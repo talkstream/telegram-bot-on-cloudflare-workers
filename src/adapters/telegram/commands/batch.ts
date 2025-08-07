@@ -1,7 +1,7 @@
-import type { CommandHandler } from '@/types';
+import type { CommandHandler } from '@/types'
 
-export const batchCommand: CommandHandler = async (ctx) => {
+export const batchCommand: CommandHandler = async ctx => {
   await ctx.reply(ctx.i18n.t('commands.batch.info', { namespace: 'telegram' }), {
-    parse_mode: 'HTML',
-  });
-};
+    parse_mode: 'HTML'
+  })
+}

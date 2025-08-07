@@ -8,31 +8,31 @@
  * @module async-analytics
  */
 
-import type { ExecutionContext } from '@cloudflare/workers-types';
+import type { ExecutionContext } from '@cloudflare/workers-types'
 
-import type { AnalyticsEngineDataset, AnalyticsEnvironment } from './types';
+import type { AnalyticsEngineDataset, AnalyticsEnvironment } from './types'
 
 export interface AnalyticsEvent {
-  event: string;
-  properties?: Record<string, unknown>;
-  timestamp?: number;
-  userId?: string | number;
-  sessionId?: string;
+  event: string
+  properties?: Record<string, unknown>
+  timestamp?: number
+  userId?: string | number
+  sessionId?: string
 }
 
 export interface AsyncAnalyticsOptions {
   /** Batch events before sending (default: true) */
-  batching?: boolean;
+  batching?: boolean
   /** Batch size before flush (default: 10) */
-  batchSize?: number;
+  batchSize?: number
   /** Max time before flush in ms (default: 1000) */
-  flushInterval?: number;
+  flushInterval?: number
   /** Enable debug logging */
-  debug?: boolean;
+  debug?: boolean
   /** Custom endpoint for analytics */
-  endpoint?: string;
+  endpoint?: string
   /** API key for analytics service */
-  apiKey?: string;
+  apiKey?: string
 }
 
 /**
@@ -56,13 +56,13 @@ export interface AsyncAnalyticsOptions {
  * ```
  */
 export class AsyncAnalytics {
-  private events: AnalyticsEvent[] = [];
-  private flushTimer?: number;
-  private readonly options: Required<AsyncAnalyticsOptions>;
+  private events: AnalyticsEvent[] = []
+  private flushTimer?: number
+  private readonly options: Required<AsyncAnalyticsOptions>
 
   constructor(
     private ctx: ExecutionContext,
-    options: AsyncAnalyticsOptions = {},
+    options: AsyncAnalyticsOptions = {}
   ) {
     this.options = {
       batching: true,
@@ -71,8 +71,8 @@ export class AsyncAnalytics {
       debug: false,
       endpoint: '',
       apiKey: '',
-      ...options,
-    };
+      ...options
+    }
   }
 
   /**
@@ -82,13 +82,13 @@ export class AsyncAnalytics {
     const analyticsEvent: AnalyticsEvent = {
       event,
       properties,
-      timestamp: Date.now(),
-    };
+      timestamp: Date.now()
+    }
 
     if (this.options.batching) {
-      this.addToBatch(analyticsEvent);
+      this.addToBatch(analyticsEvent)
     } else {
-      this.sendImmediate(analyticsEvent);
+      this.sendImmediate(analyticsEvent)
     }
   }
 
@@ -100,13 +100,13 @@ export class AsyncAnalytics {
       event,
       properties,
       userId,
-      timestamp: Date.now(),
-    };
+      timestamp: Date.now()
+    }
 
     if (this.options.batching) {
-      this.addToBatch(analyticsEvent);
+      this.addToBatch(analyticsEvent)
     } else {
-      this.sendImmediate(analyticsEvent);
+      this.sendImmediate(analyticsEvent)
     }
   }
 
@@ -116,8 +116,8 @@ export class AsyncAnalytics {
   trackPageView(path: string, properties?: Record<string, unknown>): void {
     this.track('page_view', {
       path,
-      ...properties,
-    });
+      ...properties
+    })
   }
 
   /**
@@ -129,14 +129,14 @@ export class AsyncAnalytics {
         ? {
             message: error.message,
             stack: error.stack,
-            name: error.name,
+            name: error.name
           }
-        : { message: error };
+        : { message: error }
 
     this.track('error', {
       ...errorData,
-      ...properties,
-    });
+      ...properties
+    })
   }
 
   /**
@@ -146,44 +146,44 @@ export class AsyncAnalytics {
     this.track('performance', {
       metric,
       value,
-      unit,
-    });
+      unit
+    })
   }
 
   /**
    * Force flush all pending events
    */
   flush(): void {
-    if (this.events.length === 0) return;
+    if (this.events.length === 0) return
 
-    const eventsToSend = [...this.events];
-    this.events = [];
+    const eventsToSend = [...this.events]
+    this.events = []
 
     if (this.flushTimer) {
-      clearTimeout(this.flushTimer);
-      this.flushTimer = undefined;
+      clearTimeout(this.flushTimer)
+      this.flushTimer = undefined
     }
 
-    this.sendBatch(eventsToSend);
+    this.sendBatch(eventsToSend)
   }
 
   /**
    * Add event to batch
    */
   private addToBatch(event: AnalyticsEvent): void {
-    this.events.push(event);
+    this.events.push(event)
 
     // Flush if batch size reached
     if (this.events.length >= this.options.batchSize) {
-      this.flush();
-      return;
+      this.flush()
+      return
     }
 
     // Set up flush timer if not already set
     if (!this.flushTimer) {
       this.flushTimer = setTimeout(() => {
-        this.flush();
-      }, this.options.flushInterval) as unknown as number;
+        this.flush()
+      }, this.options.flushInterval) as unknown as number
     }
   }
 
@@ -191,26 +191,26 @@ export class AsyncAnalytics {
    * Send event immediately without batching
    */
   private sendImmediate(event: AnalyticsEvent): void {
-    const promise = this.sendToAnalytics([event]);
+    const promise = this.sendToAnalytics([event])
 
     // Fire and forget - don't await
-    this.ctx.waitUntil(promise);
+    this.ctx.waitUntil(promise)
 
-    this.log(`Sent immediate event: ${event.event}`);
+    this.log(`Sent immediate event: ${event.event}`)
   }
 
   /**
    * Send batch of events
    */
   private sendBatch(events: AnalyticsEvent[]): void {
-    if (events.length === 0) return;
+    if (events.length === 0) return
 
-    const promise = this.sendToAnalytics(events);
+    const promise = this.sendToAnalytics(events)
 
     // Fire and forget - don't await
-    this.ctx.waitUntil(promise);
+    this.ctx.waitUntil(promise)
 
-    this.log(`Sent batch of ${events.length} events`);
+    this.log(`Sent batch of ${events.length} events`)
   }
 
   /**
@@ -218,8 +218,8 @@ export class AsyncAnalytics {
    */
   protected async sendToAnalytics(events: AnalyticsEvent[]): Promise<void> {
     if (!this.options.endpoint) {
-      this.log('No endpoint configured, skipping analytics');
-      return;
+      this.log('No endpoint configured, skipping analytics')
+      return
     }
 
     try {
@@ -228,21 +228,21 @@ export class AsyncAnalytics {
         headers: {
           'Content-Type': 'application/json',
           ...(this.options.apiKey && {
-            Authorization: `Bearer ${this.options.apiKey}`,
-          }),
+            Authorization: `Bearer ${this.options.apiKey}`
+          })
         },
         body: JSON.stringify({
           events,
-          timestamp: Date.now(),
-        }),
-      });
+          timestamp: Date.now()
+        })
+      })
 
       if (!response.ok) {
-        console.error(`Analytics failed: ${response.status} ${response.statusText}`);
+        console.error(`Analytics failed: ${response.status} ${response.statusText}`)
       }
     } catch (error) {
       // Don't throw - this is fire and forget
-      console.error('Failed to send analytics:', error);
+      console.error('Failed to send analytics:', error)
     }
   }
 
@@ -253,7 +253,7 @@ export class AsyncAnalytics {
     if (this.options.debug) {
       // Use console.info for debug messages (allowed by ESLint)
 
-      console.info(`[AsyncAnalytics] ${message}`);
+      console.info(`[AsyncAnalytics] ${message}`)
     }
   }
 }
@@ -265,9 +265,9 @@ export class CloudflareAnalytics extends AsyncAnalytics {
   constructor(
     ctx: ExecutionContext,
     private analyticsEngine: AnalyticsEngineDataset,
-    options?: AsyncAnalyticsOptions,
+    options?: AsyncAnalyticsOptions
   ) {
-    super(ctx, options);
+    super(ctx, options)
   }
 
   /**
@@ -275,8 +275,8 @@ export class CloudflareAnalytics extends AsyncAnalytics {
    */
   protected override async sendToAnalytics(events: AnalyticsEvent[]): Promise<void> {
     if (!this.analyticsEngine) {
-      this.log('Analytics Engine not available');
-      return;
+      this.log('Analytics Engine not available')
+      return
     }
 
     try {
@@ -285,11 +285,11 @@ export class CloudflareAnalytics extends AsyncAnalytics {
         this.analyticsEngine.writeDataPoint({
           indexes: [event.event],
           doubles: [Number(event.properties?.value) || 1],
-          blobs: [event.userId?.toString() || '', JSON.stringify(event.properties || {})],
-        });
+          blobs: [event.userId?.toString() || '', JSON.stringify(event.properties || {})]
+        })
       }
     } catch (error) {
-      console.error('Failed to write to Analytics Engine:', error);
+      console.error('Failed to write to Analytics Engine:', error)
     }
   }
 }
@@ -304,19 +304,19 @@ export class AnalyticsFactory {
   static create(
     ctx: ExecutionContext,
     env: AnalyticsEnvironment,
-    options?: AsyncAnalyticsOptions,
+    options?: AsyncAnalyticsOptions
   ): AsyncAnalytics {
     // Use Cloudflare Analytics Engine if available
     if (env.ANALYTICS_ENGINE) {
-      return new CloudflareAnalytics(ctx, env.ANALYTICS_ENGINE, options);
+      return new CloudflareAnalytics(ctx, env.ANALYTICS_ENGINE, options)
     }
 
     // Otherwise use standard HTTP analytics
     return new AsyncAnalytics(ctx, {
       endpoint: env.ANALYTICS_ENDPOINT,
       apiKey: env.ANALYTICS_API_KEY,
-      ...options,
-    });
+      ...options
+    })
   }
 
   /**
@@ -327,12 +327,12 @@ export class AnalyticsFactory {
       waitUntil: () => {},
       passThroughOnException: () => {},
       // Add required property for ExecutionContext
-      props: {},
-    } as unknown as ExecutionContext;
+      props: {}
+    } as unknown as ExecutionContext
 
     return new AsyncAnalytics(noopCtx, {
-      endpoint: '', // No endpoint means no-op
-    });
+      endpoint: '' // No endpoint means no-op
+    })
   }
 }
 
@@ -351,38 +351,38 @@ export class AnalyticsFactory {
  */
 export function TrackPerformance(metricName: string) {
   return function (_target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
-    const originalMethod = descriptor.value;
+    const originalMethod = descriptor.value
 
     descriptor.value = async function (this: { analytics?: AsyncAnalytics }, ...args: unknown[]) {
-      const start = Date.now();
+      const start = Date.now()
 
       try {
-        const result = await originalMethod.apply(this, args);
+        const result = await originalMethod.apply(this, args)
 
         // Track success
         if (this.analytics) {
-          const duration = Date.now() - start;
-          this.analytics.trackPerformance(metricName, duration);
+          const duration = Date.now() - start
+          this.analytics.trackPerformance(metricName, duration)
         }
 
-        return result;
+        return result
       } catch (error) {
         // Track error
         if (this.analytics) {
-          const duration = Date.now() - start;
+          const duration = Date.now() - start
           this.analytics.track(`${metricName}_error`, {
             duration,
             error: error instanceof Error ? error.message : String(error),
-            method: propertyKey,
-          });
+            method: propertyKey
+          })
         }
 
-        throw error;
+        throw error
       }
-    };
+    }
 
-    return descriptor;
-  };
+    return descriptor
+  }
 }
 
 /**
@@ -390,40 +390,40 @@ export function TrackPerformance(metricName: string) {
  */
 // Middleware context type
 interface MiddlewareContext {
-  request?: Request;
-  response?: Response;
-  [key: string]: unknown;
+  request?: Request
+  response?: Response
+  [key: string]: unknown
 }
 
 export function createAnalyticsMiddleware(
-  getAnalytics: (ctx: MiddlewareContext) => AsyncAnalytics,
+  getAnalytics: (ctx: MiddlewareContext) => AsyncAnalytics
 ) {
   return async (ctx: MiddlewareContext, next: () => Promise<void>) => {
-    const analytics = getAnalytics(ctx);
-    const start = Date.now();
+    const analytics = getAnalytics(ctx)
+    const start = Date.now()
 
     try {
-      await next();
+      await next()
 
       // Track request success
-      const duration = Date.now() - start;
+      const duration = Date.now() - start
       analytics.track('request_completed', {
         path: ctx.request?.url || 'unknown',
         method: ctx.request?.method || 'unknown',
         status: ctx.response?.status || 200,
-        duration,
-      });
+        duration
+      })
     } catch (error) {
       // Track request error
-      const duration = Date.now() - start;
+      const duration = Date.now() - start
       analytics.track('request_error', {
         path: ctx.request?.url || 'unknown',
         method: ctx.request?.method || 'unknown',
         duration,
-        error: error instanceof Error ? error.message : String(error),
-      });
+        error: error instanceof Error ? error.message : String(error)
+      })
 
-      throw error;
+      throw error
     }
-  };
+  }
 }

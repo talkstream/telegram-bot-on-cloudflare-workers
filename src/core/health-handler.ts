@@ -1,12 +1,12 @@
-import type { Context } from 'hono';
+import type { Context } from 'hono'
 
-import type { Env, HealthStatus } from '@/types';
-import { logger } from '@/lib/logger';
-import { getBotToken } from '@/lib/env-guards';
+import { getBotToken } from '@/lib/env-guards'
+import { logger } from '@/lib/logger'
+import type { Env, HealthStatus } from '@/types'
 
 export async function healthHandler(c: Context<{ Bindings: Env }>) {
-  const startTime = Date.now();
-  const env = c.env;
+  const startTime = Date.now()
+  const env = c.env
 
   const status: HealthStatus = {
     status: 'healthy',
@@ -17,12 +17,12 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       database: false,
       cache: false,
       telegram: false,
-      ai: false,
-    },
-  };
+      ai: false
+    }
+  }
 
   // Define health check tasks
-  const healthChecks = [];
+  const healthChecks = []
 
   // Database health check
   if (env.DB) {
@@ -30,15 +30,15 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'database',
       check: async () => {
         try {
-          if (!env.DB) return false;
-          const result = await env.DB.prepare('SELECT 1 as health').first();
-          return result?.health === 1;
+          if (!env.DB) return false
+          const result = await env.DB.prepare('SELECT 1 as health').first()
+          return result?.health === 1
         } catch (error) {
-          logger.error('D1 health check failed', { error });
-          return false;
+          logger.error('D1 health check failed', { error })
+          return false
         }
-      },
-    });
+      }
+    })
   }
 
   // KV Cache health check
@@ -47,19 +47,19 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'cache',
       check: async () => {
         try {
-          if (!env.CACHE) return false;
-          const testKey = `health_check_${Date.now()}`;
-          await env.CACHE.put(testKey, 'ok', { expirationTtl: 60 });
-          const value = await env.CACHE.get(testKey);
-          const isHealthy = value === 'ok';
-          await env.CACHE.delete(testKey);
-          return isHealthy;
+          if (!env.CACHE) return false
+          const testKey = `health_check_${Date.now()}`
+          await env.CACHE.put(testKey, 'ok', { expirationTtl: 60 })
+          const value = await env.CACHE.get(testKey)
+          const isHealthy = value === 'ok'
+          await env.CACHE.delete(testKey)
+          return isHealthy
         } catch (error) {
-          logger.error('KV cache health check failed', { error });
-          return false;
+          logger.error('KV cache health check failed', { error })
+          return false
         }
-      },
-    });
+      }
+    })
   }
 
   // Telegram Bot Token check (synchronous, but wrapped for consistency)
@@ -68,14 +68,14 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
       name: 'telegram',
       check: async () => {
         try {
-          const token = getBotToken(env);
-          return /^\d+:[A-Za-z0-9_-]{35}$/.test(token);
+          const token = getBotToken(env)
+          return /^\d+:[A-Za-z0-9_-]{35}$/.test(token)
         } catch (error) {
-          logger.error('Telegram token check failed', { error });
-          return false;
+          logger.error('Telegram token check failed', { error })
+          return false
         }
-      },
-    });
+      }
+    })
   }
 
   // AI Service check (synchronous, but wrapped for consistency)
@@ -89,51 +89,51 @@ export async function healthHandler(c: Context<{ Bindings: Env }>) {
               (env.OPENAI_API_KEY && env.OPENAI_API_KEY.length > 20) ||
               (env.XAI_API_KEY && env.XAI_API_KEY.length > 20) ||
               (env.DEEPSEEK_API_KEY && env.DEEPSEEK_API_KEY.length > 20) ||
-              (env.CLOUDFLARE_AI_ACCOUNT_ID && env.CLOUDFLARE_AI_ACCOUNT_ID.length > 0),
-          );
+              (env.CLOUDFLARE_AI_ACCOUNT_ID && env.CLOUDFLARE_AI_ACCOUNT_ID.length > 0)
+          )
         } catch (error) {
-          logger.error('AI service check failed', { error });
-          return false;
+          logger.error('AI service check failed', { error })
+          return false
         }
-      },
-    });
+      }
+    })
   }
 
   // Execute all health checks in parallel
   const results = await Promise.all(
     healthChecks.map(async ({ name, check }) => ({
       name,
-      healthy: await check(),
-    })),
-  );
+      healthy: await check()
+    }))
+  )
 
   // Update status based on results
   results.forEach(({ name, healthy }) => {
-    const serviceName = name as keyof typeof status.services;
+    const serviceName = name as keyof typeof status.services
     if (serviceName in status.services) {
-      status.services[serviceName] = healthy;
+      status.services[serviceName] = healthy
       if (!healthy) {
-        status.status = 'degraded';
+        status.status = 'degraded'
       }
     }
-  });
+  })
 
   // Determine overall status
-  const criticalServices = [status.services.database, status.services.telegram];
-  if (criticalServices.some((service) => !service)) {
-    status.status = 'unhealthy';
+  const criticalServices = [status.services.database, status.services.telegram]
+  if (criticalServices.some(service => !service)) {
+    status.status = 'unhealthy'
   }
 
   // Add performance metric
-  const duration = Date.now() - startTime;
+  const duration = Date.now() - startTime
   logger.info('Health check completed', {
     status: status.status,
     duration,
-    services: status.services,
-  });
+    services: status.services
+  })
 
   // Return appropriate status code
-  const statusCode = status.status === 'healthy' ? 200 : status.status === 'degraded' ? 200 : 503;
+  const statusCode = status.status === 'healthy' ? 200 : status.status === 'degraded' ? 200 : 503
 
-  return c.json(status, statusCode);
+  return c.json(status, statusCode)
 }

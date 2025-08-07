@@ -7,11 +7,11 @@
  */
 
 export {
+  AnalyticsFactory,
   AsyncAnalytics,
   CloudflareAnalytics,
-  AnalyticsFactory,
   TrackPerformance,
   createAnalyticsMiddleware,
   type AnalyticsEvent,
-  type AsyncAnalyticsOptions,
-} from './async-analytics';
+  type AsyncAnalyticsOptions
+} from './async-analytics'

@@ -2,4 +2,4 @@
  * Database utilities for Wireframe platform
  */
 
-export * from './field-mapper';
+export * from './field-mapper'

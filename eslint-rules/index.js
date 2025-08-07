@@ -9,17 +9,17 @@
  */
 
 // Load rules synchronously for now
-import noSnakeCaseDbFields from './no-snake-case-db-fields.js';
-import requireBooleanConversion from './require-boolean-conversion.js';
-import requireDateConversion from './require-date-conversion.js';
-import useFieldMapper from './use-field-mapper.js';
+import noSnakeCaseDbFields from './no-snake-case-db-fields.js'
+import requireBooleanConversion from './require-boolean-conversion.js'
+import requireDateConversion from './require-date-conversion.js'
+import useFieldMapper from './use-field-mapper.js'
 
 const plugin = {
   rules: {
     'no-snake-case-db-fields': noSnakeCaseDbFields,
     'require-boolean-conversion': requireBooleanConversion,
     'require-date-conversion': requireDateConversion,
-    'use-field-mapper': useFieldMapper,
+    'use-field-mapper': useFieldMapper
   },
 
   configs: {
@@ -29,8 +29,8 @@ const plugin = {
         'db-mapping/no-snake-case-db-fields': 'error',
         'db-mapping/require-boolean-conversion': 'error',
         'db-mapping/require-date-conversion': 'error',
-        'db-mapping/use-field-mapper': 'warn',
-      },
+        'db-mapping/use-field-mapper': 'warn'
+      }
     },
     strict: {
       plugins: ['db-mapping'],
@@ -38,8 +38,8 @@ const plugin = {
         'db-mapping/no-snake-case-db-fields': [
           'error',
           {
-            databaseRowTypes: ['DatabaseRow', 'DBRow', 'Row', 'Record'],
-          },
+            databaseRowTypes: ['DatabaseRow', 'DBRow', 'Row', 'Record']
+          }
         ],
         'db-mapping/require-boolean-conversion': [
           'error',
@@ -54,7 +54,7 @@ const plugin = {
               'was_',
               'are_',
               'does_',
-              'do_',
+              'do_'
             ],
             booleanSuffixes: [
               '_enabled',
@@ -64,9 +64,9 @@ const plugin = {
               '_visible',
               '_hidden',
               '_required',
-              '_optional',
-            ],
-          },
+              '_optional'
+            ]
+          }
         ],
         'db-mapping/require-date-conversion': [
           'error',
@@ -80,20 +80,20 @@ const plugin = {
               'time_*',
               'expires_*',
               'started_*',
-              'ended_*',
+              'ended_*'
             ],
-            allowNullChecks: true,
-          },
+            allowNullChecks: true
+          }
         ],
         'db-mapping/use-field-mapper': [
           'error',
           {
-            minimumFields: 2,
-          },
-        ],
-      },
-    },
-  },
-};
+            minimumFields: 2
+          }
+        ]
+      }
+    }
+  }
+}
 
-export default plugin;
+export default plugin

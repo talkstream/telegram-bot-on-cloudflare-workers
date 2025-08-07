@@ -3,43 +3,43 @@
  * This is a one-time migration script
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'fs/promises'
+import * as path from 'path'
 
-import { StaticTranslationProvider } from '../providers/static-provider';
-import type { TranslationDictionary } from '../../../core/interfaces/i18n';
+import type { TranslationDictionary } from '../../../core/interfaces/i18n'
+import { StaticTranslationProvider } from '../providers/static-provider'
 
 export class TranslationMigrator {
-  private namespaceRoot = path.join(process.cwd(), 'src/i18n/namespaces');
+  private namespaceRoot = path.join(process.cwd(), 'src/i18n/namespaces')
 
   /**
    * Load translations from JSON files and add to provider
    */
   async loadTranslationsFromFiles(provider: StaticTranslationProvider): Promise<void> {
-    const namespaces = ['core', 'adapters/telegram', 'domain/access'];
+    const namespaces = ['core', 'adapters/telegram', 'domain/access']
 
     for (const namespace of namespaces) {
-      const namespacePath = path.join(this.namespaceRoot, namespace);
+      const namespacePath = path.join(this.namespaceRoot, namespace)
 
       try {
-        const files = await fs.readdir(namespacePath);
+        const files = await fs.readdir(namespacePath)
 
         for (const file of files) {
           if (file.endsWith('.json')) {
-            const language = file.replace('.json', '');
-            const filePath = path.join(namespacePath, file);
-            const content = await fs.readFile(filePath, 'utf-8');
-            const translations = JSON.parse(content) as TranslationDictionary;
+            const language = file.replace('.json', '')
+            const filePath = path.join(namespacePath, file)
+            const content = await fs.readFile(filePath, 'utf-8')
+            const translations = JSON.parse(content) as TranslationDictionary
 
             // Normalize namespace name (remove adapters/ prefix)
-            const normalizedNamespace = namespace.replace('adapters/', '');
+            const normalizedNamespace = namespace.replace('adapters/', '')
 
-            provider.addTranslations(language, normalizedNamespace, translations);
-            console.info(`Loaded ${language} translations for namespace ${normalizedNamespace}`);
+            provider.addTranslations(language, normalizedNamespace, translations)
+            console.info(`Loaded ${language} translations for namespace ${normalizedNamespace}`)
           }
         }
       } catch (error) {
-        console.error(`Error loading translations for namespace ${namespace}:`, error);
+        console.error(`Error loading translations for namespace ${namespace}:`, error)
       }
     }
   }
@@ -63,7 +63,7 @@ export class TranslationMigrator {
           general_error: { namespace: 'core', newKey: 'system.errors.general' },
           user_identification_error: {
             namespace: 'core',
-            newKey: 'system.errors.user_identification',
+            newKey: 'system.errors.user_identification'
           },
 
           // Telegram
@@ -119,54 +119,54 @@ export class TranslationMigrator {
           ai_not_configured: { namespace: 'telegram', newKey: 'ai.general.not_configured' },
           ai_not_available_free_tier: {
             namespace: 'telegram',
-            newKey: 'ai.general.not_available_free_tier',
+            newKey: 'ai.general.not_available_free_tier'
           },
           ask_prompt_needed: { namespace: 'telegram', newKey: 'ai.general.prompt_needed' },
           powered_by: { namespace: 'telegram', newKey: 'ai.general.powered_by' },
           ai_error: { namespace: 'telegram', newKey: 'ai.general.error' },
 
           // Batch
-          batch_info: { namespace: 'telegram', newKey: 'commands.batch.info' },
-        };
-
-        const mapping = keyMap[key];
-        if (!mapping) {
-          console.warn(`No mapping found for key: ${key}`);
-          return `[${key}]`;
+          batch_info: { namespace: 'telegram', newKey: 'commands.batch.info' }
         }
 
-        const translations = await provider.loadTranslations(lang, mapping.namespace);
+        const mapping = keyMap[key]
+        if (!mapping) {
+          console.warn(`No mapping found for key: ${key}`)
+          return `[${key}]`
+        }
+
+        const translations = await provider.loadTranslations(lang, mapping.namespace)
         if (!translations) {
-          return `[${key}]`;
+          return `[${key}]`
         }
 
         // Navigate to the translation value
-        const keys = mapping.newKey.split('.');
-        let value: unknown = translations;
+        const keys = mapping.newKey.split('.')
+        let value: unknown = translations
 
         for (const k of keys) {
           if (value && typeof value === 'object' && k in value) {
-            value = (value as Record<string, unknown>)[k];
+            value = (value as Record<string, unknown>)[k]
           } else {
-            return `[${key}]`;
+            return `[${key}]`
           }
         }
 
         // Handle function values
         if (typeof value === 'function') {
-          return value(...args);
+          return value(...args)
         }
 
         // Handle string values with interpolation
         if (typeof value === 'string' && args.length > 0 && typeof args[0] === 'object') {
-          const params = args[0] as Record<string, unknown>;
+          const params = args[0] as Record<string, unknown>
           return value.replace(/\{\{(\w+)\}\}/g, (match, k) => {
-            return params[k]?.toString() || match;
-          });
+            return params[k]?.toString() || match
+          })
         }
 
-        return value?.toString() || `[${key}]`;
-      },
-    };
+        return value?.toString() || `[${key}]`
+      }
+    }
   }
 }

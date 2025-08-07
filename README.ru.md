@@ -321,7 +321,7 @@ Wireframe включает примеры команд для демонстра
 Весь пользовательский текст должен управляться через систему контента:
 
 ```typescript
-const message = contentManager.format('welcome_message', { name: userName });
+const message = contentManager.format('welcome_message', { name: userName })
 ```
 
 ### 2. **Обработка ошибок**
@@ -330,10 +330,10 @@ const message = contentManager.format('welcome_message', { name: userName });
 
 ```typescript
 try {
-  await riskyOperation();
+  await riskyOperation()
 } catch (error) {
-  logger.error('Operation failed', { error, context });
-  await ctx.reply('Произошла ошибка. Пожалуйста, попробуйте снова.');
+  logger.error('Operation failed', { error, context })
+  await ctx.reply('Произошла ошибка. Пожалуйста, попробуйте снова.')
 }
 ```
 
@@ -342,7 +342,7 @@ try {
 Применяйте соответствующие ограничения для предотвращения злоупотреблений:
 
 ```typescript
-app.post('/webhook/:token', rateLimiter({ maxRequests: 20, windowMs: 60000 }), handler);
+app.post('/webhook/:token', rateLimiter({ maxRequests: 20, windowMs: 60000 }), handler)
 ```
 
 ### 4. **Типобезопасность**
@@ -352,9 +352,9 @@ app.post('/webhook/:token', rateLimiter({ maxRequests: 20, windowMs: 60000 }), h
 ```typescript
 // Всегда определяйте типы для ваших структур данных
 interface UserData {
-  id: number;
-  telegramId: number;
-  username?: string; // Используйте опциональные свойства правильно
+  id: number
+  telegramId: number
+  username?: string // Используйте опциональные свойства правильно
 }
 ```
 
@@ -366,8 +366,8 @@ interface UserData {
 describe('StartCommand', () => {
   it('should create new user on first interaction', async () => {
     // Реализация теста
-  });
-});
+  })
+})
 ```
 
 **Важное замечание о покрытии**: Этот wireframe использует Istanbul coverage provider вместо V8 из-за совместимости с Cloudflare Workers. V8 coverage provider использует `node:inspector`, который недоступен в Workers runtime. Istanbul работает путём инструментирования кода во время сборки, что делает его совместимым с Workers.

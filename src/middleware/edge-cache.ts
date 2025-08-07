@@ -1,7 +1,7 @@
-import type { Context, Next } from 'hono';
+import type { Context, Next } from 'hono'
 
-import type { IEdgeCacheService, RouteCacheConfig } from '../core/interfaces/cache';
-import { EdgeCacheService } from '../core/services/cache/edge-cache-service';
+import type { IEdgeCacheService, RouteCacheConfig } from '../core/interfaces/cache'
+import { EdgeCacheService } from '../core/services/cache/edge-cache-service'
 
 /**
  * Default cache configuration for different route patterns
@@ -13,23 +13,23 @@ export const DEFAULT_CACHE_CONFIG: Record<string, RouteCacheConfig> = {
   '/api/static': { ttl: 86400, tags: ['api', 'static'] }, // 24 hours for static data
   '/api': { ttl: 300, tags: ['api'] }, // 5 minutes for API calls
   '/health': { ttl: 60, tags: ['monitoring'] }, // 1 minute for health checks
-  '/metrics': { ttl: 60, tags: ['monitoring'] }, // 1 minute for metrics
-};
+  '/metrics': { ttl: 60, tags: ['monitoring'] } // 1 minute for metrics
+}
 
 /**
  * Edge cache middleware configuration
  */
 export interface EdgeCacheMiddlewareConfig {
   /** Cache service instance */
-  cacheService?: IEdgeCacheService;
+  cacheService?: IEdgeCacheService
   /** Route cache configurations */
-  routeConfig?: Record<string, RouteCacheConfig>;
+  routeConfig?: Record<string, RouteCacheConfig>
   /** Skip caching for these methods */
-  skipMethods?: string[];
+  skipMethods?: string[]
   /** Custom cache key generator */
-  keyGenerator?: (c: Context) => string;
+  keyGenerator?: (c: Context) => string
   /** Enable debug logging */
-  debug?: boolean;
+  debug?: boolean
 }
 
 /**
@@ -51,25 +51,25 @@ export interface EdgeCacheMiddlewareConfig {
  * ```
  */
 export function edgeCache(config: EdgeCacheMiddlewareConfig = {}) {
-  const cacheService = config.cacheService || new EdgeCacheService();
-  const routeConfig = { ...DEFAULT_CACHE_CONFIG, ...config.routeConfig };
-  const skipMethods = config.skipMethods || ['POST', 'PUT', 'PATCH', 'DELETE'];
-  const debug = config.debug || false;
+  const cacheService = config.cacheService || new EdgeCacheService()
+  const routeConfig = { ...DEFAULT_CACHE_CONFIG, ...config.routeConfig }
+  const skipMethods = config.skipMethods || ['POST', 'PUT', 'PATCH', 'DELETE']
+  const debug = config.debug || false
 
   return async (c: Context, next: Next) => {
     // Skip caching for non-cacheable methods
     if (skipMethods.includes(c.req.method)) {
-      await next();
-      return;
+      await next()
+      return
     }
 
     // Get cache configuration for the route
-    const cacheConfig = getCacheConfig(c.req.path, routeConfig);
+    const cacheConfig = getCacheConfig(c.req.path, routeConfig)
 
     // Skip if no caching configured
     if (cacheConfig.ttl === 0) {
-      await next();
-      return;
+      await next()
+      return
     }
 
     // Generate cache key (for future use with custom key generators)
@@ -80,26 +80,26 @@ export function edgeCache(config: EdgeCacheMiddlewareConfig = {}) {
     // Try to get from cache
     const cachedResponse = cacheService.getCachedResponse
       ? await cacheService.getCachedResponse(c.req.raw)
-      : null;
+      : null
     if (cachedResponse) {
       if (debug) {
         // Log cache hit (in production, use proper logger)
       }
       // Add cache status header
-      cachedResponse.headers.set('X-Cache-Status', 'HIT');
-      return cachedResponse;
+      cachedResponse.headers.set('X-Cache-Status', 'HIT')
+      return cachedResponse
     }
 
     // Execute handler
-    await next();
+    await next()
 
     // Cache successful responses
     if (c.res.status >= 200 && c.res.status < 300) {
       // Clone response to avoid consuming it
-      const responseToCache = c.res.clone();
+      const responseToCache = c.res.clone()
 
       // Add cache status header
-      c.res.headers.set('X-Cache-Status', 'MISS');
+      c.res.headers.set('X-Cache-Status', 'MISS')
 
       // Cache in background
       const cachePromise = cacheService.cacheResponse
@@ -107,37 +107,37 @@ export function edgeCache(config: EdgeCacheMiddlewareConfig = {}) {
             ttl: cacheConfig.ttl,
             tags: cacheConfig.tags,
             browserTTL: Math.min(cacheConfig.ttl, 300), // Max 5 min browser cache
-            edgeTTL: cacheConfig.ttl,
+            edgeTTL: cacheConfig.ttl
           })
-        : Promise.resolve();
+        : Promise.resolve()
 
       cachePromise
         .then(() => {
           if (debug) {
             // eslint-disable-next-line no-console
-            console.log(`[EdgeCache] Cached response for ${c.req.path}`);
+            console.log(`[EdgeCache] Cached response for ${c.req.path}`)
           }
-          return;
+          return
         })
         .catch(() => {
           // Ignore cache errors - they should not break the response
-        });
+        })
 
       // Use executionCtx if available (production), otherwise await (testing)
       try {
-        c.executionCtx.waitUntil(cachePromise);
+        c.executionCtx.waitUntil(cachePromise)
       } catch (_e) {
         // In testing environment, just fire and forget
         cachePromise.catch((err: unknown) => {
           if (debug) {
-            console.error(`[EdgeCache] Failed to cache response: ${err}`);
+            console.error(`[EdgeCache] Failed to cache response: ${err}`)
           }
-        });
+        })
       }
     }
 
-    return c.res;
-  };
+    return c.res
+  }
 }
 
 /**
@@ -145,22 +145,22 @@ export function edgeCache(config: EdgeCacheMiddlewareConfig = {}) {
  */
 function getCacheConfig(
   path: string,
-  routeConfig: Record<string, RouteCacheConfig>,
+  routeConfig: Record<string, RouteCacheConfig>
 ): RouteCacheConfig {
   // Check exact match
   if (routeConfig[path]) {
-    return routeConfig[path];
+    return routeConfig[path]
   }
 
   // Check prefix match
   for (const [pattern, config] of Object.entries(routeConfig)) {
     if (path.startsWith(pattern)) {
-      return config;
+      return config
     }
   }
 
   // Default: no cache
-  return { ttl: 0, tags: [] };
+  return { ttl: 0, tags: [] }
 }
 
 /**
@@ -175,32 +175,32 @@ function getCacheConfig(
  */
 export function cacheInvalidator(cacheService: IEdgeCacheService) {
   return async (c: Context) => {
-    const body = await c.req.json<{ tags?: string[]; keys?: string[] }>();
+    const body = await c.req.json<{ tags?: string[]; keys?: string[] }>()
 
     if (body.tags && body.tags.length > 0) {
-      await cacheService.purgeByTags(body.tags);
+      await cacheService.purgeByTags(body.tags)
       return c.json({
         success: true,
-        message: `Purged cache for tags: ${body.tags.join(', ')}`,
-      });
+        message: `Purged cache for tags: ${body.tags.join(', ')}`
+      })
     }
 
     if (body.keys && body.keys.length > 0) {
-      await Promise.all(body.keys.map((key) => cacheService.delete(key)));
+      await Promise.all(body.keys.map(key => cacheService.delete(key)))
       return c.json({
         success: true,
-        message: `Deleted ${body.keys.length} cache entries`,
-      });
+        message: `Deleted ${body.keys.length} cache entries`
+      })
     }
 
     return c.json(
       {
         success: false,
-        message: 'No tags or keys provided for invalidation',
+        message: 'No tags or keys provided for invalidation'
       },
-      400,
-    );
-  };
+      400
+    )
+  }
 }
 
 /**
@@ -219,12 +219,12 @@ export function cacheInvalidator(cacheService: IEdgeCacheService) {
 export async function warmupCache(
   cacheService: IEdgeCacheService,
   entries: Array<{
-    key: string;
-    factory: () => Promise<unknown>;
-    options?: import('../core/interfaces/cache').CacheOptions;
-  }>,
+    key: string
+    factory: () => Promise<unknown>
+    options?: import('../core/interfaces/cache').CacheOptions
+  }>
 ): Promise<void> {
   if (cacheService.warmUp) {
-    await cacheService.warmUp(entries);
+    await cacheService.warmUp(entries)
   }
 }

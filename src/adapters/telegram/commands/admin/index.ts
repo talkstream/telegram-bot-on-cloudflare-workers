@@ -1,1 +1,1 @@
-export { requestsCommand } from './requests';
+export { requestsCommand } from './requests'

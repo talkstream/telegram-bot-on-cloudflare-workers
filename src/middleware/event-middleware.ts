@@ -1,19 +1,19 @@
-import type { MiddlewareHandler } from 'hono';
+import type { MiddlewareHandler } from 'hono'
 
-import type { Env } from '@/types';
-import { EventBus } from '@/core/events/event-bus';
-import { logger } from '@/lib/logger';
+import { EventBus } from '@/core/events/event-bus'
+import { logger } from '@/lib/logger'
+import type { Env } from '@/types'
 
 // Extend Hono context with our custom properties
 declare module 'hono' {
   interface ContextVariableMap {
-    dynamicConfig: Map<string, unknown>;
+    dynamicConfig: Map<string, unknown>
   }
 }
 
 interface EventMiddlewareConfig {
-  eventBus: EventBus;
-  source?: string;
+  eventBus: EventBus
+  source?: string
 }
 
 /**
@@ -21,13 +21,13 @@ interface EventMiddlewareConfig {
  * Emits events for request lifecycle and errors
  */
 export const eventMiddleware = (
-  config: EventMiddlewareConfig,
+  config: EventMiddlewareConfig
 ): MiddlewareHandler<{ Bindings: Env }> => {
-  const { eventBus, source = 'http-server' } = config;
+  const { eventBus, source = 'http-server' } = config
 
   return async (c, next) => {
-    const requestId = crypto.randomUUID();
-    const startTime = Date.now();
+    const requestId = crypto.randomUUID()
+    const startTime = Date.now()
 
     // Emit request start event
     eventBus.emit(
@@ -37,15 +37,15 @@ export const eventMiddleware = (
         method: c.req.method,
         path: c.req.path,
         headers: Object.fromEntries(c.req.raw.headers.entries()),
-        ip: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for'),
+        ip: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')
       },
-      source,
-    );
+      source
+    )
 
     try {
-      await next();
+      await next()
 
-      const duration = Date.now() - startTime;
+      const duration = Date.now() - startTime
 
       // Emit request complete event
       eventBus.emit(
@@ -55,15 +55,15 @@ export const eventMiddleware = (
           status: c.res.status,
           duration,
           method: c.req.method,
-          path: c.req.path,
+          path: c.req.path
         },
-        source,
-      );
+        source
+      )
 
       // Add request ID to response headers
-      c.header('X-Request-ID', requestId);
+      c.header('X-Request-ID', requestId)
     } catch (error) {
-      const duration = Date.now() - startTime;
+      const duration = Date.now() - startTime
 
       // Emit request error event
       eventBus.emit(
@@ -75,43 +75,43 @@ export const eventMiddleware = (
               ? {
                   message: error.message,
                   stack: error.stack,
-                  name: error.name,
+                  name: error.name
                 }
               : { message: String(error) },
           duration,
           method: c.req.method,
-          path: c.req.path,
+          path: c.req.path
         },
-        source,
-      );
+        source
+      )
 
       // Re-throw to let error handler middleware deal with it
-      throw error;
+      throw error
     }
-  };
-};
+  }
+}
 
 /**
  * Middleware that listens to EventBus for dynamic behavior changes
  * For example: feature flags, rate limit updates, etc.
  */
 export const eventListenerMiddleware = (
-  eventBus: EventBus,
+  eventBus: EventBus
 ): MiddlewareHandler<{ Bindings: Env }> => {
   // Store dynamic config that can be updated via events
-  const dynamicConfig = new Map<string, unknown>();
+  const dynamicConfig = new Map<string, unknown>()
 
   // Listen for config update events
-  eventBus.on('config.update', (event) => {
-    const { key, value } = event.payload as { key: string; value: unknown };
-    dynamicConfig.set(key, value);
-    logger.info('Dynamic config updated', { key, value });
-  });
+  eventBus.on('config.update', event => {
+    const { key, value } = event.payload as { key: string; value: unknown }
+    dynamicConfig.set(key, value)
+    logger.info('Dynamic config updated', { key, value })
+  })
 
   return async (c, next) => {
     // Attach dynamic config to context for use in other middleware
-    c.set('dynamicConfig', dynamicConfig);
+    c.set('dynamicConfig', dynamicConfig)
 
-    await next();
-  };
-};
+    await next()
+  }
+}

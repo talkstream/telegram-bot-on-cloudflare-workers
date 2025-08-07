@@ -2,43 +2,43 @@
  * Connection Pool exports and utilities
  */
 
-export { ConnectionPool } from './connection-pool';
-export type { PoolConfig, PooledConnection, ConnectionFactory } from './connection-pool';
+export { ConnectionPool } from './connection-pool'
+export type { ConnectionFactory, PoolConfig, PooledConnection } from './connection-pool'
 
-import { TelegramConnectionPool } from './telegram-pool';
-import { AIConnectionPool } from './ai-pool';
+import { AIConnectionPool } from './ai-pool'
+import { TelegramConnectionPool } from './telegram-pool'
 
-export { TelegramConnectionPool } from './telegram-pool';
-export type { TelegramPoolConfig } from './telegram-pool';
+export { TelegramConnectionPool } from './telegram-pool'
+export type { TelegramPoolConfig } from './telegram-pool'
 
-export { AIConnectionPool } from './ai-pool';
-export type { AIPoolConfig } from './ai-pool';
+export { AIConnectionPool } from './ai-pool'
+export type { AIPoolConfig } from './ai-pool'
 
 // Global pool manager for monitoring and management
 export class PoolManager {
-  private static isShuttingDown = false;
+  private static isShuttingDown = false
 
   /**
    * Shutdown all pools gracefully
    */
   static async shutdownAll(): Promise<void> {
     if (PoolManager.isShuttingDown) {
-      return;
+      return
     }
 
-    PoolManager.isShuttingDown = true;
+    PoolManager.isShuttingDown = true
 
-    const shutdownPromises: Promise<void>[] = [];
+    const shutdownPromises: Promise<void>[] = []
 
     // Shutdown Telegram pool
-    shutdownPromises.push(TelegramConnectionPool.reset());
+    shutdownPromises.push(TelegramConnectionPool.reset())
 
     // Shutdown all AI pools
-    shutdownPromises.push(AIConnectionPool.resetAll());
+    shutdownPromises.push(AIConnectionPool.resetAll())
 
-    await Promise.all(shutdownPromises);
+    await Promise.all(shutdownPromises)
 
-    PoolManager.isShuttingDown = false;
+    PoolManager.isShuttingDown = false
   }
 
   /**
@@ -47,7 +47,7 @@ export class PoolManager {
   static getAllStats() {
     return {
       telegram: TelegramConnectionPool.getInstance().getStats(),
-      ai: AIConnectionPool.getAllStats(),
-    };
+      ai: AIConnectionPool.getAllStats()
+    }
   }
 }

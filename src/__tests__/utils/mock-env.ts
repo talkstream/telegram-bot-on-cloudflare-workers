@@ -1,7 +1,7 @@
-import { vi } from 'vitest';
-import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import type { D1Database, KVNamespace } from '@cloudflare/workers-types'
+import { vi } from 'vitest'
 
-import type { Env } from '@/types';
+import type { Env } from '@/types'
 
 export function createMockEnv(): Env {
   return {
@@ -22,80 +22,80 @@ export function createMockEnv(): Env {
           meta: {
             last_row_id: 1,
             changes: 1,
-            duration: 0.1,
-          },
+            duration: 0.1
+          }
         }),
-        all: vi.fn().mockResolvedValue({ results: [] }),
+        all: vi.fn().mockResolvedValue({ results: [] })
       }),
       batch: vi.fn().mockResolvedValue([]),
-      exec: vi.fn().mockResolvedValue({ results: [] }),
+      exec: vi.fn().mockResolvedValue({ results: [] })
     } as unknown as D1Database,
 
     // Mock KV Namespaces
     CACHE: createMockKV(),
     RATE_LIMIT: createMockKV(),
-    SESSIONS: createMockKV(),
-  };
+    SESSIONS: createMockKV()
+  }
 }
 
 export function createMockKV() {
-  const storage = new Map<string, string>();
+  const storage = new Map<string, string>()
 
   return {
     get: vi.fn(async (key: string, type?: string) => {
-      const value = storage.get(key);
-      if (!value) return null;
+      const value = storage.get(key)
+      if (!value) return null
 
       if (type === 'json') {
-        return JSON.parse(value);
+        return JSON.parse(value)
       }
 
-      return value;
+      return value
     }),
 
     put: vi.fn(
       async (
         key: string,
         value: string | ArrayBuffer | ReadableStream,
-        options?: { expirationTtl?: number; metadata?: Record<string, unknown> },
+        options?: { expirationTtl?: number; metadata?: Record<string, unknown> }
       ) => {
-        const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-        storage.set(key, stringValue);
+        const stringValue = typeof value === 'string' ? value : JSON.stringify(value)
+        storage.set(key, stringValue)
 
         if (options?.expirationTtl) {
           // Simulate expiration
-          setTimeout(() => storage.delete(key), options.expirationTtl * 1000);
+          setTimeout(() => storage.delete(key), options.expirationTtl * 1000)
         }
-      },
+      }
     ),
 
     delete: vi.fn(async (key: string) => {
-      storage.delete(key);
+      storage.delete(key)
     }),
 
     list: vi.fn(async (options?: { prefix?: string; limit?: number; cursor?: string }) => {
       const keys = Array.from(storage.keys())
-        .filter((key) => !options?.prefix || key.startsWith(options.prefix))
-        .map((name) => ({ name, metadata: {} }));
+        .filter(key => !options?.prefix || key.startsWith(options.prefix))
+        .map(name => ({ name, metadata: {} }))
 
       return {
         keys,
         list_complete: true,
-        cursor: null,
-      };
+        cursor: null
+      }
     }),
 
     // Helper for tests
-    _storage: storage,
-  } as unknown as KVNamespace;
+    _storage: storage
+  } as unknown as KVNamespace
 }
 
 export function createMockD1Result<T>(data: T) {
   return {
     results: Array.isArray(data) ? data : [data],
     success: true,
-    meta: {},
-  };
+    meta: {}
+  }
 }
 
 export function createMockD1Database() {
@@ -105,7 +105,7 @@ export function createMockD1Database() {
       first: vi.fn().mockResolvedValue(null),
       run: vi.fn().mockResolvedValue({ success: true }),
       all: vi.fn().mockResolvedValue({ results: [] }),
-      raw: vi.fn().mockResolvedValue([]),
+      raw: vi.fn().mockResolvedValue([])
     })),
 
     batch: vi.fn().mockResolvedValue([]),
@@ -120,10 +120,10 @@ export function createMockD1Database() {
             first: vi.fn().mockResolvedValue(result),
             run: vi.fn().mockResolvedValue({ success: true }),
             all: vi.fn().mockResolvedValue({
-              results: Array.isArray(result) ? result : [result],
+              results: Array.isArray(result) ? result : [result]
             }),
-            raw: vi.fn().mockResolvedValue(Array.isArray(result) ? result : [result]),
-          };
+            raw: vi.fn().mockResolvedValue(Array.isArray(result) ? result : [result])
+          }
         }
 
         return {
@@ -131,13 +131,13 @@ export function createMockD1Database() {
           first: vi.fn().mockResolvedValue(null),
           run: vi.fn().mockResolvedValue({ success: true }),
           all: vi.fn().mockResolvedValue({ results: [] }),
-          raw: vi.fn().mockResolvedValue([]),
-        };
-      });
-    },
-  };
+          raw: vi.fn().mockResolvedValue([])
+        }
+      })
+    }
+  }
 
   return mockDb as unknown as D1Database & {
-    _setQueryResult: (sql: string, result: unknown) => void;
-  };
+    _setQueryResult: (sql: string, result: unknown) => void
+  }
 }

@@ -5,15 +5,15 @@
  * using the Wireframe v1.2 platform with TypeScript.
  */
 
-import { Bot } from '../../src/core/bot';
-import { TelegramConnector } from '../../src/connectors/messaging/telegram';
-import { CloudPlatformFactory } from '../../src/core/cloud/platform-factory';
-import { MonitoringFactory } from '../../src/connectors/monitoring/monitoring-factory';
-import type { Env } from '../../src/types/env';
+import { TelegramConnector } from '../../src/connectors/messaging/telegram'
+import { MonitoringFactory } from '../../src/connectors/monitoring/monitoring-factory'
+import { Bot } from '../../src/core/bot'
+import { CloudPlatformFactory } from '../../src/core/cloud/platform-factory'
+import type { Env } from '../../src/types/env'
 
 // Command handlers
 async function handleStartCommand(ctx: any) {
-  const userName = ctx.from?.first_name || 'friend';
+  const userName = ctx.from?.first_name || 'friend'
 
   await ctx.reply(
     `👋 Hello ${userName}! Welcome to Wireframe Bot.\n\n` +
@@ -21,8 +21,8 @@ async function handleStartCommand(ctx: any) {
       `/help - Show available commands\n` +
       `/echo <text> - Echo your message\n` +
       `/weather <city> - Get weather info (AI-powered)\n` +
-      `/about - Learn about Wireframe`,
-  );
+      `/about - Learn about Wireframe`
+  )
 }
 
 async function handleHelpCommand(ctx: any) {
@@ -34,17 +34,17 @@ async function handleHelpCommand(ctx: any) {
       `/weather <city> - Get weather info\n` +
       `/about - About this bot\n\n` +
       `This bot is built with Wireframe v1.2 🚀`,
-    { parse_mode: 'Markdown' },
-  );
+    { parse_mode: 'Markdown' }
+  )
 }
 
 async function handleEchoCommand(ctx: any) {
-  const text = ctx.match || 'Hello!';
-  await ctx.reply(`🔊 ${text}`);
+  const text = ctx.match || 'Hello!'
+  await ctx.reply(`🔊 ${text}`)
 }
 
 async function handleWeatherCommand(ctx: any) {
-  const city = ctx.match || 'London';
+  const city = ctx.match || 'London'
 
   // In a real bot, you would use the AI service here
   await ctx.reply(
@@ -53,8 +53,8 @@ async function handleWeatherCommand(ctx: any) {
       `Conditions: Partly cloudy\n` +
       `Humidity: 65%\n\n` +
       `_This is a demo response. Connect an AI provider for real weather data!_`,
-    { parse_mode: 'Markdown' },
-  );
+    { parse_mode: 'Markdown' }
+  )
 }
 
 async function handleAboutCommand(ctx: any) {
@@ -68,8 +68,8 @@ async function handleAboutCommand(ctx: any) {
       `• Plugin system\n` +
       `• TypeScript with 100% type safety\n\n` +
       `[Learn more](https://github.com/talkstream/typescript-wireframe-platform)`,
-    { parse_mode: 'Markdown', disable_web_page_preview: true },
-  );
+    { parse_mode: 'Markdown', disable_web_page_preview: true }
+  )
 }
 
 // Main handler
@@ -77,33 +77,33 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
       // Initialize monitoring
-      const monitoring = await MonitoringFactory.createFromEnv(env);
+      const monitoring = await MonitoringFactory.createFromEnv(env)
 
       // Create cloud platform connector
-      const cloudPlatform = CloudPlatformFactory.createFromTypedEnv(env);
+      const cloudPlatform = CloudPlatformFactory.createFromTypedEnv(env)
 
       // Create bot instance
       const bot = new Bot({
         connector: new TelegramConnector({
           token: env.TELEGRAM_BOT_TOKEN,
-          webhookSecret: env.TELEGRAM_WEBHOOK_SECRET,
+          webhookSecret: env.TELEGRAM_WEBHOOK_SECRET
         }),
         cloudPlatform,
-        monitoring,
-      });
+        monitoring
+      })
 
       // Register commands
-      bot.command('start', handleStartCommand);
-      bot.command('help', handleHelpCommand);
-      bot.command('echo', handleEchoCommand);
-      bot.command('weather', handleWeatherCommand);
-      bot.command('about', handleAboutCommand);
+      bot.command('start', handleStartCommand)
+      bot.command('help', handleHelpCommand)
+      bot.command('echo', handleEchoCommand)
+      bot.command('weather', handleWeatherCommand)
+      bot.command('about', handleAboutCommand)
 
       // Handle the request
-      return await bot.handleRequest(request);
+      return await bot.handleRequest(request)
     } catch (error) {
-      console.error('Bot error:', error);
-      return new Response('Internal Server Error', { status: 500 });
+      console.error('Bot error:', error)
+      return new Response('Internal Server Error', { status: 500 })
     }
-  },
-};
+  }
+}

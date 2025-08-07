@@ -32,5 +32,5 @@ export enum PaymentEventType {
   // Balance events
   BALANCE_UPDATED = 'payment:balance:updated',
   BALANCE_LOW = 'payment:balance:low',
-  BALANCE_TOPPED_UP = 'payment:balance:topped_up',
+  BALANCE_TOPPED_UP = 'payment:balance:topped_up'
 }

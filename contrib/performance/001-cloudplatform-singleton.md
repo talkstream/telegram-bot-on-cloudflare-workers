@@ -13,34 +13,34 @@ In production with Kogotochki bot, we discovered `CloudPlatformFactory.createFro
 
 ```typescript
 // File: src/core/cloud/cloud-platform-cache.ts
-import type { ICloudPlatformConnector } from './interfaces';
-import type { Env } from '../../config/env';
-import { CloudPlatformFactory } from './cloud-platform-factory';
+import type { ICloudPlatformConnector } from './interfaces'
+import type { Env } from '../../config/env'
+import { CloudPlatformFactory } from './cloud-platform-factory'
 
-const connectorCache = new Map<string, ICloudPlatformConnector>();
+const connectorCache = new Map<string, ICloudPlatformConnector>()
 
 function getCacheKey(env: Env): string {
   // Create unique key based on platform and environment
-  return `${env.PLATFORM || 'cloudflare'}_${env.ENVIRONMENT || 'production'}`;
+  return `${env.PLATFORM || 'cloudflare'}_${env.ENVIRONMENT || 'production'}`
 }
 
 export function getCloudPlatformConnector(env: Env): ICloudPlatformConnector {
-  const key = getCacheKey(env);
+  const key = getCacheKey(env)
 
-  const cached = connectorCache.get(key);
+  const cached = connectorCache.get(key)
   if (cached) {
-    return cached;
+    return cached
   }
 
-  const connector = CloudPlatformFactory.createFromTypedEnv(env);
-  connectorCache.set(key, connector);
+  const connector = CloudPlatformFactory.createFromTypedEnv(env)
+  connectorCache.set(key, connector)
 
-  return connector;
+  return connector
 }
 
 // Clear cache function for testing
 export function clearCloudPlatformCache(): void {
-  connectorCache.clear();
+  connectorCache.clear()
 }
 ```
 
@@ -50,63 +50,63 @@ export function clearCloudPlatformCache(): void {
 
 ```typescript
 // Before
-const platform = CloudPlatformFactory.createFromTypedEnv(env);
+const platform = CloudPlatformFactory.createFromTypedEnv(env)
 
 // After
-import { getCloudPlatformConnector } from './core/cloud/cloud-platform-cache';
-const platform = getCloudPlatformConnector(env);
+import { getCloudPlatformConnector } from './core/cloud/cloud-platform-cache'
+const platform = getCloudPlatformConnector(env)
 ```
 
 2. Update connectors to use cached instance:
 
 ```typescript
 // In telegram-connector.ts
-const cloudConnector = getCloudPlatformConnector(telegramConfig.env);
+const cloudConnector = getCloudPlatformConnector(telegramConfig.env)
 ```
 
 ## Test Coverage
 
 ```typescript
 // File: src/core/cloud/__tests__/cloud-platform-cache.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import { getCloudPlatformConnector, clearCloudPlatformCache } from '../cloud-platform-cache';
-import { CloudPlatformFactory } from '../cloud-platform-factory';
+import { describe, it, expect, beforeEach } from 'vitest'
+import { getCloudPlatformConnector, clearCloudPlatformCache } from '../cloud-platform-cache'
+import { CloudPlatformFactory } from '../cloud-platform-factory'
 
 describe('CloudPlatform Cache', () => {
   beforeEach(() => {
-    clearCloudPlatformCache();
-  });
+    clearCloudPlatformCache()
+  })
 
   it('should return same instance for same environment', () => {
-    const env = { PLATFORM: 'cloudflare', DB: {} };
+    const env = { PLATFORM: 'cloudflare', DB: {} }
 
-    const instance1 = getCloudPlatformConnector(env);
-    const instance2 = getCloudPlatformConnector(env);
+    const instance1 = getCloudPlatformConnector(env)
+    const instance2 = getCloudPlatformConnector(env)
 
-    expect(instance1).toBe(instance2);
-  });
+    expect(instance1).toBe(instance2)
+  })
 
   it('should return different instances for different environments', () => {
-    const env1 = { PLATFORM: 'cloudflare', ENVIRONMENT: 'dev' };
-    const env2 = { PLATFORM: 'cloudflare', ENVIRONMENT: 'prod' };
+    const env1 = { PLATFORM: 'cloudflare', ENVIRONMENT: 'dev' }
+    const env2 = { PLATFORM: 'cloudflare', ENVIRONMENT: 'prod' }
 
-    const instance1 = getCloudPlatformConnector(env1);
-    const instance2 = getCloudPlatformConnector(env2);
+    const instance1 = getCloudPlatformConnector(env1)
+    const instance2 = getCloudPlatformConnector(env2)
 
-    expect(instance1).not.toBe(instance2);
-  });
+    expect(instance1).not.toBe(instance2)
+  })
 
   it('should call factory only once per environment', () => {
-    const spy = vi.spyOn(CloudPlatformFactory, 'createFromTypedEnv');
-    const env = { PLATFORM: 'cloudflare' };
+    const spy = vi.spyOn(CloudPlatformFactory, 'createFromTypedEnv')
+    const env = { PLATFORM: 'cloudflare' }
 
-    getCloudPlatformConnector(env);
-    getCloudPlatformConnector(env);
-    getCloudPlatformConnector(env);
+    getCloudPlatformConnector(env)
+    getCloudPlatformConnector(env)
+    getCloudPlatformConnector(env)
 
-    expect(spy).toHaveBeenCalledTimes(1);
-  });
-});
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+})
 ```
 
 ## Production Impact

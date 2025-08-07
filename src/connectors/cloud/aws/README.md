@@ -14,7 +14,7 @@ This connector enables deployment of Wireframe bots on AWS infrastructure, suppo
 ## Configuration
 
 ```typescript
-import { AWSConnector } from '@/connectors/cloud/aws';
+import { AWSConnector } from '@/connectors/cloud/aws'
 
 const connector = new AWSConnector({
   env: {
@@ -25,15 +25,15 @@ const connector = new AWSConnector({
     // Service mappings
     DYNAMODB_TABLES: {
       kv: 'wireframe-kv-store',
-      sessions: 'wireframe-sessions',
+      sessions: 'wireframe-sessions'
     },
     S3_BUCKETS: {
       uploads: 'wireframe-uploads',
-      static: 'wireframe-static',
+      static: 'wireframe-static'
     },
-    USE_ELASTICACHE: 'true', // or 'false' to use DynamoDB for cache
-  },
-});
+    USE_ELASTICACHE: 'true' // or 'false' to use DynamoDB for cache
+  }
+})
 ```
 
 ## Storage Services
@@ -41,32 +41,32 @@ const connector = new AWSConnector({
 ### Key-Value Store (DynamoDB)
 
 ```typescript
-const kv = connector.getKeyValueStore('sessions');
-await kv.set('user:123', JSON.stringify({ name: 'John' }));
-const user = await kv.get('user:123');
+const kv = connector.getKeyValueStore('sessions')
+await kv.set('user:123', JSON.stringify({ name: 'John' }))
+const user = await kv.get('user:123')
 ```
 
 ### Database Store (RDS/Aurora)
 
 ```typescript
-const db = connector.getDatabaseStore('main');
-const result = await db.query('SELECT * FROM users WHERE id = ?', [userId]);
+const db = connector.getDatabaseStore('main')
+const result = await db.query('SELECT * FROM users WHERE id = ?', [userId])
 ```
 
 ### Object Store (S3)
 
 ```typescript
-const s3 = connector.getObjectStore('uploads');
-await s3.put('file.pdf', fileStream);
-const url = await s3.getPresignedUrl('file.pdf', 'get', 3600);
+const s3 = connector.getObjectStore('uploads')
+await s3.put('file.pdf', fileStream)
+const url = await s3.getPresignedUrl('file.pdf', 'get', 3600)
 ```
 
 ### Cache Store (ElastiCache/DynamoDB)
 
 ```typescript
-const cache = connector.getCacheStore();
-await cache.set('api:response', JSON.stringify(data), 300); // 5 min TTL
-const cached = await cache.get('api:response');
+const cache = connector.getCacheStore()
+await cache.set('api:response', JSON.stringify(data), 300) // 5 min TTL
+const cached = await cache.get('api:response')
 ```
 
 ## AWS-Specific Features
@@ -76,9 +76,9 @@ const cached = await cache.get('api:response');
 The S3 object store supports generating pre-signed URLs for secure, temporary access:
 
 ```typescript
-const s3 = connector.getObjectStore('uploads') as AWSS3ObjectStore;
-const uploadUrl = await s3.getPresignedUrl('avatar.jpg', 'put', 3600);
-const downloadUrl = await s3.getPresignedUrl('avatar.jpg', 'get', 3600);
+const s3 = connector.getObjectStore('uploads') as AWSS3ObjectStore
+const uploadUrl = await s3.getPresignedUrl('avatar.jpg', 'put', 3600)
+const downloadUrl = await s3.getPresignedUrl('avatar.jpg', 'get', 3600)
 ```
 
 ### Multipart Uploads
@@ -86,7 +86,7 @@ const downloadUrl = await s3.getPresignedUrl('avatar.jpg', 'get', 3600);
 For large files, use multipart uploads:
 
 ```typescript
-const uploadId = await s3.createMultipartUpload('large-video.mp4');
+const uploadId = await s3.createMultipartUpload('large-video.mp4')
 // Upload parts...
 ```
 
@@ -95,9 +95,9 @@ const uploadId = await s3.createMultipartUpload('large-video.mp4');
 The cache store can persist to DynamoDB for durability:
 
 ```typescript
-const cache = connector.getCacheStore() as AWSCacheStore;
-await cache.persistToDynamoDB();
-await cache.loadFromDynamoDB();
+const cache = connector.getCacheStore() as AWSCacheStore
+await cache.persistToDynamoDB()
+await cache.loadFromDynamoDB()
 ```
 
 ## Resource Constraints
@@ -148,19 +148,19 @@ Consider using AWS CDK or Terraform for managing infrastructure:
 
 ```typescript
 // Example CDK stack
-import * as cdk from 'aws-cdk-lib';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as cdk from 'aws-cdk-lib'
+import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 
 export class WireframeBotStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+    super(scope, id, props)
 
     // DynamoDB tables
     const kvTable = new dynamodb.Table(this, 'KVStore', {
       partitionKey: { name: 'key', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-    });
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST
+    })
 
     // Lambda function
     const botFunction = new lambda.Function(this, 'BotFunction', {
@@ -168,11 +168,11 @@ export class WireframeBotStack extends cdk.Stack {
       handler: 'index.handler',
       code: lambda.Code.fromAsset('dist'),
       environment: {
-        DYNAMODB_TABLE: kvTable.tableName,
-      },
-    });
+        DYNAMODB_TABLE: kvTable.tableName
+      }
+    })
 
-    kvTable.grantReadWriteData(botFunction);
+    kvTable.grantReadWriteData(botFunction)
   }
 }
 ```
@@ -213,7 +213,7 @@ The AWS connector integrates with CloudWatch for monitoring:
 // View them in the AWS Console or query via API
 
 // Custom metrics
-const cloudwatch = new CloudWatchClient({ region });
+const cloudwatch = new CloudWatchClient({ region })
 await cloudwatch.send(
   new PutMetricDataCommand({
     Namespace: 'Wireframe/Bot',
@@ -221,11 +221,11 @@ await cloudwatch.send(
       {
         MetricName: 'MessageProcessed',
         Value: 1,
-        Unit: 'Count',
-      },
-    ],
-  }),
-);
+        Unit: 'Count'
+      }
+    ]
+  })
+)
 ```
 
 ## Limitations

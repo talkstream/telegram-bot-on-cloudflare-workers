@@ -1,37 +1,37 @@
-import type { KVNamespace } from '@cloudflare/workers-types';
+import type { KVNamespace } from '@cloudflare/workers-types'
 
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger'
 
 export interface CacheOptions {
-  ttl?: number; // Time to live in seconds
-  prefix?: string; // Key prefix for namespacing
+  ttl?: number // Time to live in seconds
+  prefix?: string // Key prefix for namespacing
 }
 
 export class KVCache {
   constructor(
     private readonly kv: KVNamespace,
-    private readonly defaultOptions: CacheOptions = {},
+    private readonly defaultOptions: CacheOptions = {}
   ) {}
 
   /**
    * Get a value from cache
    */
   async get<T = unknown>(key: string): Promise<T | null> {
-    const fullKey = this.buildKey(key);
+    const fullKey = this.buildKey(key)
 
     try {
-      const value = await this.kv.get(fullKey, 'json');
+      const value = await this.kv.get(fullKey, 'json')
 
       if (value === null) {
-        logger.debug('Cache miss', { key: fullKey });
-        return null;
+        logger.debug('Cache miss', { key: fullKey })
+        return null
       }
 
-      logger.debug('Cache hit', { key: fullKey });
-      return value as T;
+      logger.debug('Cache hit', { key: fullKey })
+      return value as T
     } catch (error) {
-      logger.error('Cache get error', { error, key: fullKey });
-      return null;
+      logger.error('Cache get error', { error, key: fullKey })
+      return null
     }
   }
 
@@ -39,21 +39,21 @@ export class KVCache {
    * Get a string value from cache
    */
   async getString(key: string): Promise<string | null> {
-    const fullKey = this.buildKey(key);
+    const fullKey = this.buildKey(key)
 
     try {
-      const value = await this.kv.get(fullKey);
+      const value = await this.kv.get(fullKey)
 
       if (value === null) {
-        logger.debug('Cache miss', { key: fullKey });
-        return null;
+        logger.debug('Cache miss', { key: fullKey })
+        return null
       }
 
-      logger.debug('Cache hit', { key: fullKey });
-      return value;
+      logger.debug('Cache hit', { key: fullKey })
+      return value
     } catch (error) {
-      logger.error('Cache get error', { error, key: fullKey });
-      return null;
+      logger.error('Cache get error', { error, key: fullKey })
+      return null
     }
   }
 
@@ -61,26 +61,26 @@ export class KVCache {
    * Set a value in cache
    */
   async set<T>(key: string, value: T, options?: CacheOptions): Promise<void> {
-    const fullKey = this.buildKey(key);
-    const ttl = options?.ttl ?? this.defaultOptions.ttl;
+    const fullKey = this.buildKey(key)
+    const ttl = options?.ttl ?? this.defaultOptions.ttl
 
     try {
-      const putOptions: KVNamespacePutOptions = {};
+      const putOptions: KVNamespacePutOptions = {}
 
       if (ttl) {
-        putOptions.expirationTtl = ttl;
+        putOptions.expirationTtl = ttl
       }
 
       if (typeof value === 'string') {
-        await this.kv.put(fullKey, value, putOptions);
+        await this.kv.put(fullKey, value, putOptions)
       } else {
-        await this.kv.put(fullKey, JSON.stringify(value), putOptions);
+        await this.kv.put(fullKey, JSON.stringify(value), putOptions)
       }
 
-      logger.debug('Cache set', { key: fullKey, ttl });
+      logger.debug('Cache set', { key: fullKey, ttl })
     } catch (error) {
-      logger.error('Cache set error', { error, key: fullKey });
-      throw error;
+      logger.error('Cache set error', { error, key: fullKey })
+      throw error
     }
   }
 
@@ -88,14 +88,14 @@ export class KVCache {
    * Delete a value from cache
    */
   async delete(key: string): Promise<void> {
-    const fullKey = this.buildKey(key);
+    const fullKey = this.buildKey(key)
 
     try {
-      await this.kv.delete(fullKey);
-      logger.debug('Cache delete', { key: fullKey });
+      await this.kv.delete(fullKey)
+      logger.debug('Cache delete', { key: fullKey })
     } catch (error) {
-      logger.error('Cache delete error', { error, key: fullKey });
-      throw error;
+      logger.error('Cache delete error', { error, key: fullKey })
+      throw error
     }
   }
 
@@ -103,8 +103,8 @@ export class KVCache {
    * Check if a key exists in cache
    */
   async has(key: string): Promise<boolean> {
-    const value = await this.getString(key);
-    return value !== null;
+    const value = await this.getString(key)
+    return value !== null
   }
 
   /**
@@ -113,32 +113,32 @@ export class KVCache {
   async getOrSet<T>(
     key: string,
     factory: () => Promise<T> | T,
-    options?: CacheOptions,
+    options?: CacheOptions
   ): Promise<T> {
-    const cached = await this.get<T>(key);
+    const cached = await this.get<T>(key)
 
     if (cached !== null) {
-      return cached;
+      return cached
     }
 
-    const value = await factory();
-    await this.set(key, value, options);
+    const value = await factory()
+    await this.set(key, value, options)
 
-    return value;
+    return value
   }
 
   /**
    * List keys with a prefix
    */
   async list(prefix?: string): Promise<string[]> {
-    const fullPrefix = this.buildKey(prefix || '');
+    const fullPrefix = this.buildKey(prefix || '')
 
     try {
-      const list = await this.kv.list({ prefix: fullPrefix });
-      return list.keys.map((key) => key.name);
+      const list = await this.kv.list({ prefix: fullPrefix })
+      return list.keys.map(key => key.name)
     } catch (error) {
-      logger.error('Cache list error', { error, prefix: fullPrefix });
-      return [];
+      logger.error('Cache list error', { error, prefix: fullPrefix })
+      return []
     }
   }
 
@@ -146,45 +146,45 @@ export class KVCache {
    * Clear all keys with a prefix
    */
   async clear(prefix?: string): Promise<void> {
-    const keys = await this.list(prefix);
+    const keys = await this.list(prefix)
 
-    await Promise.all(keys.map((key) => this.kv.delete(key)));
+    await Promise.all(keys.map(key => this.kv.delete(key)))
 
-    logger.info('Cache cleared', { prefix, count: keys.length });
+    logger.info('Cache cleared', { prefix, count: keys.length })
   }
 
   /**
    * Build a full key with prefix
    */
   private buildKey(key: string): string {
-    const prefix = this.defaultOptions.prefix;
-    return prefix ? `${prefix}:${key}` : key;
+    const prefix = this.defaultOptions.prefix
+    return prefix ? `${prefix}:${key}` : key
   }
 }
 
 // Factory function for creating cache instances
 export function createCache(kv: KVNamespace, options?: CacheOptions): KVCache {
-  return new KVCache(kv, options);
+  return new KVCache(kv, options)
 }
 
 // Preset cache configurations
 export function createUserCache(kv: KVNamespace): KVCache {
   return new KVCache(kv, {
     prefix: 'user',
-    ttl: 3600, // 1 hour
-  });
+    ttl: 3600 // 1 hour
+  })
 }
 
 export function createSessionCache(kv: KVNamespace): KVCache {
   return new KVCache(kv, {
     prefix: 'session',
-    ttl: 86400, // 24 hours
-  });
+    ttl: 86400 // 24 hours
+  })
 }
 
 export function createRateLimitCache(kv: KVNamespace): KVCache {
   return new KVCache(kv, {
     prefix: 'rate_limit',
-    ttl: 60, // 1 minute
-  });
+    ttl: 60 // 1 minute
+  })
 }

@@ -19,10 +19,12 @@ wireframe create my-bot
 ```
 
 Options:
+
 - `-t, --template <template>` - Template to use (default: basic)
 - `--no-install` - Skip npm install
 
 The command will guide you through:
+
 1. Selecting messaging platform (Telegram, Discord, Slack)
 2. Choosing AI provider (OpenAI, Anthropic, Gemini)
 3. Picking cloud platform (Cloudflare, AWS, Vercel)
@@ -44,6 +46,7 @@ wireframe add --dev prettier eslint
 ```
 
 Options:
+
 - `--plugin` - Add as plugin instead of connector
 - `--dev` - Add as dev dependency
 
@@ -57,17 +60,20 @@ Options:
 ## Quick Start
 
 1. Install the CLI:
+
 ```bash
 npm install -g @wireframe/cli
 ```
 
 2. Create a new bot:
+
 ```bash
 wireframe create my-bot
 cd my-bot
 ```
 
 3. Start development:
+
 ```bash
 npm run dev
 ```

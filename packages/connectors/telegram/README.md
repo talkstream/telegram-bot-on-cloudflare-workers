@@ -32,7 +32,7 @@ const bot = await Wireframe.create({
   }
 })
 
-bot.on('message', async (message) => {
+bot.on('message', async message => {
   await message.reply('Hello from Wireframe!')
 })
 
@@ -43,10 +43,10 @@ await bot.start()
 
 ```typescript
 interface TelegramConfig {
-  token: string           // Bot token from @BotFather
-  webhookUrl?: string     // For webhook mode
+  token: string // Bot token from @BotFather
+  webhookUrl?: string // For webhook mode
   pollingTimeout?: number // For long polling (default: 30s)
-  apiRoot?: string        // Custom API endpoint
+  apiRoot?: string // Custom API endpoint
 }
 ```
 
@@ -55,13 +55,10 @@ interface TelegramConfig {
 ### Custom Keyboards
 
 ```typescript
-bot.on('message', async (message) => {
+bot.on('message', async message => {
   await message.reply('Choose an option:', {
     keyboard: {
-      buttons: [
-        [{ text: 'Option 1' }, { text: 'Option 2' }],
-        [{ text: 'Cancel' }]
-      ],
+      buttons: [[{ text: 'Option 1' }, { text: 'Option 2' }], [{ text: 'Cancel' }]],
       resize: true
     }
   })
@@ -71,7 +68,7 @@ bot.on('message', async (message) => {
 ### Inline Keyboards
 
 ```typescript
-bot.on('message', async (message) => {
+bot.on('message', async message => {
   await message.reply('Click a button:', {
     keyboard: {
       inline: true,
@@ -83,7 +80,7 @@ bot.on('message', async (message) => {
   })
 })
 
-bot.on('callback_query', async (query) => {
+bot.on('callback_query', async query => {
   if (query.data === 'button_clicked') {
     await query.answer('Button clicked!')
   }
@@ -93,11 +90,11 @@ bot.on('callback_query', async (query) => {
 ### Commands
 
 ```typescript
-bot.on('command:start', async (message) => {
+bot.on('command:start', async message => {
   await message.reply('Welcome to the bot!')
 })
 
-bot.on('command:help', async (message) => {
+bot.on('command:help', async message => {
   await message.reply('Available commands: /start, /help')
 })
 ```

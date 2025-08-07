@@ -26,9 +26,9 @@
 ```typescript
 // Оптимизация холодного старта через отложенную загрузку
 const loadHeavyModule = async () => {
-  const { HeavyModule } = await import('./heavy-module');
-  return new HeavyModule();
-};
+  const { HeavyModule } = await import('./heavy-module')
+  return new HeavyModule()
+}
 ```
 
 **Задачи:**
@@ -61,7 +61,7 @@ const loadHeavyModule = async () => {
 
 ```typescript
 // Компиляция схем при старте для производительности
-const compiledSchema = schema.strict();
+const compiledSchema = schema.strict()
 ```
 
 **Задачи:**
@@ -78,10 +78,10 @@ const compiledSchema = schema.strict();
 // Текущее: any types в queue service
 // Целевое: полная типизация
 interface QueueMessage<T> {
-  id: string;
-  data: T;
-  timestamp: number;
-  attempts: number;
+  id: string
+  data: T
+  timestamp: number
+  attempts: number
 }
 ```
 
@@ -96,9 +96,9 @@ interface QueueMessage<T> {
 
 ```typescript
 interface DeadLetterConfig {
-  maxRetries: number;
-  backoffStrategy: 'exponential' | 'linear';
-  dlqName: string;
+  maxRetries: number
+  backoffStrategy: 'exponential' | 'linear'
+  dlqName: string
 }
 ```
 
@@ -114,8 +114,8 @@ interface DeadLetterConfig {
 
 ```typescript
 interface RemoteBinding {
-  service: DurableObjectNamespace;
-  fetch(request: Request): Promise<Response>;
+  service: DurableObjectNamespace
+  fetch(request: Request): Promise<Response>
 }
 ```
 
@@ -132,7 +132,7 @@ interface RemoteBinding {
 // Durable Objects для shared state
 class SharedStateObject {
   constructor(state: DurableObjectState) {
-    this.state = state;
+    this.state = state
   }
 }
 ```
@@ -149,16 +149,16 @@ class SharedStateObject {
 
 ```typescript
 interface StructuredLog {
-  timestamp: string;
-  level: 'debug' | 'info' | 'warn' | 'error';
-  message: string;
+  timestamp: string
+  level: 'debug' | 'info' | 'warn' | 'error'
+  message: string
   context: {
-    traceId: string;
-    spanId: string;
-    userId?: string;
-    requestId: string;
-  };
-  metadata: Record<string, unknown>;
+    traceId: string
+    spanId: string
+    userId?: string
+    requestId: string
+  }
+  metadata: Record<string, unknown>
 }
 ```
 
@@ -174,10 +174,10 @@ interface StructuredLog {
 ```typescript
 // Metrics collection
 interface Metrics {
-  requests: Counter;
-  latency: Histogram;
-  errors: Counter;
-  activeUsers: Gauge;
+  requests: Counter
+  latency: Histogram
+  errors: Counter
+  activeUsers: Gauge
 }
 ```
 

@@ -105,7 +105,7 @@ npm run test:integration
 ```typescript
 // 1. Define interface in core/interfaces/
 export interface IMyServiceConnector {
-  doSomething(input: string): Promise<Result>;
+  doSomething(input: string): Promise<Result>
 }
 
 // 2. Create base connector
@@ -121,7 +121,7 @@ export class SpecificServiceConnector extends BaseMyServiceConnector {
 }
 
 // 4. Register in factory
-serviceRegistry.register('specific', SpecificServiceConnector);
+serviceRegistry.register('specific', SpecificServiceConnector)
 ```
 
 ### 3. Using EventBus
@@ -130,13 +130,13 @@ serviceRegistry.register('specific', SpecificServiceConnector);
 // Emit events for decoupled communication
 eventBus.emit('service:action', {
   data: payload,
-  requestId: generateId(),
-});
+  requestId: generateId()
+})
 
 // Listen for responses
-eventBus.once('service:action:success', (event) => {
+eventBus.once('service:action:success', event => {
   // Handle success
-});
+})
 ```
 
 ## 🔧 Contributing Back
@@ -166,7 +166,7 @@ git push origin feature/connector-improvement
 // Add test based on real scenario
 it('should handle Telegram rate limits gracefully', async () => {
   // Test case from production bot experience
-});
+})
 ```
 
 ### 4. Automated Contribution Tool
@@ -196,28 +196,28 @@ See [Easy Contribute Guide](./EASY_CONTRIBUTE.md) for details.
 
 ```typescript
 // ❌ Bad - Direct platform dependency
-import { KVNamespace } from '@cloudflare/workers-types';
-const kv = env.KV as KVNamespace;
+import { KVNamespace } from '@cloudflare/workers-types'
+const kv = env.KV as KVNamespace
 
 // ✅ Good - Through abstraction
-const kv = ctx.cloudConnector.getKeyValueStore('KV');
+const kv = ctx.cloudConnector.getKeyValueStore('KV')
 ```
 
 ### 2. Event-Driven Communication
 
 ```typescript
 // ❌ Bad - Direct service call
-const result = await aiService.complete(prompt);
+const result = await aiService.complete(prompt)
 
 // ✅ Good - Through events
-eventBus.emit('ai:complete', { prompt });
-eventBus.once('ai:complete:success', handleResult);
+eventBus.emit('ai:complete', { prompt })
+eventBus.once('ai:complete:success', handleResult)
 ```
 
 ### 3. Platform Feature Detection
 
 ```typescript
-const features = ctx.cloudConnector.getFeatures();
+const features = ctx.cloudConnector.getFeatures()
 if (features.hasWebSockets) {
   // Use WebSocket features
 } else {

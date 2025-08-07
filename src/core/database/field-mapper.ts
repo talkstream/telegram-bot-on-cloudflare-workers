@@ -31,61 +31,61 @@ export interface FieldMapping<
   TDb,
   TDomain,
   TDbField extends keyof TDb,
-  TDomainField extends keyof TDomain,
+  TDomainField extends keyof TDomain
 > {
-  dbField: TDbField;
-  domainField: TDomainField;
-  toDomain?: (value: TDb[TDbField]) => TDomain[TDomainField];
-  toDb?: (value: TDomain[TDomainField]) => TDb[TDbField];
+  dbField: TDbField
+  domainField: TDomainField
+  toDomain?: (value: TDb[TDbField]) => TDomain[TDomainField]
+  toDb?: (value: TDomain[TDomainField]) => TDb[TDbField]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record<string, any>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private mappings: Map<keyof TDb, FieldMapping<TDb, TDomain, any, any>> = new Map();
+  private mappings: Map<keyof TDb, FieldMapping<TDb, TDomain, any, any>> = new Map()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private reverseMappings: Map<keyof TDomain, FieldMapping<TDb, TDomain, any, any>> = new Map();
+  private reverseMappings: Map<keyof TDomain, FieldMapping<TDb, TDomain, any, any>> = new Map()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(mappings: FieldMapping<TDb, TDomain, any, any>[]) {
-    mappings.forEach((mapping) => {
-      this.mappings.set(mapping.dbField, mapping);
-      this.reverseMappings.set(mapping.domainField, mapping);
-    });
+    mappings.forEach(mapping => {
+      this.mappings.set(mapping.dbField, mapping)
+      this.reverseMappings.set(mapping.domainField, mapping)
+    })
   }
 
   /**
    * Transform a database row to a domain model
    */
   toDomain(dbRow: TDb): TDomain {
-    const result = {} as TDomain;
+    const result = {} as TDomain
 
     for (const [dbField, mapping] of this.mappings) {
-      const value = dbRow[dbField];
+      const value = dbRow[dbField]
       if (value !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (result as any)[mapping.domainField] = mapping.toDomain ? mapping.toDomain(value) : value;
+        ;(result as any)[mapping.domainField] = mapping.toDomain ? mapping.toDomain(value) : value
       }
     }
 
-    return result;
+    return result
   }
 
   /**
    * Transform a domain model to a database row
    */
   toDatabase(domain: TDomain): TDb {
-    const result = {} as TDb;
+    const result = {} as TDb
 
     for (const [domainField, mapping] of this.reverseMappings) {
-      const value = domain[domainField];
+      const value = domain[domainField]
       if (value !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (result as any)[mapping.dbField] = mapping.toDb ? mapping.toDb(value) : value;
+        ;(result as any)[mapping.dbField] = mapping.toDb ? mapping.toDb(value) : value
       }
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -95,22 +95,22 @@ export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record
    * // Returns: "telegram_id as telegramId, is_active as isActive"
    */
   generateSelectSQL(includeTablePrefix?: string): string {
-    const aliases: string[] = [];
+    const aliases: string[] = []
 
     for (const [dbField, mapping] of this.mappings) {
-      const field = String(dbField);
-      const alias = String(mapping.domainField);
+      const field = String(dbField)
+      const alias = String(mapping.domainField)
 
       if (field !== alias) {
-        const prefix = includeTablePrefix ? `${includeTablePrefix}.` : '';
-        aliases.push(`${prefix}${field} as ${alias}`);
+        const prefix = includeTablePrefix ? `${includeTablePrefix}.` : ''
+        aliases.push(`${prefix}${field} as ${alias}`)
       } else {
-        const prefix = includeTablePrefix ? `${includeTablePrefix}.` : '';
-        aliases.push(`${prefix}${field}`);
+        const prefix = includeTablePrefix ? `${includeTablePrefix}.` : ''
+        aliases.push(`${prefix}${field}`)
       }
     }
 
-    return aliases.join(', ');
+    return aliases.join(', ')
   }
 
   /**
@@ -118,15 +118,15 @@ export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record
    * @returns { fields: string[], placeholders: string[] }
    */
   generateInsertSQL(): { fields: string[]; placeholders: string[] } {
-    const fields: string[] = [];
-    const placeholders: string[] = [];
+    const fields: string[] = []
+    const placeholders: string[] = []
 
     for (const [dbField] of this.mappings) {
-      fields.push(String(dbField));
-      placeholders.push('?');
+      fields.push(String(dbField))
+      placeholders.push('?')
     }
 
-    return { fields, placeholders };
+    return { fields, placeholders }
   }
 
   /**
@@ -135,16 +135,16 @@ export class FieldMapper<TDb extends Record<string, any>, TDomain extends Record
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getDatabaseValues(domain: Partial<TDomain>): any[] {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const values: any[] = [];
+    const values: any[] = []
 
     for (const [_, mapping] of this.mappings) {
-      const value = domain[mapping.domainField];
+      const value = domain[mapping.domainField]
       if (value !== undefined) {
-        values.push(mapping.toDb ? mapping.toDb(value) : value);
+        values.push(mapping.toDb ? mapping.toDb(value) : value)
       }
     }
 
-    return values;
+    return values
   }
 }
 
@@ -157,7 +157,7 @@ export const CommonTransformers = {
    */
   sqliteBoolean: {
     toDomain: (v: number) => v === 1,
-    toDb: (v: boolean) => (v ? 1 : 0),
+    toDb: (v: boolean) => (v ? 1 : 0)
   },
 
   /**
@@ -165,7 +165,7 @@ export const CommonTransformers = {
    */
   isoDate: {
     toDomain: (v: string) => new Date(v),
-    toDb: (v: Date) => v.toISOString(),
+    toDb: (v: Date) => v.toISOString()
   },
 
   /**
@@ -173,7 +173,7 @@ export const CommonTransformers = {
    */
   unixTimestamp: {
     toDomain: (v: number) => new Date(v * 1000),
-    toDb: (v: Date) => Math.floor(v.getTime() / 1000),
+    toDb: (v: Date) => Math.floor(v.getTime() / 1000)
   },
 
   /**
@@ -182,17 +182,17 @@ export const CommonTransformers = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   json: <T = any>() => ({
     toDomain: (v: string): T => JSON.parse(v),
-    toDb: (v: T): string => JSON.stringify(v),
+    toDb: (v: T): string => JSON.stringify(v)
   }),
 
   /**
    * Comma-separated string to array
    */
   csvArray: {
-    toDomain: (v: string | null): string[] => (v ? v.split(',').map((s) => s.trim()) : []),
-    toDb: (v: string[]): string => v.join(','),
-  },
-};
+    toDomain: (v: string | null): string[] => (v ? v.split(',').map(s => s.trim()) : []),
+    toDb: (v: string[]): string => v.join(',')
+  }
+}
 
 /**
  * Utility to automatically create mappings for snake_case to camelCase
@@ -202,31 +202,31 @@ export function createAutoMapper<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TDb extends Record<string, any>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  TDomain extends Record<string, any>,
+  TDomain extends Record<string, any>
 >(
   fields: Array<keyof TDb>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customMappings?: Partial<Record<keyof TDb, Partial<FieldMapping<TDb, TDomain, any, any>>>>,
+  customMappings?: Partial<Record<keyof TDb, Partial<FieldMapping<TDb, TDomain, any, any>>>>
 ): FieldMapper<TDb, TDomain> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mappings: FieldMapping<TDb, TDomain, any, any>[] = fields.map((dbField) => {
-    const domainField = snakeToCamel(String(dbField)) as keyof TDomain;
-    const custom = customMappings?.[dbField];
+  const mappings: FieldMapping<TDb, TDomain, any, any>[] = fields.map(dbField => {
+    const domainField = snakeToCamel(String(dbField)) as keyof TDomain
+    const custom = customMappings?.[dbField]
 
     return {
       dbField,
       domainField: custom?.domainField ?? domainField,
       toDomain: custom?.toDomain,
-      toDb: custom?.toDb,
-    };
-  });
+      toDb: custom?.toDb
+    }
+  })
 
-  return new FieldMapper(mappings);
+  return new FieldMapper(mappings)
 }
 
 /**
  * Convert snake_case to camelCase
  */
 function snakeToCamel(str: string): string {
-  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
 }

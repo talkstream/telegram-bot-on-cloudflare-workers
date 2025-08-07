@@ -52,11 +52,11 @@ Always validate webhooks:
 
 ```typescript
 // ✅ Good - validates both URL token and header
-if (token !== env.TELEGRAM_WEBHOOK_SECRET) return unauthorized();
-if (header !== env.TELEGRAM_WEBHOOK_SECRET) return unauthorized();
+if (token !== env.TELEGRAM_WEBHOOK_SECRET) return unauthorized()
+if (header !== env.TELEGRAM_WEBHOOK_SECRET) return unauthorized()
 
 // ❌ Bad - only validates URL token
-if (token !== env.TELEGRAM_WEBHOOK_SECRET) return unauthorized();
+if (token !== env.TELEGRAM_WEBHOOK_SECRET) return unauthorized()
 ```
 
 ### CORS Configuration
@@ -66,9 +66,9 @@ Update `src/config/cors.ts` with your actual domains:
 ```typescript
 export const ALLOWED_ORIGINS = [
   'https://your-frontend.com',
-  'https://app.your-domain.com',
+  'https://app.your-domain.com'
   // Never use '*' in production!
-];
+]
 ```
 
 ### Database Security
@@ -85,8 +85,8 @@ Configure appropriate rate limits:
 ```typescript
 rateLimiter({
   maxRequests: 20, // Adjust based on your needs
-  windowMs: 60000, // 1 minute
-});
+  windowMs: 60000 // 1 minute
+})
 ```
 
 ## Security Features

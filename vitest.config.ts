@@ -1,8 +1,8 @@
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineWorkersConfig({
   test: {
@@ -13,7 +13,7 @@ export default defineWorkersConfig({
       workers: {
         isolatedStorage: true,
         wrangler: {
-          configPath: './wrangler.toml',
+          configPath: './wrangler.toml'
         },
         miniflare: {
           compatibilityDate: '2024-01-01',
@@ -25,14 +25,14 @@ export default defineWorkersConfig({
             GEMINI_API_KEY: 'test-gemini-key',
             ADMIN_KEY: 'test-admin-key',
             ENVIRONMENT: 'test',
-            SENTRY_DSN: '',
+            SENTRY_DSN: ''
           },
           // Mock D1 database
           d1Databases: ['DB'],
           // Mock KV namespaces
-          kvNamespaces: ['SESSIONS', 'CACHE'],
-        },
-      },
+          kvNamespaces: ['SESSIONS', 'CACHE']
+        }
+      }
     },
     coverage: {
       provider: 'istanbul', // Use istanbul instead of v8 for Cloudflare Workers compatibility
@@ -44,13 +44,13 @@ export default defineWorkersConfig({
         '**/*.config.*',
         '**/mockData.ts',
         '**/*.type.ts',
-        'eslint-rules/**',
-      ],
-    },
+        'eslint-rules/**'
+      ]
+    }
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-});
+      '@': path.resolve(__dirname, './src')
+    }
+  }
+})

@@ -2,5 +2,5 @@
  * Cache module exports
  */
 
-export { TieredCache } from './tiered-cache';
-export type { CacheTier, CacheItem, CacheStats } from './tiered-cache';
+export { TieredCache } from './tiered-cache'
+export type { CacheItem, CacheStats, CacheTier } from './tiered-cache'

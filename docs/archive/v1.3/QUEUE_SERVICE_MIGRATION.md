@@ -10,14 +10,14 @@ This guide helps you migrate from the old `QueueService` (with 7 `any` types) to
 
 ```typescript
 // Loose typing, any types allowed
-const service = new QueueService(config);
+const service = new QueueService(config)
 service.registerHandler({
   type: 'user.created',
   handler: async (data: any) => {
     // No type safety
-    console.log(data.userId); // Could be undefined
-  },
-});
+    console.log(data.userId) // Could be undefined
+  }
+})
 ```
 
 ### After (New Typed Queue Service)
@@ -25,16 +25,16 @@ service.registerHandler({
 ```typescript
 // Full type safety with message registry
 interface MyMessages extends MessageTypeRegistry {
-  'user.created': { userId: string; email: string };
+  'user.created': { userId: string; email: string }
 }
 
-const service = createTypedQueueService<MyMessages>(config);
+const service = createTypedQueueService<MyMessages>(config)
 service.registerHandler('user.created', {
-  handler: async (data) => {
+  handler: async data => {
     // TypeScript knows the shape!
-    console.log(data.userId); // Guaranteed to exist
-  },
-});
+    console.log(data.userId) // Guaranteed to exist
+  }
+})
 ```
 
 ## Migration Steps
@@ -45,51 +45,51 @@ Create a centralized type registry for all your queue messages:
 
 ```typescript
 // src/types/queue-messages.ts
-import type { MessageTypeRegistry } from '../services/queue-service-typed';
+import type { MessageTypeRegistry } from '../services/queue-service-typed'
 
 export interface AppMessageRegistry extends MessageTypeRegistry {
   // User events
   'user.created': {
-    userId: string;
-    email: string;
-    username: string;
-    createdAt: Date;
-  };
+    userId: string
+    email: string
+    username: string
+    createdAt: Date
+  }
 
   'user.updated': {
-    userId: string;
-    changes: Record<string, unknown>;
-    updatedBy: string;
-  };
+    userId: string
+    changes: Record<string, unknown>
+    updatedBy: string
+  }
 
   // Order events
   'order.placed': {
-    orderId: string;
-    userId: string;
+    orderId: string
+    userId: string
     items: Array<{
-      productId: string;
-      quantity: number;
-      price: number;
-    }>;
-    total: number;
-  };
+      productId: string
+      quantity: number
+      price: number
+    }>
+    total: number
+  }
 
   // Email events
   'email.send': {
-    to: string;
-    subject: string;
-    body: string;
-    template?: string;
-    variables?: Record<string, unknown>;
-  };
+    to: string
+    subject: string
+    body: string
+    template?: string
+    variables?: Record<string, unknown>
+  }
 
   // Notification events
   'notification.push': {
-    userId: string;
-    title: string;
-    body: string;
-    data?: Record<string, unknown>;
-  };
+    userId: string
+    title: string
+    body: string
+    data?: Record<string, unknown>
+  }
 }
 ```
 
@@ -99,29 +99,29 @@ Replace old service creation with typed version:
 
 ```typescript
 // Before
-import { QueueService } from './services/queue-service';
+import { QueueService } from './services/queue-service'
 
 const queueService = new QueueService({
   adapter: cloudflareAdapter,
-  logger,
-});
+  logger
+})
 
 // After
-import { createTypedQueueService } from './services/queue-service-typed';
-import { createCloudflareQueueAdapter } from './services/queue-adapters/typed-cloudflare-adapter';
-import type { AppMessageRegistry } from './types/queue-messages';
+import { createTypedQueueService } from './services/queue-service-typed'
+import { createCloudflareQueueAdapter } from './services/queue-adapters/typed-cloudflare-adapter'
+import type { AppMessageRegistry } from './types/queue-messages'
 
 const queueService = createTypedQueueService<AppMessageRegistry>({
   adapter: createCloudflareQueueAdapter({
     queue: env.QUEUE,
     dlqQueue: env.DLQ_QUEUE,
-    logger,
+    logger
   }),
   logger,
   enableDLQ: true,
   defaultRetryLimit: 3,
-  dlqBackoffStrategy: 'exponential',
-});
+  dlqBackoffStrategy: 'exponential'
+})
 ```
 
 ### Step 3: Update Message Handlers
@@ -134,36 +134,36 @@ queueService.registerHandler({
   type: 'user.created',
   handler: async (data: any, context) => {
     // No type safety
-    const userId = data.userId; // Could be undefined
-    await sendWelcomeEmail(data.email); // Runtime error possible
-  },
-});
+    const userId = data.userId // Could be undefined
+    await sendWelcomeEmail(data.email) // Runtime error possible
+  }
+})
 
 // After
 queueService.registerHandler('user.created', {
   handler: async (data, context) => {
     // Full type safety - TypeScript knows data shape
-    const { userId, email, username } = data;
-    await sendWelcomeEmail(email); // Compile-time type checking
+    const { userId, email, username } = data
+    await sendWelcomeEmail(email) // Compile-time type checking
 
     // Context is also typed
     logger.info('User created', {
       messageId: context.messageId,
       userId,
-      retryCount: context.retryCount,
-    });
+      retryCount: context.retryCount
+    })
   },
   onError: async (error, data, context) => {
     // Error handler also gets typed data
     logger.error('Failed to process user creation', {
       userId: data.userId,
       error: error.message,
-      retryCount: context.retryCount,
-    });
+      retryCount: context.retryCount
+    })
   },
   retryable: true,
-  maxRetries: 3,
-});
+  maxRetries: 3
+})
 ```
 
 ### Step 4: Update Message Sending
@@ -174,18 +174,18 @@ Replace untyped sends with typed versions:
 // Before
 await queueService.send('user.created', {
   userId: '123',
-  email: 'test@example.com',
+  email: 'test@example.com'
   // Missing fields not caught
-});
+})
 
 // After
 await queueService.send('user.created', {
   userId: '123',
   email: 'test@example.com',
   username: 'testuser',
-  createdAt: new Date(),
+  createdAt: new Date()
   // TypeScript enforces all required fields
-});
+})
 
 // Batch sending with type safety
 await queueService.sendBatch([
@@ -194,18 +194,18 @@ await queueService.sendBatch([
     data: {
       to: 'user1@example.com',
       subject: 'Welcome!',
-      body: 'Welcome to our service',
-    },
+      body: 'Welcome to our service'
+    }
   },
   {
     type: 'notification.push',
     data: {
       userId: '123',
       title: 'New message',
-      body: 'You have a new message',
-    },
-  },
-]);
+      body: 'You have a new message'
+    }
+  }
+])
 ```
 
 ### Step 5: Add DLQ Handling
@@ -218,17 +218,17 @@ const queueService = createTypedQueueService<AppMessageRegistry>({
   adapter,
   enableDLQ: true,
   dlqMaxRetries: 5,
-  dlqBackoffStrategy: 'exponential',
-});
+  dlqBackoffStrategy: 'exponential'
+})
 
 // Process DLQ messages
-const dlqResult = await queueService.processDLQ();
-console.log(`Reprocessed ${dlqResult.processed} messages from DLQ`);
+const dlqResult = await queueService.processDLQ()
+console.log(`Reprocessed ${dlqResult.processed} messages from DLQ`)
 
 // Monitor DLQ statistics
-const dlqStats = await queueService.getDLQStats();
-console.log(`DLQ contains ${dlqStats?.messageCount} messages`);
-console.log('Messages by type:', dlqStats?.messagesByType);
+const dlqStats = await queueService.getDLQStats()
+console.log(`DLQ contains ${dlqStats?.messageCount} messages`)
+console.log('Messages by type:', dlqStats?.messagesByType)
 ```
 
 ### Step 6: Update Tests
@@ -237,41 +237,41 @@ Replace test implementations with typed versions:
 
 ```typescript
 // Before
-import { QueueService } from '../queue-service';
+import { QueueService } from '../queue-service'
 
 const mockAdapter = {
   send: vi.fn(),
-  receive: vi.fn().mockResolvedValue([]),
+  receive: vi.fn().mockResolvedValue([])
   // ...
-};
+}
 
-const service = new QueueService({ adapter: mockAdapter });
+const service = new QueueService({ adapter: mockAdapter })
 
 // After
-import { createTypedQueueService } from '../queue-service-typed';
-import { createMemoryQueueAdapter } from '../queue-adapters/typed-memory-adapter';
-import type { AppMessageRegistry } from '../../types/queue-messages';
+import { createTypedQueueService } from '../queue-service-typed'
+import { createMemoryQueueAdapter } from '../queue-adapters/typed-memory-adapter'
+import type { AppMessageRegistry } from '../../types/queue-messages'
 
 const adapter = createMemoryQueueAdapter<AppMessageRegistry>({
   simulateLatency: 10,
-  maxQueueSize: 100,
-});
+  maxQueueSize: 100
+})
 
 const service = createTypedQueueService<AppMessageRegistry>({
   adapter,
-  enableDLQ: true,
-});
+  enableDLQ: true
+})
 
 // Type-safe test assertions
 await service.send('user.created', {
   userId: '123',
   email: 'test@test.com',
   username: 'testuser',
-  createdAt: new Date(),
-});
+  createdAt: new Date()
+})
 
-const stats = adapter.getStats();
-expect(stats.queueSize).toBe(1);
+const stats = adapter.getStats()
+expect(stats.queueSize).toBe(1)
 ```
 
 ## Common Patterns
@@ -282,29 +282,29 @@ expect(stats.queueSize).toBe(1);
 // Define discriminated union messages
 interface AppMessageRegistry extends MessageTypeRegistry {
   'payment.process': {
-    type: 'credit_card' | 'paypal' | 'crypto';
-    amount: number;
-    currency: string;
-    metadata: Record<string, unknown>;
-  };
+    type: 'credit_card' | 'paypal' | 'crypto'
+    amount: number
+    currency: string
+    metadata: Record<string, unknown>
+  }
 }
 
 service.registerHandler('payment.process', {
-  handler: async (data) => {
+  handler: async data => {
     switch (data.type) {
       case 'credit_card':
-        await processCreditCard(data);
-        break;
+        await processCreditCard(data)
+        break
       case 'paypal':
-        await processPayPal(data);
-        break;
+        await processPayPal(data)
+        break
       case 'crypto':
-        await processCrypto(data);
-        break;
+        await processCrypto(data)
+        break
       // TypeScript ensures exhaustive handling
     }
-  },
-});
+  }
+})
 ```
 
 ### Pattern 2: Message Enrichment
@@ -318,16 +318,16 @@ service.registerHandler('user.created', {
       subject: 'Welcome!',
       body: await renderTemplate('welcome', {
         username: data.username,
-        userId: data.userId,
+        userId: data.userId
       }),
       template: 'welcome',
       variables: {
         messageId: context.messageId,
-        originalTimestamp: context.timestamp,
-      },
-    });
-  },
-});
+        originalTimestamp: context.timestamp
+      }
+    })
+  }
+})
 ```
 
 ### Pattern 3: Dead Letter Queue Monitoring
@@ -335,26 +335,26 @@ service.registerHandler('user.created', {
 ```typescript
 // Set up periodic DLQ monitoring
 setInterval(async () => {
-  const stats = await queueService.getDLQStats();
+  const stats = await queueService.getDLQStats()
 
   if (stats && stats.messageCount > 0) {
     // Alert on DLQ messages
     await alerting.send({
       level: 'warning',
       message: `${stats.messageCount} messages in DLQ`,
-      details: stats.messagesByType,
-    });
+      details: stats.messagesByType
+    })
 
     // Attempt to reprocess old messages
     if (stats.oldestMessage) {
-      const age = Date.now() - stats.oldestMessage.getTime();
+      const age = Date.now() - stats.oldestMessage.getTime()
       if (age > 3600000) {
         // 1 hour
-        await queueService.processDLQ(10); // Process up to 10 messages
+        await queueService.processDLQ(10) // Process up to 10 messages
       }
     }
   }
-}, 60000); // Check every minute
+}, 60000) // Check every minute
 ```
 
 ## Gradual Migration Strategy
@@ -365,21 +365,21 @@ If you can't migrate everything at once:
 
 ```typescript
 // Keep old service for existing code
-const oldQueueService = new QueueService(config);
+const oldQueueService = new QueueService(config)
 
 // Use new service for new features
-const newQueueService = createTypedQueueService<AppMessageRegistry>(config);
+const newQueueService = createTypedQueueService<AppMessageRegistry>(config)
 
 // Gradually migrate handlers
 export const queueService = {
   // Proxy methods to appropriate service
   send: (type: string, data: unknown) => {
     if (isNewMessageType(type)) {
-      return newQueueService.send(type as any, data);
+      return newQueueService.send(type as any, data)
     }
-    return oldQueueService.send(type, data);
-  },
-};
+    return oldQueueService.send(type, data)
+  }
+}
 ```
 
 ### 2. Migrate by Feature
@@ -395,23 +395,23 @@ Start with less critical features:
 Create type guards for runtime validation during migration:
 
 ```typescript
-import { z } from 'zod';
+import { z } from 'zod'
 
 const UserCreatedSchema = z.object({
   userId: z.string(),
   email: z.string().email(),
   username: z.string(),
-  createdAt: z.date(),
-});
+  createdAt: z.date()
+})
 
 function isUserCreatedMessage(data: unknown): data is AppMessageRegistry['user.created'] {
-  return UserCreatedSchema.safeParse(data).success;
+  return UserCreatedSchema.safeParse(data).success
 }
 
 // Use in mixed environment
 if (isUserCreatedMessage(data)) {
   // Type-safe handling
-  await handleUserCreated(data);
+  await handleUserCreated(data)
 }
 ```
 
@@ -430,18 +430,18 @@ The new typed queue service has minimal performance overhead:
 
 ```typescript
 // Error: Type 'string' is not assignable to type 'user.created'
-service.send(messageType, data); // messageType is string variable
+service.send(messageType, data) // messageType is string variable
 ```
 
 **Solution**: Use type assertions or conditionals:
 
 ```typescript
 // Option 1: Type assertion (if you're certain)
-service.send(messageType as keyof AppMessageRegistry, data);
+service.send(messageType as keyof AppMessageRegistry, data)
 
 // Option 2: Type guard
 if (messageType === 'user.created') {
-  service.send(messageType, data); // TypeScript narrows type
+  service.send(messageType, data) // TypeScript narrows type
 }
 ```
 
@@ -449,7 +449,7 @@ if (messageType === 'user.created') {
 
 ```typescript
 // Error: Property 'order.cancelled' does not exist
-service.send('order.cancelled', data);
+service.send('order.cancelled', data)
 ```
 
 **Solution**: Add to message registry:
@@ -458,10 +458,10 @@ service.send('order.cancelled', data);
 interface AppMessageRegistry extends MessageTypeRegistry {
   // ... existing types
   'order.cancelled': {
-    orderId: string;
-    reason: string;
-    cancelledBy: string;
-  };
+    orderId: string
+    reason: string
+    cancelledBy: string
+  }
 }
 ```
 
@@ -470,8 +470,8 @@ interface AppMessageRegistry extends MessageTypeRegistry {
 ```typescript
 // Error: Types of parameters 'data' and 'data' are incompatible
 service.registerHandler('user.created', {
-  handler: oldHandler, // From old service
-});
+  handler: oldHandler // From old service
+})
 ```
 
 **Solution**: Wrap old handlers:
@@ -484,10 +484,10 @@ service.registerHandler('user.created', {
       messageId: context.messageId,
       retryCount: context.retryCount,
       timestamp: context.timestamp,
-      metadata: context.metadata,
-    });
-  },
-});
+      metadata: context.metadata
+    })
+  }
+})
 ```
 
 ## Benefits After Migration

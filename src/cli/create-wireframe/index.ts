@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
-import path from 'path';
-import fs from 'fs/promises';
+import fs from 'fs/promises'
+import path from 'path'
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
-import ora from 'ora';
+import chalk from 'chalk'
+import { Command } from 'commander'
+import inquirer from 'inquirer'
+import ora from 'ora'
 
-import { createProject } from './create-project.js';
-import { validateProjectName } from './utils.js';
-import type { ProjectOptions } from './types.js';
+import { createProject } from './create-project.js'
+import type { ProjectOptions } from './types.js'
+import { validateProjectName } from './utils.js'
 
-const program = new Command();
+const program = new Command()
 
 program
   .name('create-wireframe')
@@ -27,9 +27,9 @@ program
   .option('--no-install', 'Skip dependency installation')
   .option('-y, --yes', 'Skip interactive prompts')
   .action(async (projectName, options) => {
-    console.info(chalk.bold.cyan('\n🚀 Wireframe Bot Creator\n'));
+    console.info(chalk.bold.cyan('\n🚀 Wireframe Bot Creator\n'))
 
-    let config: ProjectOptions;
+    let config: ProjectOptions
 
     if (options.yes && projectName) {
       // Non-interactive mode
@@ -40,8 +40,8 @@ program
         ai: options.ai || 'openai',
         features: [],
         git: options.git !== false,
-        install: options.install !== false,
-      };
+        install: options.install !== false
+      }
     } else {
       // Interactive mode
       const answers = await inquirer.prompt([
@@ -50,7 +50,7 @@ program
           name: 'name',
           message: 'Project name:',
           default: projectName || 'my-wireframe-bot',
-          validate: validateProjectName,
+          validate: validateProjectName
         },
         {
           type: 'list',
@@ -60,9 +60,9 @@ program
             { name: '📱 Telegram', value: 'telegram' },
             { name: '🎮 Discord', value: 'discord' },
             { name: '💼 Slack', value: 'slack' },
-            { name: '💬 WhatsApp', value: 'whatsapp' },
+            { name: '💬 WhatsApp', value: 'whatsapp' }
           ],
-          default: options.platform || 'telegram',
+          default: options.platform || 'telegram'
         },
         {
           type: 'list',
@@ -72,9 +72,9 @@ program
             { name: '☁️ Cloudflare Workers', value: 'cloudflare' },
             { name: '🔶 AWS Lambda', value: 'aws' },
             { name: '🔷 Google Cloud Functions', value: 'gcp' },
-            { name: '🔵 Azure Functions', value: 'azure' },
+            { name: '🔵 Azure Functions', value: 'azure' }
           ],
-          default: options.cloud || 'cloudflare',
+          default: options.cloud || 'cloudflare'
         },
         {
           type: 'list',
@@ -85,9 +85,9 @@ program
             { name: '🧠 Anthropic (Claude)', value: 'anthropic' },
             { name: '🌟 Google (Gemini)', value: 'google' },
             { name: '💻 Local Models (Ollama)', value: 'local' },
-            { name: '🎯 Multiple Providers', value: 'multi' },
+            { name: '🎯 Multiple Providers', value: 'multi' }
           ],
-          default: options.ai || 'openai',
+          default: options.ai || 'openai'
         },
         {
           type: 'checkbox',
@@ -101,52 +101,52 @@ program
             { name: '🔌 Plugin System', value: 'plugins' },
             { name: '🎨 Admin Panel', value: 'admin' },
             { name: '📝 Logging & Monitoring', value: 'monitoring' },
-            { name: '🧪 Testing Setup', value: 'testing' },
+            { name: '🧪 Testing Setup', value: 'testing' }
           ],
-          default: ['database', 'i18n', 'monitoring', 'testing'],
+          default: ['database', 'i18n', 'monitoring', 'testing']
         },
         {
           type: 'confirm',
           name: 'typescript',
           message: 'Use TypeScript strict mode?',
-          default: true,
+          default: true
         },
         {
           type: 'confirm',
           name: 'git',
           message: 'Initialize git repository?',
-          default: options.git !== false,
+          default: options.git !== false
         },
         {
           type: 'confirm',
           name: 'install',
           message: 'Install dependencies?',
-          default: options.install !== false,
-        },
-      ]);
+          default: options.install !== false
+        }
+      ])
 
-      config = answers;
+      config = answers
     }
 
     // Create project
-    const spinner = ora('Creating project...').start();
+    const spinner = ora('Creating project...').start()
 
     try {
-      const projectPath = path.join(process.cwd(), config.name);
+      const projectPath = path.join(process.cwd(), config.name)
 
       // Check if directory exists
       try {
-        await fs.access(projectPath);
-        spinner.fail(`Directory ${config.name} already exists`);
-        process.exit(1);
+        await fs.access(projectPath)
+        spinner.fail(`Directory ${config.name} already exists`)
+        process.exit(1)
       } catch {
         // Directory doesn't exist, continue
       }
 
       // Create project
-      await createProject(projectPath, config);
+      await createProject(projectPath, config)
 
-      spinner.succeed('Project created successfully!');
+      spinner.succeed('Project created successfully!')
 
       console.info(`
 ${chalk.bold.green('✨ Success!')} Created ${chalk.cyan(config.name)} at ${chalk.gray(projectPath)}
@@ -174,12 +174,12 @@ ${chalk.bold('Resources:')}
   🐛 Issues: ${chalk.cyan('https://github.com/talkstream/typescript-wireframe-platform/issues')}
 
 ${chalk.yellow.bold('Happy coding! 🚀')}
-`);
+`)
     } catch (error) {
-      spinner.fail('Failed to create project');
-      console.error(error);
-      process.exit(1);
+      spinner.fail('Failed to create project')
+      console.error(error)
+      process.exit(1)
     }
-  });
+  })
 
-program.parse();
+program.parse()

@@ -69,8 +69,8 @@ export class Censor {
     [/\bнахуй\b/gi, 'н***й'],
     [/\bнахуя\b/gi, 'н***я'],
     [/\bпохуй\b/gi, 'п***й'],
-    [/\bпохую\b/gi, 'п***ю'],
-  ]);
+    [/\bпохую\b/gi, 'п***ю']
+  ])
 
   /**
    * Цензурирует текст, заменяя обсценную лексику звездочками
@@ -78,14 +78,14 @@ export class Censor {
    * @returns цензурированный текст
    */
   static censor(text: string): string {
-    let result = text;
+    let result = text
 
     // Применяем все паттерны
     for (const [pattern, replacement] of this.obscenePatterns) {
-      result = result.replace(pattern, replacement);
+      result = result.replace(pattern, replacement)
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -96,10 +96,10 @@ export class Censor {
   static containsObscene(text: string): boolean {
     for (const [pattern] of this.obscenePatterns) {
       if (pattern.test(text)) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
   /**
@@ -108,20 +108,20 @@ export class Censor {
    * @returns массив найденных слов
    */
   static findObsceneWords(text: string): string[] {
-    const found: string[] = [];
+    const found: string[] = []
 
     for (const [pattern] of this.obscenePatterns) {
-      const matches = text.match(pattern);
+      const matches = text.match(pattern)
       if (matches) {
-        found.push(...matches);
+        found.push(...matches)
       }
     }
 
-    return [...new Set(found)]; // Убираем дубликаты
+    return [...new Set(found)] // Убираем дубликаты
   }
 }
 
 // Экспорт функции для удобства использования
-export const censorText = (text: string): string => Censor.censor(text);
-export const containsObscene = (text: string): boolean => Censor.containsObscene(text);
-export const findObsceneWords = (text: string): string[] => Censor.findObsceneWords(text);
+export const censorText = (text: string): string => Censor.censor(text)
+export const containsObscene = (text: string): boolean => Censor.containsObscene(text)
+export const findObsceneWords = (text: string): string[] => Censor.findObsceneWords(text)

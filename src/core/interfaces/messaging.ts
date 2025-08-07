@@ -1,4 +1,4 @@
-import type { Connector } from './connector.js';
+import type { Connector } from './connector.js'
 
 /**
  * Messaging connector interface for chat platforms
@@ -7,47 +7,47 @@ export interface MessagingConnector extends Connector {
   /**
    * Send a message
    */
-  sendMessage(recipient: string, message: UnifiedMessage): Promise<MessageResult>;
+  sendMessage(recipient: string, message: UnifiedMessage): Promise<MessageResult>
 
   /**
    * Send bulk messages
    */
-  sendBulk(recipients: string[], message: UnifiedMessage): Promise<BulkMessageResult>;
+  sendBulk(recipients: string[], message: UnifiedMessage): Promise<BulkMessageResult>
 
   /**
    * Edit an existing message
    */
-  editMessage(messageId: string, message: UnifiedMessage): Promise<MessageResult>;
+  editMessage(messageId: string, message: UnifiedMessage): Promise<MessageResult>
 
   /**
    * Delete a message
    */
-  deleteMessage(messageId: string): Promise<void>;
+  deleteMessage(messageId: string): Promise<void>
 
   /**
    * Handle incoming webhook
    */
-  handleWebhook(request: Request): Promise<Response>;
+  handleWebhook(request: Request): Promise<Response>
 
   /**
    * Validate webhook request
    */
-  validateWebhook(request: Request): Promise<boolean>;
+  validateWebhook(request: Request): Promise<boolean>
 
   /**
    * Set bot commands
    */
-  setCommands(commands: BotCommand[]): Promise<void>;
+  setCommands(commands: BotCommand[]): Promise<void>
 
   /**
    * Set webhook URL
    */
-  setWebhook(url: string, options?: WebhookOptions): Promise<void>;
+  setWebhook(url: string, options?: WebhookOptions): Promise<void>
 
   /**
    * Get messaging-specific capabilities
    */
-  getMessagingCapabilities(): MessagingCapabilities;
+  getMessagingCapabilities(): MessagingCapabilities
 }
 
 /**
@@ -57,74 +57,74 @@ export interface UnifiedMessage {
   /**
    * Unique message identifier
    */
-  id?: string;
+  id?: string
 
   /**
    * Platform this message is from/for
    */
-  platform?: Platform;
+  platform?: Platform
 
   /**
    * Message sender
    */
-  sender?: User;
+  sender?: User
 
   /**
    * Chat/channel information
    */
-  chat?: Chat;
+  chat?: Chat
 
   /**
    * Message content
    */
-  content: MessageContent;
+  content: MessageContent
 
   /**
    * File attachments
    */
-  attachments?: Attachment[];
+  attachments?: Attachment[]
 
   /**
    * Message being replied to
    */
-  replyTo?: string;
+  replyTo?: string
 
   /**
    * Platform-specific metadata
    */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown>
 
   /**
    * Message timestamp
    */
-  timestamp?: number;
+  timestamp?: number
 }
 
 export interface MessageContent {
   /**
    * Plain text content
    */
-  text?: string;
+  text?: string
 
   /**
    * Rich text entities (bold, italic, etc.)
    */
-  entities?: MessageEntity[];
+  entities?: MessageEntity[]
 
   /**
    * Reply markup (keyboards, buttons)
    */
-  markup?: MessageMarkup;
+  markup?: MessageMarkup
 
   /**
    * Interactive components
    */
-  components?: InteractiveComponent[];
+  components?: InteractiveComponent[]
 
   /**
    * Message type
    */
-  type?: MessageType;
+  type?: MessageType
 }
 
 export enum MessageType {
@@ -136,16 +136,16 @@ export enum MessageType {
   STICKER = 'sticker',
   LOCATION = 'location',
   CONTACT = 'contact',
-  POLL = 'poll',
+  POLL = 'poll'
 }
 
 export interface MessageEntity {
-  type: EntityType;
-  offset: number;
-  length: number;
-  url?: string;
-  user?: User;
-  language?: string;
+  type: EntityType
+  offset: number
+  length: number
+  url?: string
+  user?: User
+  language?: string
 }
 
 export enum EntityType {
@@ -158,64 +158,64 @@ export enum EntityType {
   ITALIC = 'italic',
   CODE = 'code',
   PRE = 'pre',
-  LINK = 'link',
+  LINK = 'link'
 }
 
 export interface MessageMarkup {
-  type: 'inline' | 'keyboard' | 'remove';
-  inline_keyboard?: InlineButton[][];
-  keyboard?: KeyboardButton[][];
-  resize_keyboard?: boolean;
-  one_time_keyboard?: boolean;
-  selective?: boolean;
+  type: 'inline' | 'keyboard' | 'remove'
+  inline_keyboard?: InlineButton[][]
+  keyboard?: KeyboardButton[][]
+  resize_keyboard?: boolean
+  one_time_keyboard?: boolean
+  selective?: boolean
 }
 
 export interface InlineButton {
-  text: string;
-  callback_data?: string;
-  url?: string;
-  switch_inline_query?: string;
-  switch_inline_query_current_chat?: string;
+  text: string
+  callback_data?: string
+  url?: string
+  switch_inline_query?: string
+  switch_inline_query_current_chat?: string
 }
 
 export interface KeyboardButton {
-  text: string;
-  request_contact?: boolean;
-  request_location?: boolean;
-  request_poll?: { type?: 'quiz' | 'regular' };
+  text: string
+  request_contact?: boolean
+  request_location?: boolean
+  request_poll?: { type?: 'quiz' | 'regular' }
 }
 
 export interface InteractiveComponent {
-  type: ComponentType;
-  id: string;
-  data: unknown;
+  type: ComponentType
+  id: string
+  data: unknown
 }
 
 export enum ComponentType {
   BUTTON = 'button',
   SELECT_MENU = 'select_menu',
   TEXT_INPUT = 'text_input',
-  MODAL = 'modal',
+  MODAL = 'modal'
 }
 
 export interface User {
-  id: string;
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  avatar?: string;
-  is_bot?: boolean;
-  metadata?: Record<string, unknown>;
+  id: string
+  username?: string
+  first_name?: string
+  last_name?: string
+  avatar?: string
+  is_bot?: boolean
+  metadata?: Record<string, unknown>
 }
 
 export interface Chat {
-  id: string;
-  type: ChatType;
-  title?: string;
-  username?: string;
-  description?: string;
-  photo?: string;
-  metadata?: Record<string, unknown>;
+  id: string
+  type: ChatType
+  title?: string
+  username?: string
+  description?: string
+  photo?: string
+  metadata?: Record<string, unknown>
 }
 
 export enum ChatType {
@@ -224,20 +224,20 @@ export enum ChatType {
   SUPERGROUP = 'supergroup',
   CHANNEL = 'channel',
   DM = 'dm',
-  GUILD = 'guild',
+  GUILD = 'guild'
 }
 
 export interface Attachment {
-  type: AttachmentType;
-  url?: string;
-  file_id?: string;
-  file_size?: number;
-  mime_type?: string;
-  file_name?: string;
-  width?: number;
-  height?: number;
-  duration?: number;
-  thumbnail?: Attachment;
+  type: AttachmentType
+  url?: string
+  file_id?: string
+  file_size?: number
+  mime_type?: string
+  file_name?: string
+  width?: number
+  height?: number
+  duration?: number
+  thumbnail?: Attachment
 }
 
 export enum AttachmentType {
@@ -248,7 +248,7 @@ export enum AttachmentType {
   STICKER = 'sticker',
   ANIMATION = 'animation',
   VOICE = 'voice',
-  VIDEO_NOTE = 'video_note',
+  VIDEO_NOTE = 'video_note'
 }
 
 export enum Platform {
@@ -261,100 +261,100 @@ export enum Platform {
   TWITTER = 'twitter',
   VIBER = 'viber',
   LINE = 'line',
-  WECHAT = 'wechat',
+  WECHAT = 'wechat'
 }
 
 export interface BotCommand {
-  command: string;
-  description: string;
-  scope?: CommandScope;
+  command: string
+  description: string
+  scope?: CommandScope
 }
 
 export interface CommandScope {
-  type: 'default' | 'all_private_chats' | 'all_group_chats' | 'chat' | 'chat_member';
-  chat_id?: string;
-  user_id?: string;
+  type: 'default' | 'all_private_chats' | 'all_group_chats' | 'chat' | 'chat_member'
+  chat_id?: string
+  user_id?: string
 }
 
 export interface WebhookOptions {
-  secret_token?: string;
-  certificate?: string;
-  max_connections?: number;
-  allowed_updates?: string[];
-  drop_pending_updates?: boolean;
+  secret_token?: string
+  certificate?: string
+  max_connections?: number
+  allowed_updates?: string[]
+  drop_pending_updates?: boolean
 }
 
 export interface MessageResult {
-  success: boolean;
-  message_id?: string;
-  error?: Error;
+  success: boolean
+  message_id?: string
+  error?: Error
 }
 
 export interface BulkMessageResult {
-  total: number;
-  successful: number;
-  failed: number;
-  results: MessageResult[];
+  total: number
+  successful: number
+  failed: number
+  results: MessageResult[]
 }
 
 export interface MessagingCapabilities {
   /**
    * Maximum message length
    */
-  maxMessageLength: number;
+  maxMessageLength: number
 
   /**
    * Supported message types
    */
-  supportedMessageTypes: MessageType[];
+  supportedMessageTypes: MessageType[]
 
   /**
    * Supported entity types
    */
-  supportedEntityTypes: EntityType[];
+  supportedEntityTypes: EntityType[]
 
   /**
    * Supported attachment types
    */
-  supportedAttachmentTypes: AttachmentType[];
+  supportedAttachmentTypes: AttachmentType[]
 
   /**
    * Maximum attachments per message
    */
-  maxAttachments: number;
+  maxAttachments: number
 
   /**
    * Supports editing messages
    */
-  supportsEditing: boolean;
+  supportsEditing: boolean
 
   /**
    * Supports deleting messages
    */
-  supportsDeleting: boolean;
+  supportsDeleting: boolean
 
   /**
    * Supports reactions
    */
-  supportsReactions: boolean;
+  supportsReactions: boolean
 
   /**
    * Supports threads
    */
-  supportsThreads: boolean;
+  supportsThreads: boolean
 
   /**
    * Supports voice messages
    */
-  supportsVoice: boolean;
+  supportsVoice: boolean
 
   /**
    * Supports video messages
    */
-  supportsVideo: boolean;
+  supportsVideo: boolean
 
   /**
    * Platform-specific capabilities
    */
-  custom?: Record<string, unknown>;
+  custom?: Record<string, unknown>
 }

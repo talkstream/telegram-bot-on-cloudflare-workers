@@ -27,15 +27,15 @@ export function escapeMarkdown(text: string): string {
     '{',
     '}',
     '.',
-    '!',
-  ];
+    '!'
+  ]
 
-  let escaped = text;
+  let escaped = text
   for (const char of specialChars) {
-    escaped = escaped.replace(new RegExp(`\\${char}`, 'g'), `\\${char}`);
+    escaped = escaped.replace(new RegExp(`\\${char}`, 'g'), `\\${char}`)
   }
 
-  return escaped;
+  return escaped
 }
 
 /**
@@ -44,7 +44,7 @@ export function escapeMarkdown(text: string): string {
  * @returns Экранированный текст
  */
 export function escapeCode(text: string): string {
-  return text.replace(/`/g, '\\`');
+  return text.replace(/`/g, '\\`')
 }
 
 /**
@@ -53,7 +53,7 @@ export function escapeCode(text: string): string {
  * @returns Форматированный текст
  */
 export function bold(text: string): string {
-  return `*${escapeMarkdown(text)}*`;
+  return `*${escapeMarkdown(text)}*`
 }
 
 /**
@@ -62,7 +62,7 @@ export function bold(text: string): string {
  * @returns Форматированный текст
  */
 export function italic(text: string): string {
-  return `_${escapeMarkdown(text)}_`;
+  return `_${escapeMarkdown(text)}_`
 }
 
 /**
@@ -71,7 +71,7 @@ export function italic(text: string): string {
  * @returns Форматированный текст
  */
 export function code(text: string): string {
-  return `\`${escapeCode(text)}\``;
+  return `\`${escapeCode(text)}\``
 }
 
 /**
@@ -81,8 +81,8 @@ export function code(text: string): string {
  * @returns Форматированный текст
  */
 export function codeBlock(text: string, language?: string): string {
-  const escaped = text.replace(/```/g, '\\`\\`\\`');
-  return language ? `\`\`\`${language}\n${escaped}\n\`\`\`` : `\`\`\`\n${escaped}\n\`\`\``;
+  const escaped = text.replace(/```/g, '\\`\\`\\`')
+  return language ? `\`\`\`${language}\n${escaped}\n\`\`\`` : `\`\`\`\n${escaped}\n\`\`\``
 }
 
 /**
@@ -92,7 +92,7 @@ export function codeBlock(text: string, language?: string): string {
  * @returns Форматированная ссылка
  */
 export function link(text: string, url: string): string {
-  return `[${escapeMarkdown(text)}](${url})`;
+  return `[${escapeMarkdown(text)}](${url})`
 }
 
 /**
@@ -102,7 +102,7 @@ export function link(text: string, url: string): string {
  */
 export function quote(text: string): string {
   // Простой текст без форматирования для лучшей читаемости
-  return text;
+  return text
 }
 
 /**
@@ -111,15 +111,15 @@ export function quote(text: string): string {
  * @returns Форматированное сообщение об ошибке
  */
 export function formatError(error: unknown): string {
-  let errorMessage = '❌ Произошла ошибка';
+  let errorMessage = '❌ Произошла ошибка'
 
   if (error instanceof Error) {
-    errorMessage += `\n\n${escapeMarkdown(error.message)}`;
+    errorMessage += `\n\n${escapeMarkdown(error.message)}`
   } else if (typeof error === 'string') {
-    errorMessage += `\n\n${escapeMarkdown(error)}`;
+    errorMessage += `\n\n${escapeMarkdown(error)}`
   }
 
-  return errorMessage;
+  return errorMessage
 }
 
 /**
@@ -130,10 +130,10 @@ export function formatError(error: unknown): string {
  */
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) {
-    return text;
+    return text
   }
 
-  return text.substring(0, maxLength - 3) + '...';
+  return text.substring(0, maxLength - 3) + '...'
 }
 
 /**
@@ -142,7 +142,7 @@ export function truncate(text: string, maxLength: number): string {
  * @returns Линия из символов
  */
 export function divider(length: number = 16): string {
-  return '─'.repeat(length);
+  return '─'.repeat(length)
 }
 
 /**
@@ -151,20 +151,20 @@ export function divider(length: number = 16): string {
  * @returns Форматированное сообщение
  */
 export function formatMessage(message: {
-  content: string;
-  sender_masked_id: string;
-  sender_faction: string;
-  created_at: string;
-  is_read: boolean;
+  content: string
+  sender_masked_id: string
+  sender_faction: string
+  created_at: string
+  is_read: boolean
 }): string {
-  const faction = message.sender_faction === 'keepers' ? '🔵' : '🔴';
-  const readStatus = message.is_read ? '' : '🔴 ';
+  const faction = message.sender_faction === 'keepers' ? '🔵' : '🔴'
+  const readStatus = message.is_read ? '' : '🔴 '
   const date = new Date(message.created_at).toLocaleString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
-    minute: '2-digit',
-  });
+    minute: '2-digit'
+  })
 
   // Примечание: escapeMarkdown применяется к content. Если content уже содержит
   // форматирование, которое должно быть сохранено, используйте другую функцию
@@ -173,7 +173,7 @@ export function formatMessage(message: {
     `${readStatus}${faction} *От: ${message.sender_masked_id}*\n` +
     `📅 ${date}\n\n` +
     `${escapeMarkdown(message.content)}`
-  );
+  )
 }
 
 /**
@@ -184,7 +184,7 @@ export function formatMessage(message: {
  */
 export function truncateMessage(text: string, maxLength: number = 1000): string {
   if (text.length <= maxLength) {
-    return text;
+    return text
   }
-  return text.substring(0, maxLength - 3) + '...';
+  return text.substring(0, maxLength - 3) + '...'
 }

@@ -61,7 +61,7 @@ Wireframe is transforming into a **vendor-agnostic ecosystem** - a universal pla
 
 ### Development Priorities (v2.0 Ecosystem)
 
-1. **Package-First Development**: Every feature as modular package (@wireframe/*)
+1. **Package-First Development**: Every feature as modular package (@wireframe/\*)
 2. **Registry-Based Architecture**: Load extensions through registry, not imports
 3. **Performance Optimization**: Sub-5KB bundles, sub-50ms cold starts
 4. **Vendor Independence**: Zero vendor-specific code in core packages
@@ -107,25 +107,21 @@ Wireframe is transforming into a **vendor-agnostic ecosystem** - a universal pla
   - Successfully transformed from monolith framework to modular ecosystem
   - Zero vendor-specific code in core packages
   - Registry pattern implementation for dynamic extension loading
-  
 - ✅ **Performance Metrics Achieved**
   - **4.1KB core bundle** - Ultra-lightweight @wireframe/core package
   - **47ms cold start** - Average startup time on Cloudflare Workers
   - **145x bundle size reduction** - From monolith to modular architecture
   - **Sub-10ms CPU usage** - Optimized for Cloudflare free tier limits
-  
 - ✅ **Modular Package Structure Created**
   - **@wireframe/core** - Core event bus and registry system
   - **@wireframe/connector-telegram** - Telegram messaging connector
   - **@wireframe/connector-openai** - OpenAI AI provider connector
   - **@wireframe/connector-cloudflare** - Cloudflare platform connector
-  
 - ✅ **Technical Architecture Implemented**
   - **Registry Pattern** - Zero build-time imports, pure runtime loading
   - **EventBus Architecture** - 100% event-driven communication
   - **Connector Abstraction** - Unified interfaces for all external services
   - **Type-Safe Packages** - Full TypeScript strict mode compliance
-  
 - ✅ **Warning-Free Codebase**
   - **Zero ESLint warnings** across all packages
   - **Zero TypeScript errors** in strict mode
@@ -160,7 +156,7 @@ For information on using AI providers and adding custom models (like gemini-2.0-
 ## Project Workflow Guidelines (v2.0 Ecosystem)
 
 - **READ ECOSYSTEM DOCS FIRST**: Review WIREFRAME_ECOSYSTEM_VISION.md and docs/ECOSYSTEM_ARCHITECTURE.md
-- **Package-First Development**: Build every feature as a modular @wireframe/* package
+- **Package-First Development**: Build every feature as a modular @wireframe/\* package
 - **Registry Pattern**: Load all extensions through registry, never direct imports
 - **Event-Driven Architecture**: Use EventBus for all component communication
 - **Zero Vendor Code in Core**: Keep vendor-specific code in connector packages only

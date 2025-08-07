@@ -119,12 +119,12 @@ const aiConfig = {
       displayName: 'Gemini 2.0 Flash Lite',
       config: {
         apiKey: process.env.GEMINI_API_KEY,
-        model: 'gemini-2.0-flash-lite', // Your custom model
-      },
-    },
+        model: 'gemini-2.0-flash-lite' // Your custom model
+      }
+    }
   ],
-  default: 'gemini-lite',
-};
+  default: 'gemini-lite'
+}
 ```
 
 ### Method 2: Custom Provider
@@ -133,20 +133,20 @@ For more control, create a custom provider:
 
 ```typescript
 // src/lib/ai/adapters/gemini-lite.ts
-import { GoogleAIProvider } from './google-ai';
+import { GoogleAIProvider } from './google-ai'
 
 export class GeminiLiteProvider extends GoogleAIProvider {
   constructor(apiKey: string) {
     super({
       apiKey,
-      model: 'gemini-2.0-flash-exp',
-    });
+      model: 'gemini-2.0-flash-exp'
+    })
   }
 
   // Override methods if needed for custom behavior
   async doComplete(request: CompletionRequest): Promise<CompletionResponse> {
     // Custom implementation or call super
-    return super.doComplete(request);
+    return super.doComplete(request)
   }
 }
 ```
@@ -155,20 +155,20 @@ Then register it:
 
 ```typescript
 // In your bot initialization
-import { getProviderRegistry } from '@/lib/ai/registry';
-import { GeminiLiteProvider } from '@/lib/ai/adapters/gemini-lite';
+import { getProviderRegistry } from '@/lib/ai/registry'
+import { GeminiLiteProvider } from '@/lib/ai/adapters/gemini-lite'
 
-const registry = getProviderRegistry();
+const registry = getProviderRegistry()
 registry.register(
   'gemini-lite',
   {
     id: 'gemini-lite',
     type: 'google-ai',
     displayName: 'Gemini Lite',
-    config: { apiKey: process.env.GEMINI_API_KEY },
+    config: { apiKey: process.env.GEMINI_API_KEY }
   },
-  GeminiLiteProvider,
-);
+  GeminiLiteProvider
+)
 ```
 
 ## Using AI in Your Bot
@@ -177,19 +177,19 @@ registry.register(
 
 ```typescript
 // In your command handler
-import { AIService } from '@/services/ai-service';
+import { AIService } from '@/services/ai-service'
 
-const ai = new AIService();
-const response = await ai.complete('What is the weather today?');
-await ctx.reply(response.content);
+const ai = new AIService()
+const response = await ai.complete('What is the weather today?')
+await ctx.reply(response.content)
 ```
 
 ### With Specific Provider
 
 ```typescript
 const response = await ai.complete('Translate to Spanish: Hello', {
-  provider: 'gemini-lite', // Use your custom model
-});
+  provider: 'gemini-lite' // Use your custom model
+})
 ```
 
 ### With Fallbacks
@@ -197,8 +197,8 @@ const response = await ai.complete('Translate to Spanish: Hello', {
 ```typescript
 const ai = new AIService({
   defaultProvider: 'gemini-lite',
-  fallbackProviders: ['google-ai', 'openai'],
-});
+  fallbackProviders: ['google-ai', 'openai']
+})
 ```
 
 ## Understanding gemini-service.ts
@@ -217,18 +217,18 @@ You don't need to use it directly - the provider system handles it for you.
 Enable cost tracking to monitor usage:
 
 ```typescript
-import { CostCalculator } from '@/lib/ai/cost-tracking';
+import { CostCalculator } from '@/lib/ai/cost-tracking'
 
 const ai = new AIService({
   costTracking: {
     enabled: true,
-    calculator: new CostCalculator(),
-  },
-});
+    calculator: new CostCalculator()
+  }
+})
 
 // Get usage stats
-const stats = ai.getUsageStats();
-console.log(`Total cost: $${stats.totalCost}`);
+const stats = ai.getUsageStats()
+console.log(`Total cost: $${stats.totalCost}`)
 ```
 
 ## Best Practices

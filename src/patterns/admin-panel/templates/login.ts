@@ -2,10 +2,10 @@
  * Login page template for admin panel
  */
 
-import type { LoginPageOptions } from '../types';
+import type { LoginPageOptions } from '../types'
 
 export function renderLoginPage(options: LoginPageOptions = {}): string {
-  const { error, showCodeInput = false, telegramId = '' } = options;
+  const { error, showCodeInput = false, telegramId = '' } = options
 
   return `
 <!DOCTYPE html>
@@ -224,5 +224,5 @@ export function renderLoginPage(options: LoginPageOptions = {}): string {
     </script>
 </body>
 </html>
-  `;
+  `
 }

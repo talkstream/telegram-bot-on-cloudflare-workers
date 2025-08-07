@@ -38,7 +38,7 @@ jobs:
 
       - name: Check code formatting
         run: npm run format:check || true # Don't fail on formatting issues
-        
+
       - name: Build packages
         run: |
           cd packages/core && npm install && npm run build || true

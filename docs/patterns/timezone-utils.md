@@ -18,15 +18,15 @@ Bots serving global users face timezone challenges:
 A universal timezone utility using date-fns v4 with @date-fns/tz:
 
 ```typescript
-import { TimezoneFactory } from '@/lib/utils/timezone';
+import { TimezoneFactory } from '@/lib/utils/timezone'
 
 // Create timezone utils for user
-const user = await getUserFromDB(userId);
-const tz = TimezoneFactory.forUser(user);
+const user = await getUserFromDB(userId)
+const tz = TimezoneFactory.forUser(user)
 
 // Display time in user's timezone
-const eventTime = new Date('2025-08-06T14:00:00Z');
-await ctx.reply(`Event starts at ${tz.formatBotDateTime(eventTime)} (${tz.getAbbreviation()})`);
+const eventTime = new Date('2025-08-06T14:00:00Z')
+await ctx.reply(`Event starts at ${tz.formatBotDateTime(eventTime)} (${tz.getAbbreviation()})`)
 // Output: "Event starts at 21:00 06.08.2025 (GMT+7)"
 ```
 
@@ -41,34 +41,34 @@ npm install date-fns @date-fns/tz
 ### Basic Formatting
 
 ```typescript
-const bangkok = TimezoneFactory.get('Asia/Bangkok');
-const now = new Date();
+const bangkok = TimezoneFactory.get('Asia/Bangkok')
+const now = new Date()
 
-bangkok.formatBotTime(now); // "14:30"
-bangkok.formatBotDate(now); // "06.08.2025"
-bangkok.formatBotDateTime(now); // "14:30 06.08.2025"
-bangkok.format(now, 'EEEE'); // "Wednesday"
+bangkok.formatBotTime(now) // "14:30"
+bangkok.formatBotDate(now) // "06.08.2025"
+bangkok.formatBotDateTime(now) // "14:30 06.08.2025"
+bangkok.format(now, 'EEEE') // "Wednesday"
 ```
 
 ### Timezone Information
 
 ```typescript
-const tz = TimezoneFactory.get('Asia/Bangkok');
+const tz = TimezoneFactory.get('Asia/Bangkok')
 
-tz.getOffset(); // 7 (hours from UTC)
-tz.getAbbreviation(); // "GMT+7"
+tz.getOffset() // 7 (hours from UTC)
+tz.getAbbreviation() // "GMT+7"
 ```
 
 ### Business Hours
 
 ```typescript
-const supportTz = TimezoneFactory.get('Asia/Bangkok');
+const supportTz = TimezoneFactory.get('Asia/Bangkok')
 
 if (supportTz.isBusinessHours()) {
-  await ctx.reply('✅ Support is online!');
+  await ctx.reply('✅ Support is online!')
 } else {
-  const nextOpen = supportTz.getNextOccurrence(9, 0);
-  await ctx.reply(`Support opens at ${supportTz.formatBotDateTime(nextOpen)}`);
+  const nextOpen = supportTz.getNextOccurrence(9, 0)
+  await ctx.reply(`Support opens at ${supportTz.formatBotDateTime(nextOpen)}`)
 }
 ```
 
@@ -76,14 +76,14 @@ if (supportTz.isBusinessHours()) {
 
 ```typescript
 // Schedule notification for 9 AM local time
-const tz = TimezoneFactory.forUser(user);
-const notificationTime = tz.getNextOccurrence(9, 0);
+const tz = TimezoneFactory.forUser(user)
+const notificationTime = tz.getNextOccurrence(9, 0)
 
 await scheduleNotification({
   userId: user.id,
   sendAt: notificationTime,
-  message: 'Good morning!',
-});
+  message: 'Good morning!'
+})
 ```
 
 ## Usage Patterns
@@ -92,13 +92,13 @@ await scheduleNotification({
 
 ```typescript
 interface User {
-  id: string;
-  timezone?: string; // 'Asia/Bangkok'
-  location?: string; // 'bangkok'
+  id: string
+  timezone?: string // 'Asia/Bangkok'
+  location?: string // 'bangkok'
 }
 
 // Automatically select best timezone
-const tz = TimezoneFactory.forUser(user);
+const tz = TimezoneFactory.forUser(user)
 // Uses timezone if set, otherwise maps location, fallback to UTC
 ```
 
@@ -106,32 +106,32 @@ const tz = TimezoneFactory.forUser(user);
 
 ```typescript
 async function showAuctionEnd(ctx: Context) {
-  const user = await getUser(ctx.from.id);
-  const tz = TimezoneFactory.forUser(user);
+  const user = await getUser(ctx.from.id)
+  const tz = TimezoneFactory.forUser(user)
 
   // Auction ends at 6 AM local time
-  const auctionEnd = tz.getNextOccurrence(6, 0);
+  const auctionEnd = tz.getNextOccurrence(6, 0)
 
   await ctx.reply(
-    `⏰ Auction ends:\n` + `${tz.formatBotDateTime(auctionEnd)} (${tz.getAbbreviation()})`,
-  );
+    `⏰ Auction ends:\n` + `${tz.formatBotDateTime(auctionEnd)} (${tz.getAbbreviation()})`
+  )
 }
 ```
 
 ### Pattern 3: Global Event Announcement
 
 ```typescript
-const eventTime = new Date('2025-08-10T14:00:00Z');
+const eventTime = new Date('2025-08-10T14:00:00Z')
 
 const timezones = [
   { name: 'Bangkok', tz: TimezoneFactory.get('Asia/Bangkok') },
   { name: 'Moscow', tz: TimezoneFactory.get('Europe/Moscow') },
-  { name: 'New York', tz: TimezoneFactory.get('America/New_York') },
-];
+  { name: 'New York', tz: TimezoneFactory.get('America/New_York') }
+]
 
-let message = '🎉 Event Starting Times:\n\n';
+let message = '🎉 Event Starting Times:\n\n'
 for (const { name, tz } of timezones) {
-  message += `${name}: ${tz.formatBotDateTime(eventTime)} (${tz.getAbbreviation()})\n`;
+  message += `${name}: ${tz.formatBotDateTime(eventTime)} (${tz.getAbbreviation()})\n`
 }
 ```
 
@@ -139,12 +139,12 @@ for (const { name, tz } of timezones) {
 
 ```typescript
 function getGreeting(tz: TimezoneUtils): string {
-  const hour = parseInt(tz.format(new Date(), 'HH'));
+  const hour = parseInt(tz.format(new Date(), 'HH'))
 
-  if (hour < 12) return '🌅 Good morning';
-  if (hour < 18) return '☀️ Good afternoon';
-  if (hour < 22) return '🌆 Good evening';
-  return '🌙 Good night';
+  if (hour < 12) return '🌅 Good morning'
+  if (hour < 18) return '☀️ Good afternoon'
+  if (hour < 22) return '🌆 Good evening'
+  return '🌙 Good night'
 }
 ```
 
@@ -152,17 +152,17 @@ function getGreeting(tz: TimezoneUtils): string {
 
 ```typescript
 async function showPayments(ctx: Context) {
-  const user = await getUser(ctx.from.id);
-  const tz = TimezoneFactory.forUser(user);
-  const payments = await getPaymentHistory(user.id);
+  const user = await getUser(ctx.from.id)
+  const tz = TimezoneFactory.forUser(user)
+  const payments = await getPaymentHistory(user.id)
 
-  let message = `💳 Payment History (${tz.getAbbreviation()}):\n\n`;
+  let message = `💳 Payment History (${tz.getAbbreviation()}):\n\n`
 
   for (const payment of payments) {
-    message += `${tz.formatBotDateTime(payment.timestamp)} - ${payment.amount} stars\n`;
+    message += `${tz.formatBotDateTime(payment.timestamp)} - ${payment.amount} stars\n`
   }
 
-  await ctx.reply(message);
+  await ctx.reply(message)
 }
 ```
 
@@ -181,9 +181,9 @@ const locationMap = {
   tokyo: 'Asia/Tokyo',
   dubai: 'Asia/Dubai',
   singapore: 'Asia/Singapore',
-  sydney: 'Australia/Sydney',
+  sydney: 'Australia/Sydney'
   // ... more locations
-};
+}
 ```
 
 ## Convenience Exports
@@ -191,35 +191,35 @@ const locationMap = {
 Pre-configured timezone utilities:
 
 ```typescript
-import { UTC, Bangkok, Moscow, NewYork, London, Tokyo } from '@/lib/utils/timezone';
+import { UTC, Bangkok, Moscow, NewYork, London, Tokyo } from '@/lib/utils/timezone'
 
 // Use directly
-Bangkok.formatBotDateTime(new Date()); // "14:30 06.08.2025"
-Moscow.getAbbreviation(); // "GMT+3"
+Bangkok.formatBotDateTime(new Date()) // "14:30 06.08.2025"
+Moscow.getAbbreviation() // "GMT+3"
 ```
 
 ## Testing
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { TimezoneFactory } from '@/lib/utils/timezone';
+import { describe, it, expect } from 'vitest'
+import { TimezoneFactory } from '@/lib/utils/timezone'
 
 describe('Timezone handling', () => {
   it('should format times correctly', () => {
-    const bangkok = TimezoneFactory.get('Asia/Bangkok');
-    const utcDate = new Date('2025-08-06T00:00:00Z');
+    const bangkok = TimezoneFactory.get('Asia/Bangkok')
+    const utcDate = new Date('2025-08-06T00:00:00Z')
 
     // Bangkok is UTC+7
-    expect(bangkok.format(utcDate, 'HH:mm')).toBe('07:00');
-  });
+    expect(bangkok.format(utcDate, 'HH:mm')).toBe('07:00')
+  })
 
   it('should cache instances', () => {
-    const tz1 = TimezoneFactory.get('Asia/Bangkok');
-    const tz2 = TimezoneFactory.get('Asia/Bangkok');
+    const tz1 = TimezoneFactory.get('Asia/Bangkok')
+    const tz2 = TimezoneFactory.get('Asia/Bangkok')
 
-    expect(tz1).toBe(tz2); // Same instance
-  });
-});
+    expect(tz1).toBe(tz2) // Same instance
+  })
+})
 ```
 
 ## Production Results
@@ -245,29 +245,29 @@ From Kogotochki bot (Thailand market):
 
 ```typescript
 // ❌ Ambiguous
-'Auction ends at 06:00';
+'Auction ends at 06:00'
 
 // ✅ Clear
-'Auction ends at 06:00 (GMT+7)';
+'Auction ends at 06:00 (GMT+7)'
 ```
 
 ### 2. Store UTC, Display Local
 
 ```typescript
 // Store in database as UTC
-const timestamp = new Date().toISOString();
+const timestamp = new Date().toISOString()
 
 // Display in user's timezone
-const tz = TimezoneFactory.forUser(user);
-const display = tz.formatBotDateTime(timestamp);
+const tz = TimezoneFactory.forUser(user)
+const display = tz.formatBotDateTime(timestamp)
 ```
 
 ### 3. Cache Timezone Utils
 
 ```typescript
 // TimezoneFactory automatically caches instances
-const tz1 = TimezoneFactory.get('Asia/Bangkok');
-const tz2 = TimezoneFactory.get('Asia/Bangkok');
+const tz1 = TimezoneFactory.get('Asia/Bangkok')
+const tz2 = TimezoneFactory.get('Asia/Bangkok')
 // tz1 === tz2 (same instance)
 ```
 
@@ -276,16 +276,16 @@ const tz2 = TimezoneFactory.get('Asia/Bangkok');
 ```typescript
 const tz = TimezoneFactory.forUser({
   timezone: user.timezone, // First priority
-  location: user.location, // Second priority
-}); // Fallback: UTC
+  location: user.location // Second priority
+}) // Fallback: UTC
 ```
 
 ### 5. Business Hours Check
 
 ```typescript
 if (!supportTz.isBusinessHours()) {
-  const nextOpen = supportTz.getNextOccurrence(9, 0);
-  await ctx.reply(`Support opens at ${supportTz.formatBotDateTime(nextOpen)}`);
+  const nextOpen = supportTz.getNextOccurrence(9, 0)
+  await ctx.reply(`Support opens at ${supportTz.formatBotDateTime(nextOpen)}`)
 }
 ```
 
@@ -295,22 +295,22 @@ if (!supportTz.isBusinessHours()) {
 
 ```typescript
 // Before
-const date = new Date();
-const formatted = `${date.getHours()}:${date.getMinutes()} ${date.toDateString()}`;
+const date = new Date()
+const formatted = `${date.getHours()}:${date.getMinutes()} ${date.toDateString()}`
 
 // After
-const tz = TimezoneFactory.forUser(user);
-const formatted = tz.formatBotDateTime(date);
+const tz = TimezoneFactory.forUser(user)
+const formatted = tz.formatBotDateTime(date)
 ```
 
 ### From Moment.js
 
 ```typescript
 // Before (moment-timezone)
-moment.tz(date, 'Asia/Bangkok').format('HH:mm DD.MM.YYYY');
+moment.tz(date, 'Asia/Bangkok').format('HH:mm DD.MM.YYYY')
 
 // After (timezone utils)
-Bangkok.formatBotDateTime(date);
+Bangkok.formatBotDateTime(date)
 ```
 
 ## Performance
@@ -332,9 +332,9 @@ Bangkok.formatBotDateTime(date);
 
 ```typescript
 try {
-  const tz = new TimezoneUtils(userInput);
+  const tz = new TimezoneUtils(userInput)
 } catch {
-  const tz = new TimezoneUtils('UTC');
+  const tz = new TimezoneUtils('UTC')
 }
 ```
 
@@ -343,9 +343,9 @@ try {
 **Solution**: Use date-fns formatDistance
 
 ```typescript
-import { formatDistance } from 'date-fns';
+import { formatDistance } from 'date-fns'
 
-const timeUntil = formatDistance(auctionEnd, new Date());
+const timeUntil = formatDistance(auctionEnd, new Date())
 // "in 2 hours"
 ```
 

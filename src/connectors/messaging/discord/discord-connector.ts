@@ -1,57 +1,57 @@
-import type { ConnectorConfig } from '../../../core/interfaces/connector.js';
+import { CommonEventType } from '../../../core/events/event-bus.js'
+import type { ConnectorConfig } from '../../../core/interfaces/connector.js'
+import { ConnectorType } from '../../../core/interfaces/connector.js'
 import type {
+  BotCommand,
+  BulkMessageResult,
+  MessageResult,
+  MessagingCapabilities,
   MessagingConnector,
   UnifiedMessage,
-  MessageResult,
-  BulkMessageResult,
-  BotCommand,
-  WebhookOptions,
-  MessagingCapabilities,
-} from '../../../core/interfaces/messaging.js';
+  WebhookOptions
+} from '../../../core/interfaces/messaging.js'
 import {
-  Platform,
-  MessageType,
-  EntityType,
   AttachmentType,
   ChatType,
-} from '../../../core/interfaces/messaging.js';
-import { BaseConnector } from '../../base/base-connector.js';
-import { ConnectorType } from '../../../core/interfaces/connector.js';
-import { CommonEventType } from '../../../core/events/event-bus.js';
+  EntityType,
+  MessageType,
+  Platform
+} from '../../../core/interfaces/messaging.js'
+import { BaseConnector } from '../../base/base-connector.js'
 
 /**
  * Discord connector for Wireframe
  * Implements Discord bot functionality with webhook support
  */
 export class DiscordConnector extends BaseConnector implements MessagingConnector {
-  id = 'discord-connector';
-  name = 'Discord Connector';
-  version = '1.0.0';
-  type = ConnectorType.MESSAGING;
+  id = 'discord-connector'
+  name = 'Discord Connector'
+  version = '1.0.0'
+  type = ConnectorType.MESSAGING
 
-  private webhookUrl?: string;
-  private applicationId?: string;
-  private publicKey?: string;
-  private botToken?: string;
+  private webhookUrl?: string
+  private applicationId?: string
+  private publicKey?: string
+  private botToken?: string
 
   /**
    * Initialize Discord connector
    */
   protected async doInitialize(config: ConnectorConfig): Promise<void> {
-    this.webhookUrl = config.webhookUrl as string;
-    this.applicationId = config.applicationId as string;
-    this.publicKey = config.publicKey as string;
-    this.botToken = config.botToken as string;
+    this.webhookUrl = config.webhookUrl as string
+    this.applicationId = config.applicationId as string
+    this.publicKey = config.publicKey as string
+    this.botToken = config.botToken as string
 
     // Verify Discord credentials
     if (!this.applicationId || !this.publicKey) {
-      throw new Error('Discord application ID and public key are required');
+      throw new Error('Discord application ID and public key are required')
     }
 
     this.emitEvent(CommonEventType.CONNECTOR_INITIALIZED, {
       connector: this.id,
-      status: 'connected',
-    });
+      status: 'connected'
+    })
   }
 
   /**
@@ -60,20 +60,20 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
   async sendMessage(recipient: string, message: UnifiedMessage): Promise<MessageResult> {
     try {
       // Convert unified message to Discord format
-      const discordMessage = this.convertToDiscordMessage(message);
+      const discordMessage = this.convertToDiscordMessage(message)
 
       // Send via webhook or REST API
-      const response = await this.sendDiscordMessage(recipient, discordMessage);
+      const response = await this.sendDiscordMessage(recipient, discordMessage)
 
       return {
         success: true,
-        message_id: response.id,
-      };
+        message_id: response.id
+      }
     } catch (error) {
       return {
         success: false,
-        error: error as Error,
-      };
+        error: error as Error
+      }
     }
   }
 
@@ -81,21 +81,21 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    * Send bulk messages
    */
   async sendBulk(recipients: string[], message: UnifiedMessage): Promise<BulkMessageResult> {
-    const results: MessageResult[] = [];
-    let successful = 0;
+    const results: MessageResult[] = []
+    let successful = 0
 
     for (const recipient of recipients) {
-      const result = await this.sendMessage(recipient, message);
-      results.push(result);
-      if (result.success) successful++;
+      const result = await this.sendMessage(recipient, message)
+      results.push(result)
+      if (result.success) successful++
     }
 
     return {
       total: recipients.length,
       successful,
       failed: recipients.length - successful,
-      results,
-    };
+      results
+    }
   }
 
   /**
@@ -103,18 +103,18 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    */
   async editMessage(messageId: string, message: UnifiedMessage): Promise<MessageResult> {
     try {
-      const discordMessage = this.convertToDiscordMessage(message);
-      await this.editDiscordMessage(messageId, discordMessage);
+      const discordMessage = this.convertToDiscordMessage(message)
+      await this.editDiscordMessage(messageId, discordMessage)
 
       return {
         success: true,
-        message_id: messageId,
-      };
+        message_id: messageId
+      }
     } catch (error) {
       return {
         success: false,
-        error: error as Error,
-      };
+        error: error as Error
+      }
     }
   }
 
@@ -122,7 +122,7 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    * Delete message
    */
   async deleteMessage(messageId: string): Promise<void> {
-    await this.deleteDiscordMessage(messageId);
+    await this.deleteDiscordMessage(messageId)
   }
 
   /**
@@ -131,41 +131,41 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
   async handleWebhook(request: Request): Promise<Response> {
     try {
       // Verify webhook signature
-      const isValid = await this.validateWebhook(request);
+      const isValid = await this.validateWebhook(request)
       if (!isValid) {
-        return new Response('Unauthorized', { status: 401 });
+        return new Response('Unauthorized', { status: 401 })
       }
 
       // Parse interaction
-      const body = (await request.json()) as DiscordInteraction;
+      const body = (await request.json()) as DiscordInteraction
 
       // Handle ping
       if (body.type === 1) {
-        return Response.json({ type: 1 });
+        return Response.json({ type: 1 })
       }
 
       // Convert to unified message and emit event
-      const unifiedMessage = this.convertFromDiscordMessage(body);
+      const unifiedMessage = this.convertFromDiscordMessage(body)
 
       this.emitEvent('message.received', {
         message: unifiedMessage,
-        platform: Platform.DISCORD,
-      });
+        platform: Platform.DISCORD
+      })
 
       // Return interaction response
       return Response.json({
         type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
         data: {
           content: 'Message received',
-          flags: 64, // Ephemeral
-        },
-      });
+          flags: 64 // Ephemeral
+        }
+      })
     } catch (error) {
       this.emitEvent(CommonEventType.CONNECTOR_ERROR, {
         connector: this.id,
-        error: error instanceof Error ? error.message : 'Webhook handling failed',
-      });
-      return new Response('Internal Server Error', { status: 500 });
+        error: error instanceof Error ? error.message : 'Webhook handling failed'
+      })
+      return new Response('Internal Server Error', { status: 500 })
     }
   }
 
@@ -173,22 +173,22 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    * Validate Discord webhook
    */
   async validateWebhook(request: Request): Promise<boolean> {
-    if (!this.publicKey) return false;
+    if (!this.publicKey) return false
 
     try {
-      const signature = request.headers.get('X-Signature-Ed25519');
-      const timestamp = request.headers.get('X-Signature-Timestamp');
+      const signature = request.headers.get('X-Signature-Ed25519')
+      const timestamp = request.headers.get('X-Signature-Timestamp')
 
-      if (!signature || !timestamp) return false;
+      if (!signature || !timestamp) return false
 
       // Clone request to read body
-      const body = await request.clone().text();
+      const body = await request.clone().text()
 
       // Verify signature using Discord's public key verification
       // This would require crypto APIs available in the runtime
-      return await this.verifyDiscordSignature(signature, timestamp, body);
+      return await this.verifyDiscordSignature(signature, timestamp, body)
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -197,31 +197,31 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    */
   async setCommands(commands: BotCommand[]): Promise<void> {
     if (!this.applicationId || !this.botToken) {
-      throw new Error('Bot token required to set commands');
+      throw new Error('Bot token required to set commands')
     }
 
-    const discordCommands = commands.map((cmd) => ({
+    const discordCommands = commands.map(cmd => ({
       name: cmd.command,
       description: cmd.description,
-      type: 1, // CHAT_INPUT
-    }));
+      type: 1 // CHAT_INPUT
+    }))
 
     // Register global commands
-    await this.registerDiscordCommands(discordCommands);
+    await this.registerDiscordCommands(discordCommands)
   }
 
   /**
    * Set webhook URL
    */
   async setWebhook(url: string, _options?: WebhookOptions): Promise<void> {
-    this.webhookUrl = url;
+    this.webhookUrl = url
 
     // Discord doesn't require webhook registration like Telegram
     // The URL is configured in Discord Developer Portal
     this.emitEvent('webhook.set', {
       connector: this.id,
-      url,
-    });
+      url
+    })
   }
 
   /**
@@ -235,7 +235,7 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
         MessageType.IMAGE,
         MessageType.VIDEO,
         MessageType.AUDIO,
-        MessageType.DOCUMENT,
+        MessageType.DOCUMENT
       ],
       supportedEntityTypes: [
         EntityType.MENTION,
@@ -243,13 +243,13 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
         EntityType.BOLD,
         EntityType.ITALIC,
         EntityType.CODE,
-        EntityType.PRE,
+        EntityType.PRE
       ],
       supportedAttachmentTypes: [
         AttachmentType.PHOTO,
         AttachmentType.VIDEO,
         AttachmentType.AUDIO,
-        AttachmentType.DOCUMENT,
+        AttachmentType.DOCUMENT
       ],
       maxAttachments: 10,
       supportsEditing: true,
@@ -263,9 +263,9 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
         supportsButtons: true,
         supportsSelectMenus: true,
         supportsModals: true,
-        supportsEmbeds: true,
-      },
-    };
+        supportsEmbeds: true
+      }
+    }
   }
 
   /**
@@ -277,38 +277,38 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
       supportedPlatforms: [Platform.DISCORD],
       requiresWebhook: true,
       supportsBulkOperations: true,
-      features: ['webhook', 'commands', 'inline-buttons', 'files', 'voice', 'threads'],
-    };
+      features: ['webhook', 'commands', 'inline-buttons', 'files', 'voice', 'threads']
+    }
   }
 
   /**
    * Validate configuration
    */
   protected doValidateConfig(config: ConnectorConfig) {
-    const errors = [];
+    const errors = []
 
     if (!config.applicationId) {
       errors.push({
         field: 'applicationId',
-        message: 'Discord application ID is required',
-      });
+        message: 'Discord application ID is required'
+      })
     }
 
     if (!config.publicKey) {
       errors.push({
         field: 'publicKey',
-        message: 'Discord public key is required for webhook validation',
-      });
+        message: 'Discord public key is required for webhook validation'
+      })
     }
 
-    return errors.length > 0 ? errors : undefined;
+    return errors.length > 0 ? errors : undefined
   }
 
   /**
    * Check readiness
    */
   protected checkReadiness(): boolean {
-    return !!(this.applicationId && this.publicKey);
+    return !!(this.applicationId && this.publicKey)
   }
 
   /**
@@ -320,9 +320,9 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
       message: 'Discord connector is operational',
       details: {
         hasWebhook: !!this.webhookUrl,
-        hasBot: !!this.botToken,
-      },
-    };
+        hasBot: !!this.botToken
+      }
+    }
   }
 
   /**
@@ -330,36 +330,36 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    */
   protected async doDestroy(): Promise<void> {
     // Clean up resources
-    this.webhookUrl = undefined;
-    this.applicationId = undefined;
-    this.publicKey = undefined;
-    this.botToken = undefined;
+    this.webhookUrl = undefined
+    this.applicationId = undefined
+    this.publicKey = undefined
+    this.botToken = undefined
   }
 
   /**
    * Convert unified message to Discord format
    */
   private convertToDiscordMessage(message: UnifiedMessage): DiscordMessage {
-    const content = message.content.text || '';
+    const content = message.content.text || ''
 
     // Convert markup to Discord components
     const components = message.content.markup
       ? this.convertMarkupToComponents(message.content.markup)
-      : undefined;
+      : undefined
 
     // Convert attachments to embeds
     const embeds = message.attachments
       ? this.convertAttachmentsToEmbeds(message.attachments)
-      : undefined;
+      : undefined
 
     return {
       content,
       components,
       embeds,
       allowed_mentions: {
-        parse: ['users', 'roles'],
-      },
-    };
+        parse: ['users', 'roles']
+      }
+    }
   }
 
   /**
@@ -367,18 +367,18 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
    */
   private convertFromDiscordMessage(interaction: DiscordInteraction): UnifiedMessage {
     // Extract text based on interaction type
-    let text = '';
+    let text = ''
 
     if (interaction.type === 2 && interaction.data) {
       // Application command
-      text = `/${interaction.data.name || 'command'}`;
+      text = `/${interaction.data.name || 'command'}`
       if (interaction.data.options?.length) {
-        const args = interaction.data.options.map((opt) => opt.value).join(' ');
-        text += ` ${args}`;
+        const args = interaction.data.options.map(opt => opt.value).join(' ')
+        text += ` ${args}`
       }
     } else if (interaction.data?.content) {
       // Message component or modal submit with content
-      text = interaction.data.content;
+      text = interaction.data.content
     }
 
     return {
@@ -387,66 +387,69 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
       sender: {
         id: interaction.member?.user.id || interaction.user?.id || '',
         username: interaction.member?.user.username || interaction.user?.username,
-        is_bot: false,
+        is_bot: false
       },
       chat: {
         id: interaction.channel_id || '',
-        type: interaction.guild_id ? ChatType.GUILD : ChatType.DM,
+        type: interaction.guild_id ? ChatType.GUILD : ChatType.DM
       },
       content: {
         text,
-        type: MessageType.TEXT,
+        type: MessageType.TEXT
       },
       timestamp: Date.now(),
       metadata: {
         guild_id: interaction.guild_id,
         interaction_type: interaction.type,
-        command_name: interaction.data?.name,
-      },
-    };
+        command_name: interaction.data?.name
+      }
+    }
   }
 
   /**
    * Helper methods would go here
    */
-  private async sendDiscordMessage(_channelId: string, _message: DiscordMessage): Promise<DiscordMessageResponse> {
+  private async sendDiscordMessage(
+    _channelId: string,
+    _message: DiscordMessage
+  ): Promise<DiscordMessageResponse> {
     // Implementation would use Discord REST API or webhook
-    throw new Error('Not implemented');
+    throw new Error('Not implemented')
   }
 
   private async editDiscordMessage(_messageId: string, _message: DiscordMessage): Promise<void> {
     // Implementation would use Discord REST API
-    throw new Error('Not implemented');
+    throw new Error('Not implemented')
   }
 
   private async deleteDiscordMessage(_messageId: string): Promise<void> {
     // Implementation would use Discord REST API
-    throw new Error('Not implemented');
+    throw new Error('Not implemented')
   }
 
   private async verifyDiscordSignature(
     _signature: string,
     _timestamp: string,
-    _body: string,
+    _body: string
   ): Promise<boolean> {
     // Implementation would use crypto APIs
     // This is a placeholder - actual implementation would verify Ed25519 signature
-    return true;
+    return true
   }
 
   private async registerDiscordCommands(_commands: DiscordCommand[]): Promise<void> {
     // Implementation would use Discord REST API
-    throw new Error('Not implemented');
+    throw new Error('Not implemented')
   }
 
   private convertMarkupToComponents(_markup: unknown): DiscordComponent[] {
     // Convert unified markup to Discord components
-    return [];
+    return []
   }
 
   private convertAttachmentsToEmbeds(_attachments: unknown[]): DiscordEmbed[] {
     // Convert unified attachments to Discord embeds
-    return [];
+    return []
   }
 }
 
@@ -454,71 +457,71 @@ export class DiscordConnector extends BaseConnector implements MessagingConnecto
  * Discord-specific types
  */
 interface DiscordInteraction {
-  id: string;
-  type: number;
+  id: string
+  type: number
   data?: {
-    content?: string;
-    name?: string;
+    content?: string
+    name?: string
     options?: Array<{
-      name: string;
-      value: string | number | boolean;
-      type: number;
-    }>;
-  };
-  guild_id?: string;
-  channel_id?: string;
+      name: string
+      value: string | number | boolean
+      type: number
+    }>
+  }
+  guild_id?: string
+  channel_id?: string
   member?: {
     user: {
-      id: string;
-      username: string;
-    };
-  };
+      id: string
+      username: string
+    }
+  }
   user?: {
-    id: string;
-    username: string;
-  };
+    id: string
+    username: string
+  }
 }
 
 interface DiscordMessage {
-  content: string;
-  embeds?: DiscordEmbed[];
-  components?: DiscordComponent[];
+  content: string
+  embeds?: DiscordEmbed[]
+  components?: DiscordComponent[]
   allowed_mentions?: {
-    parse?: string[];
-  };
+    parse?: string[]
+  }
 }
 
 interface DiscordMessageResponse {
-  id: string;
-  content: string;
+  id: string
+  content: string
   author: {
-    id: string;
-    username: string;
-  };
+    id: string
+    username: string
+  }
 }
 
 interface DiscordCommand {
-  name: string;
-  description: string;
-  type: number;
+  name: string
+  description: string
+  type: number
 }
 
 interface DiscordComponent {
-  type: number;
-  components?: DiscordComponent[];
-  custom_id?: string;
-  label?: string;
-  style?: number;
+  type: number
+  components?: DiscordComponent[]
+  custom_id?: string
+  label?: string
+  style?: number
 }
 
 interface DiscordEmbed {
-  title?: string;
-  description?: string;
-  url?: string;
-  color?: number;
+  title?: string
+  description?: string
+  url?: string
+  color?: number
   fields?: Array<{
-    name: string;
-    value: string;
-    inline?: boolean;
-  }>;
+    name: string
+    value: string
+    inline?: boolean
+  }>
 }

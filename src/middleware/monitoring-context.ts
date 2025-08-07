@@ -4,46 +4,46 @@
  * Automatically sets user context and tracks request lifecycle
  */
 
-import type { Context, Next } from 'hono';
+import type { Context, Next } from 'hono'
 
-import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
-import { EventBus } from '@/core/events/event-bus';
-import { CommonEventType } from '@/core/events/types/common';
-import { FieldMapper } from '@/core/database/field-mapper';
+import { FieldMapper } from '@/core/database/field-mapper'
+import { EventBus } from '@/core/events/event-bus'
+import { CommonEventType } from '@/core/events/types/common'
+import type { IMonitoringConnector } from '@/core/interfaces/monitoring'
 
 // Shared Telegram user field mapper
 const telegramUserMapper = new FieldMapper<
   {
-    username?: string;
-    first_name?: string;
-    last_name?: string;
-    language_code?: string;
-    is_premium?: boolean;
+    username?: string
+    first_name?: string
+    last_name?: string
+    language_code?: string
+    is_premium?: boolean
   },
   {
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    languageCode?: string;
-    isPremium?: boolean;
+    username?: string
+    firstName?: string
+    lastName?: string
+    languageCode?: string
+    isPremium?: boolean
   }
 >([
   { dbField: 'username', domainField: 'username' },
   { dbField: 'first_name', domainField: 'firstName' },
   { dbField: 'last_name', domainField: 'lastName' },
   { dbField: 'language_code', domainField: 'languageCode' },
-  { dbField: 'is_premium', domainField: 'isPremium' },
-]);
+  { dbField: 'is_premium', domainField: 'isPremium' }
+])
 
 export interface MonitoringContextOptions {
-  monitoring: IMonitoringConnector;
-  eventBus?: EventBus;
-  trackPerformance?: boolean;
-  trackErrors?: boolean;
-  getUserId?: (ctx: Context) => string | undefined | Promise<string | undefined>;
+  monitoring: IMonitoringConnector
+  eventBus?: EventBus
+  trackPerformance?: boolean
+  trackErrors?: boolean
+  getUserId?: (ctx: Context) => string | undefined | Promise<string | undefined>
   getUserContext?: (
-    ctx: Context,
-  ) => Record<string, unknown> | undefined | Promise<Record<string, unknown> | undefined>;
+    ctx: Context
+  ) => Record<string, unknown> | undefined | Promise<Record<string, unknown> | undefined>
 }
 
 /**
@@ -56,18 +56,18 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
     trackPerformance = true,
     trackErrors = true,
     getUserId,
-    getUserContext,
-  } = options;
+    getUserContext
+  } = options
 
   return async (ctx: Context, next: Next) => {
-    const requestId = crypto.randomUUID();
-    const startTime = Date.now();
-    const method = ctx.req.method;
-    const path = ctx.req.path;
+    const requestId = crypto.randomUUID()
+    const startTime = Date.now()
+    const method = ctx.req.method
+    const path = ctx.req.path
 
     // Set request context
-    ctx.set('requestId', requestId);
-    ctx.set('monitoring', monitoring);
+    ctx.set('requestId', requestId)
+    ctx.set('monitoring', monitoring)
 
     // Track request start
     if (trackPerformance && eventBus) {
@@ -77,17 +77,17 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
           requestId,
           method,
           path,
-          timestamp: startTime,
+          timestamp: startTime
         },
-        'MonitoringMiddleware',
-      );
+        'MonitoringMiddleware'
+      )
     }
 
     // Set user context if available
-    const userId = await Promise.resolve(getUserId?.(ctx));
+    const userId = await Promise.resolve(getUserId?.(ctx))
     if (userId) {
-      const userContext = await Promise.resolve(getUserContext?.(ctx));
-      monitoring.setUserContext(userId, userContext);
+      const userContext = await Promise.resolve(getUserContext?.(ctx))
+      monitoring.setUserContext(userId, userContext)
     }
 
     // Track request in monitoring
@@ -96,15 +96,15 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
       method,
       path,
       userId,
-      timestamp: startTime,
-    });
+      timestamp: startTime
+    })
 
     try {
       // Continue with request processing
-      await next();
+      await next()
 
-      const duration = Date.now() - startTime;
-      const status = ctx.res.status;
+      const duration = Date.now() - startTime
+      const status = ctx.res.status
 
       // Track request completion
       if (trackPerformance && eventBus) {
@@ -116,18 +116,18 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
             path,
             status,
             duration,
-            timestamp: Date.now(),
+            timestamp: Date.now()
           },
-          'MonitoringMiddleware',
-        );
+          'MonitoringMiddleware'
+        )
       }
 
       // Track metrics
       monitoring.trackMetric('http_request_duration', duration, {
         method,
         path,
-        status: String(status),
-      });
+        status: String(status)
+      })
 
       monitoring.trackEvent('http_request_completed', {
         requestId,
@@ -136,8 +136,8 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
         status,
         duration,
         userId,
-        timestamp: Date.now(),
-      });
+        timestamp: Date.now()
+      })
 
       // Track status codes
       if (status >= 400) {
@@ -148,15 +148,15 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
           status,
           duration,
           userId,
-          timestamp: Date.now(),
-        });
+          timestamp: Date.now()
+        })
       }
     } catch (error) {
-      const duration = Date.now() - startTime;
+      const duration = Date.now() - startTime
 
       // Track error
       if (trackErrors) {
-        const errorObj = error instanceof Error ? error : new Error(String(error));
+        const errorObj = error instanceof Error ? error : new Error(String(error))
 
         monitoring.captureException(errorObj, {
           requestId,
@@ -164,8 +164,8 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
           path,
           userId,
           duration,
-          timestamp: Date.now(),
-        });
+          timestamp: Date.now()
+        })
 
         if (eventBus) {
           eventBus.emit(
@@ -177,18 +177,18 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
                 method,
                 path,
                 userId,
-                duration,
-              },
+                duration
+              }
             },
-            'MonitoringMiddleware',
-          );
+            'MonitoringMiddleware'
+          )
         }
       }
 
       // Re-throw the error
-      throw error;
+      throw error
     }
-  };
+  }
 }
 
 /**
@@ -196,54 +196,54 @@ export function createMonitoringContextMiddleware(options: MonitoringContextOpti
  */
 export function createTelegramMonitoringMiddleware(
   monitoring: IMonitoringConnector,
-  eventBus?: EventBus,
+  eventBus?: EventBus
 ) {
   return createMonitoringContextMiddleware({
     monitoring,
     eventBus,
-    getUserId: async (ctx) => {
+    getUserId: async ctx => {
       // Extract Telegram user ID from context
       try {
-        const body = await ctx.req.json();
+        const body = await ctx.req.json()
         if (body && typeof body === 'object' && 'message' in body) {
-          const message = (body as { message?: { from?: { id?: number | string } } }).message;
-          return message?.from?.id?.toString();
+          const message = (body as { message?: { from?: { id?: number | string } } }).message
+          return message?.from?.id?.toString()
         }
       } catch {
         // Body not JSON or not available
       }
-      return undefined;
+      return undefined
     },
-    getUserContext: async (ctx) => {
+    getUserContext: async ctx => {
       // Extract Telegram user context
       try {
-        const body = await ctx.req.json();
+        const body = await ctx.req.json()
         if (body && typeof body === 'object' && 'message' in body) {
           const message = (
             body as {
               message?: {
                 from?: {
-                  username?: string;
-                  first_name?: string;
-                  last_name?: string;
-                  language_code?: string;
-                  is_premium?: boolean;
-                };
-              };
+                  username?: string
+                  first_name?: string
+                  last_name?: string
+                  language_code?: string
+                  is_premium?: boolean
+                }
+              }
             }
-          ).message;
-          const from = message?.from;
+          ).message
+          const from = message?.from
           if (from) {
             // Use shared FieldMapper for snake_case to camelCase conversion
-            return telegramUserMapper.toDomain(from);
+            return telegramUserMapper.toDomain(from)
           }
         }
       } catch {
         // Body not JSON or not available
       }
-      return undefined;
-    },
-  });
+      return undefined
+    }
+  })
 }
 
 /**
@@ -251,44 +251,44 @@ export function createTelegramMonitoringMiddleware(
  */
 // Grammy context type - properly typed version
 interface GrammyContext {
-  updateType: string;
+  updateType: string
   from?: {
-    id?: number | string;
-    username?: string;
-    first_name?: string;
-    last_name?: string;
-    language_code?: string;
-    is_premium?: boolean;
-  };
+    id?: number | string
+    username?: string
+    first_name?: string
+    last_name?: string
+    language_code?: string
+    is_premium?: boolean
+  }
   chat?: {
-    id?: number | string;
-  };
+    id?: number | string
+  }
   message?: {
-    message_id?: number;
-    text?: string;
-  };
-  monitoring?: IMonitoringConnector;
-  requestId?: string;
+    message_id?: number
+    text?: string
+  }
+  monitoring?: IMonitoringConnector
+  requestId?: string
 }
 
 export function createGrammyMonitoringMiddleware(
   monitoring: IMonitoringConnector,
-  eventBus?: EventBus,
+  eventBus?: EventBus
 ) {
   return async (ctx: GrammyContext, next: () => Promise<void>) => {
-    const requestId = crypto.randomUUID();
-    const startTime = Date.now();
-    const updateType = ctx.updateType;
-    const userId = ctx.from?.id?.toString();
+    const requestId = crypto.randomUUID()
+    const startTime = Date.now()
+    const updateType = ctx.updateType
+    const userId = ctx.from?.id?.toString()
 
     // Set monitoring in context
-    ctx.monitoring = monitoring;
-    ctx.requestId = requestId;
+    ctx.monitoring = monitoring
+    ctx.requestId = requestId
 
     // Set user context with shared FieldMapper
     if (userId && ctx.from) {
-      const userContext = telegramUserMapper.toDomain(ctx.from);
-      monitoring.setUserContext(userId, userContext);
+      const userContext = telegramUserMapper.toDomain(ctx.from)
+      monitoring.setUserContext(userId, userContext)
     }
 
     // Track update start
@@ -298,8 +298,8 @@ export function createGrammyMonitoringMiddleware(
       userId,
       chatId: ctx.chat?.id,
       messageId: ctx.message?.message_id,
-      timestamp: startTime,
-    });
+      timestamp: startTime
+    })
 
     if (eventBus) {
       eventBus.emit(
@@ -308,30 +308,30 @@ export function createGrammyMonitoringMiddleware(
           requestId,
           type: 'telegram_update',
           updateType,
-          userId,
+          userId
         },
-        'GrammyMonitoring',
-      );
+        'GrammyMonitoring'
+      )
     }
 
     try {
-      await next();
+      await next()
 
-      const duration = Date.now() - startTime;
+      const duration = Date.now() - startTime
 
       // Track completion
       monitoring.trackMetric('telegram_update_duration', duration, {
         updateType,
-        userId: userId || 'anonymous',
-      });
+        userId: userId || 'anonymous'
+      })
 
       monitoring.trackEvent('telegram_update_completed', {
         requestId,
         updateType,
         userId,
         duration,
-        timestamp: Date.now(),
-      });
+        timestamp: Date.now()
+      })
 
       if (eventBus) {
         eventBus.emit(
@@ -341,14 +341,14 @@ export function createGrammyMonitoringMiddleware(
             type: 'telegram_update',
             updateType,
             userId,
-            duration,
+            duration
           },
-          'GrammyMonitoring',
-        );
+          'GrammyMonitoring'
+        )
       }
     } catch (error) {
-      const duration = Date.now() - startTime;
-      const errorObj = error instanceof Error ? error : new Error(String(error));
+      const duration = Date.now() - startTime
+      const errorObj = error instanceof Error ? error : new Error(String(error))
 
       // Track error
       monitoring.captureException(errorObj, {
@@ -358,8 +358,8 @@ export function createGrammyMonitoringMiddleware(
         chatId: ctx.chat?.id,
         messageText: ctx.message?.text,
         duration,
-        timestamp: Date.now(),
-      });
+        timestamp: Date.now()
+      })
 
       if (eventBus) {
         eventBus.emit(
@@ -371,14 +371,14 @@ export function createGrammyMonitoringMiddleware(
               type: 'telegram_update',
               updateType,
               userId,
-              duration,
-            },
+              duration
+            }
           },
-          'GrammyMonitoring',
-        );
+          'GrammyMonitoring'
+        )
       }
 
-      throw error;
+      throw error
     }
-  };
+  }
 }
