@@ -6,6 +6,8 @@
  * @module connectors/vectorize/vectorize-connector
  */
 
+import { indexInfoMapper, type IndexResultDb, type IndexInfoDomain } from './mappers';
+
 import { BaseConnector } from '@/connectors/base/base-connector';
 import type {
   ConnectorConfig,
@@ -48,13 +50,8 @@ export interface VectorMatch {
   metadata?: Record<string, unknown>;
 }
 
-export interface VectorizeIndex {
-  name: string;
-  dimensions: number;
-  metric: string;
-  totalVectors: number;
-  status: 'ready' | 'initializing' | 'error';
-}
+// Re-export from mappers for backward compatibility
+export type VectorizeIndex = IndexInfoDomain;
 
 export class VectorizeConnector extends BaseConnector {
   id = 'vectorize-connector';
@@ -285,27 +282,10 @@ export class VectorizeConnector extends BaseConnector {
       throw new Error(`Failed to get index info: ${response.status} - ${error}`);
     }
 
-    interface IndexResult {
-      name: string;
-      config: {
-        dimensions: number;
-        metric: string;
-      };
-      vectors_count?: number;
-      status?: string;
-    }
+    const data = (await response.json()) as { result: IndexResultDb };
 
-    const data = (await response.json()) as { result: IndexResult };
-    const result = data.result;
-
-    // Direct mapping without FieldMapper for 3 fields (below threshold)
-    return {
-      name: result.name,
-      dimensions: result.config.dimensions,
-      metric: result.config.metric,
-      totalVectors: result.vectors_count || 0,
-      status: result.status || 'ready',
-    };
+    // Use shared FieldMapper for consistent transformation
+    return indexInfoMapper.toDomain(data.result);
   }
 
   /**
