@@ -170,19 +170,16 @@ export class LightweightAdapter {
       const { providers, defaultProvider, fallbackProviders, costCalculator } =
         await loadProvidersFromEnv(env, 'paid');
       if (providers.length > 0) {
-        aiService = new AIService(
-          {
-            ...(defaultProvider && { defaultProvider }),
-            fallbackProviders,
-            ...(costCalculator && {
-              costTracking: {
-                enabled: true,
-                calculator: costCalculator,
-              },
-            }),
-          },
-          'paid',
-        );
+        aiService = new AIService({
+          ...(defaultProvider && { defaultProvider }),
+          fallbackProviders,
+          ...(costCalculator && {
+            costTracking: {
+              enabled: true,
+              calculator: costCalculator,
+            },
+          }),
+        });
 
         // Register all providers
         for (const provider of providers) {

@@ -22,29 +22,12 @@ export class PaymentServiceConnector {
     private eventBus: EventBus,
     config: PaymentConnectorConfig,
   ) {
-    // Map constraints to tier for backward compatibility with PaymentService
-    // TODO: Refactor PaymentService to use ResourceConstraints directly
-    const mappedConfig = {
+    // PaymentService now uses ResourceConstraints directly
+    this.paymentService = new PaymentService({
       db: config.db,
-      tier: this.constraintsToTier(config.constraints),
-    };
-    this.paymentService = new PaymentService(mappedConfig);
+      constraints: config.constraints,
+    });
     this.setupEventHandlers();
-  }
-
-  /**
-   * Convert ResourceConstraints to tier for backward compatibility
-   * This is a temporary solution until PaymentService is refactored
-   */
-  private constraintsToTier(constraints?: ResourceConstraints): 'free' | 'paid' {
-    if (!constraints) return 'free';
-
-    // If database feature is available (payments require DB)
-    if (constraints.features.has('database') && constraints.storage.maxDBWritesPerDay > 10000) {
-      return 'paid';
-    }
-
-    return 'free';
   }
 
   /**

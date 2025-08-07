@@ -5,7 +5,7 @@
 import type { Bot } from 'grammy';
 
 import type { PluginCommand } from '../../core/plugins/plugin';
-import type { EventBus } from '../../core/events/event-bus';
+import { EventBus } from '../../core/events/event-bus';
 import type { CommandArgs } from '../../types/command-args';
 import type { TelegramContext } from '../../connectors/messaging/telegram/types';
 import { TelegramCommandHandler } from '../../connectors/messaging/telegram/handlers/command-handler';
@@ -13,7 +13,59 @@ import { TelegramCommandHandler } from '../../connectors/messaging/telegram/hand
 import { setupCommands as setupLegacyCommands } from './commands';
 
 import { logger } from '@/lib/logger';
-import type { BotContext } from '@/types';
+import type { BotContext } from '@/types/telegram';
+import type { Env } from '@/config/env';
+import { UniversalRoleService } from '@/core/services/role-service';
+import { hasDatabase } from '@/lib/env-guards';
+
+/**
+ * Create role service for permission checks
+ */
+function getRoleService(env: Env): UniversalRoleService | null {
+  if (!hasDatabase(env)) {
+    return null;
+  }
+
+  const db = env.DB;
+  const ownerIds = env.BOT_OWNER_IDS?.split(',').filter(Boolean) || [];
+  const eventBus = new EventBus();
+  return new UniversalRoleService(db, ownerIds, eventBus);
+}
+
+/**
+ * Check if user is owner
+ */
+async function isOwner(ctx: BotContext): Promise<boolean> {
+  const env = ctx.env;
+  const roleService = getRoleService(env);
+  if (!roleService) {
+    // In demo mode or without DB, check env variable directly
+    const ownerIds = env.BOT_OWNER_IDS?.split(',').filter(Boolean) || [];
+    return ctx.from?.id ? ownerIds.includes(ctx.from.id.toString()) : false;
+  }
+
+  const userId = ctx.from?.id ? `telegram_${ctx.from.id}` : null;
+  if (!userId) return false;
+
+  return roleService.isOwner(userId);
+}
+
+/**
+ * Check if user is admin
+ */
+async function isAdmin(ctx: BotContext): Promise<boolean> {
+  const env = ctx.env;
+  const roleService = getRoleService(env);
+  if (!roleService) {
+    // In demo mode, everyone is admin for testing
+    return true;
+  }
+
+  const userId = ctx.from?.id ? `telegram_${ctx.from.id}` : null;
+  if (!userId) return false;
+
+  return roleService.isAdmin(userId);
+}
 
 /**
  * Create plugin commands from legacy commands
@@ -107,7 +159,11 @@ export function createPluginCommands(): PluginCommand[] {
       name: 'info',
       description: 'System information (owner only)',
       handler: async (_args, ctx) => {
-        // TODO: Check owner permission
+        // Check owner permission
+        if (!(await isOwner(ctx as unknown as BotContext))) {
+          await ctx.reply('⛔ This command requires owner privileges');
+          return;
+        }
         await ctx.reply('ℹ️ System info (coming soon)');
       },
     },
@@ -115,7 +171,11 @@ export function createPluginCommands(): PluginCommand[] {
       name: 'admin',
       description: 'Admin management (owner only)',
       handler: async (_args, ctx) => {
-        // TODO: Check owner permission
+        // Check owner permission
+        if (!(await isOwner(ctx as unknown as BotContext))) {
+          await ctx.reply('⛔ This command requires owner privileges');
+          return;
+        }
         await ctx.reply('👨‍💼 Admin management (coming soon)');
       },
     },
@@ -123,7 +183,11 @@ export function createPluginCommands(): PluginCommand[] {
       name: 'debug',
       description: 'Debug information (owner only)',
       handler: async (_args, ctx) => {
-        // TODO: Check owner permission
+        // Check owner permission
+        if (!(await isOwner(ctx as unknown as BotContext))) {
+          await ctx.reply('⛔ This command requires owner privileges');
+          return;
+        }
         await ctx.reply('🐞 Debug info (coming soon)');
       },
     },
@@ -132,7 +196,11 @@ export function createPluginCommands(): PluginCommand[] {
       name: 'requests',
       description: 'View AI requests (admin only)',
       handler: async (_args, ctx) => {
-        // TODO: Check admin permission
+        // Check admin permission
+        if (!(await isAdmin(ctx as unknown as BotContext))) {
+          await ctx.reply('⛔ This command requires admin privileges');
+          return;
+        }
         await ctx.reply('📊 AI requests (coming soon)');
       },
     },

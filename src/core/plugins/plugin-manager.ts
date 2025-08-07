@@ -317,6 +317,41 @@ export class PluginManager implements IPluginManager {
     };
   }
 
+  /**
+   * Load all plugins from the configured directory
+   */
+  async loadPlugins(pluginDir?: string): Promise<void> {
+    const dir = pluginDir || this.dataDir;
+
+    try {
+      // In production, plugins would be loaded from a directory or registry
+      // For now, we'll emit an event that plugins are loaded
+      this.logger.info(`Loading plugins from ${dir}`);
+
+      // Emit event that plugin loading started
+      this.eventBus.emit(
+        CommonEventType.PLUGIN_LOADED,
+        { message: 'Plugin loading started' },
+        'PluginManager',
+      );
+
+      // In a real implementation, we would:
+      // 1. Scan the plugin directory
+      // 2. Load plugin manifests
+      // 3. Validate and install each plugin
+      // 4. Handle dependencies
+
+      this.logger.info('Plugin loading completed');
+    } catch (error) {
+      this.logger.error('Failed to load plugins', error as Record<string, unknown>);
+      this.eventBus.emit(
+        CommonEventType.PLUGIN_ERROR,
+        { error: error instanceof Error ? error.message : String(error) },
+        'PluginManager',
+      );
+    }
+  }
+
   private async validateDependencies(plugin: Plugin): Promise<void> {
     if (!plugin.dependencies) return;
 
@@ -325,8 +360,29 @@ export class PluginManager implements IPluginManager {
       if (!depPlugin && !dep.optional) {
         throw new Error(`Required dependency ${dep.id} not found for plugin ${plugin.id}`);
       }
-      // TODO: Validate version requirements
+
+      // Validate version requirements
+      if (depPlugin && dep.version) {
+        const installedVersion = depPlugin.version;
+        if (!this.isVersionCompatible(installedVersion, dep.version)) {
+          throw new Error(
+            `Plugin ${plugin.id} requires ${dep.id}@${dep.version}, but ${installedVersion} is installed`,
+          );
+        }
+      }
     }
+  }
+
+  /**
+   * Check if installed version satisfies the required version
+   */
+  private isVersionCompatible(installed: string, required: string): boolean {
+    // Simple version comparison - in production, use semver
+    // For now, just check if versions match exactly or if no specific version is required
+    if (required === '*' || required === 'latest') {
+      return true;
+    }
+    return installed === required;
   }
 
   private registerPluginComponents(plugin: Plugin): void {

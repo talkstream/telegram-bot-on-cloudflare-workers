@@ -48,7 +48,7 @@ export async function createBot(env: Env) {
 
   const sessionService = new SessionService(
     cloudConnector.getKeyValueStore('SESSIONS'),
-    tier,
+    constraints,
     multiLayerCache,
   );
 
@@ -66,7 +66,7 @@ export async function createBot(env: Env) {
         },
       }),
     },
-    tier,
+    constraints,
   );
 
   // Register all providers

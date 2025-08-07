@@ -7,6 +7,11 @@ import type {
   AIServiceConfig,
   Message,
 } from '@/lib/ai/types';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
+import {
+  hasAICapabilities,
+  isConstrainedEnvironment,
+} from '@/core/interfaces/resource-constraints';
 import { AIProviderError } from '@/lib/ai/types';
 import { getProviderRegistry } from '@/lib/ai/registry';
 import { CostTracker as CostTrackerImpl } from '@/lib/ai/cost-tracking';
@@ -17,8 +22,29 @@ export class AIService {
   private costTracker?: CostTrackerImpl;
   private fallbackProviders: string[];
 
-  constructor(config: AIServiceConfig = {}, _tier: 'free' | 'paid' = 'free') {
+  constructor(config: AIServiceConfig = {}, constraints?: ResourceConstraints) {
     this.registry = getProviderRegistry();
+
+    // Configure based on resource constraints
+    if (constraints) {
+      // Check if AI capabilities are available
+      if (!hasAICapabilities(constraints)) {
+        logger.warn('AI capabilities may be limited with current resource constraints');
+      }
+
+      // Adjust settings based on constraints
+      const isConstrained = isConstrainedEnvironment(constraints);
+
+      // Setup fallback providers (limited in constrained environments)
+      if (isConstrained) {
+        // In constrained environments, limit fallback attempts
+        this.fallbackProviders = (config.fallbackProviders || []).slice(0, 1);
+      } else {
+        this.fallbackProviders = config.fallbackProviders || [];
+      }
+    } else {
+      this.fallbackProviders = config.fallbackProviders || [];
+    }
 
     // Set default provider if specified
     if (config.defaultProvider) {
@@ -29,9 +55,6 @@ export class AIService {
     if (config.costTracking?.enabled && config.costTracking.calculator) {
       this.costTracker = new CostTrackerImpl(config.costTracking.calculator);
     }
-
-    // Setup fallback providers
-    this.fallbackProviders = config.fallbackProviders || [];
   }
 
   /**

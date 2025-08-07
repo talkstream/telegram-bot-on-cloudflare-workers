@@ -1,5 +1,6 @@
 import type { IKeyValueStore } from '@/core/interfaces/storage';
-import { getTierConfig } from '@/config/cloudflare-tiers';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
+import { isConstrainedEnvironment } from '@/core/interfaces/resource-constraints';
 import { logger } from '@/lib/logger';
 import { MultiLayerCache } from '@/lib/multi-layer-cache';
 
@@ -13,21 +14,36 @@ export interface UserSession {
 
 export interface SessionOptions {
   ttl?: number; // TTL in seconds
-  tier?: 'free' | 'paid';
 }
 
 export class SessionService {
   private sessionsKv: IKeyValueStore;
   private cache?: MultiLayerCache;
-  private tier: 'free' | 'paid';
-  private config: ReturnType<typeof getTierConfig>;
+  private constraints?: ResourceConstraints;
+  private defaultTTL: number;
+  private cleanupBatchSize: number;
 
-  constructor(sessionsKv: IKeyValueStore, tier: 'free' | 'paid' = 'free', cache?: MultiLayerCache) {
+  constructor(
+    sessionsKv: IKeyValueStore,
+    constraints?: ResourceConstraints,
+    cache?: MultiLayerCache,
+  ) {
     this.sessionsKv = sessionsKv;
-    this.tier = tier;
-    this.config = getTierConfig(tier);
+    this.constraints = constraints;
     if (cache) {
       this.cache = cache;
+    }
+
+    // Configure based on resource constraints
+    if (constraints) {
+      // In constrained environments, use shorter TTLs and smaller batches
+      const isConstrained = isConstrainedEnvironment(constraints);
+      this.defaultTTL = isConstrained ? 300 : 3600; // 5 minutes or 1 hour
+      this.cleanupBatchSize = isConstrained ? 10 : 100;
+    } else {
+      // Default values when no constraints provided
+      this.defaultTTL = 3600;
+      this.cleanupBatchSize = 100;
     }
   }
 
@@ -60,7 +76,7 @@ export class SessionService {
     // Update cache if available
     if (this.cache) {
       await this.cache.set(key, session, {
-        ttl: this.config.performance.cacheTTL.session,
+        ttl: this.defaultTTL,
         tags: ['session'],
       });
     }
@@ -70,7 +86,7 @@ export class SessionService {
 
   async saveSession(session: UserSession, options?: SessionOptions): Promise<void> {
     const key = this.getSessionKey(session.userId);
-    const ttl = options?.ttl || this.config.performance.cacheTTL.session;
+    const ttl = options?.ttl || this.defaultTTL;
 
     // Add session metadata
     const enrichedSession: UserSession = {
@@ -86,16 +102,21 @@ export class SessionService {
 
     // Update cache if available
     if (this.cache) {
+      const tags = ['session'];
+      // Mark as important in constrained environments
+      if (this.constraints && isConstrainedEnvironment(this.constraints)) {
+        tags.push('important');
+      }
       await this.cache.set(key, enrichedSession, {
         ttl,
-        tags: ['session', 'important'], // Mark as important for free tier
+        tags,
       });
     }
 
     logger.info('Session saved', {
       userId: session.userId,
       ttl,
-      tier: this.tier,
+      constrained: this.constraints ? isConstrainedEnvironment(this.constraints) : false,
     });
   }
 
@@ -127,15 +148,17 @@ export class SessionService {
   /**
    * Clean up expired sessions (for scheduled cleanup)
    */
-  async cleanupExpiredSessions(limit = 100): Promise<number> {
-    if (this.tier === 'free') {
-      // Skip cleanup on free tier to save KV operations
-      logger.info('Session cleanup skipped on free tier');
+  async cleanupExpiredSessions(limit?: number): Promise<number> {
+    const batchSize = limit || this.cleanupBatchSize;
+
+    // Skip cleanup in heavily constrained environments to save operations
+    if (this.constraints && isConstrainedEnvironment(this.constraints)) {
+      logger.info('Session cleanup skipped in constrained environment');
       return 0;
     }
 
     let cleaned = 0;
-    const sessions = await this.sessionsKv.list({ limit });
+    const sessions = await this.sessionsKv.list({ limit: batchSize });
 
     for (const key of sessions.keys) {
       try {

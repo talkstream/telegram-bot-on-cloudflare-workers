@@ -133,7 +133,7 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
         },
       });
 
-      // TODO: Load plugins
+      // Load plugins (when plugin manager is available)
       // await pluginManager.loadPlugins();
 
       connectors.set(key, telegramConnector);

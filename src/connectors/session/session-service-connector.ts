@@ -25,26 +25,9 @@ export class SessionServiceConnector {
     private eventBus: EventBus,
     config: SessionServiceConfig,
   ) {
-    // Map constraints to tier for backward compatibility with SessionService
-    // TODO: Refactor SessionService to use ResourceConstraints directly
-    const tier = this.constraintsToTier(config.constraints);
-    this.sessionService = new SessionService(config.sessionsKv, tier, config.cache);
+    // SessionService now uses ResourceConstraints directly
+    this.sessionService = new SessionService(config.sessionsKv, config.constraints, config.cache);
     this.setupEventHandlers();
-  }
-
-  /**
-   * Convert ResourceConstraints to tier for backward compatibility
-   * This is a temporary solution until SessionService is refactored
-   */
-  private constraintsToTier(constraints?: ResourceConstraints): 'free' | 'paid' {
-    if (!constraints) return 'free';
-
-    // If sessions feature is available and has sufficient resources
-    if (constraints.features.has('sessions') && constraints.storage.maxKVWritesPerDay > 10000) {
-      return 'paid';
-    }
-
-    return 'free';
   }
 
   /**

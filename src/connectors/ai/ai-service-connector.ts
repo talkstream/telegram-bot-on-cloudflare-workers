@@ -17,26 +17,9 @@ export class AIServiceConnector {
     config?: AIServiceConfig,
     constraints?: ResourceConstraints,
   ) {
-    // Map constraints to tier for backward compatibility with AIService
-    // TODO: Refactor AIService to use ResourceConstraints directly
-    const tier = this.constraintsToTier(constraints);
-    this.aiService = new AIService(config, tier);
+    // AIService now uses ResourceConstraints directly
+    this.aiService = new AIService(config, constraints);
     this.setupEventHandlers();
-  }
-
-  /**
-   * Convert ResourceConstraints to tier for backward compatibility
-   * This is a temporary solution until AIService is refactored
-   */
-  private constraintsToTier(constraints?: ResourceConstraints): 'free' | 'paid' {
-    if (!constraints) return 'free';
-
-    // If AI feature is available and execution time is sufficient, consider it 'paid'
-    if (constraints.features.has('ai') && constraints.maxExecutionTimeMs >= 5000) {
-      return 'paid';
-    }
-
-    return 'free';
   }
 
   /**

@@ -14,6 +14,7 @@ import type {
   Usage,
   Cost,
   AICapabilities,
+  Message,
 } from '../../core/interfaces/ai.js';
 import { ConnectorType } from '../../core/interfaces/connector.js';
 import type { ConnectorCapabilities, ConnectorConfig } from '../../core/interfaces/connector.js';
@@ -278,7 +279,63 @@ export abstract class BaseAIConnector extends BaseConnector implements AIConnect
       limited.max_tokens = model.max_output_tokens || 4096;
     }
 
-    // TODO: Implement context window limiting
+    // Implement context window limiting
+    if (limited.messages && model.context_window) {
+      const contextLimit = model.context_window;
+      const outputTokens = limited.max_tokens || 4096;
+      const availableForInput = contextLimit - outputTokens;
+
+      // Estimate tokens in messages (rough estimate: 1 token ≈ 4 characters)
+      let estimatedTokens = 0;
+      const limitedMessages = [];
+
+      // Process messages from most recent to oldest to preserve recent context
+      for (let i = limited.messages.length - 1; i >= 0; i--) {
+        const message = limited.messages[i];
+        if (!message) continue;
+
+        // Handle both string and MessageContent[] content
+        const contentLength =
+          typeof message.content === 'string'
+            ? message.content.length
+            : JSON.stringify(message.content).length;
+        const messageTokens = Math.ceil(contentLength / 4);
+
+        if (estimatedTokens + messageTokens <= availableForInput) {
+          limitedMessages.unshift(message);
+          estimatedTokens += messageTokens;
+        } else if (i === limited.messages.length - 1) {
+          // Always include the most recent message, but truncate if needed
+          const availableChars = Math.max(100, (availableForInput - estimatedTokens) * 4);
+
+          // Only truncate if content is a string
+          if (typeof message.content === 'string') {
+            limitedMessages.unshift({
+              ...message,
+              content: message.content.substring(0, availableChars) + '...[truncated]',
+            });
+          } else {
+            // For complex content, include as-is but stop here
+            limitedMessages.unshift(message);
+          }
+          break;
+        } else {
+          // Skip older messages that don't fit
+          break;
+        }
+      }
+
+      limited.messages = limitedMessages.filter((m): m is Message => m !== undefined);
+
+      // Log if messages were truncated
+      if (limitedMessages.length < request.messages.length) {
+        console.warn('Context window limit reached, truncated messages', {
+          original: request.messages.length,
+          limited: limitedMessages.length,
+          contextWindow: contextLimit,
+        });
+      }
+    }
 
     return limited;
   }

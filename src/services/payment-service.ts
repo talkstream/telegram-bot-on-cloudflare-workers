@@ -7,10 +7,12 @@ import type { TelegramPayment, PendingInvoice } from '../domain/payments/reposit
 import { logger } from '../lib/logger';
 
 import type { IDatabaseStore } from '@/core/interfaces/storage';
+import type { ResourceConstraints } from '@/core/interfaces/resource-constraints';
+import { hasFeature, isConstrainedEnvironment } from '@/core/interfaces/resource-constraints';
 
 export interface PaymentServiceConfig {
   db: IDatabaseStore;
-  tier?: 'free' | 'paid';
+  constraints?: ResourceConstraints;
 }
 
 export interface CreateInvoiceOptions {
@@ -42,11 +44,35 @@ export interface PaymentResult {
 
 export class PaymentService {
   private repository: PaymentRepository;
-  private tier: 'free' | 'paid';
+  private paymentsEnabled: boolean;
+  private maxPaymentAmount: number;
+  private minPaymentAmount: number;
 
   constructor(config: PaymentServiceConfig) {
     this.repository = new PaymentRepository(config.db);
-    this.tier = config.tier || 'free';
+
+    // Configure based on resource constraints
+    if (config.constraints) {
+      // Payments require database feature and sufficient write capacity
+      this.paymentsEnabled =
+        hasFeature(config.constraints, 'payments') ||
+        (hasFeature(config.constraints, 'database') &&
+          config.constraints.storage.maxDBWritesPerDay > 1000);
+
+      // In constrained environments, limit payment amounts
+      if (isConstrainedEnvironment(config.constraints)) {
+        this.maxPaymentAmount = 100;
+        this.minPaymentAmount = 10;
+      } else {
+        this.maxPaymentAmount = 10000;
+        this.minPaymentAmount = 1;
+      }
+    } else {
+      // Default values when no constraints provided
+      this.paymentsEnabled = false;
+      this.maxPaymentAmount = 100;
+      this.minPaymentAmount = 10;
+    }
   }
 
   /**
@@ -159,12 +185,12 @@ export class PaymentService {
   }
 
   /**
-   * Check if payment is allowed on current tier
+   * Check if payment is allowed based on current configuration
    */
   isPaymentAllowed(): boolean {
-    // Payments might be restricted on free tier
-    if (this.tier === 'free') {
-      logger.warn('Payment attempted on free tier');
+    // Payments might be restricted based on configuration
+    if (!this.paymentsEnabled) {
+      logger.warn('Payment attempted but payments are disabled');
       return false;
     }
     return true;
@@ -174,17 +200,7 @@ export class PaymentService {
    * Validate payment amount
    */
   validateAmount(starsAmount: number): boolean {
-    // Telegram Stars minimum is 1
-    if (starsAmount < 1) {
-      return false;
-    }
-
-    // Maximum reasonable amount (can be configured)
-    if (starsAmount > 10000) {
-      return false;
-    }
-
-    return true;
+    return starsAmount >= this.minPaymentAmount && starsAmount <= this.maxPaymentAmount;
   }
 
   /**
