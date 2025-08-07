@@ -116,7 +116,7 @@ export class ChecklistConnector extends BaseConnector {
     chatId: number | string,
     checklist: InputChecklist,
     options?: ChecklistOptions,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     try {
       this.logger.info('[ChecklistConnector] Sending checklist', {
         chatId,
@@ -124,8 +124,11 @@ export class ChecklistConnector extends BaseConnector {
         title: checklist.title,
       });
 
-      // Use Grammy's api.raw for new Bot API 9.1 methods
-      const result = await (this.bot.api.raw as any).sendChecklist({
+      // Type assertion for Bot API 9.1 methods not yet in Grammy types
+      const api = this.bot.api.raw as unknown as {
+        sendChecklist: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      };
+      const result = await api.sendChecklist({
         chat_id: typeof chatId === 'number' ? chatId : parseInt(chatId, 10),
         checklist: {
           title: checklist.title || 'Checklist',
@@ -174,7 +177,7 @@ export class ChecklistConnector extends BaseConnector {
     messageId: number,
     checklist: InputChecklist,
     options?: EditChecklistOptions,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     try {
       this.logger.info('[ChecklistConnector] Editing checklist', {
         chatId,
@@ -182,7 +185,11 @@ export class ChecklistConnector extends BaseConnector {
         taskCount: checklist.tasks.length,
       });
 
-      const result = await (this.bot.api.raw as any).editMessageChecklist({
+      // Type assertion for Bot API 9.1 methods not yet in Grammy types
+      const api = this.bot.api.raw as unknown as {
+        editMessageChecklist: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      };
+      const result = await api.editMessageChecklist({
         chat_id: typeof chatId === 'number' ? chatId : parseInt(chatId, 10),
         message_id: messageId,
         checklist: {
@@ -227,7 +234,7 @@ export class ChecklistConnector extends BaseConnector {
   /**
    * Parse checklist from incoming message
    */
-  parseChecklist(message: any): Checklist | null {
+  parseChecklist(message: { checklist?: unknown }): Checklist | null {
     if (!message.checklist) {
       return null;
     }

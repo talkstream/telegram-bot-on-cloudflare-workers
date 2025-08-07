@@ -437,7 +437,7 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
     }
   }
 
-  private async callAPI(payload: any): Promise<any> {
+  private async callAPI(payload: Record<string, unknown>): Promise<unknown> {
     const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/bytedance/melotts`;
 
     const response = await fetch(url, {
@@ -457,7 +457,7 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
     return response.json();
   }
 
-  private async callStreamingAPI(payload: any): Promise<ReadableStream> {
+  private async callStreamingAPI(payload: Record<string, unknown>): Promise<ReadableStream> {
     const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/bytedance/melotts`;
 
     const response = await fetch(url, {
@@ -475,6 +475,10 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
       throw new Error(`MeloTTS streaming API error: ${response.status} - ${error}`);
     }
 
-    return response.body!;
+    const body = response.body;
+    if (!body) {
+      throw new Error('Response has no body');
+    }
+    return body;
   }
 }

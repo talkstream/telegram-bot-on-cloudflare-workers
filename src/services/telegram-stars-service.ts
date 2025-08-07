@@ -11,6 +11,7 @@ import type { Gift, ServiceGift } from '@/lib/telegram-types';
 import { logger } from '@/lib/logger';
 import { EventBus } from '@/core/events/event-bus';
 import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
+import { FieldMapper } from '@/core/database/field-mapper';
 
 export interface StarTransaction {
   id: string;
@@ -18,7 +19,7 @@ export interface StarTransaction {
   amount: number;
   type: 'received' | 'sent' | 'purchased' | 'converted';
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GiftTransaction {
@@ -31,11 +32,40 @@ export interface GiftTransaction {
   message?: string;
 }
 
+// Define interfaces for raw data
+interface RawTransaction {
+  id: string;
+  user_id: number;
+  amount: number;
+  type: 'received' | 'sent' | 'purchased' | 'converted';
+  date: number;
+  metadata?: Record<string, unknown>;
+}
+
+// Create FieldMapper for transaction transformations
+const transactionMapper = new FieldMapper<RawTransaction, StarTransaction>([
+  { dbField: 'id', domainField: 'id' },
+  { dbField: 'user_id', domainField: 'userId' },
+  { dbField: 'amount', domainField: 'amount' },
+  { dbField: 'type', domainField: 'type' },
+  {
+    dbField: 'date',
+    domainField: 'timestamp',
+    toDomain: (v) => new Date(v * 1000),
+    toDb: (v) => Math.floor(v.getTime() / 1000),
+  },
+  { dbField: 'metadata', domainField: 'metadata' },
+]);
+
 export class TelegramStarsService {
   private bot: Bot;
   private platform: ICloudPlatformConnector;
   private eventBus: EventBus;
-  private kvNamespace?: any; // KV storage for caching
+  private kvNamespace?: {
+    get: (key: string) => Promise<string | null>;
+    put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>;
+    delete: (key: string) => Promise<void>;
+  }; // KV storage for caching
 
   constructor(bot: Bot, platform: ICloudPlatformConnector, eventBus: EventBus) {
     this.bot = bot;
@@ -134,14 +164,7 @@ export class TelegramStarsService {
       });
 
       const transactions: StarTransaction[] =
-        result.transactions?.map((tx: any) => ({
-          id: tx.id,
-          userId: tx.user_id,
-          amount: tx.amount,
-          type: tx.type,
-          timestamp: new Date(tx.date * 1000),
-          metadata: tx.metadata,
-        })) || [];
+        result.transactions?.map((tx: RawTransaction) => transactionMapper.toDomain(tx)) || [];
 
       logger.info('[TelegramStarsService] Transactions fetched', { count: transactions.length });
 
@@ -344,7 +367,7 @@ export class TelegramStarsService {
         owned_gift_id: String(messageId), // Use messageId as gift ID placeholder
       });
 
-      const starsReceived = (result as any).star_count || 0;
+      const starsReceived = (result as { star_count?: number }).star_count || 0;
 
       logger.info('[TelegramStarsService] Gift converted to Stars', {
         userId,

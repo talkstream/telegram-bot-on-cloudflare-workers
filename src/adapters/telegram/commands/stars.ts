@@ -5,6 +5,7 @@
  * @module adapters/telegram/commands/stars
  */
 
+import type { Bot, Api } from 'grammy';
 import { InlineKeyboard } from 'grammy';
 
 import type { CommandHandler } from '@/types';
@@ -17,7 +18,10 @@ import { getCloudPlatformConnector } from '@/core/cloud/cloud-platform-cache';
 let starsService: TelegramStarsService | null = null;
 let eventBus: EventBus | null = null;
 
-async function getStarsService(bot: any, env: any): Promise<TelegramStarsService> {
+async function getStarsService(
+  bot: Bot | Api,
+  env: Record<string, unknown>,
+): Promise<TelegramStarsService> {
   if (!starsService) {
     if (!eventBus) {
       eventBus = new EventBus();

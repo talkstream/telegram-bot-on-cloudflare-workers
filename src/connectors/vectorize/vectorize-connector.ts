@@ -30,13 +30,13 @@ export interface VectorizeConfig extends ConnectorConfig {
 export interface Vector {
   id: string;
   values: number[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface VectorSearchQuery {
   vector?: number[];
   topK?: number;
-  filter?: Record<string, any>;
+  filter?: Record<string, unknown>;
   includeValues?: boolean;
   includeMetadata?: boolean;
 }
@@ -45,7 +45,7 @@ export interface VectorMatch {
   id: string;
   score: number;
   values?: number[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface VectorizeIndex {
@@ -285,14 +285,26 @@ export class VectorizeConnector extends BaseConnector {
       throw new Error(`Failed to get index info: ${response.status} - ${error}`);
     }
 
-    const data = (await response.json()) as { result: any };
+    interface IndexResult {
+      name: string;
+      config: {
+        dimensions: number;
+        metric: string;
+      };
+      vectors_count?: number;
+      status?: string;
+    }
 
+    const data = (await response.json()) as { result: IndexResult };
+    const result = data.result;
+
+    // Direct mapping without FieldMapper for 3 fields (below threshold)
     return {
-      name: data.result.name,
-      dimensions: data.result.config.dimensions,
-      metric: data.result.config.metric,
-      totalVectors: data.result.vectors_count || 0,
-      status: data.result.status || 'ready',
+      name: result.name,
+      dimensions: result.config.dimensions,
+      metric: result.config.metric,
+      totalVectors: result.vectors_count || 0,
+      status: result.status || 'ready',
     };
   }
 

@@ -434,7 +434,7 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
     }
   }
 
-  private async callAPI(payload: any): Promise<any> {
+  private async callAPI(payload: Record<string, unknown>): Promise<unknown> {
     const modelPath = this.model.replace(/-/g, '_');
     const url = `${this.baseUrl}/accounts/${this.accountId}/ai/run/@cf/openai/${modelPath}`;
 

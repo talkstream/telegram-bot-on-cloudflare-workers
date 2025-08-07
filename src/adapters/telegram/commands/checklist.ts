@@ -5,6 +5,8 @@
  * @module adapters/telegram/commands/checklist
  */
 
+import type { Bot, Api } from 'grammy';
+
 import type { CommandHandler } from '@/types';
 import { ChecklistConnector } from '@/connectors/messaging/telegram/checklist-connector';
 import { loggerAdapter } from '@/lib/logger-adapter';
@@ -15,7 +17,7 @@ import { EventBus } from '@/core/events/event-bus';
 let checklistConnector: ChecklistConnector | null = null;
 let eventBus: EventBus | null = null;
 
-function getChecklistConnector(bot: any): ChecklistConnector {
+function getChecklistConnector(bot: Bot | Api): ChecklistConnector {
   if (!checklistConnector) {
     if (!eventBus) {
       eventBus = new EventBus();
@@ -61,14 +63,20 @@ export const checklistCommand: CommandHandler = async (ctx): Promise<void> => {
     const checklist = builder.build();
 
     // Send checklist
-    const result = await connector.sendChecklist(ctx.chat!.id, checklist, {
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      await ctx.reply('❌ Unable to identify chat');
+      return;
+    }
+
+    const result = await connector.sendChecklist(chatId, checklist, {
       disable_notification: false,
       protect_content: false,
     });
 
     logger.info('[ChecklistCommand] Checklist created', {
       userId,
-      chatId: ctx.chat!.id,
+      chatId,
       title,
       messageId: result.message_id,
     });
@@ -78,7 +86,7 @@ export const checklistCommand: CommandHandler = async (ctx): Promise<void> => {
         'command:checklist:created',
         {
           userId,
-          chatId: ctx.chat!.id,
+          chatId,
           title,
         },
         'checklist-command',
@@ -126,7 +134,12 @@ export const tasksCommand: CommandHandler = async (ctx): Promise<void> => {
         builder.setTitle('📋 My Tasks').addTask(taskText, false);
 
         const checklist = builder.build();
-        await connector.sendChecklist(ctx.chat!.id, checklist);
+        const chatId = ctx.chat?.id;
+        if (!chatId) {
+          await ctx.reply('❌ Unable to identify chat');
+          return;
+        }
+        await connector.sendChecklist(chatId, checklist);
 
         await ctx.reply(`✅ Task added: "${taskText}"`);
         break;
@@ -145,7 +158,12 @@ export const tasksCommand: CommandHandler = async (ctx): Promise<void> => {
         const stats = builder.getStats();
         const checklist = builder.build();
 
-        await connector.sendChecklist(ctx.chat!.id, checklist);
+        const chatId = ctx.chat?.id;
+        if (!chatId) {
+          await ctx.reply('❌ Unable to identify chat');
+          return;
+        }
+        await connector.sendChecklist(chatId, checklist);
         await ctx.reply(
           `📊 Task Statistics:\n` +
             `✅ Completed: ${stats.done}\n` +
@@ -189,7 +207,7 @@ export const tasksCommand: CommandHandler = async (ctx): Promise<void> => {
         'command:tasks:executed',
         {
           userId,
-          chatId: ctx.chat!.id,
+          chatId: ctx.chat?.id || 0,
           action: action || 'help',
         },
         'checklist-command',
@@ -254,7 +272,12 @@ export const todoCommand: CommandHandler = async (ctx): Promise<void> => {
     const stats = builder.getStats();
 
     // Send checklist
-    await connector.sendChecklist(ctx.chat!.id, checklist);
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      await ctx.reply('❌ Unable to identify chat');
+      return;
+    }
+    await connector.sendChecklist(chatId, checklist);
 
     await ctx.reply(
       `📋 Created todo list with ${stats.total} item${stats.total !== 1 ? 's' : ''}!\n\n` +
@@ -266,7 +289,7 @@ export const todoCommand: CommandHandler = async (ctx): Promise<void> => {
         'command:todo:created',
         {
           userId,
-          chatId: ctx.chat!.id,
+          chatId: ctx.chat?.id || 0,
           itemCount: items.length,
         },
         'checklist-command',
