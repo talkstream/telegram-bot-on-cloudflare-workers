@@ -236,9 +236,17 @@ describe('CircuitBreaker', () => {
         await expect(breaker.execute(fn)).rejects.toThrow('fail');
       }
 
-      // Check events were emitted
-      expect(eventBus.emit).toHaveBeenCalledWith('circuit:failure', expect.any(Object));
-      expect(eventBus.emit).toHaveBeenCalledWith('circuit:open', expect.any(Object));
+      // Check events were emitted with 3 parameters (event, data, source)
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        'circuit:failure',
+        expect.any(Object),
+        'CircuitBreaker',
+      );
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        'circuit:open',
+        expect.any(Object),
+        'CircuitBreaker',
+      );
     });
   });
 });

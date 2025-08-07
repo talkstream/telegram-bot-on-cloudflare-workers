@@ -173,12 +173,45 @@ describe('RequestCacheFactory', () => {
   });
 });
 
-describe('@Cached decorator', () => {
-  // Skip decorator tests in vitest due to decorator configuration issues
-  // The decorator works in production but requires specific TypeScript config
-  it.skip('should cache method results', async () => {
-    // Decorator functionality is tested manually in production
-    expect(true).toBe(true);
+describe('Method caching pattern', () => {
+  it('should cache method results using cache wrapper', async () => {
+    const cache = new RequestCache();
+
+    // Create a service with cached method pattern
+    class TestService {
+      private callCount = 0;
+
+      async getData(id: string): Promise<string> {
+        // Simulate what @Cached decorator would do
+        return cache.getOrCompute(`getData:${id}`, async () => {
+          this.callCount++;
+          // Simulate expensive operation
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          return `data-${id}-${this.callCount}`;
+        });
+      }
+
+      getCallCount(): number {
+        return this.callCount;
+      }
+    }
+
+    const service = new TestService();
+
+    // First call - should compute
+    const result1 = await service.getData('user1');
+    expect(result1).toBe('data-user1-1');
+    expect(service.getCallCount()).toBe(1);
+
+    // Second call with same ID - should use cache
+    const result2 = await service.getData('user1');
+    expect(result2).toBe('data-user1-1'); // Same result
+    expect(service.getCallCount()).toBe(1); // No additional computation
+
+    // Call with different ID - should compute
+    const result3 = await service.getData('user2');
+    expect(result3).toBe('data-user2-2');
+    expect(service.getCallCount()).toBe(2);
   });
 });
 

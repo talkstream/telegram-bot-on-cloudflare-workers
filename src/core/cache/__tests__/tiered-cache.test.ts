@@ -206,33 +206,42 @@ describe('TieredCache', () => {
       expect(size.find((s) => s.tier === 'cold')?.items).toBe(1);
     });
 
-    it.skip('should evict LRU when tier is full', async () => {
+    it('should evict LRU when tier is full', async () => {
+      // Create a cache with a smaller hot tier for testing
+      const smallTiers: CacheTier[] = [{ name: 'hot', maxSize: 2, defaultTTL: 1000, weight: 10 }];
+      const testCache = new TieredCache(platform, smallTiers);
+
       // Fill hot tier (max 2)
-      await cache.set('key1', 'value1', { tier: 'hot' });
-      await cache.set('key2', 'value2', { tier: 'hot' });
+      await testCache.set('key1', 'value1', { tier: 'hot' });
+      await testCache.set('key2', 'value2', { tier: 'hot' });
+
+      // Check that hot tier is full
+      let size = testCache.getSize();
+      let hotTierSize = size.find((s) => s.tier === 'hot')?.items;
+      expect(hotTierSize).toBe(2);
 
       // Access key2 to make it more recent
-      await cache.get('key2');
+      await testCache.get('key2');
 
       // Add another, should evict key1
-      await cache.set('key3', 'value3', { tier: 'hot' });
+      await testCache.set('key3', 'value3', { tier: 'hot' });
 
-      // Check that tier has correct size
-      const size = cache.getSize();
-      const hotTierSize = size.find((s) => s.tier === 'hot')?.items;
+      // Check that tier has correct size after eviction
+      size = testCache.getSize();
+      hotTierSize = size.find((s) => s.tier === 'hot')?.items;
       expect(hotTierSize).toBe(2);
 
       // Check stats
-      const stats = cache.getStats();
+      const stats = testCache.getStats();
       expect(stats.evictions).toBeGreaterThan(0);
 
       // Verify key1 was evicted
-      const value1 = await cache.get('key1');
+      const value1 = await testCache.get('key1');
       expect(value1).toBeNull();
 
       // Verify key2 and key3 remain
-      const value2 = await cache.get('key2');
-      const value3 = await cache.get('key3');
+      const value2 = await testCache.get('key2');
+      const value3 = await testCache.get('key3');
       expect(value2).toBe('value2');
       expect(value3).toBe('value3');
     });
@@ -312,19 +321,27 @@ describe('TieredCache', () => {
       expect(stats.misses).toBe(2);
     });
 
-    it.skip('should track evictions', async () => {
+    it('should track evictions', async () => {
       const tiers: CacheTier[] = [{ name: 'tiny', maxSize: 2, defaultTTL: 1000, weight: 10 }];
-      cache = new TieredCache(platform, tiers);
+      const evictCache = new TieredCache(platform, tiers);
 
-      await cache.set('key1', 'value1', { tier: 'tiny' });
-      await cache.set('key2', 'value2', { tier: 'tiny' });
-      await cache.set('key3', 'value3', { tier: 'tiny' }); // Should evict key1
+      await evictCache.set('key1', 'value1', { tier: 'tiny' });
+      await evictCache.set('key2', 'value2', { tier: 'tiny' });
 
-      const stats = cache.getStats();
+      // Access key2 to make it more recent
+      await evictCache.get('key2');
+
+      await evictCache.set('key3', 'value3', { tier: 'tiny' }); // Should evict key1
+
+      const stats = evictCache.getStats();
       expect(stats.evictions).toBe(1);
 
-      const size = cache.getSize();
+      const size = evictCache.getSize();
       expect(size.find((s) => s.tier === 'tiny')?.items).toBe(2);
+
+      // Verify key1 was evicted
+      const value1 = await evictCache.get('key1');
+      expect(value1).toBeNull();
     });
 
     it('should track tier-specific stats', async () => {
