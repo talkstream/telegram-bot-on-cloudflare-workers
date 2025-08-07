@@ -1,0 +1,22 @@
+{
+  "name": "wireframe-hello-world",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@wireframe/core": "file:../../packages/core",
+    "@wireframe/connector-telegram": "file:../../packages/connectors/telegram",
+    "@wireframe/connector-openai": "file:../../packages/connectors/openai"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.5",
+    "tsx": "^4.7.0",
+    "dotenv": "^16.4.1"
+  }
+}

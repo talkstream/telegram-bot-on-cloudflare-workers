@@ -1,0 +1,47 @@
+{
+  "name": "@wireframe/connector-cloudflare",
+  "version": "2.0.0-alpha.1",
+  "description": "Cloudflare Workers connector for Wireframe AI Assistant Ecosystem",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "wireframe",
+    "cloudflare",
+    "workers",
+    "kv",
+    "d1",
+    "connector"
+  ],
+  "author": "Wireframe Contributors",
+  "license": "MIT",
+  "peerDependencies": {
+    "@wireframe/core": "^2.0.0-alpha",
+    "@cloudflare/workers-types": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250807.0",
+    "@types/node": "^20.11.5",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wireframe/core",
+    "directory": "packages/connectors/cloudflare"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "sideEffects": false
+}
