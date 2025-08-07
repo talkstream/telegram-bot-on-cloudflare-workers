@@ -5,8 +5,8 @@
  */
 
 // Re-export only what we need from Zod
-export { z } from 'zod/v4/core/api';
-export type { ZodSchema, ZodType, ZodError } from 'zod/v4/core/api';
+export { z } from 'zod';
+export type { ZodSchema, ZodType, ZodError } from 'zod';
 
 // Lazy load heavy dependencies
 export const loadGrammy = () => import('grammy');

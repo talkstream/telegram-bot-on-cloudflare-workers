@@ -4,7 +4,8 @@
  * Manages multiple circuit breakers for different services
  */
 
-import { CircuitBreaker, CircuitBreakerConfig, CircuitBreakerStats } from './circuit-breaker';
+import { CircuitBreaker } from './circuit-breaker';
+import type { CircuitBreakerConfig, CircuitBreakerStats } from './circuit-breaker';
 
 import { EventBus } from '@/core/events/event-bus';
 import { logger } from '@/lib/logger';
@@ -54,9 +55,10 @@ export class CircuitBreakerManager {
   register(config: ServiceConfig): CircuitBreaker {
     const { service, ...breakerConfig } = config;
 
-    if (this.breakers.has(service)) {
+    const existing = this.breakers.get(service);
+    if (existing) {
       logger.warn('Circuit breaker already registered', { service });
-      return this.breakers.get(service)!;
+      return existing;
     }
 
     const breaker = new CircuitBreaker(
@@ -71,7 +73,7 @@ export class CircuitBreakerManager {
       config: breakerConfig,
     });
 
-    this.eventBus?.emit('circuit:registered', { service, config });
+    this.eventBus?.emit('circuit:registered', { service, config }, 'CircuitBreakerManager');
 
     return breaker;
   }
@@ -176,7 +178,7 @@ export class CircuitBreakerManager {
       breaker.reset();
     }
     logger.info('All circuit breakers reset');
-    this.eventBus?.emit('circuit:reset-all', {});
+    this.eventBus?.emit('circuit:reset-all', {}, 'CircuitBreakerManager');
   }
 
   /**
@@ -185,7 +187,7 @@ export class CircuitBreakerManager {
   unregister(service: string): void {
     if (this.breakers.delete(service)) {
       logger.info('Circuit breaker unregistered', { service });
-      this.eventBus?.emit('circuit:unregistered', { service });
+      this.eventBus?.emit('circuit:unregistered', { service }, 'CircuitBreakerManager');
     }
   }
 

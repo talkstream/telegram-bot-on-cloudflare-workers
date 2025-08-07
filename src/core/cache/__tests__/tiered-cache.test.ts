@@ -8,7 +8,13 @@ import { TieredCache } from '../tiered-cache';
 import type { CacheTier } from '../tiered-cache';
 
 import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
-import type { IKeyValueStore } from '@/core/interfaces/storage';
+import type {
+  IKeyValueStore,
+  IDatabaseStore,
+  IObjectStore,
+  ICacheStore,
+  IQueueStore,
+} from '@/core/interfaces/storage';
 
 // Mock KV store
 class MockKeyValueStore implements IKeyValueStore {
@@ -52,18 +58,14 @@ class MockKeyValueStore implements IKeyValueStore {
     this.store.delete(key);
   }
 
-  async list(options?: {
-    prefix?: string;
-    limit?: number;
-    cursor?: string;
-  }): Promise<{
+  async list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<{
     keys: Array<{ name: string; metadata?: Record<string, unknown> }>;
     list_complete: boolean;
     cursor?: string;
   }> {
     const allKeys = Array.from(this.store.keys());
     const filtered = options?.prefix
-      ? allKeys.filter((k) => k.startsWith(options.prefix!))
+      ? allKeys.filter((k) => k.startsWith(options.prefix))
       : allKeys;
 
     // Simple cursor implementation for testing
@@ -93,19 +95,19 @@ class MockCloudPlatform implements ICloudPlatformConnector {
     return this.kvStores.get(namespace) || new MockKeyValueStore();
   }
 
-  getDatabaseStore(): any {
+  getDatabaseStore(): IDatabaseStore {
     throw new Error('Not implemented');
   }
 
-  getObjectStore(): any {
+  getObjectStore(): IObjectStore {
     throw new Error('Not implemented');
   }
 
-  getCacheStore(): any {
+  getCacheStore(): ICacheStore | null {
     return null;
   }
 
-  getQueueStore(): any {
+  getQueueStore(): IQueueStore {
     throw new Error('Not implemented');
   }
 
@@ -122,7 +124,7 @@ class MockCloudPlatform implements ICloudPlatformConnector {
     };
   }
 
-  getEnvironmentVariables() {
+  getEnv() {
     return {};
   }
 

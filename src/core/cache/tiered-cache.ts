@@ -249,7 +249,7 @@ export class TieredCache {
 
     // Also delete from KV
     try {
-      const kv = this.platform.getKeyValueStore('cache');
+      const kv = this.platform?.getKeyValueStore('cache');
       if (kv) {
         await kv.delete(key);
       }
@@ -274,7 +274,7 @@ export class TieredCache {
         // Also clear from KV if it's memory tier
         if (tierName === 'memory') {
           try {
-            const kv = this.platform.getKeyValueStore('cache');
+            const kv = this.platform?.getKeyValueStore('cache');
             if (kv) {
               // Get all keys and delete them
               let cursor: string | undefined;
@@ -302,7 +302,7 @@ export class TieredCache {
 
       // Also clear KV
       try {
-        const kv = this.platform.getKeyValueStore('cache');
+        const kv = this.platform?.getKeyValueStore('cache');
         if (kv) {
           // Get all keys and delete them
           let cursor: string | undefined;
@@ -446,7 +446,7 @@ export class TieredCache {
       // Also delete from KV if it's in memory tier and not demoted
       if (!demoted && (tierName === 'memory' || tierName === 'hot' || tierName === 'tiny')) {
         try {
-          const kv = this.platform.getKeyValueStore('cache');
+          const kv = this.platform?.getKeyValueStore('cache');
           if (kv) {
             await kv.delete(oldestKey);
           }
@@ -489,7 +489,7 @@ export class TieredCache {
    */
   private async loadFromKV<T>(key: string): Promise<T | null> {
     try {
-      const kv = this.platform.getKeyValueStore('cache');
+      const kv = this.platform?.getKeyValueStore('cache');
       if (!kv) return null;
 
       const jsonData = await kv.get<string>(key);
@@ -525,7 +525,7 @@ export class TieredCache {
    */
   private async persistToKV<T>(key: string, item: CacheItem<T>): Promise<void> {
     try {
-      const kv = this.platform.getKeyValueStore('cache');
+      const kv = this.platform?.getKeyValueStore('cache');
       if (!kv) return;
 
       const ttlSeconds = Math.floor((item.expiresAt - Date.now()) / 1000);

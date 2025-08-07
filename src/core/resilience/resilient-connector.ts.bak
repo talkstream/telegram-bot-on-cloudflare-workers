@@ -1,0 +1,39 @@
+/**
+ * Resilient Connector Wrapper
+ *
+ * DEPRECATED: This file is outdated and does not match current AIConnector and MessagingConnector interfaces.
+ * It was designed for older versions of the interfaces that had generateResponse/sendMessage methods.
+ * The current interfaces use complete() for AI and different message formats.
+ * 
+ * Keeping for reference only. Will need complete rewrite to match new interfaces.
+ */
+
+import { CircuitBreakerManager } from './circuit-breaker-manager';
+import type { CircuitBreakerConfig } from './circuit-breaker';
+
+import type { AIConnector } from '@/core/interfaces/ai';
+import type { MessagingConnector } from '@/core/interfaces/messaging';
+import { logger } from '@/lib/logger';
+
+/**
+ * DEPRECATED - Does not match current AIConnector interface
+ */
+export class ResilientAIConnector {
+  // Implementation removed - incompatible with current interfaces
+}
+
+/**
+ * DEPRECATED - Does not match current MessagingConnector interface
+ */
+export class ResilientMessagingConnector {
+  // Implementation removed - incompatible with current interfaces
+}
+
+/**
+ * DEPRECATED - Factory function needs rewrite for new interfaces
+ */
+export function withResilience<T>(connector: T, config?: Partial<CircuitBreakerConfig>): T {
+  // For now, return connector without wrapping
+  logger.warn('withResilience is deprecated and currently bypassed');
+  return connector;
+}

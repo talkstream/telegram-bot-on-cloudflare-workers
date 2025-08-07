@@ -268,7 +268,7 @@ export class CircuitBreaker {
    */
   private emitEvent(event: string, data: Record<string, unknown>): void {
     if (this.eventBus) {
-      this.eventBus.emit(event, data);
+      this.eventBus.emit(event, data, 'CircuitBreaker');
     }
   }
 

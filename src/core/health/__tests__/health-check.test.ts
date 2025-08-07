@@ -26,18 +26,24 @@ describe('HealthCheckService', () => {
 
     // Create mock platform
     mockPlatform = {
-      getKV: vi.fn().mockResolvedValue({
+      getKeyValueStore: vi.fn().mockReturnValue({
         get: vi.fn().mockResolvedValue(null),
       }),
-      getDB: vi.fn().mockResolvedValue({
+      getDatabaseStore: vi.fn().mockReturnValue({
         prepare: vi.fn().mockReturnValue({
           first: vi.fn().mockResolvedValue({ 1: 1 }),
         }),
       }),
-      getStorage: vi.fn(),
-      getEnv: vi.fn(),
-      getResourceConstraints: vi.fn(),
-    } as any;
+      getObjectStore: vi.fn(),
+      getEnv: vi.fn().mockReturnValue({}),
+      getResourceConstraints: vi.fn().mockReturnValue({
+        maxCpuTime: 10,
+        maxMemory: 128,
+        maxStorageKeys: 1000,
+        maxDatabaseRows: 100000,
+        environment: 'test',
+      }),
+    } as ICloudPlatformConnector;
 
     service = new HealthCheckService(eventBus, mockPlatform);
 
@@ -68,7 +74,9 @@ describe('HealthCheckService', () => {
     });
 
     it('should return unhealthy status when platform check fails', async () => {
-      mockPlatform.getKV = vi.fn().mockRejectedValue(new Error('KV not available'));
+      mockPlatform.getKeyValueStore = vi.fn().mockImplementation(() => {
+        throw new Error('KV not available');
+      });
 
       const result = await service.check();
 
@@ -78,7 +86,9 @@ describe('HealthCheckService', () => {
     });
 
     it('should return unhealthy status when database check fails', async () => {
-      mockPlatform.getDB = vi.fn().mockRejectedValue(new Error('DB connection failed'));
+      mockPlatform.getDatabaseStore = vi.fn().mockImplementation(() => {
+        throw new Error('DB connection failed');
+      });
 
       const result = await service.check();
 
@@ -89,9 +99,9 @@ describe('HealthCheckService', () => {
 
     it('should respect timeout configuration', async () => {
       // Make platform check slow
-      mockPlatform.getKV = vi
-        .fn()
-        .mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 1000)));
+      mockPlatform.getKeyValueStore = vi.fn().mockImplementation(() => ({
+        get: () => new Promise((resolve) => setTimeout(resolve, 1000)),
+      }));
 
       const result = await service.check({ timeout: 100 });
 

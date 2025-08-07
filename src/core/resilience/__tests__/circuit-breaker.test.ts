@@ -7,6 +7,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CircuitBreaker, CircuitState } from '../circuit-breaker';
 import type { CircuitBreakerConfig } from '../circuit-breaker';
 
+import type { EventBus } from '@/core/events/event-bus';
+
 describe('CircuitBreaker', () => {
   let breaker: CircuitBreaker;
   let config: CircuitBreakerConfig;
@@ -226,7 +228,7 @@ describe('CircuitBreaker', () => {
         emit: vi.fn(),
       };
 
-      const breaker = new CircuitBreaker(config, eventBus as any);
+      const breaker = new CircuitBreaker(config, eventBus as EventBus);
       const fn = vi.fn().mockRejectedValue(new Error('fail'));
 
       // Cause circuit to open

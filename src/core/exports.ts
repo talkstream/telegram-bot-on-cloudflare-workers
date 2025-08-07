@@ -6,19 +6,19 @@
 
 // Event Bus - export only what's needed
 export { EventBus } from './events/event-bus';
-export type { EventBusEvent, EventPayload } from './interfaces/event-bus';
+export type { EventBusEvents } from './interfaces/event-bus';
 
 // Interfaces - export only essential types
-export type { BotContext } from './interfaces/context';
-export type { IMessagingConnector } from './interfaces/messaging';
-export type { IAIConnector } from './interfaces/ai';
+export type { BotContext } from '@/types/telegram';
+export type { MessagingConnector } from './interfaces/messaging';
+export type { AIConnector } from './interfaces/ai';
 export type { ICloudPlatformConnector } from './interfaces/cloud-platform';
 
 // Services - export factories for lazy loading
 export const createRoleService = () =>
   import('./services/role-service').then((m) => m.UniversalRoleService);
 export const createServiceContainer = () =>
-  import('./services/service-container').then((m) => m.ServiceContainer);
+  import('./services/service-container').then((m) => m.initializeServiceContainer);
 
 // Pools - export singletons with lazy initialization
 export const getTelegramPool = () =>

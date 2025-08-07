@@ -4,6 +4,8 @@
  * Provides comprehensive health monitoring for all system components
  */
 
+import type { Context } from 'hono';
+
 import type { EventBus } from '@/core/events/event-bus';
 import type { ICloudPlatformConnector } from '@/core/interfaces/cloud-platform';
 import { CircuitBreakerManager } from '@/core/resilience/circuit-breaker-manager';
@@ -26,7 +28,7 @@ export interface ComponentHealth {
   name: string;
   status: 'healthy' | 'degraded' | 'unhealthy';
   responseTime?: number;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   error?: string;
 }
 
@@ -331,27 +333,26 @@ export class HealthCheckService {
     return this.lastCheck;
   }
 
+  private intervalId?: NodeJS.Timeout;
+
   /**
    * Start periodic health checks
    */
   startPeriodicChecks(interval: number = this.checkInterval): void {
     this.stopPeriodicChecks();
 
-    const intervalId = setInterval(async () => {
+    this.intervalId = setInterval(async () => {
       await this.check();
     }, interval);
-
-    // Store interval ID for cleanup
-    (this as any).intervalId = intervalId;
   }
 
   /**
    * Stop periodic health checks
    */
   stopPeriodicChecks(): void {
-    if ((this as any).intervalId) {
-      clearInterval((this as any).intervalId);
-      delete (this as any).intervalId;
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
     }
   }
 
@@ -373,7 +374,7 @@ export class HealthCheckService {
  * Health check middleware for Hono
  */
 export function createHealthCheckMiddleware(healthService: HealthCheckService) {
-  return async (ctx: any) => {
+  return async (ctx: Context) => {
     const path = new URL(ctx.req.url).pathname;
 
     if (path === '/health') {
@@ -410,5 +411,8 @@ export function createHealthCheckMiddleware(healthService: HealthCheckService) {
         status === 'unhealthy' ? 503 : 200,
       );
     }
+
+    // Path not handled, continue to next middleware
+    return;
   };
 }
