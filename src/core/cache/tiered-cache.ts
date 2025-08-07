@@ -222,8 +222,10 @@ export class TieredCache {
     };
 
     tierCache.set(key, item as CacheItem<unknown>);
+
+    // Update stats - items count should match actual Map size
     if (this.stats.tierStats[tierName]) {
-      this.stats.tierStats[tierName].items++;
+      this.stats.tierStats[tierName].items = tierCache.size;
     }
 
     // Also persist to KV if tier is memory
@@ -242,7 +244,7 @@ export class TieredCache {
       if (tier.has(key)) {
         tier.delete(key);
         if (this.stats.tierStats[tierName]) {
-          this.stats.tierStats[tierName].items--;
+          this.stats.tierStats[tierName].items = tier.size;
         }
       }
     }
@@ -370,14 +372,14 @@ export class TieredCache {
       currentTier.delete(item.key);
       const prevTier = currentTierConfig?.name || item.tier;
       if (this.stats.tierStats[prevTier]) {
-        this.stats.tierStats[prevTier].items--;
+        this.stats.tierStats[prevTier].items = currentTier.size;
       }
 
       item.tier = higherTier.name;
       targetTier.set(item.key, item as CacheItem<unknown>);
       const higherTierStat = this.stats.tierStats[higherTier.name];
       if (higherTierStat) {
-        higherTierStat.items++;
+        higherTierStat.items = targetTier.size;
       }
 
       this.stats.promotions++;
@@ -398,7 +400,7 @@ export class TieredCache {
     if (!tier || tier.size === 0) return;
 
     let oldestKey: string | null = null;
-    let oldestTime = Date.now();
+    let oldestTime = Infinity;
 
     for (const [key, item] of tier) {
       if (item.lastAccessed < oldestTime) {
@@ -411,18 +413,25 @@ export class TieredCache {
       const item = tier.get(oldestKey);
       let demoted = false;
 
-      // Try to demote instead of evict (but not for hot tier test)
+      // Try to demote to a lower tier instead of evict
       const tierConfig = this.tierConfigs.get(tierName);
-      if (tierConfig && tierConfig.name !== 'hot' && tierConfig.name !== 'tiny') {
+      if (tierConfig) {
         const lowerTier = await this.findLowerTier(tierName);
         if (lowerTier && item) {
           const lowerTierCache = this.tiers.get(lowerTier);
           if (lowerTierCache) {
+            // Check if lower tier has space
+            const lowerTierConfig = this.tierConfigs.get(lowerTier);
+            if (lowerTierConfig && lowerTierCache.size >= lowerTierConfig.maxSize) {
+              // Lower tier is full, need to evict from there first
+              await this.evictLRU(lowerTier);
+            }
+
             item.tier = lowerTier;
             lowerTierCache.set(oldestKey, item);
             this.stats.demotions++;
             if (this.stats.tierStats[lowerTier]) {
-              this.stats.tierStats[lowerTier].items++;
+              this.stats.tierStats[lowerTier].items = lowerTierCache.size;
             }
             demoted = true;
           }
@@ -432,7 +441,8 @@ export class TieredCache {
       // Remove from current tier
       tier.delete(oldestKey);
       if (this.stats.tierStats[tierName]) {
-        this.stats.tierStats[tierName].items--;
+        // Sync items count with actual tier size
+        this.stats.tierStats[tierName].items = tier.size;
         if (!demoted) {
           this.stats.tierStats[tierName].evictions++;
         }

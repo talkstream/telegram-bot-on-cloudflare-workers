@@ -263,6 +263,7 @@ describe('Performance tracking', () => {
 
     const analytics = new AsyncAnalytics(mockCtx, {
       endpoint: 'https://analytics.test/events',
+      batching: false, // Disable batching for immediate send
     });
 
     // Track performance manually (what decorator would do)
