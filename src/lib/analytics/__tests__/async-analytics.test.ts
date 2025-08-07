@@ -11,6 +11,7 @@ describe('AsyncAnalytics', () => {
   let analytics: AsyncAnalytics
   let mockCtx: { waitUntil: ReturnType<typeof vi.fn> }
   let waitUntilCalls: Promise<unknown>[] = []
+  let originalFetch: typeof global.fetch
 
   beforeEach(() => {
     waitUntilCalls = []
@@ -20,10 +21,23 @@ describe('AsyncAnalytics', () => {
       }),
       passThroughOnException: vi.fn()
     }
+    
+    // Save original fetch
+    originalFetch = global.fetch
+    
+    // Mock fetch globally to prevent real network requests
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ success: true })
+    })
   })
 
   afterEach(() => {
     vi.clearAllMocks()
+    // Restore original fetch
+    global.fetch = originalFetch
   })
 
   describe('basic tracking', () => {
@@ -129,7 +143,7 @@ describe('AsyncAnalytics', () => {
 
   describe('error handling', () => {
     beforeEach(() => {
-      // Mock fetch to return error response
+      // Override global mock to return error response
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 500,
@@ -288,6 +302,25 @@ describe('AnalyticsFactory', () => {
 })
 
 describe('Performance tracking', () => {
+  let originalFetch: typeof global.fetch
+  
+  beforeEach(() => {
+    // Save and mock fetch for this describe block
+    originalFetch = global.fetch
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => ({ success: true })
+    })
+  })
+  
+  afterEach(() => {
+    // Restore original fetch
+    global.fetch = originalFetch
+    vi.clearAllMocks()
+  })
+  
   it('should track method performance metrics', async () => {
     const mockCtx = {
       waitUntil: vi.fn()
@@ -387,6 +420,7 @@ describe('createAnalyticsMiddleware', () => {
 describe('Production Scenarios', () => {
   let analytics: AsyncAnalytics
   let mockCtx: { waitUntil: ReturnType<typeof vi.fn> }
+  let originalFetch: typeof global.fetch
 
   beforeEach(() => {
     mockCtx = {
@@ -394,10 +428,18 @@ describe('Production Scenarios', () => {
       passThroughOnException: vi.fn()
     }
 
+    // Save and mock fetch
+    originalFetch = global.fetch
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200
     })
+  })
+  
+  afterEach(() => {
+    // Restore original fetch
+    global.fetch = originalFetch
+    vi.clearAllMocks()
   })
 
   it('should handle high-volume event tracking', () => {
