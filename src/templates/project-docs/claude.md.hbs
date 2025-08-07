@@ -1,0 +1,323 @@
+# {{projectName}} - Development Guide
+
+## Project Context
+
+**Project**: {{projectDescription}}
+**Version**: {{currentVersion}}
+**Created**: {{setupDate}}
+**Author**: {{authorName}}
+
+This project is built on the Wireframe platform - a universal AI assistant framework designed for platform independence and scalability.
+
+## Architecture Overview
+
+### Core Stack
+- **Messaging Platform**: {{primaryPlatform}}
+- **Cloud Provider**: {{cloudProvider}}
+- **AI Integration**: {{aiProvider}}
+- **Language**: TypeScript (strict mode)
+- **Runtime**: Node.js 20+ / Cloudflare Workers
+
+### Key Architectural Patterns
+
+1. **Connector Pattern**: All external services use standardized connectors
+2. **Event-Driven**: Components communicate via EventBus
+3. **Platform Agnostic**: Zero coupling to specific platforms
+4. **Plugin System**: Extensible through hot-swappable plugins
+5. **Type Safety**: 100% TypeScript with no `any` types
+
+## Development Workflow
+
+### Essential Commands
+
+```bash
+# Development
+npm run dev              # Start local development server
+npm run dev:tunnel       # Development with public tunnel
+
+# Quality Checks
+npm run typecheck        # TypeScript type checking
+npm run lint            # ESLint validation
+npm run lint:fix        # Auto-fix linting issues
+npm test                # Run test suite
+npm run test:coverage   # Generate coverage report
+
+# Database
+npm run db:generate     # Create new migration
+npm run db:apply:local  # Apply migrations locally
+npm run db:apply:remote # Apply to production
+
+# Deployment
+npm run deploy          # Deploy to {{cloudProvider}}
+npm run deploy:preview  # Deploy preview environment
+```
+
+### Project Structure
+
+```
+{{projectName}}/
+├── src/
+│   ├── adapters/       # Platform-specific adapters
+│   │   └── {{primaryPlatform}}/
+│   │       ├── commands/    # Command handlers
+│   │       ├── callbacks/   # Callback handlers
+│   │       └── middleware/  # Platform middleware
+│   ├── connectors/     # External service connectors
+│   │   ├── ai/        # AI provider connectors
+│   │   ├── cloud/     # Cloud platform connectors
+│   │   └── messaging/ # Messaging platform connectors
+│   ├── core/          # Framework core components
+│   │   ├── bot.ts     # Main bot class
+│   │   ├── events/    # Event bus system
+│   │   └── plugins/   # Plugin system
+│   └── services/      # Business logic services
+├── migrations/        # Database migrations
+├── tests/            # Test files
+└── docs/             # Documentation
+```
+
+## Current Features
+
+{{#if features}}
+### Implemented
+{{#each features}}
+- ✅ {{this}}
+{{/each}}
+{{else}}
+### Base Features
+- ✅ Command routing system
+- ✅ Event-driven architecture
+- ✅ Database integration (D1)
+- ✅ KV storage support
+- ✅ Rate limiting
+- ✅ Health monitoring
+{{/if}}
+
+### Platform: {{primaryPlatform}}
+
+{{#ifEquals primaryPlatform "telegram"}}
+#### Telegram-Specific Features
+- Inline keyboards and callbacks
+- Media handling (photos, documents)
+- Group chat support
+- Payment integration (Stars)
+- Webhook validation
+{{/ifEquals}}
+
+{{#ifEquals primaryPlatform "discord"}}
+#### Discord-Specific Features
+- Slash commands
+- Message components
+- Guild management
+- Voice channel support
+- Rich embeds
+{{/ifEquals}}
+
+## AI Integration
+
+{{#if aiProvider}}
+### Provider: {{aiProvider}}
+
+{{#ifEquals aiProvider "google-ai"}}
+- Model: Gemini Pro / Gemini Flash
+- Features: Text generation, embeddings, vision
+- Free tier available
+{{/ifEquals}}
+
+{{#ifEquals aiProvider "openai"}}
+- Models: GPT-4, GPT-3.5
+- Features: Completions, embeddings, functions
+- Pay-per-use pricing
+{{/ifEquals}}
+
+{{#ifEquals aiProvider "anthropic"}}
+- Models: Claude 3 family
+- Features: Long context, constitutional AI
+- Enterprise-ready
+{{/ifEquals}}
+{{else}}
+### No AI Provider Configured
+To add AI capabilities, configure an AI provider in your environment.
+{{/if}}
+
+## Development Guidelines
+
+### Code Quality Standards
+
+1. **TypeScript Strict Mode**
+   - No `any` types allowed
+   - Handle all nullable values
+   - Use type guards for runtime checks
+
+2. **Testing Requirements**
+   - Write tests for all new features
+   - Maintain >80% code coverage
+   - Use mocks for external services
+
+3. **Error Handling**
+   - Use circuit breakers for external calls
+   - Implement proper error recovery
+   - Log errors with context
+
+4. **Performance**
+   - Lazy load heavy dependencies
+   - Use caching strategically
+   - Monitor response times
+
+### Best Practices
+
+1. **Security**
+   - Never commit secrets
+   - Use environment variables
+   - Validate all inputs
+   - Implement rate limiting
+
+2. **Documentation**
+   - Document public APIs
+   - Add JSDoc comments
+   - Update README for features
+   - Keep CHANGELOG current
+
+3. **Git Workflow**
+   - Create feature branches
+   - Write descriptive commits
+   - Test before pushing
+   - Use PR templates
+
+## Environment Configuration
+
+### Required Variables
+```env
+# Platform Credentials
+{{#ifEquals primaryPlatform "telegram"}}
+TELEGRAM_BOT_TOKEN=     # From @BotFather
+TELEGRAM_WEBHOOK_SECRET= # Generated secret
+{{/ifEquals}}
+{{#ifEquals primaryPlatform "discord"}}
+DISCORD_BOT_TOKEN=       # From Discord Developer Portal
+DISCORD_APPLICATION_ID=  # Application ID
+{{/ifEquals}}
+
+# Owner Configuration
+BOT_OWNER_IDS=          # Comma-separated admin IDs
+
+{{#if aiProvider}}
+# AI Provider
+AI_PROVIDER={{aiProvider}}
+{{#ifEquals aiProvider "google-ai"}}
+GEMINI_API_KEY=         # From Google AI Studio
+{{/ifEquals}}
+{{#ifEquals aiProvider "openai"}}
+OPENAI_API_KEY=         # From OpenAI Platform
+{{/ifEquals}}
+{{/if}}
+```
+
+### Optional Variables
+```env
+# Monitoring
+SENTRY_DSN=             # Error tracking
+ENVIRONMENT=development # or production
+
+# Features
+ENABLE_ANALYTICS=true
+ENABLE_CACHE=true
+```
+
+## Deployment
+
+### {{cloudProvider}} Deployment
+
+{{#ifEquals cloudProvider "cloudflare"}}
+1. **Configure Resources**
+   ```bash
+   wrangler d1 create {{projectName}}-db
+   wrangler kv:namespace create {{projectName}}_kv
+   ```
+
+2. **Update wrangler.toml**
+   - Add D1 database binding
+   - Add KV namespace bindings
+   - Set compatibility date
+
+3. **Deploy**
+   ```bash
+   npm run deploy
+   ```
+
+4. **Set Webhook**
+   ```bash
+   npm run webhook:set
+   ```
+{{/ifEquals}}
+
+{{#ifEquals cloudProvider "aws"}}
+1. **Configure AWS**
+   ```bash
+   aws configure
+   ```
+
+2. **Deploy with SAM**
+   ```bash
+   sam build
+   sam deploy --guided
+   ```
+{{/ifEquals}}
+
+## Troubleshooting
+
+### Common Issues
+
+1. **TypeScript Errors**
+   - Run `npm run typecheck` to identify issues
+   - Check for missing type definitions
+   - Ensure strict mode compliance
+
+2. **Deployment Failures**
+   - Verify all secrets are set
+   - Check resource limits
+   - Review deployment logs
+
+3. **Bot Not Responding**
+   - Verify webhook is set correctly
+   - Check bot token validity
+   - Review error logs
+
+### Debug Commands
+
+```bash
+# Check configuration
+npm run config:check
+
+# View logs
+npm run logs:tail
+
+# Test webhook
+npm run webhook:test
+
+# Database diagnostics
+npm run db:status
+```
+
+## Contributing
+
+When contributing improvements back to Wireframe:
+
+1. **Identify reusable patterns**
+2. **Run contribution tool**:
+   ```bash
+   npm run contribute
+   ```
+3. **Select contribution type**
+4. **Follow the guided process**
+
+## Resources
+
+- [Wireframe Documentation](https://github.com/talkstream/typescript-wireframe-platform)
+- [{{primaryPlatform}} API Docs](https://core.telegram.org/bots/api)
+- [{{cloudProvider}} Documentation](https://developers.cloudflare.com/workers)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs)
+
+---
+
+_This document is auto-generated and filtered for privacy. Last updated: {{setupDate}}_

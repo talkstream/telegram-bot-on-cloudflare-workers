@@ -1,0 +1,312 @@
+# 🚀 Quick Start Guide - {{projectName}}
+
+## Project Information
+
+- **Name**: {{projectName}}
+- **Description**: {{projectDescription}}
+- **Bot Username**: {{botUsername}}
+- **Platform**: {{primaryPlatform}}
+- **Cloud**: {{cloudProvider}}
+- **Created**: {{setupDate}}
+- **Author**: {{authorName}}
+
+## Prerequisites Check
+
+Before starting, ensure you have:
+
+- [ ] Node.js 20+ (`node --version`)
+- [ ] npm 10+ (`npm --version`)
+- [ ] Git installed (`git --version`)
+- [ ] {{cloudProvider}} CLI installed
+{{#ifEquals cloudProvider "cloudflare"}}
+- [ ] Wrangler CLI (`npm install -g wrangler`)
+{{/ifEquals}}
+{{#ifEquals cloudProvider "aws"}}
+- [ ] AWS CLI (`aws --version`)
+{{/ifEquals}}
+
+## Step-by-Step Setup
+
+### 1️⃣ Install Dependencies
+
+```bash
+# Install all project dependencies
+npm install
+
+# Verify installation
+npm run check:setup
+```
+
+### 2️⃣ Configure Environment
+
+Create `.dev.vars` file in the project root:
+
+```env
+# Required: Bot Credentials
+{{#ifEquals primaryPlatform "telegram"}}
+TELEGRAM_BOT_TOKEN={{botToken}}
+TELEGRAM_WEBHOOK_SECRET={{webhookSecret}}
+{{/ifEquals}}
+{{#ifEquals primaryPlatform "discord"}}
+DISCORD_BOT_TOKEN=your_discord_token
+DISCORD_APPLICATION_ID=your_app_id
+{{/ifEquals}}
+
+# Required: Admin Configuration
+BOT_OWNER_IDS={{ownerIds}}
+
+{{#if aiProvider}}
+# AI Provider Configuration
+AI_PROVIDER={{aiProvider}}
+{{#ifEquals aiProvider "google-ai"}}
+GEMINI_API_KEY=your_gemini_api_key
+{{/ifEquals}}
+{{#ifEquals aiProvider "openai"}}
+OPENAI_API_KEY=your_openai_api_key
+{{/ifEquals}}
+{{#ifEquals aiProvider "anthropic"}}
+ANTHROPIC_API_KEY=your_anthropic_api_key
+{{/ifEquals}}
+{{/if}}
+
+# Optional: Monitoring
+SENTRY_DSN=your_sentry_dsn_if_you_have_one
+ENVIRONMENT=development
+```
+
+### 3️⃣ Setup Cloud Resources
+
+{{#ifEquals cloudProvider "cloudflare"}}
+#### Cloudflare Workers Setup
+
+```bash
+# Login to Cloudflare
+wrangler login
+
+# Create D1 Database
+wrangler d1 create {{projectName}}-db
+# Copy the database_id from output
+
+# Create KV Namespaces
+wrangler kv:namespace create "{{projectName}}_kv"
+wrangler kv:namespace create "{{projectName}}_cache"
+wrangler kv:namespace create "{{projectName}}_sessions"
+# Copy the namespace IDs from output
+```
+
+Update `wrangler.toml` with your IDs:
+
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "{{projectName}}-db"
+database_id = "YOUR_DATABASE_ID"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "YOUR_CACHE_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "YOUR_SESSIONS_NAMESPACE_ID"
+```
+{{/ifEquals}}
+
+{{#ifEquals cloudProvider "aws"}}
+#### AWS Lambda Setup
+
+```bash
+# Configure AWS credentials
+aws configure
+
+# Create DynamoDB tables
+aws dynamodb create-table --table-name {{projectName}}-users ...
+aws dynamodb create-table --table-name {{projectName}}-sessions ...
+
+# Create S3 bucket for storage
+aws s3 mb s3://{{projectName}}-storage
+```
+{{/ifEquals}}
+
+### 4️⃣ Initialize Database
+
+```bash
+# Run database migrations
+npm run db:apply:local
+
+# Verify database setup
+npm run db:status
+```
+
+### 5️⃣ Start Development Server
+
+```bash
+# Start local development
+npm run dev
+
+# Your bot is now running locally!
+# Press 'b' to open in browser
+# Press 'l' to see logs
+```
+
+### 6️⃣ Test Your Bot
+
+{{#ifEquals primaryPlatform "telegram"}}
+1. Open Telegram
+2. Search for {{botUsername}}
+3. Send `/start` command
+4. You should receive a welcome message!
+{{/ifEquals}}
+
+{{#ifEquals primaryPlatform "discord"}}
+1. Invite bot to your server using the OAuth2 URL
+2. Type `/help` in any channel
+3. Bot should respond with available commands
+{{/ifEquals}}
+
+### 7️⃣ Deploy to Production
+
+```bash
+# Run tests first
+npm test
+
+# Deploy to {{cloudProvider}}
+npm run deploy
+
+# Set webhook (for Telegram)
+{{#ifEquals primaryPlatform "telegram"}}
+npm run webhook:set
+{{/ifEquals}}
+
+# Verify deployment
+npm run health:check
+```
+
+## 📋 Available Commands
+
+### Development
+- `npm run dev` - Start development server
+- `npm run dev:tunnel` - Development with public URL
+- `npm test` - Run test suite
+- `npm run typecheck` - Check TypeScript types
+- `npm run lint` - Lint code
+
+### Database
+- `npm run db:generate` - Create new migration
+- `npm run db:apply:local` - Apply migrations locally
+- `npm run db:apply:remote` - Apply to production
+- `npm run db:status` - Check database status
+
+### Deployment
+- `npm run deploy` - Deploy to production
+- `npm run deploy:preview` - Deploy preview
+- `npm run logs:tail` - View live logs
+- `npm run webhook:set` - Configure webhook
+- `npm run health:check` - Check bot health
+
+## 🎯 Next Steps
+
+### Add Your First Command
+
+Create a new file `src/adapters/{{primaryPlatform}}/commands/hello.ts`:
+
+```typescript
+import type { Context } from '@/types/context';
+
+export const helloCommand = {
+  command: 'hello',
+  description: 'Say hello!',
+  handler: async (ctx: Context) => {
+    const name = ctx.from?.first_name || 'friend';
+    await ctx.reply(`Hello, ${name}! 👋`);
+  },
+};
+```
+
+Register it in `src/adapters/{{primaryPlatform}}/commands/index.ts`.
+
+### Configure AI Responses
+
+{{#if aiProvider}}
+Your bot is configured with {{aiProvider}}. To use AI:
+
+```typescript
+import { AIService } from '@/services/ai-service';
+
+const ai = new AIService();
+const response = await ai.complete({
+  prompt: 'User question here',
+  maxTokens: 150,
+});
+```
+{{else}}
+To add AI capabilities:
+
+1. Choose a provider (Google Gemini, OpenAI, etc.)
+2. Get an API key
+3. Add to `.dev.vars`:
+   ```env
+   AI_PROVIDER=google-ai
+   GEMINI_API_KEY=your_key
+   ```
+{{/if}}
+
+### Add Database Models
+
+Create new models in `src/domain/`:
+
+```typescript
+// src/domain/users/model.ts
+export interface User {
+  id: string;
+  telegramId: number;
+  username?: string;
+  createdAt: Date;
+}
+```
+
+## 🆘 Troubleshooting
+
+### Bot Not Responding
+1. Check bot token is correct
+2. Verify webhook is set: `npm run webhook:test`
+3. Check logs: `npm run logs:tail`
+
+### TypeScript Errors
+1. Run `npm run typecheck` to see all errors
+2. Ensure you're using Node.js 20+
+3. Try `npm run clean && npm install`
+
+### Deployment Issues
+1. Verify all secrets are set in {{cloudProvider}}
+2. Check you're logged in: `wrangler whoami`
+3. Review deployment logs for errors
+
+### Database Problems
+1. Ensure migrations are applied: `npm run db:status`
+2. Check database connection in logs
+3. Try resetting: `npm run db:reset:local`
+
+## 📚 Resources
+
+- [Project Documentation](./docs/README.md)
+- [Wireframe Platform Docs](https://github.com/talkstream/typescript-wireframe-platform)
+- [{{primaryPlatform}} Bot API](https://core.telegram.org/bots/api)
+- [{{cloudProvider}} Documentation](https://developers.cloudflare.com/workers)
+
+## 💡 Pro Tips
+
+1. **Use TypeScript Strict Mode** - Already configured, maintains code quality
+2. **Test Before Deploy** - Run `npm test` before every deployment
+3. **Monitor Logs** - Use `npm run logs:tail` to watch production
+4. **Use Environment Variables** - Never hardcode secrets
+5. **Follow Patterns** - Check existing code for examples
+
+---
+
+_Generated on {{setupDate}} | Version {{currentVersion}}_
+_Need help? Check the [troubleshooting guide](./docs/TROUBLESHOOTING.md) or open an issue._

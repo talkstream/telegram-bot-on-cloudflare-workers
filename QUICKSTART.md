@@ -1,22 +1,39 @@
-# 🚀 Quick Start: Deploy Your Telegram Bot in 5 Minutes
+# 🚀 Quick Start: Deploy Your Bot in 5 Minutes
 
 ## Prerequisites
 
 - Node.js 20+ and npm 10+
 - [Cloudflare account](https://dash.cloudflare.com/sign-up) (free tier works!)
-- Telegram account
+- Account on your chosen platform (Telegram, Discord, etc.)
 
-## One-Command Deploy
+## 🎯 Two Ways to Start
+
+### Option 1: Enhanced Setup Wizard (Recommended)
 
 ```bash
-# Clone and deploy
+# Clone and setup with full wizard
 git clone https://github.com/talkstream/typescript-wireframe-platform.git
 cd typescript-wireframe-platform
 npm install
+npm run setup:wizard
+```
+
+The enhanced wizard supports:
+
+- 🌐 Multiple platforms (Telegram, Discord, Slack, WhatsApp)
+- ☁️ Multiple clouds (Cloudflare, AWS, GCP, Azure)
+- 🧠 AI provider selection with configuration
+- 📚 Auto-generated CLAUDE.md and INIT.md documentation
+- 💾 State saving (resume if interrupted)
+
+### Option 2: Quick Telegram Setup
+
+```bash
+# For Telegram-only quick setup
 npm run setup:bot
 ```
 
-The interactive setup wizard will:
+The setup wizard will:
 
 - ✅ Help you create a Telegram bot via @BotFather
 - ✅ Configure all required secrets

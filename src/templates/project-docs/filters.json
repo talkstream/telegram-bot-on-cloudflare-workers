@@ -1,0 +1,75 @@
+{
+  "privatePatterns": [
+    {
+      "pattern": "/Users/[^/]+/",
+      "replacement": "/path/to/",
+      "description": "macOS user paths"
+    },
+    {
+      "pattern": "/home/[^/]+/",
+      "replacement": "/path/to/",
+      "description": "Linux user paths"
+    },
+    {
+      "pattern": "C:\\\\Users\\\\[^\\\\]+\\\\",
+      "replacement": "C:\\path\\to\\",
+      "description": "Windows user paths"
+    },
+    {
+      "pattern": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}",
+      "replacement": "user@example.com",
+      "description": "Email addresses"
+    },
+    {
+      "pattern": "sk-[a-zA-Z0-9]{48}",
+      "replacement": "sk-XXXXXXXXXXXXXXXXXXXX",
+      "description": "OpenAI API keys"
+    },
+    {
+      "pattern": "AIza[a-zA-Z0-9]{35}",
+      "replacement": "AIzaXXXXXXXXXXXXXXXXX",
+      "description": "Google API keys"
+    },
+    {
+      "pattern": "\\d{10}:[A-Za-z0-9_-]{35}",
+      "replacement": "0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      "description": "Telegram bot tokens"
+    },
+    {
+      "pattern": "xoxb-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24}",
+      "replacement": "xoxb-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXX",
+      "description": "Slack bot tokens"
+    },
+    {
+      "pattern": "https://[^\\s]*sentry\\.io/[^\\s]*\\d+",
+      "replacement": "https://sentry.io/organizations/ORG/projects/PROJECT",
+      "description": "Sentry DSN URLs"
+    }
+  ],
+  "projectSpecificFilters": [
+    {
+      "pattern": "kogotochki",
+      "replacement": "project",
+      "description": "Specific project name"
+    },
+    {
+      "pattern": "wireframe-kogotochki",
+      "replacement": "wireframe-bot",
+      "description": "Worktree names"
+    },
+    {
+      "pattern": "/Documents/Dropbox/AApps/",
+      "replacement": "/projects/",
+      "description": "Personal directory structure"
+    }
+  ],
+  "removePatterns": [
+    "TODO.*personal",
+    "FIXME.*private",
+    "NOTE.*internal",
+    "\\[personal.*?\\]",
+    "\\[private.*?\\]",
+    "\\[internal.*?\\]"
+  ],
+  "sensitiveFields": ["password", "secret", "token", "key", "dsn", "credential", "auth", "private"]
+}
