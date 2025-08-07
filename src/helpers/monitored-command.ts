@@ -4,10 +4,26 @@
  * Automatically tracks command execution with monitoring
  */
 
-import type { CommandModule, CommandBuilder, CommandContext } from '@/types/command';
+import type { BotContext } from '@/types/telegram';
 import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
 import type { EventBus } from '@/core/events/event-bus';
-import { CommonEventType } from '@/core/events/types/common';
+
+// Command types (local definitions to avoid import errors)
+export interface CommandModule<T = object> {
+  command: string;
+  describe: string;
+  handler: (ctx: BotContext & T) => Promise<void>;
+}
+
+export interface CommandBuilder {
+  command: (cmd: string) => {
+    describe: (desc: string) => {
+      handler: <T = object>(handler: (ctx: BotContext & T) => Promise<void>) => CommandModule<T>;
+    };
+  };
+}
+
+export type CommandContext<T = object> = BotContext & T;
 
 export interface MonitoredCommandOptions<T = object> {
   /**
@@ -96,7 +112,7 @@ export function createMonitoredCommand<T = object>(
       // Emit command start event
       if (eventBus) {
         eventBus.emit(
-          CommonEventType.COMMAND_EXECUTED,
+          'command:executed',
           {
             command: commandName,
             userId,
@@ -179,7 +195,7 @@ export function createMonitoredCommand<T = object>(
         // Emit error event
         if (eventBus) {
           eventBus.emit(
-            CommonEventType.COMMAND_ERROR,
+            'command:error',
             {
               command: commandName,
               error: errorObj,

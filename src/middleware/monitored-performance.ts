@@ -4,11 +4,8 @@
  * Extends PerformanceMonitor to automatically report to monitoring service
  */
 
-import {
-  PerformanceMonitor,
-  PerformanceMonitorConfig,
-  PerformanceMetrics,
-} from './performance-monitor';
+import { PerformanceMonitor } from './performance-monitor';
+import type { PerformanceMonitorConfig, PerformanceMetrics } from './performance-monitor';
 
 import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
 import { EventBus } from '@/core/events/event-bus';

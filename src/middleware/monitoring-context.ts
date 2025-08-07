@@ -9,6 +9,31 @@ import type { Context, Next } from 'hono';
 import type { IMonitoringConnector } from '@/core/interfaces/monitoring';
 import { EventBus } from '@/core/events/event-bus';
 import { CommonEventType } from '@/core/events/types/common';
+import { FieldMapper } from '@/core/database/field-mapper';
+
+// Shared Telegram user field mapper
+const telegramUserMapper = new FieldMapper<
+  {
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    language_code?: string;
+    is_premium?: boolean;
+  },
+  {
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    languageCode?: string;
+    isPremium?: boolean;
+  }
+>([
+  { dbField: 'username', domainField: 'username' },
+  { dbField: 'first_name', domainField: 'firstName' },
+  { dbField: 'last_name', domainField: 'lastName' },
+  { dbField: 'language_code', domainField: 'languageCode' },
+  { dbField: 'is_premium', domainField: 'isPremium' },
+]);
 
 export interface MonitoringContextOptions {
   monitoring: IMonitoringConnector;
@@ -209,13 +234,8 @@ export function createTelegramMonitoringMiddleware(
           ).message;
           const from = message?.from;
           if (from) {
-            return {
-              username: from.username,
-              firstName: from.first_name,
-              lastName: from.last_name,
-              languageCode: from.language_code,
-              isPremium: from.is_premium,
-            };
+            // Use shared FieldMapper for snake_case to camelCase conversion
+            return telegramUserMapper.toDomain(from);
           }
         }
       } catch {
@@ -265,15 +285,10 @@ export function createGrammyMonitoringMiddleware(
     ctx.monitoring = monitoring;
     ctx.requestId = requestId;
 
-    // Set user context
-    if (userId) {
-      monitoring.setUserContext(userId, {
-        username: ctx.from?.username,
-        firstName: ctx.from?.first_name,
-        lastName: ctx.from?.last_name,
-        languageCode: ctx.from?.language_code,
-        isPremium: ctx.from?.is_premium,
-      });
+    // Set user context with shared FieldMapper
+    if (userId && ctx.from) {
+      const userContext = telegramUserMapper.toDomain(ctx.from);
+      monitoring.setUserContext(userId, userContext);
     }
 
     // Track update start
