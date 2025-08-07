@@ -50,7 +50,7 @@ export class Registry {
       const instance = module.default || module;
       this.instances.set(name, instance);
       return instance;
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to load package: ${name}`);
     }
   }

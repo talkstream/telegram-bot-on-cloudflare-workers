@@ -1,9 +1,10 @@
+import path from 'path'
+
 import { Command } from 'commander'
 import prompts from 'prompts'
 import chalk from 'chalk'
 import ora from 'ora'
 import fs from 'fs-extra'
-import path from 'path'
 // Using ES modules - no need for __dirname
 
 export const createCommand = new Command('create')

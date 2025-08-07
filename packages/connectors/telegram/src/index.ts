@@ -5,7 +5,7 @@
  */
 
 import { Bot, webhookCallback } from 'grammy'
-import type { Connector, ConnectorType, Message, User, Chat } from '@wireframe/core'
+import type { Connector, ConnectorType, Message } from '@wireframe/core'
 
 export interface TelegramConfig {
   token: string

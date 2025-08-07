@@ -1,9 +1,10 @@
+import path from 'path'
+import { execSync } from 'child_process'
+
 import { Command } from 'commander'
 import chalk from 'chalk'
 import ora from 'ora'
 import fs from 'fs-extra'
-import path from 'path'
-import { execSync } from 'child_process'
 
 export const addCommand = new Command('add')
   .description('Add a package to your bot')

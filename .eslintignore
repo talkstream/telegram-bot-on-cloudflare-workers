@@ -1,0 +1,17 @@
+# Build output
+dist/
+.wrangler/
+coverage/
+website/
+
+# Dependencies
+node_modules/
+
+# Temporarily ignore new connector packages until properly configured
+packages/connectors/*/src/
+
+# Examples
+examples/
+
+# Backup files
+backup/
