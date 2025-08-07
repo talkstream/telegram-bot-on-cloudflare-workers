@@ -19,6 +19,8 @@ import { getBotToken, isDemoMode } from '@/lib/env-guards';
 import { MockAIConnector } from '@/connectors/ai/mock-ai-connector';
 import { MockTelegramConnector } from '@/connectors/messaging/telegram/mock-telegram-connector';
 import { TelegramConnector } from '@/connectors/messaging/telegram/telegram-connector';
+import { PerformanceMonitor } from '@/middleware/performance-monitor';
+import { CacheConnector } from '@/connectors/cache/cache-connector';
 
 /**
  * Wireframe core services
@@ -28,6 +30,8 @@ export interface WireframeServices extends Record<string, unknown> {
   aiConnector: AIConnector;
   messagingConnector: MessagingConnector;
   kvCache: KVCache;
+  performanceMonitor: PerformanceMonitor;
+  cacheConnector: CacheConnector;
 }
 
 /**
@@ -136,6 +140,41 @@ function registerCoreServices(): void {
       throw new Error('KV store required for cache');
     }
     return new KVCache(kv);
+  });
+
+  // Performance Monitor
+  coreServices.register('performanceMonitor', () => {
+    return new PerformanceMonitor({
+      slowOperationThreshold: 1000,
+      verySlowOperationThreshold: 5000,
+      maxMetricsPerOperation: 100,
+      captureStackTrace: serviceConfig.env?.NODE_ENV === 'development',
+    });
+  });
+
+  // Cache Connector (unified multi-layer cache)
+  coreServices.register('cacheConnector', () => {
+    if (!serviceConfig.env) {
+      throw new Error('Environment not configured');
+    }
+
+    const eventBus = new EventBus();
+    const monitor = coreServices.get('performanceMonitor');
+    const kvNamespace = getKeyValueStore();
+
+    return new CacheConnector({
+      id: 'unified-cache',
+      name: 'Unified Cache',
+      eventBus,
+      performanceMonitor: monitor,
+      kvNamespace: kvNamespace as KVNamespace | undefined,
+      layers: {
+        request: true,
+        edge: true,
+        kv: !!kvNamespace,
+      },
+      defaultTTL: 300,
+    });
   });
 }
 
