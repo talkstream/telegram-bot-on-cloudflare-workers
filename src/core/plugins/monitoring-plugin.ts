@@ -10,6 +10,22 @@ import { CommonEventType } from '../events/types/common';
 import { UserEventType } from '../events/types/user';
 import { AIEventType } from '../events/types/ai';
 import { PaymentEventType } from '../events/types/payment';
+import type {
+  RequestStartedPayload,
+  RequestCompletedPayload,
+  ErrorOccurredPayload,
+  SessionCreatedPayload,
+  CacheEventPayload,
+  PluginLoadedPayload,
+  PluginErrorPayload,
+  AICompletionSuccessPayload,
+  AICompletionFailedPayload,
+  PaymentCompletedPayload,
+  PaymentFailedPayload,
+  UserRegisteredPayload,
+  UserLoggedInPayload,
+  PluginContext,
+} from '../events/types/event-payloads';
 
 import type { Plugin } from './plugin';
 
@@ -49,7 +65,7 @@ export class MonitoringPlugin implements Plugin {
     this.config = config;
   }
 
-  async install(_context: any): Promise<void> {
+  async install(_context: PluginContext): Promise<void> {
     // Subscribe to all event types
     this.subscribeToEvents();
     logger.info('Monitoring plugin installed');
@@ -93,7 +109,8 @@ export class MonitoringPlugin implements Plugin {
 
   private trackPerformanceEvents(): void {
     // Track request start/end for performance metrics
-    this.eventBus.on(CommonEventType.REQUEST_STARTED, (data: any) => {
+    this.eventBus.on(CommonEventType.REQUEST_STARTED, (event) => {
+      const data = event.payload as RequestStartedPayload;
       const requestId = data.requestId || `request-${Date.now()}`;
       this.performanceTracking.set(requestId, Date.now());
 
@@ -103,7 +120,8 @@ export class MonitoringPlugin implements Plugin {
       });
     });
 
-    this.eventBus.on(CommonEventType.REQUEST_COMPLETED, (data: any) => {
+    this.eventBus.on(CommonEventType.REQUEST_COMPLETED, (event) => {
+      const data = event.payload as RequestCompletedPayload;
       const requestId = data.requestId || `request-${Date.now()}`;
       const startTime = this.performanceTracking.get(requestId);
 
@@ -126,28 +144,30 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track AI completion performance
-    this.eventBus.on(AIEventType.COMPLETION_SUCCESS, (data: any) => {
+    this.eventBus.on(AIEventType.COMPLETION_SUCCESS, (event) => {
+      const data = event.payload as AICompletionSuccessPayload;
       if (data.latency) {
         this.monitoring.trackMetric('ai_completion_latency', data.latency, {
-          provider: data.provider,
-          model: data.model,
+          provider: data.provider || 'unknown',
+          model: data.model || 'unknown',
         });
       }
 
       if (data.tokens) {
         this.monitoring.trackMetric('ai_tokens_used', data.tokens, {
-          provider: data.provider,
-          model: data.model,
+          provider: data.provider || 'unknown',
+          model: data.model || 'unknown',
         });
       }
     });
 
     // Track payment processing time
-    this.eventBus.on(PaymentEventType.PAYMENT_COMPLETED, (data: any) => {
+    this.eventBus.on(PaymentEventType.PAYMENT_COMPLETED, (event) => {
+      const data = event.payload as PaymentCompletedPayload;
       if (data.processingTime) {
         this.monitoring.trackMetric('payment_processing_time', data.processingTime, {
-          paymentType: data.type,
-          amount: data.amount,
+          paymentType: data.type || 'unknown',
+          amount: String(data.amount ?? 0),
         });
       }
     });
@@ -155,7 +175,8 @@ export class MonitoringPlugin implements Plugin {
 
   private trackErrorEvents(): void {
     // Track all error events
-    this.eventBus.on(CommonEventType.ERROR_OCCURRED, (data: any) => {
+    this.eventBus.on(CommonEventType.ERROR_OCCURRED, (event) => {
+      const data = event.payload as ErrorOccurredPayload;
       const error = data.error instanceof Error ? data.error : new Error(String(data.error));
 
       this.monitoring.captureException(error, {
@@ -165,7 +186,8 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track AI failures
-    this.eventBus.on(AIEventType.COMPLETION_FAILED, (data: any) => {
+    this.eventBus.on(AIEventType.COMPLETION_FAILED, (event) => {
+      const data = event.payload as AICompletionFailedPayload;
       const error = data.error instanceof Error ? data.error : new Error(String(data.error));
 
       this.monitoring.captureException(error, {
@@ -176,7 +198,8 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track payment failures
-    this.eventBus.on(PaymentEventType.PAYMENT_FAILED, (data: any) => {
+    this.eventBus.on(PaymentEventType.PAYMENT_FAILED, (event) => {
+      const data = event.payload as PaymentFailedPayload;
       const error = data.error instanceof Error ? data.error : new Error(String(data.error));
 
       this.monitoring.captureException(error, {
@@ -187,7 +210,8 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track plugin errors
-    this.eventBus.on(CommonEventType.PLUGIN_ERROR, (data: any) => {
+    this.eventBus.on(CommonEventType.PLUGIN_ERROR, (event) => {
+      const data = event.payload as PluginErrorPayload;
       const error = data.error instanceof Error ? data.error : new Error(String(data.error));
 
       this.monitoring.captureException(error, {
@@ -199,7 +223,8 @@ export class MonitoringPlugin implements Plugin {
 
   private trackCustomEvents(): void {
     // Track user events
-    this.eventBus.on(UserEventType.USER_REGISTERED, (data: any) => {
+    this.eventBus.on(UserEventType.USER_REGISTERED, (event) => {
+      const data = event.payload as UserRegisteredPayload;
       if (this.shouldTrackEvent(UserEventType.USER_REGISTERED)) {
         this.monitoring.trackEvent('user_registered', {
           userId: data.userId,
@@ -208,7 +233,8 @@ export class MonitoringPlugin implements Plugin {
       }
     });
 
-    this.eventBus.on(UserEventType.USER_LOGGED_IN, (data: any) => {
+    this.eventBus.on(UserEventType.USER_LOGGED_IN, (event) => {
+      const data = event.payload as UserLoggedInPayload;
       if (this.shouldTrackEvent(UserEventType.USER_LOGGED_IN)) {
         this.monitoring.trackEvent('user_logged_in', {
           userId: data.userId,
@@ -226,7 +252,8 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track plugin lifecycle
-    this.eventBus.on(CommonEventType.PLUGIN_LOADED, (data: any) => {
+    this.eventBus.on(CommonEventType.PLUGIN_LOADED, (event) => {
+      const data = event.payload as PluginLoadedPayload;
       if (this.shouldTrackEvent(CommonEventType.PLUGIN_LOADED)) {
         this.monitoring.trackEvent('plugin_loaded', {
           pluginId: data.pluginId,
@@ -237,7 +264,8 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track session events
-    this.eventBus.on(CommonEventType.SESSION_CREATED, (data: any) => {
+    this.eventBus.on(CommonEventType.SESSION_CREATED, (event) => {
+      const data = event.payload as SessionCreatedPayload;
       if (this.shouldTrackEvent(CommonEventType.SESSION_CREATED)) {
         this.monitoring.trackEvent('session_created', {
           sessionId: data.sessionId,
@@ -248,7 +276,8 @@ export class MonitoringPlugin implements Plugin {
     });
 
     // Track cache events for performance insights
-    this.eventBus.on(CommonEventType.CACHE_HIT, (data: any) => {
+    this.eventBus.on(CommonEventType.CACHE_HIT, (event) => {
+      const data = event.payload as CacheEventPayload;
       if (this.shouldTrackEvent(CommonEventType.CACHE_HIT)) {
         this.monitoring.trackMetric('cache_hit', 1, {
           key: data.key,
@@ -256,7 +285,8 @@ export class MonitoringPlugin implements Plugin {
       }
     });
 
-    this.eventBus.on(CommonEventType.CACHE_MISS, (data: any) => {
+    this.eventBus.on(CommonEventType.CACHE_MISS, (event) => {
+      const data = event.payload as CacheEventPayload;
       if (this.shouldTrackEvent(CommonEventType.CACHE_MISS)) {
         this.monitoring.trackMetric('cache_miss', 1, {
           key: data.key,
@@ -304,7 +334,7 @@ export function createMonitoringPlugin(
   });
 
   // Auto-install the plugin
-  plugin.install({} as any).catch((error: unknown) => {
+  plugin.install({}).catch((error: unknown) => {
     console.error('Failed to install monitoring plugin:', error);
   });
 

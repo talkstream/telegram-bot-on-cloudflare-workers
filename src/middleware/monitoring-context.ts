@@ -181,7 +181,7 @@ export function createTelegramMonitoringMiddleware(
       try {
         const body = await ctx.req.json();
         if (body && typeof body === 'object' && 'message' in body) {
-          const message = (body as any).message;
+          const message = (body as { message?: { from?: { id?: number | string } } }).message;
           return message?.from?.id?.toString();
         }
       } catch {
@@ -194,7 +194,19 @@ export function createTelegramMonitoringMiddleware(
       try {
         const body = await ctx.req.json();
         if (body && typeof body === 'object' && 'message' in body) {
-          const message = (body as any).message;
+          const message = (
+            body as {
+              message?: {
+                from?: {
+                  username?: string;
+                  first_name?: string;
+                  last_name?: string;
+                  language_code?: string;
+                  is_premium?: boolean;
+                };
+              };
+            }
+          ).message;
           const from = message?.from;
           if (from) {
             return {
@@ -217,11 +229,33 @@ export function createTelegramMonitoringMiddleware(
 /**
  * Grammy middleware for monitoring context
  */
+// Grammy context type - properly typed version
+interface GrammyContext {
+  updateType: string;
+  from?: {
+    id?: number | string;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+    language_code?: string;
+    is_premium?: boolean;
+  };
+  chat?: {
+    id?: number | string;
+  };
+  message?: {
+    message_id?: number;
+    text?: string;
+  };
+  monitoring?: IMonitoringConnector;
+  requestId?: string;
+}
+
 export function createGrammyMonitoringMiddleware(
   monitoring: IMonitoringConnector,
   eventBus?: EventBus,
 ) {
-  return async (ctx: any, next: () => Promise<void>) => {
+  return async (ctx: GrammyContext, next: () => Promise<void>) => {
     const requestId = crypto.randomUUID();
     const startTime = Date.now();
     const updateType = ctx.updateType;

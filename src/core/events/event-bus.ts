@@ -130,12 +130,12 @@ export class EventBus {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listeners.add(handler as any);
+    // Type-safe handler storage - we store untyped handlers internally
+    // but expose typed interface through generic methods
+    listeners.add(handler as EventHandler);
 
     return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      listeners?.delete(handler as any);
+      listeners?.delete(handler as EventHandler);
       if (listeners?.size === 0) {
         this.listeners.delete(type);
       }

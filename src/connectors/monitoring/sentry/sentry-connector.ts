@@ -179,7 +179,12 @@ export class SentryConnector extends BaseMonitoringConnector {
       'startTransaction' in this.sdk &&
       typeof this.sdk.startTransaction === 'function'
     ) {
-      const transaction = (this.sdk as any).startTransaction({
+      interface TransactionSDK extends SentrySDK {
+        startTransaction(options: { op: string; name: string; data?: Record<string, unknown> }): {
+          finish(): void;
+        };
+      }
+      const transaction = (this.sdk as TransactionSDK).startTransaction({
         op: 'custom',
         name,
         data,
@@ -206,7 +211,12 @@ export class SentryConnector extends BaseMonitoringConnector {
 
     // If we have custom metrics support (Sentry 7.77.0+)
     if (this.sdk && 'metrics' in this.sdk && this.sdk.metrics) {
-      (this.sdk.metrics as any).gauge(name, value, tags);
+      interface MetricsSDK extends SentrySDK {
+        metrics?: {
+          gauge(name: string, value: number, tags?: Record<string, string>): void;
+        };
+      }
+      (this.sdk as MetricsSDK).metrics?.gauge(name, value, tags);
     }
   }
 
