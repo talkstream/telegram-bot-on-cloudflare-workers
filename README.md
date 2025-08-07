@@ -113,10 +113,18 @@ _Your support is invested thoughtfully into making this project even better. Tha
 
 - **🎯 AI-First Development** - Optimized for Claude Code, Cursor, and AI assistants
 - **📝 100% Type Safety** - No `any` types, full TypeScript strict mode
+- **🔥 Hot Reload Support** - Live browser reload during development
 - **🧪 Comprehensive Testing** - Unit, integration, and performance tests
 - **📚 Rich Documentation** - Detailed guides and examples
 - **🔧 CLI Tools** - Project generation and management
 - **🎨 Clean Architecture** - SOLID principles, clean code
+
+### Security & Performance
+
+- **🔒 Global Rate Limiting** - Configurable policies for all endpoints
+- **🛡️ DDoS Protection** - Burst limiting and traffic spike prevention
+- **⚡ Edge Optimized** - Sub-10ms response times on Cloudflare Workers
+- **📊 Resource Monitoring** - Built-in health checks and metrics
 
 ---
 
@@ -158,6 +166,9 @@ npm run db:migrate
 ```bash
 # Local development
 npm run dev
+
+# Development with hot reload
+npm run dev:hot
 
 # Run tests
 npm test
