@@ -1,0 +1,61 @@
+{
+  "name": "@wireframe/core",
+  "version": "2.0.0-alpha.1",
+  "description": "Vendor-agnostic core for Wireframe AI Assistant Ecosystem",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./interfaces": "./dist/interfaces/index.js",
+    "./events": "./dist/events/index.js",
+    "./registry": "./dist/registry/index.js",
+    "./plugins": "./dist/plugins/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "keywords": [
+    "wireframe",
+    "ai",
+    "assistant",
+    "framework",
+    "ecosystem",
+    "vendor-agnostic"
+  ],
+  "author": "Wireframe Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wireframe/core",
+    "directory": "packages/core"
+  },
+  "homepage": "https://wireframe.dev",
+  "bugs": {
+    "url": "https://github.com/wireframe/core/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "sideEffects": false
+}

@@ -1,10 +1,28 @@
-## Current Version: v1.3.0
+## 🚨 CRITICAL: VENDOR-AGNOSTIC ECOSYSTEM TRANSFORMATION IN PROGRESS
 
-## Project Context: Wireframe v1.3
+### ⚠️ DO NOT REVERT TO OLD PATTERNS!
 
-### What is Wireframe?
+**Wireframe is NO LONGER a framework - it's becoming a vendor-agnostic ECOSYSTEM**
 
-Wireframe is a **universal AI assistant platform** - NOT just a Telegram bot framework. It's designed to:
+**MANDATORY READING BEFORE ANY WORK**:
+
+1. 📖 [WIREFRAME_ECOSYSTEM_VISION.md](./WIREFRAME_ECOSYSTEM_VISION.md) - The new vision and strategy
+2. 🏗️ [docs/ECOSYSTEM_ARCHITECTURE.md](./docs/ECOSYSTEM_ARCHITECTURE.md) - Technical architecture
+
+### Core Principles Moving Forward:
+
+- **NO vendor-specific code in core** - Everything vendor-related goes in connectors
+- **Package-first development** - Every feature is a package
+- **Registry pattern** - All extensions loaded through registry, not imports
+- **Marketplace mindset** - Build for reusability and monetization
+
+## Current Version: v2.0-ecosystem (Transitioning from v1.3.0)
+
+## Project Context: Wireframe Ecosystem
+
+### What is Wireframe NOW?
+
+Wireframe is transforming into a **vendor-agnostic ecosystem** - a universal platform for building AI assistants. It provides:
 
 - Deploy AI assistants on ANY messaging platform (Telegram, Discord, Slack, WhatsApp)
 - Run on ANY cloud provider (Cloudflare, AWS, GCP, Azure)

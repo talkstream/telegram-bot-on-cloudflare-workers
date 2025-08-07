@@ -1,12 +1,19 @@
 {
-  "name": "typescript-wireframe-platform",
-  "version": "1.3.0",
-  "description": "Production-ready wireframe for creating any bots (Telegram, etc.) on Clouds (Cloudflare Worker, Google Cloud, etc.) with TypeScript 100% strict.",
+  "name": "wireframe",
+  "version": "2.0.0-alpha.1",
+  "description": "High-performance, vendor-agnostic AI Assistant Ecosystem",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "packages/connectors/*",
+    "packages/plugins/*",
+    "packages/templates/*"
+  ],
   "type": "module",
   "main": "./src/index.ts",
   "sideEffects": false,
   "bin": {
-    "create-wireframe": "./src/cli/create-wireframe/index.ts"
+    "wireframe": "./packages/cli/dist/index.js"
   },
   "scripts": {
     "dev": "wrangler dev --env development --var ENVIRONMENT:development",

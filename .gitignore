@@ -102,5 +102,25 @@ contribution-insights.json
 *.key
 *.crt
 
-# Website (exclude from main repository)
+# Website (separate project)
 website/
+
+# Legacy/Archive (temporary, will be removed)
+legacy/
+old/
+
+# Package outputs
+packages/*/dist/
+packages/*/build/
+packages/*/coverage/
+packages/*/*/dist/
+packages/*/*/build/
+packages/*/*/coverage/
+
+# Monorepo tools
+.turbo/
+lerna-debug.log*
+
+# Generated types
+src/types/database.d.ts
+**/generated/
