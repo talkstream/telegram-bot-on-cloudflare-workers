@@ -5,8 +5,15 @@
  * @module lib/utils/timezone
  */
 
-import { format as dateFnsFormat, parse, isValid } from 'date-fns';
-import { tz } from '@date-fns/tz';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+// Extend dayjs with required plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
 
 /**
  * Create timezone-aware date utilities for any timezone
@@ -31,42 +38,40 @@ export class TimezoneUtils {
   format(date: Date | string | number, formatStr: string): string {
     const dateObj = this.normalizeDate(date);
 
-    if (!isValid(dateObj)) {
+    if (!dayjs(dateObj).isValid()) {
       console.error('Invalid date provided to format:', date);
       return 'Invalid date';
     }
 
-    return dateFnsFormat(dateObj, formatStr, { in: tz(this.timezoneName) });
+    return dayjs(dateObj).tz(this.timezoneName).format(formatStr);
   }
 
   /**
    * Get current date in timezone
    */
   now(): Date {
-    return new Date();
+    return dayjs().tz(this.timezoneName).toDate();
   }
 
   /**
    * Parse date string in timezone context
    */
   parse(dateString: string, formatStr: string): Date {
-    // Parse the date string with the format in UTC first
-    const parsed = parse(dateString, formatStr, new Date());
+    // Parse the date string with the format in the timezone context
+    const parsed = dayjs.tz(dateString, formatStr, this.timezoneName);
 
-    if (!isValid(parsed)) {
+    if (!parsed.isValid()) {
       return new Date('Invalid Date');
     }
 
-    // The parsed date is already a valid Date object
-    // When used with formatting, the timezone context will be applied
-    return parsed;
+    return parsed.toDate();
   }
 
   /**
    * Format date for bot messages (localized)
    */
   formatBotDate(date: Date | string | number): string {
-    return this.format(date, 'dd.MM.yyyy');
+    return this.format(date, 'DD.MM.YYYY');
   }
 
   /**
@@ -80,17 +85,16 @@ export class TimezoneUtils {
    * Format date and time for bot messages (localized)
    */
   formatBotDateTime(date: Date | string | number): string {
-    return this.format(date, 'HH:mm dd.MM.yyyy');
+    return this.format(date, 'HH:mm DD.MM.YYYY');
   }
 
   /**
    * Get timezone offset in hours
    */
   getOffset(): number {
-    const date = new Date();
-    const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
-    const tzDate = new Date(date.toLocaleString('en-US', { timeZone: this.timezoneName }));
-    return Math.round((tzDate.getTime() - utcDate.getTime()) / 3600000);
+    const date = dayjs().tz(this.timezoneName);
+    // Get offset in minutes and convert to hours
+    return Math.round(date.utcOffset() / 60);
   }
 
   /**
@@ -116,25 +120,22 @@ export class TimezoneUtils {
    * Get next occurrence of a local time
    */
   getNextOccurrence(hour: number, minute: number = 0): Date {
-    const now = new Date();
+    const now = dayjs();
 
-    // Create a date for today at the target time in local timezone
-    const todayStr = this.format(now, 'yyyy-MM-dd');
-    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-
-    // Parse the target datetime string
-    const todayTarget = parse(`${todayStr} ${timeStr}`, 'yyyy-MM-dd HH:mm', new Date());
-
-    // Adjust for timezone offset to get the UTC time
-    const offset = this.getOffset();
-    const todayTargetUTC = new Date(todayTarget.getTime() - offset * 3600000);
+    // Create a date for today at the target time in the timezone
+    const todayTarget = dayjs()
+      .tz(this.timezoneName)
+      .hour(hour)
+      .minute(minute)
+      .second(0)
+      .millisecond(0);
 
     // If this time has already passed, move to tomorrow
-    if (todayTargetUTC <= now) {
-      return new Date(todayTargetUTC.getTime() + 24 * 3600000);
+    if (todayTarget.isBefore(now) || todayTarget.isSame(now)) {
+      return todayTarget.add(1, 'day').toDate();
     }
 
-    return todayTargetUTC;
+    return todayTarget.toDate();
   }
 
   private normalizeDate(date: Date | string | number): Date {
@@ -163,6 +164,13 @@ export class TimezoneFactory {
       throw new Error(`Failed to create timezone instance for ${timezone}`);
     }
     return instance;
+  }
+
+  /**
+   * Clear all cached instances (useful for testing)
+   */
+  static clear(): void {
+    this.instances.clear();
   }
 
   /**
@@ -203,21 +211,21 @@ export class TimezoneFactory {
     };
 
     if (!location) return null;
-    return locationMap[location.toLowerCase()] || null;
-  }
 
-  /**
-   * Clear cached instances (useful for tests)
-   */
-  static clear(): void {
-    this.instances.clear();
+    const normalized = location.toLowerCase().replace(/[\s-]/g, '_');
+    return locationMap[normalized] || null;
   }
 }
 
-// Convenience exports for common timezones
+/**
+ * Convenience exports for common timezones
+ */
 export const UTC = TimezoneFactory.get('UTC');
 export const Bangkok = TimezoneFactory.get('Asia/Bangkok');
 export const Moscow = TimezoneFactory.get('Europe/Moscow');
 export const NewYork = TimezoneFactory.get('America/New_York');
 export const London = TimezoneFactory.get('Europe/London');
 export const Tokyo = TimezoneFactory.get('Asia/Tokyo');
+export const Dubai = TimezoneFactory.get('Asia/Dubai');
+export const Singapore = TimezoneFactory.get('Asia/Singapore');
+export const Sydney = TimezoneFactory.get('Australia/Sydney');

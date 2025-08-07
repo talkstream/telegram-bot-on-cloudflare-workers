@@ -31,7 +31,7 @@ describe('AsyncAnalytics', () => {
       analytics = new AsyncAnalytics(mockCtx, {
         endpoint: 'https://analytics.test/events',
         apiKey: 'test-key',
-        batching: false, // Disable batching for simpler tests
+        batching: false, // Disable batching for immediate tracking tests
       });
     });
 
@@ -138,7 +138,7 @@ describe('AsyncAnalytics', () => {
 
       analytics = new AsyncAnalytics(mockCtx, {
         endpoint: 'https://analytics.example.com/events',
-        batching: false,
+        batching: false, // Disable for error handling tests
       });
     });
 
@@ -161,7 +161,7 @@ describe('AsyncAnalytics', () => {
       analytics = new AsyncAnalytics(mockCtx, {
         // No endpoint
         debug: true,
-        batching: false, // Disable batching for immediate send
+        batching: false, // Need immediate send for no-endpoint test
       });
     });
 
@@ -198,17 +198,49 @@ describe('CloudflareAnalytics', () => {
     mockAnalyticsEngine = {
       writeDataPoint: vi.fn(),
     };
+  });
 
+  it('should write to Analytics Engine with immediate send', () => {
     analytics = new CloudflareAnalytics(mockCtx, mockAnalyticsEngine, {
       batching: false,
     });
-  });
 
-  it('should write to Analytics Engine', () => {
     analytics.track('test_event', { value: 42 });
 
-    // Since sendToAnalytics is private, we can't directly test it
-    // But we can verify waitUntil was called
+    // With batching disabled, should send immediately
+    expect(mockCtx.waitUntil).toHaveBeenCalledTimes(1);
+  });
+
+  it('should batch events with Analytics Engine', () => {
+    analytics = new CloudflareAnalytics(mockCtx, mockAnalyticsEngine, {
+      batching: true,
+      batchSize: 3,
+    });
+
+    // Track first two events - should not send yet
+    analytics.track('event1', { value: 1 });
+    analytics.track('event2', { value: 2 });
+    expect(mockCtx.waitUntil).not.toHaveBeenCalled();
+
+    // Third event reaches batch size - should trigger send
+    analytics.track('event3', { value: 3 });
+    expect(mockCtx.waitUntil).toHaveBeenCalledTimes(1);
+  });
+
+  it('should flush batched events to Analytics Engine', () => {
+    analytics = new CloudflareAnalytics(mockCtx, mockAnalyticsEngine, {
+      batching: true,
+      batchSize: 10,
+    });
+
+    analytics.track('event1', { value: 1 });
+    analytics.track('event2', { value: 2 });
+
+    // Events are batched, not sent yet
+    expect(mockCtx.waitUntil).not.toHaveBeenCalled();
+
+    // Manual flush sends the batch
+    analytics.flush();
     expect(mockCtx.waitUntil).toHaveBeenCalledTimes(1);
   });
 });
@@ -263,7 +295,7 @@ describe('Performance tracking', () => {
 
     const analytics = new AsyncAnalytics(mockCtx, {
       endpoint: 'https://analytics.test/events',
-      batching: false, // Disable batching for immediate send
+      batching: false, // Need immediate tracking for performance test
     });
 
     // Track performance manually (what decorator would do)
@@ -388,7 +420,7 @@ describe('Production Scenarios', () => {
   it('should not block response time', () => {
     analytics = new AsyncAnalytics(mockCtx, {
       endpoint: 'https://analytics.test',
-      batching: false,
+      batching: false, // Measure per-event timing without batching
     });
 
     const start = Date.now();

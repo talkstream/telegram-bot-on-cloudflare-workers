@@ -11,6 +11,9 @@ import { statsCommand } from './stats';
 import { balanceCommand } from './balance';
 import { askCommand } from './ask';
 import { batchCommand } from './batch';
+// Import Bot API 9.1 commands
+import { checklistCommand, tasksCommand, todoCommand } from './checklist';
+import { starsCommand, giftCommand, sendStarsCommand } from './stars';
 // Import role-based commands
 import { infoCommand, adminCommand, debugCommand } from './owner';
 import { requestsCommand } from './admin';
@@ -52,6 +55,14 @@ export function setupCommands(bot: Bot<BotContext>, roleService?: UniversalRoleS
   bot.command('ask', askCommand);
   bot.command('batch', batchCommand);
 
+  // Bot API 9.1 commands
+  bot.command('checklist', checklistCommand);
+  bot.command('tasks', tasksCommand);
+  bot.command('todo', todoCommand);
+  bot.command('stars', starsCommand);
+  bot.command('gift', giftCommand);
+  bot.command('sendstars', sendStarsCommand);
+
   // Owner commands
   bot.command('info', auth.requireOwner, infoCommand);
   bot.command('admin', auth.requireOwner, adminCommand);
@@ -71,6 +82,12 @@ export function setupCommands(bot: Bot<BotContext>, roleService?: UniversalRoleS
       { command: 'balance', description: 'Check balance' },
       { command: 'ask', description: 'Ask AI a question' },
       { command: 'batch', description: 'Test request batching' },
+      { command: 'checklist', description: '📝 Create a checklist' },
+      { command: 'tasks', description: '📋 Manage tasks' },
+      { command: 'todo', description: '✅ Quick todo list' },
+      { command: 'stars', description: '⭐ Telegram Stars balance' },
+      { command: 'gift', description: '🎁 Send or manage gifts' },
+      { command: 'sendstars', description: '💫 Send Stars to user' },
     ])
     .catch((error) => {
       logger.error('Failed to set bot commands', { error });

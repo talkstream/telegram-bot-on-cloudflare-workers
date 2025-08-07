@@ -1,7 +1,7 @@
 import { BasePlugin } from '../../src/core/plugins/plugin.js';
 import type { PluginContext, PluginCommand } from '../../src/core/plugins/plugin.js';
 import type { Context } from 'grammy';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 /**
  * Reminder Plugin for Telegram Bot
@@ -147,7 +147,7 @@ export class ReminderPlugin extends BasePlugin {
     // Confirm to user
     await ctx.reply(
       `✅ Reminder set!\n\n` +
-        `📅 Time: ${format(reminderTime, 'PPpp')}\n` +
+        `📅 Time: ${dayjs(reminderTime).format('MMMM D, YYYY h:mm A')}\n` +
         `💬 Message: "${message}"\n\n` +
         `I'll remind you when the time comes! ⏰`,
     );
@@ -170,7 +170,10 @@ export class ReminderPlugin extends BasePlugin {
 
     const reminderList = activeReminders
       .sort((a, b) => a.remindAt.getTime() - b.remindAt.getTime())
-      .map((r, index) => `${index + 1}. 📅 ${format(r.remindAt, 'PPp')}\n   💬 "${r.message}"`)
+      .map(
+        (r, index) =>
+          `${index + 1}. 📅 ${dayjs(r.remindAt).format('MMM D, YYYY h:mm A')}\n   💬 "${r.message}"`,
+      )
       .join('\n\n');
 
     await ctx.reply(

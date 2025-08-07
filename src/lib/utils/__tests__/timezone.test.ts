@@ -86,7 +86,7 @@ describe('TimezoneUtils', () => {
   });
 
   describe('next occurrence', () => {
-    it.skip('should calculate next occurrence correctly', () => {
+    it('should calculate next occurrence correctly', () => {
       const tz = new TimezoneUtils('UTC');
 
       // Mock current time to 10 AM UTC on August 6
@@ -96,16 +96,16 @@ describe('TimezoneUtils', () => {
       const next6am = tz.getNextOccurrence(6, 0);
 
       // Format to check the result properly
-      expect(tz.format(next6am, 'yyyy-MM-dd HH:mm')).toBe('2025-08-07 06:00');
+      expect(tz.format(next6am, 'YYYY-MM-DD HH:mm')).toBe('2025-08-07 06:00');
 
       vi.restoreAllMocks();
     });
   });
 
   describe('parsing', () => {
-    it.skip('should parse date strings in timezone context', () => {
+    it('should parse date strings in timezone context', () => {
       const tz = new TimezoneUtils('Asia/Bangkok');
-      const parsed = tz.parse('06.08.2025 14:30', 'dd.MM.yyyy HH:mm');
+      const parsed = tz.parse('06.08.2025 14:30', 'DD.MM.YYYY HH:mm');
 
       expect(parsed).toBeInstanceOf(Date);
       expect(parsed.toString()).not.toBe('Invalid Date');
@@ -183,7 +183,7 @@ describe('Convenience exports', () => {
 });
 
 describe('Production scenarios', () => {
-  it.skip('should handle auction end times across timezones', () => {
+  it('should handle auction end times across timezones', () => {
     // Mock current time for consistent testing
     mockDate('2025-08-06T10:00:00Z');
 
@@ -213,7 +213,7 @@ describe('Production scenarios', () => {
     expect(formatted).toBe('Payment: 100 stars at 17:30 06.08.2025 (GMT+7)');
   });
 
-  it.skip('should handle daily notifications at local time', () => {
+  it('should handle daily notifications at local time', () => {
     // Mock current time for consistent testing
     mockDate('2025-08-06T07:00:00Z');
 
