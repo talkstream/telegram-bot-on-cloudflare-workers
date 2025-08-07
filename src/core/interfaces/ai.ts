@@ -171,7 +171,7 @@ export interface Usage {
 }
 
 export interface Cost {
-  amount: number;
+  total: number;
   currency: string;
   breakdown?: {
     prompt: number;

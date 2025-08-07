@@ -160,7 +160,7 @@ export abstract class BaseAIConnector extends BaseConnector implements AIConnect
     const model = this.models.get(this.defaultModel || '');
     if (!model || !model.input_cost || !model.output_cost) {
       return {
-        amount: 0,
+        total: 0,
         currency: 'USD',
         breakdown: {
           prompt: 0,
@@ -173,7 +173,7 @@ export abstract class BaseAIConnector extends BaseConnector implements AIConnect
     const completionCost = (usage.completion_tokens / 1000) * model.output_cost;
 
     return {
-      amount: promptCost + completionCost,
+      total: promptCost + completionCost,
       currency: 'USD',
       breakdown: {
         prompt: promptCost,

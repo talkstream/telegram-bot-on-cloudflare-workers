@@ -49,6 +49,29 @@ export abstract class BaseMonitoringConnector implements IMonitoringConnector {
     this.doAddBreadcrumb(breadcrumb);
   }
 
+  trackEvent(name: string, data?: Record<string, unknown>): void {
+    // Default implementation - add as breadcrumb
+    this.addBreadcrumb({
+      message: name,
+      category: 'event',
+      level: 'info',
+      data,
+    });
+  }
+
+  trackMetric(name: string, value: number, tags?: Record<string, string>): void {
+    // Default implementation - add as breadcrumb
+    this.addBreadcrumb({
+      message: `Metric: ${name}`,
+      category: 'metric',
+      level: 'info',
+      data: {
+        value,
+        ...tags,
+      },
+    });
+  }
+
   abstract flush(timeout?: number): Promise<boolean>;
 
   isAvailable(): boolean {

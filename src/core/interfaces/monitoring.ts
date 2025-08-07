@@ -34,6 +34,16 @@ export interface IMonitoringConnector {
   addBreadcrumb(breadcrumb: Breadcrumb): void;
 
   /**
+   * Track custom event
+   */
+  trackEvent(name: string, data?: Record<string, unknown>): void;
+
+  /**
+   * Track metric
+   */
+  trackMetric(name: string, value: number, tags?: Record<string, string>): void;
+
+  /**
    * Flush pending events
    */
   flush(timeout?: number): Promise<boolean>;

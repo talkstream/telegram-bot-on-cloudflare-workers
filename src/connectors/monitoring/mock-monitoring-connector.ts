@@ -48,6 +48,23 @@ export class MockMonitoringConnector implements IMonitoringConnector {
     console.info('[MockMonitoring] Breadcrumb:', breadcrumb);
   }
 
+  trackEvent(name: string, data?: Record<string, unknown>): void {
+    console.info('[MockMonitoring] Event tracked:', {
+      name,
+      data,
+      timestamp: new Date(),
+    });
+  }
+
+  trackMetric(name: string, value: number, tags?: Record<string, string>): void {
+    console.info('[MockMonitoring] Metric tracked:', {
+      name,
+      value,
+      tags,
+      timestamp: new Date(),
+    });
+  }
+
   setUser(user: { id: string; username?: string; email?: string }): void {
     console.info('[MockMonitoring] User context set:', user);
   }

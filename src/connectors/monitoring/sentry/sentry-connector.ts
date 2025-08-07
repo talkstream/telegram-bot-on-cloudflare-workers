@@ -160,6 +160,56 @@ export class SentryConnector extends BaseMonitoringConnector {
     });
   }
 
+  override trackEvent(name: string, data?: Record<string, unknown>): void {
+    if (!this.client || !this.isAvailable()) {
+      return;
+    }
+
+    // Track as a breadcrumb for context
+    this.addBreadcrumb({
+      message: name,
+      category: 'custom',
+      level: 'info',
+      data,
+    });
+
+    // Also capture as a transaction for performance monitoring
+    if (
+      this.sdk &&
+      'startTransaction' in this.sdk &&
+      typeof this.sdk.startTransaction === 'function'
+    ) {
+      const transaction = (this.sdk as any).startTransaction({
+        op: 'custom',
+        name,
+        data,
+      });
+      transaction.finish();
+    }
+  }
+
+  override trackMetric(name: string, value: number, tags?: Record<string, string>): void {
+    if (!this.client || !this.isAvailable()) {
+      return;
+    }
+
+    // Add as breadcrumb for context
+    this.addBreadcrumb({
+      message: `Metric: ${name}`,
+      category: 'metric',
+      level: 'info',
+      data: {
+        value,
+        ...tags,
+      },
+    });
+
+    // If we have custom metrics support (Sentry 7.77.0+)
+    if (this.sdk && 'metrics' in this.sdk && this.sdk.metrics) {
+      (this.sdk.metrics as any).gauge(name, value, tags);
+    }
+  }
+
   async flush(timeout = 2000): Promise<boolean> {
     if (!this.client) {
       return true;

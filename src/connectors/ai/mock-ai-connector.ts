@@ -223,7 +223,7 @@ export class MockAIConnector implements AIConnector {
   calculateCost(_usage: Usage): Cost {
     // Mock cost calculation (free in demo mode)
     return {
-      amount: 0,
+      total: 0,
       currency: 'USD',
       breakdown: {
         prompt: 0,
