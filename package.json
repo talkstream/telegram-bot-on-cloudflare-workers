@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "wrangler dev --env development --var ENVIRONMENT:development",
+    "dev:hot": "node scripts/dev-hot-reload.js",
     "dev:remote": "wrangler dev --env development --var ENVIRONMENT:development --remote",
     "build": "node esbuild.config.js",
     "build:analyze": "node scripts/analyze-bundle.js",
@@ -53,6 +54,7 @@
     "@vitest/coverage-istanbul": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",
     "chalk": "^5.3.0",
+    "chokidar": "^4.0.3",
     "commander": "^14.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",

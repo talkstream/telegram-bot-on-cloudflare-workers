@@ -4,7 +4,8 @@ import type { Env } from './config/env';
 import { validateEnv } from './config/env';
 import { isDemoMode, getBotToken, getWebhookSecret } from './lib/env-guards';
 import { loggerMiddleware } from './middleware/logger';
-import { rateLimiter } from './middleware/rate-limiter';
+import { createRateLimitPolicies } from './middleware/rate-limit-policies';
+import { devReloadMiddleware } from './middleware/dev-reload';
 import { wrapSentry } from './config/sentry';
 import { handleScheduled } from './core/scheduled-handler';
 import { errorHandler } from './middleware/error-handler';
@@ -21,17 +22,26 @@ import { MockMonitoringConnector } from './connectors/monitoring/mock-monitoring
 // Initialize the app
 const app = new Hono<{ Bindings: Env }>();
 
+// Create rate limit policies
+const rateLimitPolicies = createRateLimitPolicies();
+
 // Global Error Handler
 app.onError(errorHandler());
 
-// Middleware
+// Global Middleware
 app.use('*', loggerMiddleware());
+// Apply global rate limiting to all endpoints
+app.use('*', rateLimitPolicies.global);
+// Development hot reload support
+app.use('*', devReloadMiddleware());
 
 // Routes
-app.get('/', (c) => c.text('🚀 Wireframe v1.2 - Universal AI Assistant Platform'));
+app.get('/', rateLimitPolicies.static, (c) =>
+  c.text('🚀 Wireframe v1.2 - Universal AI Assistant Platform'),
+);
 
-// Health check endpoints
-app.get('/health', async (c) => {
+// Health check endpoints with monitoring rate limits
+app.get('/health', rateLimitPolicies.health, async (c) => {
   const env = validateEnv(c.env);
   const demoMode = isDemoMode(env);
   const key = demoMode ? 'mock' : getBotToken(env);
@@ -71,7 +81,7 @@ app.get('/health', async (c) => {
 });
 
 // Detailed health check endpoint
-app.get('/health/detailed', async (c) => {
+app.get('/health/detailed', rateLimitPolicies.health, async (c) => {
   const env = validateEnv(c.env);
   const demoMode = isDemoMode(env);
   const key = demoMode ? 'mock' : getBotToken(env);
@@ -100,12 +110,12 @@ app.get('/health/detailed', async (c) => {
 });
 
 // Liveness probe (is the service running?)
-app.get('/health/live', (c) => {
+app.get('/health/live', rateLimitPolicies.health, (c) => {
   return c.text('OK', 200);
 });
 
 // Readiness probe (is the service ready to handle requests?)
-app.get('/health/ready', async (c) => {
+app.get('/health/ready', rateLimitPolicies.health, async (c) => {
   const env = validateEnv(c.env);
   const demoMode = isDemoMode(env);
   const key = demoMode ? 'mock' : getBotToken(env);
@@ -231,8 +241,8 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
   return connectors.get(key) as TelegramConnector | MockTelegramConnector;
 }
 
-// Telegram Webhook with new connector architecture
-app.post('/webhook/:token', rateLimiter(), async (c) => {
+// Telegram Webhook with strict rate limiting
+app.post('/webhook/:token', rateLimitPolicies.strict, rateLimitPolicies.burst, async (c) => {
   const env = validateEnv(c.env);
   const token = c.req.param('token');
   const demoMode = isDemoMode(env);
@@ -259,8 +269,8 @@ app.post('/webhook/:token', rateLimiter(), async (c) => {
   return response;
 });
 
-// Demo endpoint
-app.get('/demo', (c) => {
+// Demo endpoint with static content rate limit
+app.get('/demo', rateLimitPolicies.static, (c) => {
   return c.html(`
     <!DOCTYPE html>
     <html>
