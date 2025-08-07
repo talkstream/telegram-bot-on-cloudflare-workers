@@ -216,25 +216,25 @@ export class TimezoneAwareBot {
     return { id: userId, timezone: 'Asia/Bangkok' };
   }
 
-  private async processUpdate(ctx: Context) {
+  private async processUpdate(_ctx: Context) {
     // Handle update...
   }
 }
 
 // Helper functions (mock implementations)
-async function getUserFromDB(userId: string): Promise<any> {
-  return { id: userId, timezone: 'Asia/Bangkok' };
+async function getUserFromDB(_userId: string): Promise<any> {
+  return { id: _userId, timezone: 'Asia/Bangkok' };
 }
 
-async function getPaymentHistory(userId: string): Promise<any[]> {
+async function getPaymentHistory(_userId: string): Promise<any[]> {
   return [{ timestamp: new Date(), amount: 100, description: 'Service payment' }];
 }
 
-async function updateUserTimezone(userId: number, timezone: string): Promise<void> {
+async function updateUserTimezone(_userId: number, _timezone: string): Promise<void> {
   // Update in database
 }
 
-async function getTimezoneFromCoordinates(lat: number, lng: number): Promise<string> {
+async function getTimezoneFromCoordinates(_lat: number, _lng: number): Promise<string> {
   // In real app, use Google Timezone API or similar
   return 'Asia/Bangkok';
 }

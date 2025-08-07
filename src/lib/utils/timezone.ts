@@ -6,7 +6,7 @@
  */
 
 import { format as dateFnsFormat, parse, isValid } from 'date-fns';
-import { tz, type TZDate } from '@date-fns/tz';
+import { tz } from '@date-fns/tz';
 
 /**
  * Create timezone-aware date utilities for any timezone
@@ -19,12 +19,10 @@ import { tz, type TZDate } from '@date-fns/tz';
  * ```
  */
 export class TimezoneUtils {
-  private timezone: TZDate;
   private timezoneName: string;
 
   constructor(timezoneName: string = 'UTC') {
     this.timezoneName = timezoneName;
-    this.timezone = tz(timezoneName);
   }
 
   /**
@@ -38,7 +36,7 @@ export class TimezoneUtils {
       return 'Invalid date';
     }
 
-    return dateFnsFormat(dateObj, formatStr, { in: this.timezone });
+    return dateFnsFormat(dateObj, formatStr, { in: tz(this.timezoneName) });
   }
 
   /**
@@ -160,7 +158,11 @@ export class TimezoneFactory {
     if (!this.instances.has(timezone)) {
       this.instances.set(timezone, new TimezoneUtils(timezone));
     }
-    return this.instances.get(timezone)!;
+    const instance = this.instances.get(timezone);
+    if (!instance) {
+      throw new Error(`Failed to create timezone instance for ${timezone}`);
+    }
+    return instance;
   }
 
   /**
