@@ -4,8 +4,8 @@
  * Cloudflare Workers connector for Wireframe
  */
 
-import type { Connector } from '../../../core/src/interfaces'
-import { ConnectorType } from '../../../core/src/interfaces'
+import type { Connector } from '@wireframe/core'
+import { ConnectorType } from '@wireframe/core'
 
 export interface CloudflareConfig {
   kv?: KVNamespace

@@ -21,8 +21,8 @@
   "author": "Wireframe Contributors",
   "license": "MIT",
   "peerDependencies": {
-    "@wireframe/core": "^2.0.0-alpha",
-    "@cloudflare/workers-types": "^4.0.0"
+    "@cloudflare/workers-types": "^4.0.0",
+    "@wireframe/core": "^2.0.0-alpha"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250807.0",

@@ -6,8 +6,8 @@
 
 import OpenAI from 'openai'
 
-import type { Connector } from '../../../core/src/interfaces'
-import { ConnectorType } from '../../../core/src/interfaces'
+import type { Connector } from '@wireframe/core'
+import { ConnectorType } from '@wireframe/core'
 
 export interface OpenAIConfig {
   apiKey: string
