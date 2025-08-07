@@ -120,6 +120,7 @@ export default {
 
     // Check if source field maps to target using snake_case to camelCase
     function isSnakeToCamelMapping(source, target) {
+      if (!source || !target) return false;
       const expectedCamelCase = source.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       return expectedCamelCase === target;
     }

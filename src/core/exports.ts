@@ -5,8 +5,8 @@
  */
 
 // Event Bus - export only what's needed
-export { EventBus } from './event-bus/event-bus';
-export type { EventBusEvent, EventPayload } from './event-bus/interfaces';
+export { EventBus } from './events/event-bus';
+export type { EventBusEvent, EventPayload } from './interfaces/event-bus';
 
 // Interfaces - export only essential types
 export type { BotContext } from './interfaces/context';
