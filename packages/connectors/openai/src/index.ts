@@ -5,7 +5,8 @@
  */
 
 import OpenAI from 'openai'
-import type { Connector, ConnectorType } from '@wireframe/core'
+import type { Connector } from '../../../core/src/interfaces'
+import { ConnectorType } from '../../../core/src/interfaces'
 
 export interface OpenAIConfig {
   apiKey: string
@@ -113,13 +114,13 @@ export class OpenAIConnector implements Connector {
       size: options?.size || '1024x1024'
     })
 
-    return response.data.map(item => item.url!).filter(Boolean)
+    return response.data?.map(item => item.url!).filter(Boolean) || []
   }
 
   /**
    * Moderate content
    */
-  async moderate(text: string): Promise<{ flagged: boolean, categories: Record<string, boolean> }> {
+  async moderate(text: string): Promise<{ flagged: boolean, categories: Record<string, boolean | null> }> {
     if (!this.client) {
       throw new Error('Connector not initialized')
     }
@@ -129,9 +130,12 @@ export class OpenAIConnector implements Connector {
     })
 
     const result = response.results[0]
+    if (!result) {
+      throw new Error('No moderation result received')
+    }
     return {
       flagged: result.flagged,
-      categories: result.categories
+      categories: { ...result.categories }
     }
   }
 
