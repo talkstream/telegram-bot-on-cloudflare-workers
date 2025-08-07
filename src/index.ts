@@ -11,6 +11,7 @@ import { errorHandler } from './middleware/error-handler';
 import { EventBus } from './core/events/event-bus';
 import { TelegramConnector } from './connectors/messaging/telegram';
 import { getCloudPlatformConnector } from './core/cloud/cloud-platform-cache';
+import { HealthCheckService } from './core/health/health-check';
 // Register all cloud connectors
 import './connectors/cloud';
 // Import mock connectors for demo mode
@@ -29,33 +30,106 @@ app.use('*', loggerMiddleware());
 // Routes
 app.get('/', (c) => c.text('🚀 Wireframe v1.2 - Universal AI Assistant Platform'));
 
-// Enhanced health endpoint for demo mode
+// Health check endpoints
 app.get('/health', async (c) => {
-  const env = c.env;
+  const env = validateEnv(c.env);
   const demoMode = isDemoMode(env);
+  const key = demoMode ? 'mock' : getBotToken(env);
 
-  return c.json({
-    status: 'ok',
-    version: '1.2.0',
-    mode: demoMode ? 'demo' : 'production',
-    timestamp: new Date().toISOString(),
-    environment: env.ENVIRONMENT || 'development',
-    platform: env.CLOUD_PLATFORM || 'cloudflare',
-    features: {
-      telegram: demoMode ? 'mock' : 'enabled',
-      ai: env.AI_PROVIDER || 'mock',
-      monitoring: env.SENTRY_DSN ? 'enabled' : 'mock',
-      database: env.DB ? 'enabled' : 'disabled',
-      sessions: env.SESSIONS ? 'enabled' : 'disabled',
+  // Get or initialize health service
+  let healthService = healthServices.get(key);
+  if (!healthService) {
+    // Initialize connector if needed (which will also create health service)
+    await getTelegramConnector(env);
+    healthService = healthServices.get(key);
+  }
+
+  if (healthService) {
+    const status = await healthService.getStatus();
+    return c.json(
+      {
+        status,
+        version: '1.3.0',
+        mode: demoMode ? 'demo' : 'production',
+        timestamp: Date.now(),
+        environment: env.ENVIRONMENT || 'development',
+        platform: env.CLOUD_PLATFORM || 'cloudflare',
+      },
+      status === 'healthy' ? 200 : status === 'degraded' ? 200 : 503,
+    );
+  }
+
+  // Fallback if health service not available
+  return c.json(
+    {
+      status: 'unknown',
+      version: '1.3.0',
+      timestamp: Date.now(),
     },
-    message: demoMode
-      ? '🎯 Running in DEMO mode - configure secrets to enable full functionality'
-      : '✅ All systems operational',
-  });
+    503,
+  );
+});
+
+// Detailed health check endpoint
+app.get('/health/detailed', async (c) => {
+  const env = validateEnv(c.env);
+  const demoMode = isDemoMode(env);
+  const key = demoMode ? 'mock' : getBotToken(env);
+
+  let healthService = healthServices.get(key);
+  if (!healthService) {
+    await getTelegramConnector(env);
+    healthService = healthServices.get(key);
+  }
+
+  if (healthService) {
+    const result = await healthService.check();
+    return c.json(
+      result,
+      result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503,
+    );
+  }
+
+  return c.json(
+    {
+      status: 'unhealthy',
+      error: 'Health service not available',
+    },
+    503,
+  );
+});
+
+// Liveness probe (is the service running?)
+app.get('/health/live', (c) => {
+  return c.text('OK', 200);
+});
+
+// Readiness probe (is the service ready to handle requests?)
+app.get('/health/ready', async (c) => {
+  const env = validateEnv(c.env);
+  const demoMode = isDemoMode(env);
+  const key = demoMode ? 'mock' : getBotToken(env);
+
+  let healthService = healthServices.get(key);
+  if (!healthService) {
+    await getTelegramConnector(env);
+    healthService = healthServices.get(key);
+  }
+
+  if (healthService) {
+    const status = await healthService.getStatus();
+    return c.text(
+      status === 'unhealthy' ? 'NOT READY' : 'READY',
+      status === 'unhealthy' ? 503 : 200,
+    );
+  }
+
+  return c.text('NOT READY', 503);
 });
 
 // Store connectors per environment
 const connectors = new Map<string, TelegramConnector | MockTelegramConnector>();
+const healthServices = new Map<string, HealthCheckService>();
 
 async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockTelegramConnector> {
   const demoMode = isDemoMode(env);
@@ -77,6 +151,15 @@ async function getTelegramConnector(env: Env): Promise<TelegramConnector | MockT
     // Create cloud platform connector using cache (singleton pattern)
     const cloudConnector = getCloudPlatformConnector(env);
     const constraints = cloudConnector.getResourceConstraints();
+
+    // Initialize health check service
+    const healthService = new HealthCheckService(eventBus, cloudConnector);
+    healthServices.set(key, healthService);
+
+    // Start periodic health checks in production
+    if (!demoMode && env.ENVIRONMENT === 'production') {
+      healthService.startPeriodicChecks(60000); // Check every minute
+    }
 
     // Initialize AI service connector or mock
     if (env.AI_PROVIDER && env.AI_PROVIDER !== 'mock') {

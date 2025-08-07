@@ -147,6 +147,17 @@ export class CircuitBreakerManager {
   }
 
   /**
+   * Get all statistics (alias for getStats)
+   */
+  getAllStats(): Record<string, CircuitBreakerStats> {
+    const result: Record<string, CircuitBreakerStats> = {};
+    for (const [service, breaker] of this.breakers) {
+      result[service] = breaker.getStats();
+    }
+    return result;
+  }
+
+  /**
    * Reset a specific service breaker
    */
   reset(service: string): void {

@@ -59,13 +59,14 @@ export interface CacheStats {
 }
 
 export class TieredCache {
+  private static instance: TieredCache | undefined;
   private tiers: Map<string, Map<string, CacheItem<unknown>>> = new Map();
   private tierConfigs: Map<string, CacheTier> = new Map();
   private stats: CacheStats;
-  private platform: ICloudPlatformConnector;
+  private platform?: ICloudPlatformConnector;
   private accessCounter = 0;
 
-  constructor(platform: ICloudPlatformConnector, tiers: CacheTier[] = []) {
+  constructor(platform?: ICloudPlatformConnector, tiers: CacheTier[] = []) {
     this.platform = platform;
 
     // Default tiers if none provided
@@ -335,6 +336,16 @@ export class TieredCache {
       items: this.tiers.get(name)?.size || 0,
       maxSize: config.maxSize,
     }));
+  }
+
+  /**
+   * Get singleton instance
+   */
+  static getInstance(platform?: ICloudPlatformConnector): TieredCache {
+    if (!TieredCache.instance) {
+      TieredCache.instance = new TieredCache(platform);
+    }
+    return TieredCache.instance;
   }
 
   /**
