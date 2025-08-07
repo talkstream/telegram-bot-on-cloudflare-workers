@@ -63,6 +63,7 @@ export class TieredCache {
   private tierConfigs: Map<string, CacheTier> = new Map();
   private stats: CacheStats;
   private platform: ICloudPlatformConnector;
+  private accessCounter = 0;
 
   constructor(platform: ICloudPlatformConnector, tiers: CacheTier[] = []) {
     this.platform = platform;
@@ -133,7 +134,7 @@ export class TieredCache {
 
         // Update access metadata
         item.accessCount++;
-        item.lastAccessed = now;
+        item.lastAccessed = now + this.accessCounter++;
 
         // Update stats
         this.stats.hits++;
@@ -203,7 +204,7 @@ export class TieredCache {
       return;
     }
 
-    // Check if we need to evict for new item
+    // Check if we need to evict BEFORE adding new item
     if (tierCache.size >= tierConfig.maxSize) {
       await this.evictLRU(tierName);
     }
@@ -213,7 +214,7 @@ export class TieredCache {
       key,
       tier: tierName,
       accessCount: 0,
-      lastAccessed: now,
+      lastAccessed: now + this.accessCounter++,
       createdAt: now,
       expiresAt: now + ttl,
       size: options.size,
@@ -264,9 +265,7 @@ export class TieredCache {
       const tier = this.tiers.get(tierName);
       if (tier) {
         // Clear all keys from this tier
-        for (const key of tier.keys()) {
-          tier.delete(key);
-        }
+        tier.clear();
         if (this.stats.tierStats[tierName]) {
           this.stats.tierStats[tierName].items = 0;
         }
@@ -276,10 +275,15 @@ export class TieredCache {
           try {
             const kv = this.platform.getKeyValueStore('cache');
             if (kv) {
-              const list = await kv.list();
-              for (const item of list.keys) {
-                await kv.delete(item.name);
-              }
+              // Get all keys and delete them
+              let cursor: string | undefined;
+              do {
+                const list = await kv.list({ cursor, limit: 100 });
+                for (const key of list.keys) {
+                  await kv.delete(key.name);
+                }
+                cursor = list.cursor;
+              } while (cursor);
             }
           } catch (error) {
             logger.warn('Failed to clear KV cache', { error });
@@ -299,10 +303,15 @@ export class TieredCache {
       try {
         const kv = this.platform.getKeyValueStore('cache');
         if (kv) {
-          const list = await kv.list();
-          for (const item of list.keys) {
-            await kv.delete(item.name);
-          }
+          // Get all keys and delete them
+          let cursor: string | undefined;
+          do {
+            const list = await kv.list({ cursor, limit: 100 });
+            for (const key of list.keys) {
+              await kv.delete(key.name);
+            }
+            cursor = list.cursor;
+          } while (cursor);
         }
       } catch (error) {
         logger.warn('Failed to clear KV cache', { error });
@@ -389,6 +398,7 @@ export class TieredCache {
 
     if (oldestKey) {
       const item = tier.get(oldestKey);
+      let demoted = false;
 
       // Try to demote instead of evict (but not for hot tier test)
       const tierConfig = this.tierConfigs.get(tierName);
@@ -400,19 +410,30 @@ export class TieredCache {
             item.tier = lowerTier;
             lowerTierCache.set(oldestKey, item);
             this.stats.demotions++;
+            if (this.stats.tierStats[lowerTier]) {
+              this.stats.tierStats[lowerTier].items++;
+            }
+            demoted = true;
           }
         }
       }
 
+      // Remove from current tier
       tier.delete(oldestKey);
-      this.stats.evictions++;
       if (this.stats.tierStats[tierName]) {
-        this.stats.tierStats[tierName].evictions++;
         this.stats.tierStats[tierName].items--;
+        if (!demoted) {
+          this.stats.tierStats[tierName].evictions++;
+        }
       }
 
-      // Also delete from KV if it's in memory tier
-      if (tierName === 'memory' || tierName === 'hot' || tierName === 'tiny') {
+      // Only count as eviction if not demoted
+      if (!demoted) {
+        this.stats.evictions++;
+      }
+
+      // Also delete from KV if it's in memory tier and not demoted
+      if (!demoted && (tierName === 'memory' || tierName === 'hot' || tierName === 'tiny')) {
         try {
           const kv = this.platform.getKeyValueStore('cache');
           if (kv) {
@@ -426,7 +447,7 @@ export class TieredCache {
       logger.debug('Cache item evicted', {
         key: oldestKey,
         tier: tierName,
-        demoted: false,
+        demoted,
       });
     }
   }

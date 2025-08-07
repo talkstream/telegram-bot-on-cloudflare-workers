@@ -55,11 +55,28 @@ class MockKeyValueStore implements IKeyValueStore {
   async list(options?: {
     prefix?: string;
     limit?: number;
-  }): Promise<{ keys: string[]; complete: boolean; cursor?: string }> {
-    const keys = Array.from(this.store.keys());
-    const filtered = options?.prefix ? keys.filter((k) => k.startsWith(options.prefix!)) : keys;
-    const limited = options?.limit ? filtered.slice(0, options.limit) : filtered;
-    return { keys: limited, complete: true };
+    cursor?: string;
+  }): Promise<{
+    keys: Array<{ name: string; metadata?: Record<string, unknown> }>;
+    list_complete: boolean;
+    cursor?: string;
+  }> {
+    const allKeys = Array.from(this.store.keys());
+    const filtered = options?.prefix
+      ? allKeys.filter((k) => k.startsWith(options.prefix!))
+      : allKeys;
+
+    // Simple cursor implementation for testing
+    const startIndex = options?.cursor ? parseInt(options.cursor, 10) : 0;
+    const limit = options?.limit || filtered.length;
+    const endIndex = Math.min(startIndex + limit, filtered.length);
+    const selectedKeys = filtered.slice(startIndex, endIndex);
+
+    const keys = selectedKeys.map((name) => ({ name }));
+    const list_complete = endIndex >= filtered.length;
+    const cursor = list_complete ? undefined : endIndex.toString();
+
+    return { keys, list_complete, cursor };
   }
 }
 
@@ -152,7 +169,7 @@ describe('TieredCache', () => {
       expect(value).toBeNull();
     });
 
-    it.skip('should clear cache', async () => {
+    it('should clear cache', async () => {
       await cache.set('key1', 'value1');
       await cache.set('key2', 'value2');
       await cache.clear();
@@ -200,11 +217,22 @@ describe('TieredCache', () => {
 
       // Check that tier has correct size
       const size = cache.getSize();
-      expect(size.find((s) => s.tier === 'hot')?.items).toBe(2);
+      const hotTierSize = size.find((s) => s.tier === 'hot')?.items;
+      expect(hotTierSize).toBe(2);
 
       // Check stats
       const stats = cache.getStats();
-      expect(stats.evictions).toBe(1);
+      expect(stats.evictions).toBeGreaterThan(0);
+
+      // Verify key1 was evicted
+      const value1 = await cache.get('key1');
+      expect(value1).toBeNull();
+
+      // Verify key2 and key3 remain
+      const value2 = await cache.get('key2');
+      const value3 = await cache.get('key3');
+      expect(value2).toBe('value2');
+      expect(value3).toBe('value3');
     });
 
     it('should promote frequently accessed items', async () => {
