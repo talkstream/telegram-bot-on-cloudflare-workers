@@ -5,7 +5,6 @@
  */
 
 import OpenAI from 'openai'
-
 import type { Connector } from '@wireframe/core'
 import { ConnectorType } from '@wireframe/core'
 
