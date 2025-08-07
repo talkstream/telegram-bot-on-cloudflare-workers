@@ -244,12 +244,13 @@ export class MeloTTSConnector extends BaseConnector implements AIConnector {
       const latency = Date.now() - startTime;
 
       // Decode base64 audio if needed
-      const audioBuffer = Buffer.from(response.audio, 'base64');
+      const result = response as { audio?: string; duration?: number };
+      const audioBuffer = Buffer.from(result.audio || '', 'base64');
 
       const ttsResponse: TTSResponse = {
         audio: audioBuffer,
         format: options?.format || 'mp3',
-        duration: response.duration || audioBuffer.length / (options?.sampleRate || 24000) / 2, // Estimate
+        duration: result.duration || audioBuffer.length / (options?.sampleRate || 24000) / 2, // Estimate
         sampleRate: options?.sampleRate || 24000,
         size: audioBuffer.length,
         metadata: {

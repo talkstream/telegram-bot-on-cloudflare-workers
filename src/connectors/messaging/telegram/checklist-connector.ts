@@ -235,15 +235,25 @@ export class ChecklistConnector extends BaseConnector {
    * Parse checklist from incoming message
    */
   parseChecklist(message: { checklist?: unknown }): Checklist | null {
-    if (!message.checklist) {
+    if (!message.checklist || typeof message.checklist !== 'object') {
       return null;
     }
 
+    const checklistData = message.checklist as {
+      title?: string;
+      tasks?: Array<{ text: string; done?: boolean; is_done?: boolean }>;
+      task_count?: number;
+      done_task_count?: number;
+    };
+
     return {
-      title: message.checklist.title,
-      tasks: message.checklist.tasks || [],
-      task_count: message.checklist.task_count || 0,
-      done_task_count: message.checklist.done_task_count || 0,
+      title: checklistData.title || 'Untitled',
+      tasks: (checklistData.tasks || []).map((task) => ({
+        text: task.text,
+        is_done: task.is_done ?? task.done ?? false,
+      })),
+      task_count: checklistData.task_count || 0,
+      done_task_count: checklistData.done_task_count || 0,
     };
   }
 

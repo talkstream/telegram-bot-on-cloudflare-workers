@@ -22,7 +22,8 @@ function getChecklistConnector(bot: Bot | Api): ChecklistConnector {
     if (!eventBus) {
       eventBus = new EventBus();
     }
-    checklistConnector = new ChecklistConnector(bot, loggerAdapter, eventBus);
+    // Cast to Bot since ChecklistConnector expects Bot type
+    checklistConnector = new ChecklistConnector(bot as Bot, loggerAdapter, eventBus);
   }
   return checklistConnector;
 }

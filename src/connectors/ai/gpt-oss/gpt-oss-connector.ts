@@ -234,17 +234,20 @@ export class GPTOSSConnector extends BaseConnector implements AIConnector {
       const latency = Date.now() - startTime;
 
       // Parse and format the response
+      const result = response as {
+        result?: { response?: string; prompt_tokens?: number; completion_tokens?: number };
+      };
       const completionResponse: CompletionResponse = {
         id: `gpt-oss-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         model: 'gpt-oss-120b',
-        content: response.result?.response || '',
+        content: result.result?.response || '',
         role: 'assistant' as MessageRole,
         finish_reason: 'stop' as FinishReason,
         usage: {
-          prompt_tokens: response.result?.prompt_tokens || 0,
-          completion_tokens: response.result?.completion_tokens || 0,
+          prompt_tokens: result.result?.prompt_tokens || 0,
+          completion_tokens: result.result?.completion_tokens || 0,
           total_tokens:
-            (response.result?.prompt_tokens || 0) + (response.result?.completion_tokens || 0),
+            (result.result?.prompt_tokens || 0) + (result.result?.completion_tokens || 0),
         },
         metadata: {
           latency,

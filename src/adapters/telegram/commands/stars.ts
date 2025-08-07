@@ -27,7 +27,7 @@ async function getStarsService(
       eventBus = new EventBus();
     }
     const platform = await getCloudPlatformConnector(env);
-    starsService = new TelegramStarsService(bot, platform, eventBus);
+    starsService = new TelegramStarsService(bot as Bot, platform, eventBus);
     await starsService.initialize();
   }
   return starsService;

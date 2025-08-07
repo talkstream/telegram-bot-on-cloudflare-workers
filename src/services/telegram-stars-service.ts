@@ -164,7 +164,9 @@ export class TelegramStarsService {
       });
 
       const transactions: StarTransaction[] =
-        result.transactions?.map((tx: RawTransaction) => transactionMapper.toDomain(tx)) || [];
+        result.transactions?.map((tx: unknown, _index: number, _array: unknown[]) =>
+          transactionMapper.toDomain(tx as RawTransaction),
+        ) || [];
 
       logger.info('[TelegramStarsService] Transactions fetched', { count: transactions.length });
 
@@ -367,7 +369,7 @@ export class TelegramStarsService {
         owned_gift_id: String(messageId), // Use messageId as gift ID placeholder
       });
 
-      const starsReceived = (result as { star_count?: number }).star_count || 0;
+      const starsReceived = (result as unknown as { star_count?: number }).star_count || 0;
 
       logger.info('[TelegramStarsService] Gift converted to Stars', {
         userId,

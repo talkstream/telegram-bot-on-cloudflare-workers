@@ -257,12 +257,26 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
       const latency = Date.now() - startTime;
 
       // Parse and format the response
+      const result = response as {
+        text?: string;
+        language?: string;
+        duration?: number;
+        words?: Array<{ word: string; start: number; end: number; confidence: number }>;
+        segments?: Array<{
+          id: number;
+          start: number;
+          end: number;
+          text: string;
+          confidence?: number;
+        }>;
+      };
+
       const transcriptionResponse: TranscriptionResponse = {
-        text: response.text || '',
-        language: response.language,
-        duration: response.duration,
-        words: response.words,
-        segments: response.segments,
+        text: result.text || '',
+        language: result.language,
+        duration: result.duration,
+        words: result.words,
+        segments: result.segments,
         metadata: {
           latency,
           model: this.model,
@@ -272,18 +286,18 @@ export class WhisperConnector extends BaseConnector implements AIConnector {
       };
 
       logger.info('[WhisperConnector] Transcription successful', {
-        duration: response.duration,
-        language: response.language,
+        duration: result.duration,
+        language: result.language,
         latency,
-        wordCount: response.words?.length || 0,
-        segmentCount: response.segments?.length || 0,
+        wordCount: result.words?.length || 0,
+        segmentCount: result.segments?.length || 0,
       });
 
       this.emitEvent('ai:audio:transcription:success', {
         connector: this.id,
         model: this.model,
-        duration: response.duration,
-        language: response.language,
+        duration: result.duration,
+        language: result.language,
         latency,
       });
 
