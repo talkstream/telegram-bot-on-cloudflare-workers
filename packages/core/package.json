@@ -16,8 +16,8 @@
     "./plugins": "./dist/plugins/index.js"
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsc",
+    "dev": "tsc --watch",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src"

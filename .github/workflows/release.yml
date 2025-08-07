@@ -51,6 +51,34 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Validate Zero Warnings Policy
+        run: |
+          echo "🔍 Checking for warnings..."
+          npm run lint 2>&1 | tee lint-output.txt
+          if grep -q "warning" lint-output.txt; then
+            echo "❌ Warnings found! Zero warning policy violated."
+            exit 1
+          fi
+          echo "✅ No warnings - Zero warning policy maintained!"
+
+      - name: Build and Validate Packages
+        run: |
+          echo "📦 Building @wireframe/core..."
+          cd packages/core
+          npm install
+          npm run build
+          
+          # Validate bundle size
+          if [ -f dist/index.js ]; then
+            SIZE=$(stat -f%z dist/index.js 2>/dev/null || stat -c%s dist/index.js)
+            echo "✅ Core bundle size: $((SIZE/1024))KB"
+            if [ $SIZE -gt 102400 ]; then
+              echo "❌ Core bundle exceeds 100KB limit!"
+              exit 1
+            fi
+          fi
+          cd ../..
+
       - name: Build changelog
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v5
