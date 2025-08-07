@@ -1,6 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { MockedFunction } from 'vitest';
 
 import { TimezoneUtils, TimezoneFactory, UTC, Bangkok, Moscow, NewYork } from '../timezone';
+
+// Helper function for mocking Date with proper typing
+function mockDate(dateStr: string): MockedFunction<typeof Date> {
+  const OriginalDate = Date;
+  const mockNow = new OriginalDate(dateStr);
+
+  return vi.spyOn(global, 'Date').mockImplementation((arg?: string | number | Date) => {
+    if (arg !== undefined) {
+      return new OriginalDate(arg as string | number | Date);
+    }
+    return mockNow;
+  }) as MockedFunction<typeof Date>;
+}
 
 describe('TimezoneUtils', () => {
   let utils: TimezoneUtils;
@@ -76,15 +90,7 @@ describe('TimezoneUtils', () => {
       const tz = new TimezoneUtils('UTC');
 
       // Mock current time to 10 AM UTC on August 6
-      const originalDate = Date;
-      const mockNow = new originalDate('2025-08-06T10:00:00Z');
-
-      vi.spyOn(global, 'Date').mockImplementation((arg?: any) => {
-        if (arg !== undefined) {
-          return new originalDate(arg);
-        }
-        return mockNow;
-      }) as any;
+      mockDate('2025-08-06T10:00:00Z');
 
       // Next 6 AM should be tomorrow since it's 10 AM now
       const next6am = tz.getNextOccurrence(6, 0);
@@ -179,15 +185,7 @@ describe('Convenience exports', () => {
 describe('Production scenarios', () => {
   it.skip('should handle auction end times across timezones', () => {
     // Mock current time for consistent testing
-    const originalDate = Date;
-    const mockNow = new originalDate('2025-08-06T10:00:00Z');
-
-    vi.spyOn(global, 'Date').mockImplementation((arg?: any) => {
-      if (arg !== undefined) {
-        return new originalDate(arg);
-      }
-      return mockNow;
-    }) as any;
+    mockDate('2025-08-06T10:00:00Z');
 
     // Auction ends at 6 AM local time
     const bangkokUser = TimezoneFactory.get('Asia/Bangkok');
@@ -217,15 +215,7 @@ describe('Production scenarios', () => {
 
   it.skip('should handle daily notifications at local time', () => {
     // Mock current time for consistent testing
-    const originalDate = Date;
-    const mockNow = new originalDate('2025-08-06T07:00:00Z');
-
-    vi.spyOn(global, 'Date').mockImplementation((arg?: any) => {
-      if (arg !== undefined) {
-        return new originalDate(arg);
-      }
-      return mockNow;
-    }) as any;
+    mockDate('2025-08-06T07:00:00Z');
 
     const users = [
       { id: 1, timezone: 'Asia/Bangkok' },

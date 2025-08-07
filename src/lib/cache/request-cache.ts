@@ -8,6 +8,8 @@
  * @module request-cache
  */
 
+import { FieldMapper } from '../../core/database/field-mapper';
+
 export interface CacheEntry<T> {
   value: T;
   timestamp: number;
@@ -20,6 +22,25 @@ export interface RequestCacheOptions {
   namespace?: string;
   /** Enable debug logging */
   debug?: boolean;
+}
+
+// Stats interfaces for field mapping
+interface StatsRaw {
+  hits: number;
+  misses: number;
+  total: number;
+  hit_rate: number;
+  size: number;
+  pending: number;
+}
+
+interface StatsFormatted {
+  hits: number;
+  misses: number;
+  total: number;
+  hitRate: number;
+  size: number;
+  pending: number;
 }
 
 /**
@@ -47,6 +68,16 @@ export class RequestCache {
   private readonly options: RequestCacheOptions;
   private hits = 0;
   private misses = 0;
+
+  // Field mapper for statistics
+  private static statsMapper = new FieldMapper<StatsRaw, StatsFormatted>([
+    { dbField: 'hits', domainField: 'hits' },
+    { dbField: 'misses', domainField: 'misses' },
+    { dbField: 'total', domainField: 'total' },
+    { dbField: 'hit_rate', domainField: 'hitRate' },
+    { dbField: 'size', domainField: 'size' },
+    { dbField: 'pending', domainField: 'pending' },
+  ]);
 
   constructor(options: RequestCacheOptions = {}) {
     this.options = {
@@ -159,16 +190,18 @@ export class RequestCache {
   /**
    * Get cache statistics
    */
-  getStats() {
+  getStats(): StatsFormatted {
     const total = this.hits + this.misses;
-    return {
+    const rawStats: StatsRaw = {
       hits: this.hits,
       misses: this.misses,
       total,
-      hitRate: total > 0 ? this.hits / total : 0,
+      hit_rate: total > 0 ? this.hits / total : 0,
       size: this.cache.size,
       pending: this.pendingPromises.size,
     };
+
+    return RequestCache.statsMapper.toDomain(rawStats);
   }
 
   /**

@@ -10,6 +10,8 @@
 
 import type { ExecutionContext } from '@cloudflare/workers-types';
 
+import type { AnalyticsEngineDataset, AnalyticsEnvironment } from './types';
+
 export interface AnalyticsEvent {
   event: string;
   properties?: Record<string, unknown>;
@@ -76,7 +78,7 @@ export class AsyncAnalytics {
   /**
    * Track an event without blocking the response
    */
-  track(event: string, properties?: Record<string, any>): void {
+  track(event: string, properties?: Record<string, unknown>): void {
     const analyticsEvent: AnalyticsEvent = {
       event,
       properties,
@@ -93,7 +95,7 @@ export class AsyncAnalytics {
   /**
    * Track with user context
    */
-  trackUser(userId: string | number, event: string, properties?: Record<string, any>): void {
+  trackUser(userId: string | number, event: string, properties?: Record<string, unknown>): void {
     const analyticsEvent: AnalyticsEvent = {
       event,
       properties,
@@ -111,7 +113,7 @@ export class AsyncAnalytics {
   /**
    * Track page view
    */
-  trackPageView(path: string, properties?: Record<string, any>): void {
+  trackPageView(path: string, properties?: Record<string, unknown>): void {
     this.track('page_view', {
       path,
       ...properties,
@@ -121,7 +123,7 @@ export class AsyncAnalytics {
   /**
    * Track error
    */
-  trackError(error: Error | string, properties?: Record<string, any>): void {
+  trackError(error: Error | string, properties?: Record<string, unknown>): void {
     const errorData =
       error instanceof Error
         ? {
@@ -262,7 +264,7 @@ export class AsyncAnalytics {
 export class CloudflareAnalytics extends AsyncAnalytics {
   constructor(
     ctx: ExecutionContext,
-    private analyticsEngine: any,
+    private analyticsEngine: AnalyticsEngineDataset,
     options?: AsyncAnalyticsOptions,
   ) {
     super(ctx, options);
@@ -282,7 +284,7 @@ export class CloudflareAnalytics extends AsyncAnalytics {
         // Cloudflare Analytics Engine has specific format
         this.analyticsEngine.writeDataPoint({
           indexes: [event.event],
-          doubles: event.properties?.value || 1,
+          doubles: [Number(event.properties?.value) || 1],
           blobs: [event.userId?.toString() || '', JSON.stringify(event.properties || {})],
         });
       }
@@ -290,14 +292,6 @@ export class CloudflareAnalytics extends AsyncAnalytics {
       console.error('Failed to write to Analytics Engine:', error);
     }
   }
-}
-
-// Environment interface
-interface AnalyticsEnvironment {
-  ANALYTICS_ENDPOINT?: string;
-  ANALYTICS_API_KEY?: string;
-  ANALYTICS_ENGINE?: unknown;
-  DEBUG?: string;
 }
 
 /**
