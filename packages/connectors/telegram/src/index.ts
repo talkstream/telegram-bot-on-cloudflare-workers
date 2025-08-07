@@ -5,6 +5,7 @@
  */
 
 import { Bot, webhookCallback } from 'grammy'
+
 import type { Connector, Message } from '../../../core/src/interfaces'
 import { ConnectorType } from '../../../core/src/interfaces'
 

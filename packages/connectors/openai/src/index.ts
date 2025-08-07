@@ -5,6 +5,7 @@
  */
 
 import OpenAI from 'openai'
+
 import type { Connector } from '../../../core/src/interfaces'
 import { ConnectorType } from '../../../core/src/interfaces'
 
