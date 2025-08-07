@@ -100,7 +100,7 @@ export class TelegramConnector implements Connector {
         title: msg.chat.title
       },
       date: new Date(msg.date * 1000),
-      reply: async (text, options) => {
+      reply: async (text: string, options?: any) => {
         await ctx.reply(text, {
           parse_mode: options?.parseMode,
           reply_to_message_id: options?.replyToMessageId

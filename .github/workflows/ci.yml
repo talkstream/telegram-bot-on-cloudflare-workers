@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build packages
+        run: npm run build --workspaces --if-present
+
       - name: Run TypeScript type check
         run: npm run typecheck
 
@@ -38,9 +41,6 @@ jobs:
 
       - name: Check code formatting
         run: npm run format:check || true # Don't fail on formatting issues
-
-      - name: Build packages
-        run: npm run build --workspaces --if-present
 
   test:
     name: Run Tests
