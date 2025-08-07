@@ -337,9 +337,9 @@ export function TrackPerformance(operation?: string) {
     const methodName = String(propertyKey);
     const operationName = operation || `${className}.${methodName}`;
 
-    descriptor.value = async function (...args: unknown[]) {
+    descriptor.value = async function (this: unknown, ...args: unknown[]) {
       const monitor = getDefaultMonitor();
-      return monitor.trackOperation(operationName, () => originalMethod.apply(this, args), {
+      return monitor.trackOperation(operationName, async () => originalMethod.apply(this, args), {
         methodName,
         className,
       });
