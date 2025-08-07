@@ -4,12 +4,15 @@
   "description": "Production-ready wireframe for creating any bots (Telegram, etc.) on Clouds (Cloudflare Worker, Google Cloud, etc.) with TypeScript 100% strict.",
   "type": "module",
   "main": "./src/index.ts",
+  "sideEffects": false,
   "bin": {
     "create-wireframe": "./src/cli/create-wireframe/index.ts"
   },
   "scripts": {
     "dev": "wrangler dev --env development --var ENVIRONMENT:development",
     "dev:remote": "wrangler dev --env development --var ENVIRONMENT:development --remote",
+    "build": "node esbuild.config.js",
+    "build:analyze": "node scripts/analyze-bundle.js",
     "deploy": "wrangler deploy --env production",
     "deploy:staging": "wrangler deploy --env staging",
     "test": "vitest run",
