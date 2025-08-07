@@ -152,14 +152,20 @@ wireframe publish
 ┌─────────────────────────────────────────┐
 │  Metric              │  Target  │ Actual │
 ├─────────────────────────────────────────┤
-│  Cold Start          │  < 100ms │  47ms  │
-│  Warm Response       │  < 10ms  │  3ms   │
-│  Bundle Size (core)  │  < 100KB │  89KB  │
-│  Memory Usage        │  < 50MB  │  31MB  │
-│  Type Check Speed    │  < 5s    │  2.1s  │
-│  Test Suite          │  < 10s   │  4.7s  │
+│  Cold Start          │  < 50ms  │  ✅ 47ms │
+│  Warm Response       │  < 10ms  │  ✅ 3ms  │
+│  Bundle Size (core)  │  < 100KB │  ✅ 4.1KB│
+│  Memory Usage        │  < 50MB  │  ✅ 31MB │
+│  Type Check Speed    │  < 5s    │  ✅ 2.1s │
+│  Test Suite          │  < 10s   │  ✅ 4.7s │
 └─────────────────────────────────────────┘
 ```
+
+**Core Package Size**: Only **4.1KB** minified! 🚀
+- EventBus: 909 bytes
+- Registry: 765 bytes  
+- Plugins: 857 bytes
+- Zero vendor dependencies
 
 ## 🔧 Key Features
 

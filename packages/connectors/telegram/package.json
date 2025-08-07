@@ -1,0 +1,46 @@
+{
+  "name": "@wireframe/connector-telegram",
+  "version": "2.0.0-alpha.1",
+  "description": "Telegram Bot API connector for Wireframe",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "wireframe",
+    "telegram",
+    "bot",
+    "connector"
+  ],
+  "author": "Wireframe Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "grammy": "^1.21.0"
+  },
+  "peerDependencies": {
+    "@wireframe/core": "^2.0.0-alpha"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wireframe/core",
+    "directory": "packages/connectors/telegram"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "sideEffects": false
+}
