@@ -3,10 +3,12 @@
  */
 
 import { EventBus } from './events'
-import type { Bot, Config, Connector, MessageHandler } from './interfaces'
+import type { Bot, Config, Connector, MessageHandler, Plugin } from './interfaces'
 import { ConnectorType } from './interfaces'
 import { PluginManager } from './plugins'
 import { Registry } from './registry'
+
+type EventHandler = (...args: unknown[]) => void | Promise<void>
 
 export class Wireframe implements Bot {
   private eventBus: EventBus
@@ -42,7 +44,7 @@ export class Wireframe implements Bot {
       if (config.plugins) {
         for (const pluginName of config.plugins) {
           const plugin = await instance.registry.load(pluginName)
-          instance.pluginManager.add(plugin as any)
+          instance.pluginManager.add(plugin as Plugin)
         }
         await instance.pluginManager.initializeAll(instance)
       }
@@ -55,14 +57,14 @@ export class Wireframe implements Bot {
    * Subscribe to events
    */
   on(event: string, handler: MessageHandler): void {
-    this.eventBus.on(event, handler as any)
+    this.eventBus.on(event, handler as EventHandler)
   }
 
   /**
    * Unsubscribe from events
    */
   off(event: string, handler: MessageHandler): void {
-    this.eventBus.off(event, handler as any)
+    this.eventBus.off(event, handler as EventHandler)
   }
 
   /**
@@ -83,7 +85,7 @@ export class Wireframe implements Bot {
     // Start all connectors
     for (const connector of this.connectors.values()) {
       if ('start' in connector && typeof connector.start === 'function') {
-        await (connector as any).start()
+        await connector.start()
       }
     }
 
@@ -102,7 +104,7 @@ export class Wireframe implements Bot {
     // Stop all connectors
     for (const connector of this.connectors.values()) {
       if ('stop' in connector && typeof connector.stop === 'function') {
-        await (connector as any).stop()
+        await connector.stop()
       }
     }
 
@@ -130,29 +132,31 @@ export class Wireframe implements Bot {
   /**
    * Get the AI connector (convenience method)
    */
-  get ai(): any {
+  get ai(): { complete: (prompt: string) => Promise<string> } {
     const connector = this.getConnector(ConnectorType.AI)
-    return (
-      connector || {
-        async complete(_prompt: string): Promise<string> {
-          throw new Error('No AI connector configured')
-        }
+    if (connector && 'complete' in connector) {
+      return connector as { complete: (prompt: string) => Promise<string> }
+    }
+    return {
+      async complete(_prompt: string): Promise<string> {
+        throw new Error('No AI connector configured')
       }
-    )
+    }
   }
 
   /**
    * Get the messaging connector (convenience method)
    */
-  get messaging(): any {
+  get messaging(): { sendMessage: (chatId: string, text: string) => Promise<void> } {
     const connector = this.getConnector(ConnectorType.MESSAGING)
-    return (
-      connector || {
-        async sendMessage(_chatId: string, _text: string): Promise<void> {
-          throw new Error('No messaging connector configured')
-        }
+    if (connector && 'sendMessage' in connector) {
+      return connector as { sendMessage: (chatId: string, text: string) => Promise<void> }
+    }
+    return {
+      async sendMessage(_chatId: string, _text: string): Promise<void> {
+        throw new Error('No messaging connector configured')
       }
-    )
+    }
   }
 
   /**

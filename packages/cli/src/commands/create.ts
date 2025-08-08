@@ -13,7 +13,7 @@ export const createCommand = new Command('create')
   .option('-t, --template <template>', 'Template to use', 'basic')
   .option('--no-install', 'Skip npm install')
   .action(async (name, options) => {
-    console.log(chalk.blue('\n🚀 Welcome to Wireframe!\n'))
+    console.info(chalk.blue('\n🚀 Welcome to Wireframe!\n'))
 
     // Get bot name if not provided
     if (!name) {
@@ -36,7 +36,7 @@ export const createCommand = new Command('create')
     // Check if directory exists
     const targetDir = path.resolve(process.cwd(), name)
     if (fs.existsSync(targetDir)) {
-      console.log(chalk.red(`Error: Directory ${name} already exists`))
+      console.error(chalk.red(`Error: Directory ${name} already exists`))
       process.exit(1)
     }
 
@@ -115,14 +115,14 @@ export const createCommand = new Command('create')
 
       // Add connector dependencies
       if (config.messaging) {
-        ;(packageJson.dependencies as any)[`@wireframe/connector-${config.messaging}`] =
+        ;(packageJson.dependencies as Record<string, string>)[`@wireframe/connector-${config.messaging}`] =
           '^2.0.0-alpha'
       }
       if (config.ai) {
-        ;(packageJson.dependencies as any)[`@wireframe/connector-${config.ai}`] = '^2.0.0-alpha'
+        ;(packageJson.dependencies as Record<string, string>)[`@wireframe/connector-${config.ai}`] = '^2.0.0-alpha'
       }
       if (config.cloud) {
-        ;(packageJson.dependencies as any)[`@wireframe/connector-${config.cloud}`] = '^2.0.0-alpha'
+        ;(packageJson.dependencies as Record<string, string>)[`@wireframe/connector-${config.cloud}`] = '^2.0.0-alpha'
       }
 
       await fs.writeJson(path.join(targetDir, 'package.json'), packageJson, { spaces: 2 })
@@ -246,20 +246,20 @@ A Wireframe AI Assistant bot.
 
       // Install dependencies
       if (options.install !== false) {
-        console.log('\n📦 Installing dependencies...\n')
+        console.info('\n📦 Installing dependencies...\n')
         const { execSync } = await import('child_process')
         execSync('npm install', { cwd: targetDir, stdio: 'inherit' })
       }
 
       // Success message
-      console.log(chalk.green('\n✨ Your bot is ready!\n'))
-      console.log('Next steps:')
-      console.log(chalk.cyan(`  cd ${name}`))
+      console.info(chalk.green('\n✨ Your bot is ready!\n'))
+      console.info('Next steps:')
+      console.info(chalk.cyan(`  cd ${name}`))
       if (options.install === false) {
-        console.log(chalk.cyan('  npm install'))
+        console.info(chalk.cyan('  npm install'))
       }
-      console.log(chalk.cyan('  npm run dev'))
-      console.log('\nHappy building! 🚀\n')
+      console.info(chalk.cyan('  npm run dev'))
+      console.info('\nHappy building! 🚀\n')
     } catch (error) {
       spinner.fail('Failed to create bot')
       console.error(error)

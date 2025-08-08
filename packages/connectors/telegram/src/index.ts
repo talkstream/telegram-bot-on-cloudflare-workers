@@ -5,6 +5,7 @@
  */
 
 import { Bot, webhookCallback } from 'grammy'
+import type { Context } from 'grammy'
 import type { Connector, Message } from '@wireframe/core'
 import { ConnectorType } from '@wireframe/core'
 
@@ -50,7 +51,7 @@ export class TelegramConnector implements Connector {
       this.bot.start({
         drop_pending_updates: true,
         allowed_updates: [],
-        onStart: () => console.log('Telegram bot started')
+        onStart: () => console.info('Telegram bot started')
       })
     }
   }
@@ -80,18 +81,28 @@ export class TelegramConnector implements Connector {
   /**
    * Convert Grammy context to Wireframe message
    */
-  private convertMessage(ctx: any): Message {
+  private convertMessage(ctx: Context): Message {
     const msg = ctx.message || ctx.editedMessage || ctx.channelPost || ctx.editedChannelPost
+    
+    if (!msg) {
+      throw new Error('No message found in context')
+    }
 
     return {
       id: String(msg.message_id),
-      text: msg.text,
-      from: {
+      text: msg.text || '',
+      from: msg.from ? {
         id: String(msg.from.id),
         username: msg.from.username,
         firstName: msg.from.first_name,
         lastName: msg.from.last_name,
         isBot: msg.from.is_bot
+      } : {
+        id: 'unknown',
+        username: undefined,
+        firstName: undefined,
+        lastName: undefined,
+        isBot: false
       },
       chat: {
         id: String(msg.chat.id),
@@ -99,9 +110,9 @@ export class TelegramConnector implements Connector {
         title: msg.chat.title
       },
       date: new Date(msg.date * 1000),
-      reply: async (text: string, options?: any) => {
+      reply: async (text: string, options?: { parseMode?: string; replyToMessageId?: string | number }) => {
         await ctx.reply(text, {
-          parse_mode: options?.parseMode,
+          parse_mode: options?.parseMode as ('HTML' | 'Markdown' | 'MarkdownV2' | undefined),
           reply_to_message_id: options?.replyToMessageId
             ? Number(options.replyToMessageId)
             : undefined
@@ -127,7 +138,7 @@ export class TelegramConnector implements Connector {
   /**
    * Send message to a chat
    */
-  async sendMessage(chatId: string, text: string, options?: any): Promise<void> {
+  async sendMessage(chatId: string, text: string, options?: Record<string, unknown>): Promise<void> {
     if (!this.bot) {
       throw new Error('Connector not initialized')
     }

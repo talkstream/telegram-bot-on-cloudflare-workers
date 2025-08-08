@@ -57,7 +57,7 @@ export class OpenAIConnector implements Connector {
     }
 
     const completion = await this.client.chat.completions.create({
-      model: options?.model || this.config.model!,
+      model: options?.model || this.config.model || 'gpt-4-turbo-preview',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: options?.maxTokens || this.config.maxTokens,
       temperature: options?.temperature || this.config.temperature
@@ -78,7 +78,7 @@ export class OpenAIConnector implements Connector {
     }
 
     const completion = await this.client.chat.completions.create({
-      model: options?.model || this.config.model!,
+      model: options?.model || this.config.model || 'gpt-4-turbo-preview',
       messages,
       max_tokens: options?.maxTokens || this.config.maxTokens,
       temperature: options?.temperature || this.config.temperature
@@ -120,7 +120,7 @@ export class OpenAIConnector implements Connector {
       size: options?.size || '1024x1024'
     })
 
-    return response.data?.map(item => item.url!).filter(Boolean) || []
+    return response.data?.map(item => item.url).filter((url): url is string => url !== undefined) || []
   }
 
   /**

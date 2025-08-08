@@ -41,13 +41,15 @@ export class CloudflareConnector implements Connector {
 
     return {
       get: async (key: string): Promise<string | null> => {
-        return await this.config!.kv!.get(key)
+        if (!this.config?.kv) throw new Error('KV not configured')
+        return await this.config.kv.get(key)
       },
 
       getWithMetadata: async <T = unknown>(
         key: string
       ): Promise<{ value: string | null; metadata: T | null }> => {
-        return await this.config!.kv!.getWithMetadata<T>(key)
+        if (!this.config?.kv) throw new Error('KV not configured')
+        return await this.config.kv.getWithMetadata<T>(key)
       },
 
       put: async (
@@ -55,11 +57,13 @@ export class CloudflareConnector implements Connector {
         value: string,
         options?: { expirationTtl?: number; metadata?: unknown }
       ): Promise<void> => {
-        await this.config!.kv!.put(key, value, options)
+        if (!this.config?.kv) throw new Error('KV not configured')
+        await this.config.kv.put(key, value, options)
       },
 
       delete: async (key: string): Promise<void> => {
-        await this.config!.kv!.delete(key)
+        if (!this.config?.kv) throw new Error('KV not configured')
+        await this.config.kv.delete(key)
       },
 
       list: async (options?: {
@@ -67,7 +71,8 @@ export class CloudflareConnector implements Connector {
         limit?: number
         cursor?: string
       }): Promise<KVNamespaceListResult<unknown>> => {
-        return await this.config!.kv!.list(options)
+        if (!this.config?.kv) throw new Error('KV not configured')
+        return await this.config.kv.list(options)
       }
     }
   }
@@ -82,19 +87,23 @@ export class CloudflareConnector implements Connector {
 
     return {
       prepare: (query: string) => {
-        return this.config!.d1!.prepare(query)
+        if (!this.config?.d1) throw new Error('D1 not configured')
+        return this.config.d1.prepare(query)
       },
 
       exec: async (query: string): Promise<D1ExecResult> => {
-        return await this.config!.d1!.exec(query)
+        if (!this.config?.d1) throw new Error('D1 not configured')
+        return await this.config.d1.exec(query)
       },
 
       batch: async <T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> => {
-        return await this.config!.d1!.batch<T>(statements)
+        if (!this.config?.d1) throw new Error('D1 not configured')
+        return await this.config.d1.batch<T>(statements)
       },
 
       dump: async (): Promise<ArrayBuffer> => {
-        return await this.config!.d1!.dump()
+        if (!this.config?.d1) throw new Error('D1 not configured')
+        return await this.config.d1.dump()
       }
     }
   }
@@ -109,7 +118,8 @@ export class CloudflareConnector implements Connector {
 
     return {
       get: async (key: string): Promise<R2ObjectBody | null> => {
-        return await this.config!.r2!.get(key)
+        if (!this.config?.r2) throw new Error('R2 not configured')
+        return await this.config.r2.get(key)
       },
 
       put: async (
@@ -117,19 +127,23 @@ export class CloudflareConnector implements Connector {
         value: ReadableStream | ArrayBuffer | string,
         options?: R2PutOptions
       ): Promise<R2Object> => {
-        return await this.config!.r2!.put(key, value, options)
+        if (!this.config?.r2) throw new Error('R2 not configured')
+        return await this.config.r2.put(key, value, options)
       },
 
       delete: async (key: string): Promise<void> => {
-        await this.config!.r2!.delete(key)
+        if (!this.config?.r2) throw new Error('R2 not configured')
+        await this.config.r2.delete(key)
       },
 
       list: async (options?: R2ListOptions): Promise<R2Objects> => {
-        return await this.config!.r2!.list(options)
+        if (!this.config?.r2) throw new Error('R2 not configured')
+        return await this.config.r2.list(options)
       },
 
       head: async (key: string): Promise<R2Object | null> => {
-        return await this.config!.r2!.head(key)
+        if (!this.config?.r2) throw new Error('R2 not configured')
+        return await this.config.r2.head(key)
       }
     }
   }
@@ -144,13 +158,15 @@ export class CloudflareConnector implements Connector {
 
     return {
       send: async (message: unknown): Promise<void> => {
-        await this.config!.queue!.send(message)
+        if (!this.config?.queue) throw new Error('Queue not configured')
+        await this.config.queue.send(message)
       },
 
       sendBatch: async (
         messages: Array<{ body: unknown; contentType?: string }>
       ): Promise<void> => {
-        await this.config!.queue!.sendBatch(messages as any)
+        if (!this.config?.queue) throw new Error('Queue not configured')
+        await this.config.queue.sendBatch(messages as MessageSendRequest[])
       }
     }
   }

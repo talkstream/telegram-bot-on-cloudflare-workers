@@ -30,15 +30,16 @@ export class Registry {
    */
   async load(name: string): Promise<Connector | Plugin> {
     // Check if already loaded
-    if (this.instances.has(name)) {
-      return this.instances.get(name)!
+    const existing = this.instances.get(name)
+    if (existing) {
+      return existing
     }
 
     // Try to load from registered loaders
     const loader = this.loaders.get(name)
     if (loader) {
       const module = await loader()
-      const instance = (module as any).default || module
+      const instance = ((module as { default?: Connector | Plugin }).default || module) as Connector | Plugin
       this.instances.set(name, instance)
       return instance
     }

@@ -15,7 +15,7 @@ export const addCommand = new Command('add')
     // Check if in a Wireframe project
     const packageJsonPath = path.join(process.cwd(), 'package.json')
     if (!fs.existsSync(packageJsonPath)) {
-      console.log(chalk.red('Error: Not in a Wireframe project directory'))
+      console.error(chalk.red('Error: Not in a Wireframe project directory'))
       process.exit(1)
     }
 
@@ -23,7 +23,7 @@ export const addCommand = new Command('add')
 
     // Check if it's a Wireframe project
     if (!packageJson.dependencies?.['@wireframe/core']) {
-      console.log(chalk.red('Error: This is not a Wireframe project'))
+      console.error(chalk.red('Error: This is not a Wireframe project'))
       process.exit(1)
     }
 
@@ -52,11 +52,11 @@ export const addCommand = new Command('add')
       const configFile = configFiles.find(f => fs.existsSync(path.join(process.cwd(), f)))
 
       if (configFile && !options.dev) {
-        console.log(
+        console.info(
           chalk.yellow('\n⚠️  Remember to update your wireframe.config to use the new packages')
         )
-        console.log(chalk.dim('Example:'))
-        console.log(
+        console.info(chalk.dim('Example:'))
+        console.info(
           chalk.dim(`
 export default defineConfig({
   connectors: [${packages
@@ -68,7 +68,7 @@ export default defineConfig({
         )
       }
 
-      console.log(chalk.green('\n✨ Done!\n'))
+      console.info(chalk.green('\n✨ Done!\n'))
     } catch (error) {
       spinner.fail('Failed to add packages')
       console.error(error)

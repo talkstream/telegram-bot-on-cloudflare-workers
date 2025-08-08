@@ -13,7 +13,8 @@ export class EventBus {
       this.events.set(event, new Set())
     }
 
-    const handlers = this.events.get(event)!
+    const handlers = this.events.get(event)
+    if (!handlers) return
     if (handlers.size >= this.maxListeners) {
       console.warn(`Warning: Possible memory leak. ${event} has ${handlers.size} listeners`)
     }
