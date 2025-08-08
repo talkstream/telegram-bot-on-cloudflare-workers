@@ -133,11 +133,13 @@ jobs:
         run: |
           echo "🔍 Checking for warnings..."
           npm run lint 2>&1 | tee lint-output.txt
-          if grep -q "warning" lint-output.txt; then
-            echo "❌ Warnings found! Zero warning policy violated."
+          # Filter out ESLint system warnings (like .eslintignore deprecation)
+          # Only look for actual code warnings (format: "file.ts:line:col warning message")
+          if grep -E "^[^(]*\.(ts|tsx|js|jsx):[0-9]+:[0-9]+.*warning" lint-output.txt; then
+            echo "❌ Code warnings found! Zero warning policy violated."
             exit 1
           fi
-          echo "✅ No warnings - Zero warning policy maintained!"
+          echo "✅ No code warnings - Zero warning policy maintained!"
 
       - name: Validate bundle size
         run: |
