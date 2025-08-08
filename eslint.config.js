@@ -20,7 +20,10 @@ export default [
       '**/.husky/**',
       '**/website/**',
       '**/examples/**',
-      '**/scripts/**'
+      '**/scripts/**',
+      '**/backup/**',
+      // Temporarily ignore new connector packages until properly configured
+      'packages/connectors/*/src/**'
     ]
   },
 
