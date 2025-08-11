@@ -20,7 +20,7 @@
   "author": "Wireframe Contributors",
   "license": "MIT",
   "dependencies": {
-    "openai": "^4.28.0"
+    "openai": "^5.12.2"
   },
   "peerDependencies": {
     "@wireframe/core": "^2.0.0-alpha"
