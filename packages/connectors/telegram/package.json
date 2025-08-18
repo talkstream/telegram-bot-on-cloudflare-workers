@@ -19,7 +19,7 @@
   "author": "Wireframe Contributors",
   "license": "MIT",
   "dependencies": {
-    "grammy": "^1.21.0"
+    "grammy": "^1.38.1"
   },
   "peerDependencies": {
     "@wireframe/core": "^2.0.0-alpha"
