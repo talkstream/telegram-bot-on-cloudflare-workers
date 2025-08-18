@@ -19,7 +19,7 @@ jobs:
         run: git config --global init.defaultBranch main
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -50,7 +50,7 @@ jobs:
         run: git config --global init.defaultBranch main
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -86,7 +86,7 @@ jobs:
         run: git config --global init.defaultBranch main
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run npm audit
         run: npm audit --omit=dev
@@ -108,7 +108,7 @@ jobs:
         run: git config --global init.defaultBranch main
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

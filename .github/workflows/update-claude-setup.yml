@@ -42,7 +42,7 @@ jobs:
         run: git config --global init.defaultBranch main
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
